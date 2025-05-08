@@ -1,0 +1,90 @@
+#form_body {
+    width: 80%;
+    margin:auto;
+    /* background-color: cyan; */
+}
+
+#form{
+    margin-top: 40px;
+    align-items: center;
+    background-color:#c8ebff;
+    padding: 189px;
+    padding-top: 10px;
+    padding-bottom: 45px;
+    border-radius: 14px;
+    border:1px solid black;
+
+}
+
+#form input[type="text"],input[type="password"],input[type="file" i]{
+
+    border: 1px solid black;
+    background-color: whitesmoke;
+    width: 100%;
+    border-radius: 11px;
+    height: 40px;
+    padding-left: 37%;
+    padding-top: 1%;
+    box-sizing: border-box;
+    box-shadow: -10px 10px 10px gray;
+}
+  
+
+#form label{
+    font-weight:700;
+    font-size: large;
+
+}
+.btn{
+
+   
+        border: none;
+        
+        padding: 3px 14px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius:5px;
+       
+        font-weight: 700;
+        padding-top:7px;
+        padding-bottom: 7px;
+    }
+
+    #frm_btns{
+        text-align: center;
+        margin-top: 34px;
+    }
+
+    #add{
+        color: white;
+        background-color: #7e0099db;
+       border: 1px solid #262626;
+       margin-right: 5px;
+    }
+
+
+    #cancel{
+        color: white;
+        background-color:#e62d2ddb;
+       
+        border:1px solid red;
+        margin-left: 5px;
+    }
+
+
+    #Download {
+
+        color: white; 
+        background-color:#199581db;
+    }
+
+#wrapper_download {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}

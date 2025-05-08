@@ -1,0 +1,51 @@
+{% extends "trend/base.html" %}
+{% load static %}
+{% block title%}Add category{% endblock title%}
+{% block css %} <link rel="stylesheet" href="{% static 'css/trend/DPR_upload_status_tbl.css' %}" />  {% endblock css%}
+{% block content%}
+
+
+{% if status_obj %}
+    <div id="head-update-status" style="text-align:center">UPDATE STATUS</div>
+    <div id="update-table">
+      <table class="table" id="table">
+        <thead>
+          <tr>
+            <!-- <th>ID</th> -->
+            <th>SITE_ID</th>
+            <th>UPDATE STATUS</th>
+            <th>REMARKS</th>
+           
+          </tr>
+        </thead>
+        <tbody>
+          
+          {% for obj in status_obj %}
+          <tr>
+            <!-- <td>{{obj.id}}</td> -->
+            <td>{{obj.SITE_ID}}</td>
+            <td> {% if obj.update_status == "UPDATED" %}
+                <span style="size: 20px;">&#9989;</span>
+                {%  endif %}
+                {% if obj.update_status == "NOT UPDATED" %}
+                <span style="size: 20px;">&#10060;</span>
+                {%  endif %}
+
+            </td>
+            <td>{{obj.Remark}}</td>
+          
+  
+  
+  
+  
+           
+          </tr>
+          
+          {% endfor %}
+        </tbody>
+      </table>
+     
+      
+    </div>
+{% endif %}
+{% endblock %}

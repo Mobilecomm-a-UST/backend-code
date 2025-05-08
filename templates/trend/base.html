@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}BASE{% endblock title %}</title>
+  <link rel="stylesheet" href=" {% static '/css/trend/base.css' %}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+  {% block css%}
+  {% endblock %}
+</head>
+
+<body>
+
+  <div class="content">
+    <div id="logo">
+      <img id="icon" src="{% static '/icons/mcom_logo.jpg' %}" alt="Mobilecomm" class="headerimg" />
+    </div>
+    <h1 id="p1">Mobilecomm Technologies</h1>
+
+
+  </div>
+
+
+  <div class="navbar">
+    <ul id="nav-btn">
+      <li><a class="btn1 active" href="/shop/">Home</a></li>
+      <li><a class=" btn1" href="/shop/about/">About Us</a></li>
+      <li><a class=" btn1" href="/shop/contactus/">Contact Us</a></li>
+      {% if perms.trend.add_dpr_table1 %}
+
+      <li class="dropdown2"><span class="btn1">Upload DPR</span>
+        <div class="dashboard-list">
+          <a href="{% url 'dpr_upload' %}">DPR Keys</a>
+          <a href="{% url 'circle_wise_dpr_upload'  %}">DPR Report</a>
+          <a href="{%  url 'mapa_status_upld'  %}">DPR MAPA Status</a>
+
+        </div>
+
+      </li>
+      {% endif %}
+
+      {% if perms.trend.view_dpr_table1 %}
+      <li><a class=" btn1" href="{% url 'dpr_update'%}">View Site List/Update</a></li>
+      {% endif %}
+
+      {% if perms.trend.view_dpr_table1 %}
+      <li class="dropdown2"><span class="btn1">DASHBOARD</span>
+        <div class="dashboard-list">
+          <a href="{% url 'dashboard'  %}">Over All</a>
+          <a href="{% url 'circle_wise_dashboard'  %}">Circle-Wise</a>
+          <div class="dropdown2-1 project"> <span> Project-Wise</span>
+            <div class="Project-list">
+              <a href="/trend/circle_wise_dashboard/?project=NT">NT</a>
+              <a href="/trend/circle_wise_dashboard/?project=ULS">ULS</a>
+              <a href="/trend/circle_wise_dashboard/?project=Capacity Upgrade">Capacity Upgrade</a>
+              <a href="/trend/circle_wise_dashboard/?project=Relocation">Relocation</a>
+            </div>
+          </div>
+        </div>
+      </li>
+      {% endif %}
+
+      {% if perms.trend.view_dpr_table1 %}
+      <li class="dropdown1"><span class="btn1">View DPR</span>
+        <div class="circle-list">
+          <a href="{% url 'dpr_view' 'ALL'  %}">ALL</a>
+          <!-- <a href="{% url 'dpr_view' 'MUM'  %}">MUM</a>
+          <a href="{% url 'dpr_view' 'TNCH'  %}">TNCH</a>
+          <a href="{% url 'dpr_view' 'AP'  %}">AP</a>
+          <a href="{% url 'dpr_view' 'Delhi'  %}">Delhi</a> -->
+          {% for c in cir %}
+          <a href="{% url 'dpr_view' c  %}"> {{c}} </a>
+          {% endfor %}
+        </div>
+
+      </li>
+      {% endif %}
+
+
+    </ul>
+
+    <div class="lginout" id="lginout">
+      {% if user.is_authenticated %}
+
+      <!-- <div id="pro_image" onclick="menuToggle();">
+          {% if request.user.profile.pro_pic %}
+          <img src="{{request.user.profile.pro_pic.url}}" height="30" width="30"/>
+          {%  endif %}
+        </div> -->
+
+      <!-- <div class="menu">
+          <ul>
+            <li><a href="#">Change Profile</a></li><hr style="margin:1;">
+            <li><a href="#">Change Password</a></li>
+          </ul>
+         </div> -->
+      <ul class="header_user_name">
+
+        <li>
+          <p id="name" style="text-transform: capitalize;">{{request.session.uname}}</p>
+        </li>
+        <li>
+          <button class="lgout"><a style="text-decoration:none; color:black;" class="ac"
+              href="{% url 'logout'  %}">logout</a></button>
+        </li>
+      </ul>
+      {% else %}
+      <ul class="header_user_name">
+        <li>
+          <button class="lgin"><a class="ac" style="text-decoration:none; color:black;"
+              href="{% url 'login' %}">login</a></button>
+        </li>
+        <!-- <li>
+              <button class="reg"><a class="ac" style="text-decoration:none; color:black;" href="/shop_accounts/register/"
+                >register</a></button>
+              
+            </li> -->
+      </ul>
+      {% endif %}
+    </div>
+
+    </ul>
+  </div>
+
+  </div>
+
+  <!-- print(user.has_perm("blog.delete_post")) # => False
+print(user.has_perm("blog.change_post")) # => False
+print(user.has_perm("blog.view_post")) # => True
+print(user.has_perm("blog.add_post")) # => True -->
+
+
+
+  <div class="body">
+    {% block content %}
+
+    {% endblock %}
+  </div>
+  <script>
+
+    function menuToggle() {
+      const toggleMenu = document.querySelector('.menu');
+      toggleMenu.classList.toggle('active')
+    }
+
+
+
+
+
+  </script>
+
+</body>
+
+
+</html>

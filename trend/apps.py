@@ -1,0 +1,10 @@
+from django.apps import AppConfig
+
+
+class TrendConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'trend'
+
+    def ready(self):
+            from . import signals
+

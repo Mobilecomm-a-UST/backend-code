@@ -1,0 +1,172 @@
+{% extends 'trend/base.html'%}
+{% load static %}
+{% block css%}
+<link rel="stylesheet" href="{% static 'css/trend/DPR_view.css' %}" /> {% endblock %}
+{% block title %} catagory:{{c_head}} {% endblock title %}
+
+{% block content %}
+
+<div id="body_content">
+  <div id="bck_add_btn">
+
+
+
+
+    <div id="search-box">
+      <form class="form">
+        {% csrf_token %}
+        <input type="text" placeholder="Search By Site ID" name="id search" id="user" required />
+        <button type="Submit" value="Search" id="search-button" class="btn">
+          <i class="fa fa-search"></i></button>
+      </form>
+    
+    
+    </div>
+    <a href="?MS2 filter='ms2'"> <button type=" submit " id='add_products' class="btn">
+      MS2 Site</button></a>
+
+    <a href="/{{path}}"> <button type=" submit " id='add_products' class="btn"><i class="fa fa-download"></i>
+        Download</button></a>
+    
+  </div>
+
+  <div id="table_wrapper" >
+    <table class="table" id="table">
+      <thead>
+        <tr>
+          <th>S/NO.</th>
+          <th>CIRCLE</th>
+          <th>SITE ID<a href="?short=item_name" style="text-decoration:none;"> <span> &#8593; </span> </a> <a
+              href="?short=-item_name" style="text-decoration:none;"> <span> &#8595;</span> </a></th>
+          <th>BAND<a href="?short=short_discription" style="text-decoration:none;"> <span> &#8593; </span> </a> <a
+              href="?short=-short_discription" style="text-decoration:none;"> <span> &#8595;</span> </a></th>
+          <th>Project</th>
+          <th>Activity</th>
+          <th>Unique_SITE_ID</th>
+          <th>TOCO_NAME</th>
+          <th>OA_COMMERCIAL_TRAFFIC_PUT_ON_AIR_MS1_DATE</th>
+
+
+          <!-- ##################################### SOFT AT #################### -->
+          <th>Soft_AT_Status</th>
+          <th>SOFT_AT_ACCEPTANCE_DATE</th>
+          <th>SOFT_AT_ACCEPTANCE_MAIL</th>
+          <th>SOFT_AT_REJECTION_DATE</th>
+          <th>SOFT_AT_REJECTION_REASON</th>
+          <th>SOFT_AT_REJECTED_TAT_DATE</th>
+          <th>SOFT_AT_OFFERED_DATE</th>
+          <th>SOFT_AT_OFFERED_REMARKS</th>
+          <th>SOFT_AT_PENDING_REASON</th>
+          <th>SOFT_AT_PENDING_REMARK</th>
+          <th>SOFT_AT_PENDING_TAT_DATE</th>
+          <!-- ############################### physical at #########################3 -->
+          <th>PHYSICAL_AT_Status</th>
+          <th>PHYSICAL_AT_ACCEPTANCE_DATE</th>
+          <th>PHYSICAL_AT_ACCEPTANCE_MAIL</th>
+          <th>PHYSICAL_AT_REJECTION_DATE</th>
+          <th>PHYSICAL_AT_REJECTION_REASON</th>
+          <th>PHYSICAL_AT_REJECTED_TAT_DATE</th>
+          <th>PHYSICAL_AT_OFFERED_DATE</th>
+          <th>PHYSICAL_AT_OFFERED_REMARKS</th>
+          <th>PHYSICAL_AT_PENDING_REASON</th>
+          <th>PHYSICAL_AT_PENDING_REMARK</th>
+          <th>PHYSICAL_AT_PENDING_TAT_DATE</th>
+          <!-- ########################################## Performance at #####################-->
+          <th>Performane_AT_Status</th>
+          <th>PERFORMANCE_AT_ACCEPTANCE_DATE</th>
+          <th>PERFORMANCE_AT_ACCEPTANCE_MAIL</th>
+          <th>PERFORMANCE_AT_REJECTION_DATE</th>
+          <th>PERFORMANCE_AT_REJECTION_REASON</th>
+          <th>PERFORMANCE_AT_REJECTED_TAT_DATE</th>
+          <th>PERFORMANCE_AT_OFFERED_DATE</th>
+          <th>PERFORMANCE_AT_OFFERED_REMARKS</th>
+          <th>PERFORMANCE_AT_PENDING_REASON</th>
+          <th>PERFORMANCE_AT_PENDING_REMARK</th>
+          <th>PERFORMANCE_AT_PENDING_TAT_DATE</th>
+          <th>MAPA_STATUS</th>
+
+
+        </tr>
+      </thead>
+      <tbody>
+        {% for site in object %}
+        <tr>
+          <td>{{forloop.counter}}</td>
+          <td>{{site.CIRCLE}}</td>
+          <td> {{ site.SITE_ID}}</td>
+          <td> {{ site.BAND}}</td>
+          <td> {{ site.Project}}</td>
+          <td> {{ site.Activity}}</td>
+          <td> {{ site.Unique_SITE_ID}}</td>
+          <td> {{ site.TOCO_NAME}}</td>
+          <td> {{ site.OA_COMMERCIAL_TRAFFIC_PUT_ON_AIR_MS1_DATE}}</td>
+
+
+          <!-- ##################################### SOFT AT #################### -->
+          <td> {{ site.Soft_AT_Status}}</td>
+          <td> {{ site.SOFT_AT_ACCEPTANCE_DATE}}</td>
+          {% if site.SOFT_AT_ACCEPTANCE_MAIL %}
+          <td> <a href="{{ site.SOFT_AT_ACCEPTANCE_MAIL.url}}">Download</a></td>
+          {% else %}
+          <td> </td>
+
+          {% endif %}
+          <td> {{ site.SOFT_AT_REJECTION_DATE}}</td>
+          <td> {{ site.SOFT_AT_REJECTION_REASON}}</td>
+          <td> {{ site.SOFT_AT_REJECTED_TAT_DATE}}</td>
+          <td> {{ site.SOFT_AT_OFFERED_DATE}}</td>
+          <td> {{ site.SOFT_AT_OFFERED_REMARKS}}</td>
+          <td> {{ site.SOFT_AT_PENDING_REASON}}</td>
+          <td> {{ site.SOFT_AT_PENDING_REMARK}}</td>
+          <td> {{ site.SOFT_AT_PENDING_TAT_DATE}}</td>
+          <!-- ########################################## physical at #####################-->
+          <td> {{ site.PHYSICAL_AT_Status}}</td>
+          <td> {{ site.PHYSICAL_AT_ACCEPTANCE_DATE}}</td>
+          {% if site.PHYSICAL_AT_ACCEPTANCE_MAIL %}
+          <td> <a href="{{ site.PHYSICAL_AT_ACCEPTANCE_MAIL.url}}">Download</a></td>
+          {% else %}
+          <td> </td>
+
+
+          {% endif %}
+          <td> {{ site.PHYSICAL_AT_REJECTION_DATE}}</td>
+          <td> {{ site.PHYSICAL_AT_REJECTION_REASON}}</td>
+          <td> {{ site.PHYSICAL_AT_REJECTED_TAT_DATE}}</td>
+          <td> {{ site.PHYSICAL_AT_OFFERED_DATE}}</td>
+          <td> {{ site.PHYSICAL_AT_OFFERED_REMARKS}}</td>
+          <td> {{ site.PHYSICAL_AT_PENDING_REASON}}</td>
+          <td> {{ site.PHYSICAL_AT_PENDING_REMARK}}</td>
+          <td> {{ site.PHYSICAL_AT_PENDING_TAT_DATE}}</td>
+
+
+          <!-- ########################################## Performance at #####################-->
+
+          <td> {{ site.Performance_AT_Status}}</td>
+          <td> {{ site.PERFORMANCE_AT_ACCEPTANCE_DATE}}</td>
+          {% if site.PERFORMANCE_AT_ACCEPTANCE_MAIL %}
+          <td> <a href="{{ site.PERFORMANCE_AT_ACCEPTANCE_MAIL.url}}">Download</a></td>
+          {% else %}
+          <td> </td>
+
+
+          {% endif %}
+          <td> {{ site.PERFORMANCE_AT_REJECTION_DATE}}</td>
+          <td> {{ site.PERFORMANCE_AT_REJECTION_REASON}}</td>
+          <td> {{ site.PERFORMANCE_AT_REJECTED_TAT_DATE}}</td>
+          <td> {{ site.PERFORMANCE_AT_OFFERED_DATE}}</td>
+          <td> {{ site.PERFORMANCE_AT_OFFERED_REMARKS}}</td>
+          <td> {{ site.PERFORMANCE_AT_PENDING_REASON}}</td>
+          <td> {{ site.PERFORMANCE_AT_PENDING_REMARK}}</td>
+          <td> {{ site.PERFORMANCE_AT_PENDING_TAT_DATE}}</td>
+          <td> {{ site.MAPA_STATUS}}</td>
+
+
+
+          {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+{% endblock content %}

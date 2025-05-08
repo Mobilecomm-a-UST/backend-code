@@ -1,0 +1,379 @@
+{% extends "trend/base.html" %} {% load static %} {% block css%}
+<link rel="stylesheet" href="{% static 'css/trend/single_site_view.css' %}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+{% endblock %}
+
+{% block content %}
+
+
+  <h2   style=" text-align:center; margin-top: 10px;">{{object.SITE_ID}}</h2>
+
+<div class="super">
+
+  <div class="all-details">
+
+    
+    
+    <div class="item-name">
+      <h3>CIRCLE :</h3> {{object.CIRCLE}}
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>BAND :</h3>
+      <p>{{object.BAND}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>Unique_SITE_ID :</h3>
+      <p>{{object.Unique_SITE_ID}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>TOCO_NAME :</h3>
+      <p>{{object.TOCO_NAME}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>Project :</h3>
+      <p>{{object.Project }}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>OA_(COMMERCIAL_TRAFFIC_PUT_ON_AIR)_(MS1)_DATE: </h3>
+      <p>{{object.OA_COMMERCIAL_TRAFFIC_PUT_ON_AIR_MS1_DATE}}</p>
+    </div>
+    <hr>
+
+    <!-- ########################################### soft at ###########################################3     -->
+    {% if object.Soft_AT_Status == "ACCEPTED" %}
+
+    <div class="item-name">
+      <h3>SOFT_AT_ACCEPTANCE_DATE:</h3>
+      <p>{{object.SOFT_AT_ACCEPTANCE_DATE }}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3> SOFT_AT_ACCEPTANCE_MAIL:</h3>
+      <p><a href="{{object.SOFT_AT_ACCEPTANCE_MAIL.url}}">Download</a></p>
+    </div>
+    <hr>
+    {% endif %}
+
+
+    {% if object.Soft_AT_Status == "REJECTED" %}
+
+    <div class="item-name">
+      <h3>SOFT_AT_REJECTION_DATE:</h3>
+      <p>{{object.SOFT_AT_REJECTION_DATE}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>SOFT_AT_REJECTION_REASON:</h3>
+      <p>{{object.SOFT_AT_REJECTION_REASON}}</p>
+    </div>
+    <hr>
+
+    <div class="item-name">
+      <h3>SOFT_AT_REJECTED_TAT_DATE:</h3>
+      <p>{{object.SOFT_AT_REJECTED_TAT_DATE}}</p>
+    </div>
+    <hr>
+    {% endif %}
+
+    {% if object.Soft_AT_Status == "OFFERED" %}
+
+    <div class="item-name">
+      <h3>SOFT_AT_OFFERED_DATE:</h3>
+      <p>{{object.SOFT_AT_OFFERED_DATE }}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>SOFT_AT_OFFERED_REMARKS:</h3>
+      <p>{{object.SOFT_AT_OFFERED_REMARKS}}</p>
+    </div>
+    <hr>
+    {% endif %}
+
+    {% if object.Soft_AT_Status == "PENDING" %}
+
+    <div class="item-name">
+      <h3>SOFT_AT_PENDING_REASON:</h3>
+      <p>{{object.SOFT_AT_PENDING_REASON}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>SOFT_AT_PENDING_REMARK:</h3>
+      <p>{{object.SOFT_AT_PENDING_REMARK}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>SOFT_AT_PENDING_TAT_DATE:</h3>
+      <p>{{object.SOFT_AT_PENDING_TAT_DATE}}</p>
+    </div>
+    <hr>
+    {% endif %}
+
+    <!-- #################################################pHYSICAL at############################### -->
+
+
+    {% if object.PHYSICAL_AT_Status == "ACCEPTED" %}
+
+    <div class="item-name">
+      <h3>PHYSICAL_AT_ACCEPTANCE_DATE:</h3>
+      <p>{{object.PHYSICAL_AT_ACCEPTANCE_DATE }}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3> PHYSICAL_AT_ACCEPTANCE_MAIL:</h3>
+      <p><a href="{{object.PHYSICAL_AT_ACCEPTANCE_MAIL.url}}">Download</a></p>
+    </div>
+    <hr>
+    {% endif %}
+
+
+    {% if object.PHYSICAL_AT_Status == "REJECTED" %}
+
+    <div class="item-name">
+      <h3>PHYSICAL_AT_REJECTION_DATE:</h3>
+      <p>{{object.PHYSICAL_AT_REJECTION_DATE}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>PHYSICAL_AT_REJECTION_REASON:</h3>
+      <p>{{object.PHYSICAL_AT_REJECTION_REASON}}</p>
+    </div>
+    <hr>
+
+    <div class="item-name">
+      <h3>PHYSICAL_AT_REJECTED_TAT_DATE:</h3>
+      <p>{{object.PHYSICAL_AT_REJECTED_TAT_DATE}}</p>
+    </div>
+    <hr>
+    {% endif %}
+
+    {% if object.PHYSICAL_AT_Status == "OFFERED" %}
+
+    <div class="item-name">
+      <h3>PHYSICAL_AT_OFFERED_DATE:</h3>
+      <p>{{object.PHYSICAL_AT_OFFERED_DATE }}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>PHYSICAL_AT_OFFERED_REMARKS:</h3>
+      <p>{{object.PHYSICAL_AT_OFFERED_REMARKS}}</p>
+    </div>
+    <hr>
+    {% endif %}
+
+    {% if object.PHYSICAL_AT_Status == "PENDING" %}
+
+    <div class="item-name">
+      <h3>PHYSICAL_AT_PENDING_REASON:</h3>
+      <p>{{object.PHYSICAL_AT_PENDING_REASON}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>PHYSICAL_AT_PENDING_REMARK:</h3>
+      <p>{{object.PHYSICAL_AT_PENDING_REMARK}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>PHYSICAL_AT_PENDING_TAT_DATE:</h3>
+      <p>{{object.PHYSICAL_AT_PENDING_TAT_DATE}}</p>
+    </div>
+    <hr>
+    {% endif %}
+    <!-- ################################################# PERFORMANCE at ############################### -->
+
+
+    {% if object.Performance_AT_Status == "ACCEPTED" %}
+
+    <div class="item-name">
+      <h3>PERFORMANCE_AT_ACCEPTANCE_DATE:</h3>
+      <p>{{object.PERFORMANCE_AT_ACCEPTANCE_DATE }}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3> PERFORMANCE_AT_ACCEPTANCE_MAIL:</h3>
+      <p><a href="{{object.PERFORMANCE_AT_ACCEPTANCE_MAIL.url}}">Download</a></p>
+    </div>
+    <hr>
+    {% endif %}
+
+
+    {% if object.Performance_AT_Status == "REJECTED" %}
+
+    <div class="item-name">
+      <h3>PERFORMANCE_AT_REJECTION_DATE:</h3>
+      <p>{{object.PERFORMANCE_AT_REJECTION_DATE}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>PERFORMANCE_AT_REJECTION_REASON:</h3>
+      <p>{{object.PERFORMANCE_AT_REJECTION_REASON}}</p>
+    </div>
+    <hr>
+
+    <div class="item-name">
+      <h3>PERFORMANCE_AT_REJECTED_TAT_DATE:</h3>
+      <p>{{object.PERFORMANCE_AT_REJECTED_TAT_DATE}}</p>
+    </div>
+    <hr>
+    {% endif %}
+
+    {% if object.Performance_AT_Status == "OFFERED" %}
+
+    <div class="item-name">
+      <h3>PERFORMANCE_AT_OFFERED_DATE:</h3>
+      <p>{{object.PERFORMANCE_AT_OFFERED_DATE }}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>PERFORMANCE_AT_OFFERED_REMARKS:</h3>
+      <p>{{object.PERFORMANCE_AT_OFFERED_REMARKS}}</p>
+    </div>
+    <hr>
+    {% endif %}
+
+    {% if object.Performance_AT_Status == "PENDING" %}
+
+    <div class="item-name">
+      <h3>PERFORMANCE_AT_PENDING_REASON:</h3>
+      <p>{{object.PERFORMANCE_AT_PENDING_REASON}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>PERFORMANCE_AT_PENDING_REMARK:</h3>
+      <p>{{object.PERFORMANCE_AT_PENDING_REMARK}}</p>
+    </div>
+    <hr>
+    <div class="item-name">
+      <h3>PERFORMANCE_AT_PENDING_TAT_DATE:</h3>
+      <p>{{object.PERFORMANCE_AT_PENDING_TAT_DATE}}</p>
+    </div>
+    <hr>
+    {% endif %}
+
+
+
+    <!-- <div style="text-align: center;"> <a href="#" id="atc" class="btn">Add to Cart</a> <a href="#" id="bn"
+        class="btn">Buy Now</a></div> -->
+  </div>
+  <div class="at">
+    <div class="at_boxes soft_at">
+     
+        <div class="dropdown">SOFT_AT_Status:</div>
+        <div class="dropbtn" onclick="myFunction1()"><div>{{object.Soft_AT_Status}}</div> <i class="fa fa-caret-down"></i></div>
+       
+    
+      <div id="myDropdown1" class="dropdown-content">
+       
+          {% if object.Soft_AT_Status != "ACCEPTED"%}
+          <a href="{% url 'soft_at_update' object.id 'ACCEPTED' %}">ACCEPTED</a>
+          {% endif %}
+         <a href="{% url 'soft_at_update' object.id 'REJECTED' %}">REJECTED</a>
+          
+          <a href="{% url 'soft_at_update' object.id 'OFFERED' %}">OFFERED</a>
+          
+          <a href="{% url 'soft_at_update' object.id 'PENDING' %}">PENDING</a>
+         
+      
+      </div>
+
+    </div>
+
+
+
+
+    <div class="at_boxes physical_at">
+      
+        <div class="dropdown" >PHYSICAL_AT_Status:</div>
+        <div  class="dropbtn" onclick="myFunction2()"><div>{{object.PHYSICAL_AT_Status}}</div> <i class="fa fa-caret-down"></i></div>
+      
+      <div id="myDropdown2" class="dropdown-content">
+        {% if object.PHYSICAL_AT_Status != "ACCEPTED"%}
+          <a href="{% url 'physical_at_update' object.id 'ACCEPTED' %}">ACCEPTED</a>
+         {%  endif %}
+          <a href="{% url 'physical_at_update' object.id 'REJECTED' %}">REJECTED</a>
+         
+        <a href="{% url 'physical_at_update' object.id 'OFFERED' %}">OFFERED</a>
+        
+        <a href="{% url 'physical_at_update' object.id 'PENDING' %}">PENDING</a>
+        
+       
+      </div>
+    </div>
+
+    <div class="at_boxes performane_at">
+      
+        <div class="dropdown">Performance_AT_Status:</div>
+        <div class="dropbtn" onclick="myFunction3()" ><div>{{object.Performance_AT_Status}}</div> <i class="fa fa-caret-down"></i></div>
+        <div id="myDropdown3" class="dropdown-content">
+          {% if object.Performance_AT_Status != "ACCEPTED"%}
+          <a href="{% url 'performance_at_update' object.id 'ACCEPTED' %}">ACCEPTED</a>
+          {% endif  %}
+          <a href="{% url 'performance_at_update' object.id 'REJECTED' %}">REJECTED</a>
+
+          <a href="{% url 'performance_at_update' object.id 'OFFERED' %}">OFFERED</a>
+
+          <a href="{% url 'performance_at_update' object.id 'PENDING' %}">PENDING</a>
+
+
+        </div>
+      </div>
+    </div>
+
+
+    
+  </div>
+  {% for message in messages %}
+
+  <h3 class="message" style="text-align:center;">{{message}}</h3>
+
+  {% endfor %}
+  <!-- #############################################33 -->
+  <!-- <div class="dropdown">
+    <div onclick="myFunction()" class="dropbtn">{{object.Performance_AT_Status}}</div>
+    <div id="myDropdown" class="dropdown-content">
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div> -->
+
+  <script>
+
+   
+
+
+    // #################################################3
+
+    function myFunction1() {
+      document.getElementById("myDropdown1").classList.toggle("show");
+    }
+
+
+    function myFunction2() {
+      document.getElementById("myDropdown2").classList.toggle("show");
+    }
+    function myFunction3() {
+      document.getElementById("myDropdown3").classList.toggle("show");
+    }
+
+    // Close the dropdown if the user clicks outside of it
+    window.onclick = function (event) {
+      if (!event.target.matches('.dropbtn')) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        var i;
+        for (i = 0; i < dropdowns.length; i++) {
+          var openDropdown = dropdowns[i];
+          if (openDropdown.classList.contains('show')) {
+            openDropdown.classList.remove('show');
+          }
+        }
+      }
+    }
+
+  </script>
+  {% endblock %}

@@ -1,0 +1,1983 @@
+ # match=0
+                        # objs=pre_post_report.objects.all()
+                        # pre_cell=d[6]
+                        # ins=False
+                        # for i,obj in enumerate(objs):
+                            
+                               
+                        #        post_cell=obj.Post_trend_cell
+                        #        a,sts=max_match(pre_cell,post_cell)
+                               
+                        #     #    print(pre_cell,post_cell,a)
+                        #        if a > match and sts :
+                        #               ins=True
+                        #               match=a
+                        #               ob=obj
+                        # if ins:    
+                        #  print(pre_cell,ob.Post_trend_cell)
+                        #  print("_____________________________________________________________")   
+
+                        # df_Pre_volte_traffic.to_excel("pre_volte_traffic.xlsx", index=False)
+                        # df_Pre_volte_traffic=pd.read_excel("pre_volte_traffic.xlsx",header=2)
+                        # df_Pre_data_volume.to_excel("pre_data_volume.xlsx", index=False)
+                        # df_Pre_data_volume=pd.read_excel("pre_data_volume.xlsx",header=2)
+                        # df_Post_data_volume.to_excel("post_data_volume.xlsx", index=False)
+                        # df_Post_data_volume=pd.read_excel("post_data_volume.xlsx",header=2)
+
+                        # df_Post_data_volume.columns=df_Post_data_volume.iloc[1]
+                        # df_Post_data_volume = df_Post_data_volume.iloc[2:].reset_index(drop=True)
+
+
+                    
+                    
+                        # ###################################### for pre ##############################################                
+            # location= MEDIA_ROOT + r"\dpr\dpr_report_file"
+            # fs = FileSystemStorage(location=location)
+            # pre_file = fs.save(pre_file.name, pre_file)
+            # # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+            # filepath = fs.path(pre_file)
+            # print("file_path:-",filepath)
+            # df_dict=pd.read_excel(filepath,sheet_name=None,header=[0,2])
+            # os.remove(path=filepath)
+            # print(filepath,"deleted...............")
+            
+            # df = pd.concat(df_dict.values(), axis=0) # to merge every sheet of the df_dict
+            # if not(df.empty):
+               
+            #     df.to_excel("pre_trend_excel.xlsx") # just to visualise the data frame
+            
+            #     df_Pre_volte_traffic=df[["Unnamed: 0","PS RRC Succ Rate","Unnamed: 36","Unnamed: 37","Unnamed: 38","Unnamed: 39","Unnamed: 1","CRITERIA"]]
+            #     df_Pre_volte_traffic.columns=df_Pre_volte_traffic.iloc[1]
+            #     df_Pre_volte_traffic = df_Pre_volte_traffic.iloc[2:].reset_index(drop=True)
+                
+            #     df_Pre_volte_traffic.to_excel("actual_pre_volte_traffic.xlsx",index=False)
+            #     print("################################ df pre volte traffic #########################")
+            #     print(df_Post_volte_traffic)
+
+            #     df_Pre_data_volume=df[["Unnamed: 0","Payload","Unnamed: 141","Unnamed: 142","Unnamed: 143","Unnamed: 144","Unnamed: 1","CRITERIA",]]
+            #     df_Pre_data_volume.columns=df_Pre_data_volume.iloc[1]
+            #     df_Pre_data_volume = df_Pre_data_volume.iloc[2:].reset_index(drop=True)
+                
+            #     df_Pre_data_volume.to_excel("actual_pre_data_volume.xlsx", index=False)
+            #     print("############################## df pre data volume ##############################")
+            #     print(df_Post_data_volume)
+            #     dates=df_Post_data_volume.columns
+            #     print(dates)
+            #     # print(type(dates[1]))
+            #     date1=dates[1].day
+            #     date2=dates[2].day
+            #     date3=dates[3].day
+            #     date4=dates[4].day
+            #     date5=dates[5].day
+            #     print(date1)
+            #     print(date2)
+            #     print(date3)
+            #     print(date4)
+            #     print(date5)
+
+                
+          
+          
+            #     for d in df_Pre_volte_traffic.values:
+            #             site=d[7]
+            #             cell_name=d[0]
+                        
+            #             objs=pre_post_report.objects.filter(Post_cell_site_id=mapping_dic[site])
+            #             ins=False
+            #             for obj1 in objs:
+                            
+            #                   if obj1.Post_cell_name[-1]==cell_name[-1]:
+            #                          obj=obj1
+            #                          ins=True
+            #                          print(cell_name,obj.Post_cell_name)
+                                  
+                               
+            #             if ins:
+            #                 if(date1==1):
+            #                         obj.Pre_Volte_Traffic_1=d[1]
+            #                         obj.Pre_Volte_Traffic_2=d[2]
+            #                         obj.Pre_Volte_Traffic_3=d[3]
+            #                         obj.Pre_Volte_Traffic_4=d[4]
+            #                         obj.Pre_Volte_Traffic_5=d[5]
+            #                         # obj.Post_Data_Volume_1=d[1]
+            #                         # obj.Post_Data_Volume_1=d[1]
+            #                 if(date1==2):
+            #                         obj.Pre_Volte_Traffic_2=d[1]
+            #                         obj.Pre_Volte_Traffic_3=d[2]
+            #                         obj.Pre_Volte_Traffic_4=d[3]
+            #                         obj.Pre_Volte_Traffic_5=d[4]
+            #                         obj.Pre_Volte_Traffic_6=d[5]
+            #                         # obj.Post_Data_Volume_1=d[1]
+            #                         # obj.Post_Data_Volume_1=d[1]
+            #                 if(date1==3):
+            #                         obj.Pre_Volte_Traffic_3=d[1]
+            #                         obj.Pre_Volte_Traffic_4=d[2]
+            #                         obj.Pre_Volte_Traffic_5=d[3]
+            #                         obj.Pre_Volte_Traffic_6=d[4]
+            #                         obj.Pre_Volte_Traffic_7=d[5]
+            #                         # obj.Post_Data_Volume_1=d[1]
+            #                         # obj.Post_Data_Volume_1=d[1]    
+            #                 if(date1==4):
+            #                         obj.Pre_Volte_Traffic_4=d[1]
+            #                         obj.Pre_Volte_Traffic_5=d[2]
+            #                         obj.Pre_Volte_Traffic_6=d[3]
+            #                         obj.Pre_Volte_Traffic_7=d[4]
+            #                         obj.Pre_Volte_Traffic_8=d[5]
+            #                         # obj.Post_Data_Volume_1=d[1]
+            #                         # obj.Post_Data_Volume_1=d[1] 
+            #                 obj.save()
+                              
+            # else:
+            #       context={"status":False,"message":"DPR Report is empty"}
+            #       return Response(context)
+
+
+
+
+#  df.style.set_table_styles(
+#    [{
+#        'selector': 'th',
+#        'props': [('background-color', '#add8e6')]
+#    }])
+#             writer=pd.ExcelWriter(path,engine="xlsxwriter")
+#         #     df.to_excel(path,index=True)
+#             df.to_excel(writer,index=True)
+#             writer.save()
+
+
+
+
+############################## for sector level colour gradient ###############################################33
+#  df_style=df.style
+#             idx = pd.IndexSlice
+#             # colors = ["red", "orange", "yellow","#ffff00", "darkgreen"]
+#             Pre_colors=["#cc3300","#ff9933","#ffcc33","#ffff33","#00cc33"]
+#             Post_colors=["#00cc33","#ffff33","#ffcc33","#ff9933","#cc3300"]
+#             Pre_cmap1 = mpl.colors.LinearSegmentedColormap.from_list("mycmap",Pre_colors)
+#             Post_cmap1 = mpl.colors.LinearSegmentedColormap.from_list("mycmap", Post_colors)
+#             index=len(df.index)
+#         #     df=df_style.background_gradient(cmap=cmap1,axis=1)
+#             for i in range(0,index):
+#                     slice_Pre_VT = idx[idx[i], idx["Volte Traffic",:,:]]
+#                     slice_Post_VT = idx[idx[i], idx["Volte Traffic",:,:]]
+#                     slice_Pre_DV = idx[idx[i], idx["Data Volume",:,:]]
+#                     slice_Post_DV = idx[idx[i], idx["Data Volume",:,:]]
+#                     df_style=df_style.background_gradient(cmap=Pre_cmap1,axis=1,subset=slice_Pre_VT)\
+#                                      .background_gradient(cmap=Post_cmap1,axis=1,subset=slice_Post_VT)\
+#                                      .background_gradient(cmap=Pre_cmap1,axis=1,subset=slice_Pre_DV)\
+#                                      .background_gradient(cmap=Post_cmap1,axis=1,subset=slice_Post_DV) #vmax=mx,vmin=mi
+#                     df_style.set_properties(**{'border':'1px solid black'})
+
+                
+
+
+    ############################################# whole code for : pre post when there were 2 hearder ##############################
+
+
+# @api_view(["POST"])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated])
+# def pre_post_upload_7(request):
+  
+#     # pre_trend = request.FILES["pre_trend"] if 'pre_trend' in request.FILES else None
+#             post_file = request.FILES["post_trend"] if 'post_trend' in request.FILES else None
+#             pre_file = request.FILES["pre_trend"] if 'pre_trend' in request.FILES else None
+#             mapping_file = request.FILES["mapping"] if 'mapping' in request.FILES else None
+
+#             ######################################## for mappings ###################################################
+#             location= MEDIA_ROOT + r"\dpr\dpr_report_file"
+#             fs = FileSystemStorage(location=location)
+#             mapping_file = fs.save(mapping_file.name, mapping_file)
+#             # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+#             filepath = fs.path(mapping_file)
+#             print("file_path:-",filepath)
+#             df_mapping=pd.read_excel(filepath,header=1)
+#             os.remove(path=filepath)
+#             print(filepath,"deleted...............")
+#             print(df_mapping)
+#         #     df_mapping.to_excel("mappings.xlsx")
+#             if not(df_mapping.empty):
+#                    OldSiteMapping_dic={}
+#                    NewSiteMapping_dic={}
+#                    for i,d in df_mapping.iterrows():
+#                           if "Old Site ID" in df_mapping.columns and  "New Site ID" in df_mapping.columns:
+#                                          OldSiteMapping_dic[d["Old Site ID"]]=[d["New Site ID"],d["Relocation Date"]]
+#                                          NewSiteMapping_dic[d["New Site ID"]]=d["Today Date"]
+                                         
+#                           else:
+#                                 context={"status":False,"message":"Old Site ID/New Site ID is missing or name is not correct"}
+#                                 return Response(context)
+
+                          
+#             else:
+#                   context={"status":False,"message":"mapping file is empty"}
+#                   return Response(context)       
+#             print(OldSiteMapping_dic)   
+               
+
+#             ############################################# for Post ################################################
+#             location= os.path.join(MEDIA_ROOT,"Original_trend")
+#             fs = FileSystemStorage(location=location)
+#             post_file = fs.save(post_file.name, post_file)
+#             # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+#             filepath = fs.path(post_file)
+#             print("file_path:-",filepath)
+
+#             df_raw_kpi=pd.read_excel(filepath)
+            
+#             os.remove(path=filepath)
+#             print(filepath,"deleted...............")
+            
+#                                             #__________ Preprocessing of the Raw KPI _____________#
+
+#             df_raw_kpi["Short name"].fillna( inplace=True, method="ffill")
+#             df_raw_kpi["Short name"] =df_raw_kpi["Short name"].apply(lambda x: x.strip()) # to remove all tralling spaces..... and leading spaces..
+    
+    
+#             df_raw_kpi.rename( columns={'Unnamed: 1':'date'}, inplace=True )
+    
+#             df_raw_kpi["MV_DL User Throughput_Kbps [CDBH]"] = (df_raw_kpi["MV_DL User Throughput_Kbps [CDBH]"]/1024)
+#             df_raw_kpi.rename(columns={"MV_DL User Throughput_Kbps [CDBH]" :"MV_DL User Throughput_Mbps [CDBH]" } ,inplace = True )
+    
+#             df_raw_kpi["MV_UL User Throughput_Kbps [CDBH]"] = (df_raw_kpi["MV_UL User Throughput_Kbps [CDBH]"]/1024)
+#             df_raw_kpi.rename(columns={"MV_UL User Throughput_Kbps [CDBH]" :"MV_UL User Throughput_Mbps [CDBH]" } ,inplace = True )
+    
+#             print(df_raw_kpi)
+#             print(df_raw_kpi.columns)
+    
+    
+    
+#             lis=list(df_raw_kpi["Short name"])
+#             sit_id_lis=[]
+#             cell_id_lis=[]
+#             for item in lis:
+#                     if("_" in item):
+#                         cell_id=item.split("_")[-2]
+#                         ln=len(item.split("_")[-1])
+#                         #print(ln)
+#                         sit_id=item.split("_")[-2][:-ln]
+#                     else:
+#                         cell_id=item
+#                         sit_id=item
+#                     cell_id_lis.append(cell_id)
+#                     sit_id_lis.append(sit_id)
+    
+#             print(sit_id)
+#             print(cell_id_lis)
+    
+#             df_raw_kpi.insert(1, "SITE_ID", sit_id_lis)
+#             df_raw_kpi.insert(2, "CELL_ID", cell_id_lis)
+    
+            
+            
+#             df_raw_kpi.rename(columns={"Short name" :"Shortname" } ,inplace = True )
+#             df_raw_kpi.fillna(value=0,inplace=True)
+
+#             date1=datetime.datetime.today()
+            
+#             date1=date(2023,1,31)
+#             dt1 = date1 - timedelta(1)
+#             dt2 = date1 - timedelta(2)
+#             dt3 = date1 - timedelta(3)
+#             dt4 = date1 - timedelta(4)
+#             dt5 = date1 - timedelta(5)
+#             dt6 = date1-  timedelta(6)
+#             dt7 = date1-  timedelta(7)
+#             ls=[dt1,dt2,dt3,dt4,dt5,dt6,dt7]
+#             print("Dates: ", ls)
+#             df_DateFiltered = df_raw_kpi[(df_raw_kpi.date.isin(ls))]
+#             print(df_DateFiltered)
+#             df_pivoted = df_DateFiltered.pivot_table(index=["Shortname","SITE_ID","CELL_ID"], columns="date",values=["MV_4G Data Volume_GB","MV_VoLTE Traffic"])
+#             print(df_pivoted)
+#             df_pivoted.to_excel("tst.xlsx")
+#             df=df_pivoted
+#         #   sys.exit("exiting...................................................")
+           
+#                                              #_____________*************************________________# 
+#             print(df)
+#             if not(df.empty):
+#                 dates=df["MV_4G Data Volume_GB"].columns
+#                 print(dates)
+#                 # print(type(dates[1]))
+#                 date1=dates[0].day
+#                 date2=dates[1].day
+#                 date3=dates[2].day
+#                 date4=dates[3].day
+#                 date5=dates[4].day
+#                 date6=dates[5].day
+#                 date7=dates[6].day
+#                 print(date1)
+#                 print(date2)
+#                 print(date3)
+#                 print(date4)
+#                 print(date5)
+#                 print(date6)
+#                 print(date7)
+                
+#                 # df.to_excel("post_trend_excel.xlsx") # just to visualise the data frame
+
+               
+#                 df.columns =df.columns.to_flat_index() # flattening the multi index header to single index
+#                 df.to_excel("flattened_post_data_volume.xlsx", index=True)
+#                 df.reset_index(inplace=True)
+#                 df.to_excel("Index_Reset_flattened_post_data_volume.xlsx", index=True)
+                
+                
+#                 print("############################## df post data volume ##############################")
+         
+               
+#                 # df_Post_volte_traffic=df[["Unnamed: 0","PS RRC Succ Rate","Unnamed: 36","Unnamed: 37","Unnamed: 38","Unnamed: 39","Unnamed: 1","CRITERIA"]]
+#                 # df_Post_volte_traffic.columns=df_Post_volte_traffic.iloc[1]
+#                 # df_Post_volte_traffic = df_Post_volte_traffic.iloc[2:].reset_index(drop=True)
+#                 # df_Post_volte_traffic.to_excel("actual_post_volte_traffic.xlsx", index=False)
+#                 # print("################################ df post volte traffic #########################")
+#                 # print(df_Post_volte_traffic)
+
+                
+             
+             
+#                 print(df.index)
+#                 for d in df.values:
+#                         if(not (pd.isnull(d[0]))):
+#                             obj,created = pre_post_report2.objects.get_or_create(Post_cell_name=d[0])
+                        
+#                             obj.Post_cell_site_id=d[1]
+#                             print(d)
+#                             obj.Today_date = NewSiteMapping_dic[d[1]]
+                            
+                        
+
+#                             obj.Post_Volte_Traffic_Day1=round(d[10],2)
+#                             obj.Post_Volte_Traffic_Day2=round(d[11],2)
+#                             obj.Post_Volte_Traffic_Day3=round(d[12],2)
+#                             obj.Post_Volte_Traffic_Day4=round(d[13],2)
+#                             obj.Post_Volte_Traffic_Day5=round(d[14],2)
+#                             obj.Post_Volte_Traffic_Day6=round(d[15],2)
+#                             obj.Post_Volte_Traffic_Day7=round(d[16],2)
+
+#                             obj.Post_Data_Volume_Day1=round(d[3],2)
+#                             obj.Post_Data_Volume_Day2=round(d[4],2)
+#                             obj.Post_Data_Volume_Day3=round(d[5],2)
+#                             obj.Post_Data_Volume_Day4=round(d[6],2)
+#                             obj.Post_Data_Volume_Day5=round(d[7],2)
+#                             obj.Post_Data_Volume_Day6=round(d[8],2)
+#                             obj.Post_Data_Volume_Day7=round(d[9],2)
+
+#                             lis_DV=[d[3],d[4],d[5],d[6],d[7],d[8],d[9]]
+#                             lis_VT=[d[10],d[11],d[12],d[13],d[14],d[15],d[16]]
+#                             DV_avg=round(mean(lis_DV),2)
+#                             VT_avg=round(mean(lis_VT),2)
+#                             obj.Post_Data_Volume_AVG=DV_avg
+#                             obj.Post_Volte_Traffic_AVG=VT_avg
+ 
+#                             obj.save()
+#             else:
+#                   context={"status":False,"message":"Post_trend is empty"}
+#                   return Response(context)
+#             ######################################### for pre #######################################               
+#             location= os.path.join(MEDIA_ROOT,"Original_trend")
+#             fs = FileSystemStorage(location=location)
+#             pre_file = fs.save(pre_file.name, pre_file)
+#             # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+#             filepath = fs.path(pre_file)
+#             print("file_path:-",filepath)
+#             df_raw_kpi=pd.read_excel(filepath)
+            
+#             os.remove(path=filepath)
+#             print(filepath,"deleted...............")
+            
+#                                             #__________ Preprocessing of the Raw KPI _____________#
+
+#             df_raw_kpi["Short name"].fillna( inplace=True, method="ffill")
+#             df_raw_kpi["Short name"] =df_raw_kpi["Short name"].apply(lambda x: x.strip()) # to remove all tralling spaces..... and leading spaces..
+    
+    
+#             df_raw_kpi.rename( columns={'Unnamed: 1':'date'}, inplace=True )
+    
+#             df_raw_kpi["MV_DL User Throughput_Kbps [CDBH]"] = (df_raw_kpi["MV_DL User Throughput_Kbps [CDBH]"]/1024)
+#             df_raw_kpi.rename(columns={"MV_DL User Throughput_Kbps [CDBH]" :"MV_DL User Throughput_Mbps [CDBH]" } ,inplace = True )
+    
+#             df_raw_kpi["MV_UL User Throughput_Kbps [CDBH]"] = (df_raw_kpi["MV_UL User Throughput_Kbps [CDBH]"]/1024)
+#             df_raw_kpi.rename(columns={"MV_UL User Throughput_Kbps [CDBH]" :"MV_UL User Throughput_Mbps [CDBH]" } ,inplace = True )
+    
+#             print(df_raw_kpi)
+#             print(df_raw_kpi.columns)
+    
+    
+    
+#             lis=list(df_raw_kpi["Short name"])
+#             sit_id_lis=[]
+#             cell_id_lis=[]
+#             for item in lis:
+#                     if("_" in item):
+#                         cell_id=item.split("_")[-2]
+#                         ln=len(item.split("_")[-1])
+#                         #print(ln)
+#                         sit_id=item.split("_")[-2][:-ln]
+#                     else:
+#                         cell_id=item
+#                         sit_id=item
+#                     cell_id_lis.append(cell_id)
+#                     sit_id_lis.append(sit_id)
+    
+#             print(sit_id)
+#             print(cell_id_lis)
+    
+#             df_raw_kpi.insert(1, "SITE_ID", sit_id_lis)
+#             df_raw_kpi.insert(2, "CELL_ID", cell_id_lis)
+    
+            
+            
+#             df_raw_kpi.rename(columns={"Short name" :"Shortname" } ,inplace = True )
+#             df_raw_kpi.fillna(value=0,inplace=True)
+
+#             date1=datetime.datetime.today()
+
+#             date1=date(2023,1,24)
+#             dt1 = date1 - timedelta(1)
+#             dt2 = date1 - timedelta(2)
+#             dt3 = date1 - timedelta(3)
+#             dt4 = date1 - timedelta(4)
+#             dt5 = date1 - timedelta(5)
+#             dt6 = date1-  timedelta(6)
+#             dt7 = date1-  timedelta(7)
+#             ls=[dt1,dt2,dt3,dt4,dt5,dt6,dt7]
+#             print("Dates: ", ls)
+#             df_DateFiltered = df_raw_kpi[(df_raw_kpi.date.isin(ls))]
+#             print(df_DateFiltered)
+#             df_pivoted = df_DateFiltered.pivot_table(index=["Shortname","SITE_ID","CELL_ID"], columns="date",values=["MV_4G Data Volume_GB","MV_VoLTE Traffic"])
+#             print(df_pivoted)
+#             df_pivoted.to_excel("tst.xlsx")
+#             df=df_pivoted
+#         #   sys.exit("exiting...................................................")
+           
+#                                              #_____________*************************________________# 
+            
+          
+            
+           
+#             print(df)
+            
+#             if not(df.empty):
+#                 dates=df["MV_4G Data Volume_GB"].columns
+#                 print(dates)
+#                 # print(type(dates[1]))
+#                 date1=dates[0].day
+#                 date2=dates[1].day
+#                 date3=dates[2].day
+#                 date4=dates[3].day
+#                 date5=dates[4].day
+#                 print(date1)
+#                 print(date2)
+#                 print(date3)
+#                 print(date4)
+#                 print(date5)
+                
+#                 # df.to_excel("post_trend_excel.xlsx") # just to visualise the data frame
+
+               
+#                 df.columns =df.columns.to_flat_index() # flattening the multi index header to single index
+#                 df.to_excel("flattened_pre_data_volume.xlsx", index=False)
+#                 df.reset_index(inplace=True)
+#                 df.to_excel("Index_Reset_flattened_pre_data_volume.xlsx", index=True)
+                
+#                 print("############################## df post data volume ##############################")
+        
+#                 print("Finding Exact Match....")
+#                 for d in df.values:
+#                         site=d[1]
+#                         Pre_cell_name=d[0]
+#                         pre_trend_cell=d[2]
+#                         try:
+#                                 objs=pre_post_report2.objects.filter(Post_cell_site_id=OldSiteMapping_dic[site][0])
+#                         except:
+#                                 continue
+#                         ins=False
+                        
+#                         for obj1 in objs:
+                            
+#                               if obj1.Post_cell_name.split("_")[-1]==Pre_cell_name.split("_")[-1] and obj1.Post_cell_name.split("_")[2] == Pre_cell_name.split("_")[2] :
+#                                      obj=obj1
+#                                      ins=True
+#                                      print("pre-",Pre_cell_name," ","Post-",obj.Post_cell_name)
+#                                      break
+                                  
+                               
+#                         if ins:
+#                             obj.Pre_cell_name=Pre_cell_name
+                            
+#                             obj.Pre_cell_site_id=site
+#                             obj.Relocation_date = OldSiteMapping_dic[site][1]
+                           
+#                             obj.Pre_Volte_Traffic_Day1=round(d[10],2)
+#                             obj.Pre_Volte_Traffic_Day2=round(d[11],2)
+#                             obj.Pre_Volte_Traffic_Day3=round(d[12],2)
+#                             obj.Pre_Volte_Traffic_Day4=round(d[13],2)
+#                             obj.Pre_Volte_Traffic_Day5=round(d[14],2)
+#                             obj.Pre_Volte_Traffic_Day6=round(d[15],2)
+#                             obj.Pre_Volte_Traffic_Day7=round(d[16],2)
+
+#                             obj.Pre_Data_Volume_Day1=round(d[3],2)
+#                             obj.Pre_Data_Volume_Day2=round(d[4],2)
+#                             obj.Pre_Data_Volume_Day3=round(d[5],2)
+#                             obj.Pre_Data_Volume_Day4=round(d[6],2)
+#                             obj.Pre_Data_Volume_Day5=round(d[7],2)
+#                             obj.Pre_Data_Volume_Day6=round(d[8],2)
+#                             obj.Pre_Data_Volume_Day7=round(d[9],2)
+
+#                             lis_DV=[d[3],d[4],d[5],d[6],d[7],d[8],d[9]]
+#                             lis_VT=[d[10],d[11],d[12],d[13],d[14],d[15],d[16]]
+#                             DV_avg=round(mean(lis_DV),2)
+#                             VT_avg=round(mean(lis_VT),2)
+#                             obj.Pre_Data_Volume_AVG=DV_avg
+#                             obj.Pre_Volte_Traffic_AVG=VT_avg      
+
+
+#                             obj.save()
+                              
+#             else:
+#                   context={"status":False,"message":"DPR Report is empty"}
+#                   return Response(context)
+
+
+           
+           
+            
+
+#            ############################################ to fill average Change ##############################################
+#             objs=pre_post_report2.objects.all()
+#             for obj in objs:
+#                    pre_DV_avg=obj.Pre_Data_Volume_AVG
+#                    post_DV_avg=obj.Post_Data_Volume_AVG
+                   
+#                    if pre_DV_avg !=0:
+#                         obj.Percentage_change_Data_Volume=round(((post_DV_avg-pre_DV_avg)/pre_DV_avg)*100,2)
+#                    else:
+#                         obj.Percentage_change_Data_Volume=0
+                          
+#                    pre_VT_avg=obj.Pre_Volte_Traffic_AVG
+#                    post_VT_avg=obj.Post_Volte_Traffic_AVG
+
+#                    if pre_VT_avg !=0:     
+#                         obj.Percentage_change_Volte_Traffic=round(((post_VT_avg-pre_VT_avg)/pre_VT_avg)*100,2)
+#                    else:
+#                           obj.Percentage_change_Volte_Traffic=0
+#                    obj.save()
+           
+            
+#         #     dr=pd.DataFrame.from_records(pre_post_report2.objects.all().values())
+#         ################################ sitewise Report making ###################################################
+#             unique_site_list=list(pre_post_report2.objects.values_list("Post_cell_site_id",flat=True).distinct())
+#             print(unique_site_list)
+
+#             for site in unique_site_list:
+#                    SiteWise_obj,sts=pre_post_report_siteWise.objects.get_or_create(Post_cell_site_id=site)
+#                    obj_set=pre_post_report2.objects.filter(Post_cell_site_id=site)
+
+#                    SiteWise_obj.Today_date=obj_set[0].Today_date
+
+#                    SiteWise_obj.Relocation_date=obj_set[0].Relocation_date
+
+#                    SiteWise_obj.Pre_cell_site_id=obj_set[0].Pre_cell_site_id
+
+
+#                    Pre_VT_Day1=SiteWise_obj.Pre_Volte_Traffic_Day1=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day1"))["ar"],2)
+#                    Pre_VT_Day2=SiteWise_obj.Pre_Volte_Traffic_Day2=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day2"))["ar"],2)
+#                    Pre_VT_Day3=SiteWise_obj.Pre_Volte_Traffic_Day3=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day3"))["ar"],2)
+#                    Pre_VT_Day4=SiteWise_obj.Pre_Volte_Traffic_Day4=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day4"))["ar"],2)
+#                    Pre_VT_Day5=SiteWise_obj.Pre_Volte_Traffic_Day5=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day5"))["ar"],2)
+#                    Pre_VT_Day6=SiteWise_obj.Pre_Volte_Traffic_Day6=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day6"))["ar"],2)
+#                    Pre_VT_Day7=SiteWise_obj.Pre_Volte_Traffic_Day7=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day7"))["ar"],2)
+
+#                    Post_VT_Day1=SiteWise_obj.Post_Volte_Traffic_Day1=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day1"))["ar"],2)
+#                    Post_VT_Day2=SiteWise_obj.Post_Volte_Traffic_Day2=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day2"))["ar"],2)
+#                    Post_VT_Day3=SiteWise_obj.Post_Volte_Traffic_Day3=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day3"))["ar"],2)
+#                    Post_VT_Day4=SiteWise_obj.Post_Volte_Traffic_Day4=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day4"))["ar"],2)
+#                    Post_VT_Day5=SiteWise_obj.Post_Volte_Traffic_Day5=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day5"))["ar"],2)
+#                    Post_VT_Day6=SiteWise_obj.Post_Volte_Traffic_Day6=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day6"))["ar"],2)
+#                    Post_VT_Day7=SiteWise_obj.Post_Volte_Traffic_Day7=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day7"))["ar"],2)
+
+#                    Pre_DV_Day1=SiteWise_obj.Pre_Data_Volume_Day1=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day1"))["ar"],2)
+#                    Pre_DV_Day2=SiteWise_obj.Pre_Data_Volume_Day2=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day2"))["ar"],2)
+#                    Pre_DV_Day3=SiteWise_obj.Pre_Data_Volume_Day3=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day3"))["ar"],2)
+#                    Pre_DV_Day4=SiteWise_obj.Pre_Data_Volume_Day4=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day4"))["ar"],2)
+#                    Pre_DV_Day5=SiteWise_obj.Pre_Data_Volume_Day5=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day5"))["ar"],2)
+#                    Pre_DV_Day6=SiteWise_obj.Pre_Data_Volume_Day6=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day6"))["ar"],2)
+#                    Pre_DV_Day7=SiteWise_obj.Pre_Data_Volume_Day7=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day7"))["ar"],2)
+
+#                    Post_DV_Day1=SiteWise_obj.Post_Data_Volume_Day1=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day1"))["ar"],2)
+#                    Post_DV_Day2=SiteWise_obj.Post_Data_Volume_Day2=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day2"))["ar"],2)
+#                    Post_DV_Day3=SiteWise_obj.Post_Data_Volume_Day3=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day3"))["ar"],2)
+#                    Post_DV_Day4=SiteWise_obj.Post_Data_Volume_Day4=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day4"))["ar"],2)
+#                    Post_DV_Day5=SiteWise_obj.Post_Data_Volume_Day5=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day5"))["ar"],2)
+#                    Post_DV_Day6=SiteWise_obj.Post_Data_Volume_Day6=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day6"))["ar"],2)
+#                    Post_DV_Day7=SiteWise_obj.Post_Data_Volume_Day7=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day7"))["ar"],2)
+
+#                    Pre_VT_AVG= round((
+#                                 Pre_VT_Day1
+#                               + Pre_VT_Day2 
+#                               + Pre_VT_Day3 
+#                               + Pre_VT_Day4 
+#                               + Pre_VT_Day5 
+#                               + Pre_VT_Day6 
+#                               + Pre_VT_Day7
+#                               )/7 ,2)
+                  
+#                    Post_VT_AVG= round((Post_VT_Day1
+#                                + Post_VT_Day2 
+#                                + Post_VT_Day3 
+#                                + Post_VT_Day4 
+#                                + Post_VT_Day5 
+#                                + Post_VT_Day6 
+#                                + Post_VT_Day7
+#                                )/7 ,2)
+
+#                    Pre_DV_AVG= round((
+#                                 Pre_DV_Day1
+#                               + Pre_DV_Day2 
+#                               + Pre_DV_Day3 
+#                               + Pre_DV_Day4 
+#                               + Pre_DV_Day5 
+#                               + Pre_DV_Day6 
+#                               + Pre_DV_Day7
+#                               )/7 ,2)
+#                    Post_DV_AVG=round( (Post_DV_Day1
+#                                + Post_DV_Day2 
+#                                + Post_DV_Day3 
+#                                + Post_DV_Day4 
+#                                + Post_DV_Day5 
+#                                + Post_DV_Day6 
+#                                + Post_DV_Day7
+#                                )/7 ,2)
+                   
+#                    SiteWise_obj.Pre_Volte_Traffic_AVG=Pre_VT_AVG
+#                    SiteWise_obj.Post_Volte_Traffic_AVG=Post_VT_AVG
+
+#                    SiteWise_obj.Pre_Data_Volume_AVG=Pre_DV_AVG
+#                    SiteWise_obj.Post_Data_Volume_AVG=Post_DV_AVG
+
+#                    if Pre_VT_AVG !=0:    
+#                         SiteWise_obj.Percentage_change_Volte_Traffic= round(((Post_VT_AVG-Pre_VT_AVG)/Pre_VT_AVG)*100,2)
+#                    else:
+#                         SiteWise_obj.Percentage_change_Volte_Traffic=0
+#                    if Pre_DV_AVG !=0:
+#                         SiteWise_obj.Percentage_change_Data_Volume= round(((Post_DV_AVG-Pre_DV_AVG)/Pre_DV_AVG)*100,2)
+#                    else:
+#                           SiteWise_obj.Percentage_change_Data_Volume=0
+                          
+#                    SiteWise_obj.save()
+
+
+#         ###############################################################################################################
+
+
+#         ########################################### to create the folder in media to save the generated record ################################
+       
+#             directory =  "Original_trend"
+#             # Parent Directory path
+#             parent_dir =  MEDIA_ROOT 
+           
+#             # Path
+#             path = os.path.join(parent_dir, directory)
+#             print(path)
+#             #Create the directory
+#             if(not (os.path.isdir(path))):
+#                 os.makedirs(path)
+#                 print("Directory '% s' created" % directory)
+            
+            
+           
+#             RecordPath= os.path.join(path ,"record1.xlsx")
+   
+   
+   
+   
+#     ############################################# Creating DF from pre_post_report2 model (Sector wise)##################################################################       
+#             # we have assigned objs in the upper section code
+#             df=pd.DataFrame(list(objs.values()))
+#             df["Percentage_change_Volte_Traffic"]=df["Percentage_change_Volte_Traffic"].astype("str") +" %"
+#             df["Percentage_change_Data_Volume"]=df["Percentage_change_Data_Volume"].astype("str") +" %"
+#         #     df.to_excel("report without header.xlsx",index=True)
+#         #     colour_df=df.copy()
+#             # tuples=[
+#             #        ("","Post_cell_name"),
+#             #        ("","Pre_cell_name"),
+#             #        ("","Post_cell_site_id"),
+#             #        ("","Pre_cell_site_id"),
+                  
+#             #        ("","Relocation Date"),
+#             #        ("","Today Date"),
+
+#             #        ("Pre_Volte_Traffic","Day1"),
+#             #        ("Pre_Volte_Traffic","Day2"),
+#             #        ("Pre_Volte_Traffic","Day3"),
+#             #        ("Pre_Volte_Traffic","Day4"),
+#             #        ("Pre_Volte_Traffic","Day5"),
+#             #        ("Pre_Volte_Traffic","Day6"),
+#             #        ("Pre_Volte_Traffic","Day7"),
+
+#             #        ("Post_Volte_Traffic","Day1"),
+#             #        ("Post_Volte_Traffic","Day2"),
+#             #        ("Post_Volte_Traffic","Day3"),
+#             #        ("Post_Volte_Traffic","Day4"),
+#             #        ("Post_Volte_Traffic","Day5"),
+#             #        ("Post_Volte_Traffic","Day6"),
+#             #        ("Post_Volte_Traffic","Day7"),
+
+#             #        ("Blank","Blank"),
+                  
+
+#             #        ("Pre_Data_Volume","Day1"),
+#             #        ("Pre_Data_Volume","Day2"),
+#             #        ("Pre_Data_Volume","Day3"),
+#             #        ("Pre_Data_Volume","Day4"),
+#             #        ("Pre_Data_Volume","Day5"),
+#             #        ("Pre_Data_Volume","Day6"),
+#             #        ("Pre_Data_Volume","Day7"),
+
+#             #         ("Post_Data_Volume","Day1"),
+#             #         ("Post_Data_Volume","Day2"),
+#             #         ("Post_Data_Volume","Day3"),
+#             #         ("Post_Data_Volume","Day4"),
+#             #         ("Post_Data_Volume","Day5"),
+#             #         ("Post_Data_Volume","Day6"),
+#             #         ("Post_Data_Volume","Day7"),
+                   
+#             #         ("Comparison","Pre_Volte_Traffic_AVG"),
+#             #         ("Comparison","Post_Volte_Traffic_AVG"),
+#             #         ("Comparison","Pre_Data_Volume_AVG"),
+#             #         ("Comparison","Post_Data_Volume_AVG"),
+#             #         ("Percentage Change","Volte Traffic"),
+#             #         ("Percentage Change","Data Volume"),
+#             #        ]
+#             tuples=[
+#                    ("","","Post_cell_name"),
+#                    ("","","Pre_cell_name"),
+#                    ("","","Post_cell_site_id"),
+#                    ("","","Pre_cell_site_id"),
+                  
+#                    ("","","Relocation Date"),
+#                    ("","","Today Date"),
+
+#                    ("Volte Traffic","Pre_Volte_Traffic","Day1"),
+#                    ("Volte Traffic","Pre_Volte_Traffic","Day2"),
+#                    ("Volte Traffic","Pre_Volte_Traffic","Day3"),
+#                    ("Volte Traffic","Pre_Volte_Traffic","Day4"),
+#                    ("Volte Traffic","Pre_Volte_Traffic","Day5"),
+#                    ("Volte Traffic","Pre_Volte_Traffic","Day6"),
+#                    ("Volte Traffic","Pre_Volte_Traffic","Day7"),
+
+#                    ("Volte Traffic","Post_Volte_Traffic","Day1"),
+#                    ("Volte Traffic","Post_Volte_Traffic","Day2"),
+#                    ("Volte Traffic","Post_Volte_Traffic","Day3"),
+#                    ("Volte Traffic","Post_Volte_Traffic","Day4"),
+#                    ("Volte Traffic","Post_Volte_Traffic","Day5"),
+#                    ("Volte Traffic","Post_Volte_Traffic","Day6"),
+#                    ("Volte Traffic","Post_Volte_Traffic","Day7"),
+
+#                    ("Blank","",""),
+                  
+
+#                    ("Data Volume","Pre_Data_Volume","Day1"),
+#                    ("Data Volume","Pre_Data_Volume","Day2"),
+#                    ("Data Volume","Pre_Data_Volume","Day3"),
+#                    ("Data Volume","Pre_Data_Volume","Day4"),
+#                    ("Data Volume","Pre_Data_Volume","Day5"),
+#                    ("Data Volume","Pre_Data_Volume","Day6"),
+#                    ("Data Volume","Pre_Data_Volume","Day7"),
+
+#                     ("Data Volume","Post_Data_Volume","Day1"),
+#                     ("Data Volume","Post_Data_Volume","Day2"),
+#                     ("Data Volume","Post_Data_Volume","Day3"),
+#                     ("Data Volume","Post_Data_Volume","Day4"),
+#                     ("Data Volume","Post_Data_Volume","Day5"),
+#                     ("Data Volume","Post_Data_Volume","Day6"),
+#                     ("Data Volume","Post_Data_Volume","Day7"),
+                   
+#                     ("Comparison","","Pre_Volte_Traffic_AVG"),
+#                     ("Comparison","","Post_Volte_Traffic_AVG"),
+#                     ("Comparison","","Pre_Data_Volume_AVG"),
+#                     ("Comparison","","Post_Data_Volume_AVG"),
+#                     ("Percentage Change","","Volte Traffic"),
+#                     ("Percentage Change","","Data Volume"),
+#                    ]
+            
+#             cols = pd.MultiIndex.from_tuples(tuples)
+#             df.columns=cols
+#             df.to_excel("test.xlsx")
+# #################################################### for making colourgradient of every cell (Sector Wise) ######################################
+#             df_style=df.style
+#             idx = pd.IndexSlice
+#             # colors = ["red", "orange", "yellow","#ffff00", "darkgreen"]
+#             Pre_colors=["#cc3300","#ff9933","#ffcc33","#ffff33","#00cc33"]
+#             Post_colors=["#00cc33","#ffff33","#ffcc33","#ff9933","#cc3300"]
+#             Pre_cmap1 = mpl.colors.LinearSegmentedColormap.from_list("mycmap",Pre_colors)
+#             Post_cmap1 = mpl.colors.LinearSegmentedColormap.from_list("mycmap", Post_colors)
+#             index=len(df.index)
+#         #     df=df_style.background_gradient(cmap=cmap1,axis=1)
+#             for i in range(0,index):
+#                     slice_Pre_VT = idx[idx[i], idx["Pre_Volte_Traffic",:]]
+#                     slice_Post_VT = idx[idx[i], idx["Post_Volte_Traffic",:]]
+#                     slice_Pre_DV = idx[idx[i], idx["Pre_Data_Volume",:]]
+#                     slice_Post_DV = idx[idx[i], idx["Post_Data_Volume",:]]
+#                     df_style=df_style.background_gradient(cmap=Pre_cmap1,axis=1,subset=slice_Pre_VT)\
+#                                      .background_gradient(cmap=Post_cmap1,axis=1,subset=slice_Post_VT)\
+#                                      .background_gradient(cmap=Pre_cmap1,axis=1,subset=slice_Pre_DV)\
+#                                      .background_gradient(cmap=Post_cmap1,axis=1,subset=slice_Post_DV) #vmax=mx,vmin=mi
+#                     df_style.set_properties(**{'border':'1px solid black'})
+
+                
+
+
+    
+# ###################################################################################################################################
+#             writer = pd.ExcelWriter(RecordPath, engine='xlsxwriter')
+#             df_style.to_excel(writer,sheet_name="SectorLevel",index=True)
+
+#             writer.save()
+            
+# ############################################# Creating DF from pre_post_report2_SiteWise model (Site wise)##################################################################       
+           
+#             objs=pre_post_report_siteWise.objects.all()
+#             df=pd.DataFrame(list(objs.values()))
+#             df["Percentage_change_Volte_Traffic"]=df["Percentage_change_Volte_Traffic"].astype("str") +" %"
+#             df["Percentage_change_Data_Volume"]=df["Percentage_change_Data_Volume"].astype("str") +" %"
+#         #     df.to_excel("report without header.xlsx",index=True)
+#             tuples=[("","ID"),
+                  
+#                    ("","Post_cell_site_id"),
+#                    ("","Pre_cell_site_id"),
+                  
+#                    ("","Relocation Date"),
+#                    ("","Today Date"),
+
+#                    ("Pre_Volte_Traffic","Day1"),
+#                    ("Pre_Volte_Traffic","Day2"),
+#                    ("Pre_Volte_Traffic","Day3"),
+#                    ("Pre_Volte_Traffic","Day4"),
+#                    ("Pre_Volte_Traffic","Day5"),
+#                    ("Pre_Volte_Traffic","Day6"),
+#                    ("Pre_Volte_Traffic","Day7"),
+
+#                    ("Post_Volte_Traffic","Day1"),
+#                    ("Post_Volte_Traffic","Day2"),
+#                    ("Post_Volte_Traffic","Day3"),
+#                    ("Post_Volte_Traffic","Day4"),
+#                    ("Post_Volte_Traffic","Day5"),
+#                    ("Post_Volte_Traffic","Day6"),
+#                    ("Post_Volte_Traffic","Day7"),
+                   
+#                    ("Blank","Blank"),
+
+#                    ("Pre_Data_Volume","Day1"),
+#                    ("Pre_Data_Volume","Day2"),
+#                    ("Pre_Data_Volume","Day3"),
+#                    ("Pre_Data_Volume","Day4"),
+#                    ("Pre_Data_Volume","Day5"),
+#                    ("Pre_Data_Volume","Day6"),
+#                    ("Pre_Data_Volume","Day7"),
+
+#                     ("Post_Data_Volume","Day1"),
+#                     ("Post_Data_Volume","Day2"),
+#                     ("Post_Data_Volume","Day3"),
+#                     ("Post_Data_Volume","Day4"),
+#                     ("Post_Data_Volume","Day5"),
+#                     ("Post_Data_Volume","Day6"),
+#                     ("Post_Data_Volume","Day7"),
+                   
+#                     ("Comparison","Pre_Volte_Traffic_AVG"),
+#                     ("Comparison","Post_Volte_Traffic_AVG"),
+#                     ("Comparison","Pre_Data_Volume_AVG"),
+#                     ("Comparison","Post_Data_Volume_AVG"),
+#                     ("Percentage Change","Volte Traffic"),
+#                     ("Percentage Change","Data Volume"),
+#                    ]
+#             cols = pd.MultiIndex.from_tuples(tuples)
+#             df.columns=cols
+#             SiteWisePath= path + "/"+"SiteWise_record.xlsx"
+
+# #################################################### for making colourgradient of every cell (Site Wise) ######################################
+#             df_style=df.style
+#             idx = pd.IndexSlice
+#             # colors = ["red", "orange", "yellow","#ffff00", "darkgreen"]
+#             Pre_colors=["#cc3300","#ff9933","#ffcc33","#ffff33","#00cc33"]
+#             Post_colors=["#00cc33","#ffff33","#ffcc33","#ff9933","#cc3300"]
+#             Pre_cmap1 = mpl.colors.LinearSegmentedColormap.from_list("mycmap",Pre_colors)
+#             Post_cmap1 = mpl.colors.LinearSegmentedColormap.from_list("mycmap", Post_colors)
+#             index=len(df.index)
+#             print(df)
+#             for i in range(0,index):
+#                     # test=idx[idx[i],idx["Pre_Volte_Traffic":"Post_Volte_Traffic","Day1":"Day7"]]
+#                     # print(test)
+#                     slice_Pre_VT = idx[idx[i], idx["Pre_Volte_Traffic",:]]
+                   
+#                     slice_Post_VT = idx[idx[i], idx["Post_Volte_Traffic",:]]
+#                     slice_Pre_DV = idx[idx[i], idx["Pre_Data_Volume",:]]
+#                     slice_Post_DV = idx[idx[i], idx["Post_Data_Volume",:]]
+#                     df_style=df_style.background_gradient(cmap=Pre_cmap1,axis=1,subset=slice_Pre_VT)\
+#                                      .background_gradient(cmap=Post_cmap1,axis=1,subset=slice_Post_VT)\
+#                                      .background_gradient(cmap=Pre_cmap1,axis=1,subset=slice_Pre_DV)\
+#                                      .background_gradient(cmap=Post_cmap1,axis=1,subset=slice_Post_DV) #vmax=mx,vmin=mi
+#                     df_style.set_properties(**{'border':'1px solid black'})
+# # .background_gradient(cmap=Post_cmap1,axis=1,subset=slice_Post_VT)\
+# ###################################################################################################################################
+       
+#             df_style.to_excel(writer,sheet_name="SiteLevel", index=True)
+#             writer.save()
+ 
+ 
+# #################################################################### Code for Colouring the excel headers(Sector wise) #############################################################
+#             print("Performing excel operation.............................")
+#             wb = openpyxl.load_workbook(RecordPath)
+#             ws = wb['SectorLevel']
+#             ws["H1"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["O1"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["W1"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AD1"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["AK1"].fill=PatternFill(patternType='solid',fgColor="ff148aff")
+#             ws["AO1"].fill=PatternFill(patternType='solid',fgColor="ff33e0ff")
+
+
+#             ws["AK2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AL2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["AM2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AN2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+          
+#             ws["AO2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AP2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+
+
+#  #################################################################### Code for Colouring the excel headers(Sector wise) #############################################################
+       
+#             ws = wb["SiteLevel"]
+#             ws["G1"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["N1"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["V1"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AC1"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["AJ1"].fill=PatternFill(patternType='solid',fgColor="ff148aff")
+#             ws["AN1"].fill=PatternFill(patternType='solid',fgColor="ff33e0ff")
+
+#             ws["AJ2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AK2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["AL2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AM2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+          
+#             ws["AN2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AO2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+
+            
+            
+            
+#             coloured_path=os.path.join( path,"coloured_record.xlsx")
+
+#             wb.save(coloured_path)
+#             print("excel operation done.........................")
+#             download_url=os.path.join(MEDIA_URL,"Original_trend","coloured_record.xlsx")
+            
+#             return Response({"status":"true","message":"Report Generated Succesfully","Download_url":download_url})   
+   
+
+
+###################################################### All Codes for Original Trend #################################################
+
+# @api_view(["POST"])
+# def pre_post_upload(request):
+  
+#     # pre_trend = request.FILES["pre_trend"] if 'pre_trend' in request.FILES else None
+#             post_file = request.FILES["post_trend"] if 'post_trend' in request.FILES else None
+#             pre_file = request.FILES["pre_trend"] if 'pre_trend' in request.FILES else None
+#             mapping_file = request.FILES["mapping"] if 'mapping' in request.FILES else None
+
+#             ######################################## for mappings ###################################################
+#             location= MEDIA_ROOT + r"\dpr\dpr_report_file"
+#             fs = FileSystemStorage(location=location)
+#             mapping_file = fs.save(mapping_file.name, mapping_file)
+#             # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+#             filepath = fs.path(mapping_file)
+#             print("file_path:-",filepath)
+#             df_mapping=pd.read_excel(filepath,header=1)
+#             os.remove(path=filepath)
+#             print(filepath,"deleted...............")
+#             print(df_mapping)
+#         #     df_mapping.to_excel("mappings.xlsx")
+#             if not(df_mapping.empty):
+#                    mapping_dic={}
+#                    for i,d in df_mapping.iterrows():
+#                           if "Old Site ID" in df_mapping.columns and  "New Site ID" in df_mapping.columns:
+#                                          mapping_dic[d["Old Site ID"]]=d["New Site ID"]
+#                           else:
+#                                 context={"status":False,"message":"Old Site ID/New Site ID is missing or name is not correct"}
+#                                 return Response(context)
+
+                          
+#             else:
+#                   context={"status":False,"message":"mapping file is empty"}
+#                   return Response(context)       
+#             print(mapping_dic)   
+               
+
+#             ############################################# for Post ################################################
+#             location= MEDIA_ROOT + r"\dpr\dpr_report_file"
+#             fs = FileSystemStorage(location=location)
+#             post_file = fs.save(post_file.name, post_file)
+#             # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+#             filepath = fs.path(post_file)
+#             print("file_path:-",filepath)
+#             df_dict=pd.read_excel(filepath,sheet_name=None,header=[0,2])
+            
+#             os.remove(path=filepath)
+#             print(filepath,"deleted...............")
+            
+#             df = pd.concat(df_dict.values(), axis=0) # to merge every sheet of the df_dict
+#             print(df)
+            
+#             if not(df.empty):
+#                 dates=df["Payload"].columns
+#                 print(dates)
+#                 # print(type(dates[1]))
+#                 date1=dates[0].day
+#                 date2=dates[1].day
+#                 date3=dates[2].day
+#                 date4=dates[3].day
+#                 date5=dates[4].day
+#                 print(date1)
+#                 print(date2)
+#                 print(date3)
+#                 print(date4)
+#                 print(date5)
+                
+#                 # df.to_excel("post_trend_excel.xlsx") # just to visualise the data frame
+
+#                 df_Post=df[["Unnamed: 0_level_0","Unnamed: 1_level_0","CRITERIA","Payload","PS RRC Succ Rate"]] # extracting the traffic , data volume,short_name, trend_cell,site and creating a new df ,just for development we are taking traffic=rrc suss rate
+#                 df_Post.columns =df_Post.columns.to_flat_index() # flattening the multi index header to single index
+#                 df_Post= df_Post[df_Post.columns[[0,1,2,6,7,8,9,10,13,14,15,16,17,18]]]
+                
+#                 # df_Post_data_volume.to_excel("actual_post_data_volume.xlsx", index=False)
+#                 print("############################## df post data volume ##############################")
+#                 print(df_Post) 
+               
+#                 # df_Post_volte_traffic=df[["Unnamed: 0","PS RRC Succ Rate","Unnamed: 36","Unnamed: 37","Unnamed: 38","Unnamed: 39","Unnamed: 1","CRITERIA"]]
+#                 # df_Post_volte_traffic.columns=df_Post_volte_traffic.iloc[1]
+#                 # df_Post_volte_traffic = df_Post_volte_traffic.iloc[2:].reset_index(drop=True)
+#                 # df_Post_volte_traffic.to_excel("actual_post_volte_traffic.xlsx", index=False)
+#                 # print("################################ df post volte traffic #########################")
+#                 # print(df_Post_volte_traffic)
+
+                
+             
+             
+                
+#                 for d in df_Post.values:
+#                         if(d[0] != "" or d[0] !=None):
+#                             obj,created = pre_post_report.objects.get_or_create(Post_cell_name=d[0])
+#                             obj.Post_trend_cell=d[1]
+#                             obj.Post_cell_site_id=d[2]
+                            
+                            
+#                             if(date1==1):
+                                    
+#                                     obj.Post_Data_Volume_1=d[3]
+#                                     obj.Post_Data_Volume_2=d[4]
+#                                     obj.Post_Data_Volume_3=d[5]
+#                                     obj.Post_Data_Volume_4=d[6]
+#                                     obj.Post_Data_Volume_5=d[7]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+
+#                                     obj.Post_Volte_Traffic_1=d[8]
+#                                     obj.Post_Volte_Traffic_2=d[9]
+#                                     obj.Post_Volte_Traffic_3=d[10]
+#                                     obj.Post_Volte_Traffic_4=d[11]
+#                                     obj.Post_Volte_Traffic_5=d[12]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+
+                                    
+#                             if(date1==2):
+#                                     obj.Post_Data_Volume_2=d[3]
+#                                     obj.Post_Data_Volume_3=d[4]
+#                                     obj.Post_Data_Volume_4=d[5]
+#                                     obj.Post_Data_Volume_5=d[6]
+#                                     obj.Post_Data_Volume_6=d[7]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+
+#                                     obj.Post_Volte_Traffic_2=d[8]
+#                                     obj.Post_Volte_Traffic_3=d[9]
+#                                     obj.Post_Volte_Traffic_4=d[10]
+#                                     obj.Post_Volte_Traffic_5=d[11]
+#                                     obj.Post_Volte_Traffic_6=d[12]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+
+                                    
+#                             if(date1==3):
+#                                     obj.Post_Data_Volume_3=d[3]
+#                                     obj.Post_Data_Volume_4=d[4]
+#                                     obj.Post_Data_Volume_5=d[5]
+#                                     obj.Post_Data_Volume_6=d[6]
+#                                     obj.Post_Data_Volume_7=d[7]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+
+#                                     obj.Post_Volte_Traffic_3=d[8]
+#                                     obj.Post_Volte_Traffic_4=d[9]
+#                                     obj.Post_Volte_Traffic_5=d[10]
+#                                     obj.Post_Volte_Traffic_6=d[11]
+#                                     obj.Post_Volte_Traffic_7=d[12]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                             if(date1==4):
+#                                     obj.Post_Data_Volume_4=d[3]
+#                                     obj.Post_Data_Volume_5=d[4]
+#                                     obj.Post_Data_Volume_6=d[5]
+#                                     obj.Post_Data_Volume_7=d[6]
+#                                     obj.Post_Data_Volume_8=d[7]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+
+#                                     obj.Post_Volte_Traffic_4=d[8]
+#                                     obj.Post_Volte_Traffic_5=d[9]
+#                                     obj.Post_Volte_Traffic_6=d[10]
+#                                     obj.Post_Volte_Traffic_7=d[11]
+#                                     obj.Post_Volte_Traffic_8=d[12]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+                        
+#                             if(date1==5):
+#                                     obj.Post_Data_Volume_5=d[3]
+#                                     obj.Post_Data_Volume_6=d[4]
+#                                     obj.Post_Data_Volume_7=d[5]
+#                                     obj.Post_Data_Volume_8=d[6]
+#                                     obj.Post_Data_Volume_9=d[7]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+
+#                                     obj.Post_Volte_Traffic_5=d[8]
+#                                     obj.Post_Volte_Traffic_6=d[9]
+#                                     obj.Post_Volte_Traffic_7=d[10]
+#                                     obj.Post_Volte_Traffic_8=d[11]
+#                                     obj.Post_Volte_Traffic_9=d[12]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+
+#                             if(date1==6):
+#                                     obj.Post_Data_Volume_6=d[3]
+#                                     obj.Post_Data_Volume_7=d[4]
+#                                     obj.Post_Data_Volume_8=d[5]
+#                                     obj.Post_Data_Volume_9=d[6]
+#                                     obj.Post_Data_Volume_10=d[7]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+
+#                                     obj.Post_Volte_Traffic_6=d[8]
+#                                     obj.Post_Volte_Traffic_7=d[9]
+#                                     obj.Post_Volte_Traffic_8=d[10]
+#                                     obj.Post_Volte_Traffic_9=d[11]
+#                                     obj.Post_Volte_Traffic_10=d[12]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+                        
+
+#                             obj.save()
+#             else:
+#                   context={"status":False,"message":"Post_trend is empty"}
+#                   return Response(context)
+#             ######################################### for pre #######################################               
+#             location= MEDIA_ROOT + r"\dpr\dpr_report_file"
+#             fs = FileSystemStorage(location=location)
+#             pre_file = fs.save(pre_file.name, pre_file)
+#             # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+#             filepath = fs.path(pre_file)
+#             print("file_path:-",filepath)
+#             df_dict=pd.read_excel(filepath,sheet_name=None,header=[0,2])
+            
+#             os.remove(path=filepath)
+#             print(filepath,"deleted...............")
+            
+#             df = pd.concat(df_dict.values(), axis=0) # to merge every sheet of the df_dict
+#             print(df)
+            
+#             if not(df.empty):
+#                 dates=df["Payload"].columns
+#                 print(dates)
+#                 # print(type(dates[1]))
+#                 date1=dates[0].day
+#                 date2=dates[1].day
+#                 date3=dates[2].day
+#                 date4=dates[3].day
+#                 date5=dates[4].day
+#                 print(date1)
+#                 print(date2)
+#                 print(date3)
+#                 print(date4)
+#                 print(date5)
+                
+#                 # df.to_excel("post_trend_excel.xlsx") # just to visualise the data frame
+
+#                 df_Pre=df[["Unnamed: 0_level_0","Unnamed: 1_level_0","CRITERIA","Payload","PS RRC Succ Rate"]] # extracting the traffic , data volume,short_name, trend_cell,site and creating a new df ,just for development we are taking traffic=rrc suss rate
+#                 df_Pre.columns =df_Pre.columns.to_flat_index() # flattening the multi index header to single index
+#                 df_Pre= df_Pre[df_Pre.columns[[0,1,2,6,7,8,9,10,13,14,15,16,17,18]]]
+                
+#                 # df_Pre.to_excel("actual_pre_data_volume.xlsx", index=False)
+#                 print("############################## df post data volume ##############################")
+#                 print(df_Pre) 
+#                 print("Finding Exact Match....")
+#                 for d in df_Pre.values:
+#                         site=d[2]
+#                         Pre_cell_name=d[0]
+#                         pre_trend_cell=d[1]
+#                         try:
+#                                 objs=pre_post_report.objects.filter(Post_cell_site_id=mapping_dic[site])
+#                         except:
+#                                 continue
+#                         ins=False
+                        
+#                         for obj1 in objs:
+                            
+#                               if obj1.Post_trend_cell[-1]==pre_trend_cell[-1] and obj1.Post_trend_cell[:2]==pre_trend_cell[:2] :
+#                                      obj=obj1
+#                                      ins=True
+#                                      print("pre-",Pre_cell_name," ","Post-",obj.Post_cell_name)
+#                                      break
+                                  
+                               
+#                         if ins:
+#                             obj.Pre_cell_name=Pre_cell_name
+#                             obj.Pre_trend_cell=pre_trend_cell
+#                             obj.Pre_cell_site_id=site
+#                             if(date1==1):
+                                    
+#                                     obj.Pre_Data_Volume_1=d[3]
+#                                     obj.Pre_Data_Volume_2=d[4]
+#                                     obj.Pre_Data_Volume_3=d[5]
+#                                     obj.Pre_Data_Volume_4=d[6]
+#                                     obj.Pre_Data_Volume_5=d[7]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+
+#                                     obj.Pre_Volte_Traffic_1=d[8]
+#                                     obj.Pre_Volte_Traffic_2=d[9]
+#                                     obj.Pre_Volte_Traffic_3=d[10]
+#                                     obj.Pre_Volte_Traffic_4=d[11]
+#                                     obj.Pre_Volte_Traffic_5=d[12]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+
+                                    
+#                             if(date1==2):
+#                                     obj.Pre_Data_Volume_2=d[3]
+#                                     obj.Pre_Data_Volume_3=d[4]
+#                                     obj.Pre_Data_Volume_4=d[5]
+#                                     obj.Pre_Data_Volume_5=d[6]
+#                                     obj.Pre_Data_Volume_6=d[7]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+
+#                                     obj.Pre_Volte_Traffic_2=d[8]
+#                                     obj.Pre_Volte_Traffic_3=d[9]
+#                                     obj.Pre_Volte_Traffic_4=d[10]
+#                                     obj.Pre_Volte_Traffic_5=d[11]
+#                                     obj.Pre_Volte_Traffic_6=d[12]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+
+                                    
+#                             if(date1==3):
+#                                     obj.Pre_Data_Volume_3=d[3]
+#                                     obj.Pre_Data_Volume_4=d[4]
+#                                     obj.Pre_Data_Volume_5=d[5]
+#                                     obj.Pre_Data_Volume_6=d[6]
+#                                     obj.Pre_Data_Volume_7=d[7]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+
+#                                     obj.Pre_Volte_Traffic_3=d[8]
+#                                     obj.Pre_Volte_Traffic_4=d[9]
+#                                     obj.Pre_Volte_Traffic_5=d[10]
+#                                     obj.Pre_Volte_Traffic_6=d[11]
+#                                     obj.Pre_Volte_Traffic_7=d[12]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+#                             if(date1==4):
+#                                     obj.Pre_Data_Volume_4=d[3]
+#                                     obj.Pre_Data_Volume_5=d[4]
+#                                     obj.Pre_Data_Volume_6=d[5]
+#                                     obj.Pre_Data_Volume_7=d[6]
+#                                     obj.Pre_Data_Volume_8=d[7]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+
+#                                     obj.Pre_Volte_Traffic_4=d[8]
+#                                     obj.Pre_Volte_Traffic_5=d[9]
+#                                     obj.Pre_Volte_Traffic_6=d[10]
+#                                     obj.Pre_Volte_Traffic_7=d[11]
+#                                     obj.Pre_Volte_Traffic_8=d[12]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                             if(date1==16):
+#                                     obj.Pre_Data_Volume_16=d[3]
+#                                     obj.Pre_Data_Volume_17=d[4]
+#                                     obj.Pre_Data_Volume_18=d[5]
+#                                     obj.Pre_Data_Volume_19=d[6]
+#                                     obj.Pre_Data_Volume_20=d[7]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+#                                     # obj.Pre_Data_Volume_1=d[1]
+
+#                                     obj.Pre_Volte_Traffic_16=d[8]
+#                                     obj.Pre_Volte_Traffic_17=d[9]
+#                                     obj.Pre_Volte_Traffic_18=d[10]
+#                                     obj.Pre_Volte_Traffic_19=d[11]
+#                                     obj.Pre_Volte_Traffic_20=d[12]
+#                                     # obj.Post_Data_Volume_1=d[1]
+#                                     # obj.Post_Data_Volume_1=d[1]
+
+
+#                             obj.save()
+                              
+#             else:
+#                   context={"status":False,"message":"DPR Report is empty"}
+#                   return Response(context)
+               
+#             objs=pre_post_report.objects.all()
+
+#             x = datetime.datetime.now()
+#             y=x.strftime("%B")
+#         ######################################## to create the  month named folder ####################
+#             directory = y
+#             # Parent Directory path
+#             parent_dir =  MEDIA_ROOT  + r"/Original_trend"
+#             # Path
+#             path = os.path.join(parent_dir, directory)
+#             print(path)
+#             #Create the directory
+#             if(not (os.path.isdir(path))):
+#                 os.makedirs(path)
+#                 print("Directory '% s' created" % directory)
+            
+            
+           
+#             path= path + "/" + y +"_record.xlsx"
+#             pd.DataFrame(list(objs.values())).to_excel(path,index=False)
+        
+#             return Response({"message":"true"})   
+
+
+#################################################### extra code for original trend when pre colour code in the output was reverse of the post ###################
+                      
+
+# @api_view(["POST"])
+# def OFF_pre_post_upload_7(request):
+  
+#     # pre_trend = request.FILES["pre_trend"] if 'pre_trend' in request.FILES else None
+#             post_file = request.FILES["post_trend"] if 'post_trend' in request.FILES else None
+#             pre_file = request.FILES["pre_trend"] if 'pre_trend' in request.FILES else None
+#             mapping_file = request.FILES["mapping"] if 'mapping' in request.FILES else None
+
+#             ######################################## for mappings ###################################################
+#             location= MEDIA_ROOT + r"\dpr\dpr_report_file"
+#             fs = FileSystemStorage(location=location)
+            
+#             mapping_file = fs.save(mapping_file.name, mapping_file) 
+#             # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+#             filepath = fs.path(mapping_file)
+#             print("file_path:-",filepath)
+#             df_mapping=pd.read_excel(filepath,header=1)
+#             os.remove(path=filepath)
+#             print(filepath,"deleted...............")
+#             print(df_mapping)
+#         #     df_mapping.to_excel("mappings.xlsx")
+#             if not(df_mapping.empty):
+#                    OldSiteMapping_dic={}
+#                    NewSiteMapping_dic={}
+#                    for i,d in df_mapping.iterrows():
+#                           if "Old Site ID" in df_mapping.columns and  "New Site ID" in df_mapping.columns:
+#                                          OldSiteMapping_dic[d["Old Site ID"]]=[d["New Site ID"],d["Relocation Date"]]
+#                                          NewSiteMapping_dic[d["New Site ID"]]=d["Today Date"]
+                                         
+#                           else:
+#                                 context={"status":False,"message":"Old Site ID/New Site ID is missing or name is not correct"}
+#                                 return Response(context)
+
+                          
+#             else:
+#                   context={"status":False,"message":"mapping file is empty"}
+#                   return Response(context)       
+#             print(OldSiteMapping_dic)   
+               
+
+#             ############################################# for Post ################################################
+#             location= os.path.join(MEDIA_ROOT,"Original_trend")
+#             fs = FileSystemStorage(location=location)
+#             post_file = fs.save(post_file.name, post_file)
+#             # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+#             filepath = fs.path(post_file)
+#             print("file_path:-",filepath)
+
+#             wb=openpyxl.load_workbook(filepath,data_only=True)
+#             wb.save(filepath)
+#             print("for post: Saving only values done ...................")
+#             df_dict=pd.read_excel(filepath,sheet_name=None,header=[0,2])
+            
+#             os.remove(path=filepath)
+#             print(filepath,"deleted...............")
+            
+#             df = pd.concat(df_dict.values(), axis=0) # to merge every sheet of the df_dict
+           
+#             df = df.dropna(subset=[("Unnamed: 0_level_0","Cell Name")])
+#             print(df)
+#             if not(df.empty):
+#                 #  and len(df["Payload"].columns) >= 7
+                
+#                 dates=df["Payload"].columns
+#                 print(dates)
+#                 # print(type(dates[1]))
+#                 date1=dates[0].day
+#                 date2=dates[1].day
+#                 date3=dates[2].day
+#                 date4=dates[3].day
+#                 date5=dates[4].day
+#                 date6=dates[5].day
+#                 date7=dates[6].day
+#                 print(date1)
+#                 print(date2)
+#                 print(date3)
+#                 print(date4)
+#                 print(date5)
+#                 print(date6)
+#                 print(date7)
+                
+#                 # df.to_excel("post_trend_excel.xlsx") # just to visualise the data frame
+
+#                 df_Post=df[["Unnamed: 0_level_0","Unnamed: 1_level_0","CRITERIA","Payload","Volte_Traffic"]] # extracting the traffic , data volume,short_name, trend_cell,site and creating a new df ,just for development we are taking traffic=rrc suss rate
+#                 df_Post.columns =df_Post.columns.to_flat_index() # flattening the multi index header to single index
+#                 # df_Post.to_excel("flattened_post_data_volume.xlsx", index=False)
+#                 df_Post= df_Post[df_Post.columns[[0,1,2,6,7,8,9,10,11,12,15,16,17,18,19,20,21]]]
+                
+#                 df_Post.to_excel("actual_post_data_volume.xlsx", index=False)
+#                 print("############################## df post data volume ##############################")
+#                 print(df_Post) 
+               
+#                 # df_Post_volte_traffic=df[["Unnamed: 0","PS RRC Succ Rate","Unnamed: 36","Unnamed: 37","Unnamed: 38","Unnamed: 39","Unnamed: 1","CRITERIA"]]
+#                 # df_Post_volte_traffic.columns=df_Post_volte_traffic.iloc[1]
+#                 # df_Post_volte_traffic = df_Post_volte_traffic.iloc[2:].reset_index(drop=True)
+#                 # df_Post_volte_traffic.to_excel("actual_post_volte_traffic.xlsx", index=False)
+#                 # print("################################ df post volte traffic #########################")
+#                 # print(df_Post_volte_traffic)
+
+                
+             
+             
+                
+#                 for d in df_Post.values:
+#                         if(not (pd.isnull(d[0]))):
+#                             obj,created = pre_post_report2.objects.get_or_create(Post_cell_name=d[0])
+#                             obj.Post_trend_cell=d[1]
+#                             obj.Post_cell_site_id=d[2]
+#                             print(d)
+#                             obj.Today_date = NewSiteMapping_dic[d[2]]
+                            
+                        
+
+#                             obj.Post_Volte_Traffic_Day1=round(d[10],2)
+#                             obj.Post_Volte_Traffic_Day2=round(d[11],2)
+#                             obj.Post_Volte_Traffic_Day3=round(d[12],2)
+#                             obj.Post_Volte_Traffic_Day4=round(d[13],2)
+#                             obj.Post_Volte_Traffic_Day5=round(d[14],2)
+#                             obj.Post_Volte_Traffic_Day6=round(d[15],2)
+#                             obj.Post_Volte_Traffic_Day7=round(d[16],2)
+
+#                             obj.Post_Data_Volume_Day1=round(d[3],2)
+#                             obj.Post_Data_Volume_Day2=round(d[4],2)
+#                             obj.Post_Data_Volume_Day3=round(d[5],2)
+#                             obj.Post_Data_Volume_Day4=round(d[6],2)
+#                             obj.Post_Data_Volume_Day5=round(d[7],2)
+#                             obj.Post_Data_Volume_Day6=round(d[8],2)
+#                             obj.Post_Data_Volume_Day7=round(d[9],2)
+
+#                             lis_DV=[d[3],d[4],d[5],d[6],d[7],d[8],d[9]]
+#                             lis_VT=[d[10],d[11],d[12],d[13],d[14],d[15],d[16]]
+#                             DV_avg=round(mean(lis_DV),2)
+#                             VT_avg=round(mean(lis_VT),2)
+#                             obj.Post_Data_Volume_AVG=DV_avg
+#                             obj.Post_Volte_Traffic_AVG=VT_avg
+ 
+#                             obj.save()
+#             else:
+#                   context={"status":False,"message":"Post_trend is empty"}
+#                   return Response(context)
+#             ######################################### for pre #######################################               
+#             location= os.path.join(MEDIA_ROOT,"Original_trend")
+#             fs = FileSystemStorage(location=location)
+#             pre_file = fs.save(pre_file.name, pre_file)
+#             # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+#             filepath = fs.path(pre_file)
+#             print("file_path:-",filepath)
+#             wb=openpyxl.load_workbook(filepath,data_only=True)
+#             wb.save(filepath)
+#             df_dict=pd.read_excel(filepath,sheet_name=None,header=[0,2])
+            
+#             os.remove(path=filepath)
+#             print(filepath,"deleted...............")
+            
+#             df = pd.concat(df_dict.values(), axis=0) # to merge every sheet of the df_dict
+#             df = df.dropna(subset=[("Unnamed: 0_level_0","Cell Name")])
+#             print(df)
+            
+#             if not(df.empty):
+#                 dates=df["Payload"].columns
+#                 print(dates)
+#                 # print(type(dates[1]))
+#                 date1=dates[0].day
+#                 date2=dates[1].day
+#                 date3=dates[2].day
+#                 date4=dates[3].day
+#                 date5=dates[4].day
+#                 print(date1)
+#                 print(date2)
+#                 print(date3)
+#                 print(date4)
+#                 print(date5)
+                
+#                 # df.to_excel("post_trend_excel.xlsx") # just to visualise the data frame
+
+#                 df_Pre=df[["Unnamed: 0_level_0","Unnamed: 1_level_0","CRITERIA","Payload","Volte_Traffic"]] # extracting the traffic , data volume,short_name, trend_cell,site and creating a new df ,just for development we are taking traffic=rrc suss rate
+#                 df_Pre.columns =df_Pre.columns.to_flat_index() # flattening the multi index header to single index
+#                 # df_Pre.to_excel("flattened_pre_data_volume.xlsx", index=False)
+#                 df_Pre= df_Pre[df_Pre.columns[[0,1,2,6,7,8,9,10,11,12,15,16,17,18,19,20,21]]]
+#                 # df_Pre.to_excel("actual_pre_data_volume.xlsx", index=False)
+#                 print("############################## df post data volume ##############################")
+#                 print(df_Pre) 
+#                 print("Finding Exact Match....")
+#                 for d in df_Pre.values:
+#                         site=d[2]
+#                         Pre_cell_name=d[0]
+#                         pre_trend_cell=d[1]
+#                         try:
+#                                 objs=pre_post_report2.objects.filter(Post_cell_site_id=OldSiteMapping_dic[site][0])
+#                         except:
+#                                 continue
+#                         ins=False
+                        
+#                         for obj1 in objs:
+                            
+#                               if obj1.Post_trend_cell[-1]==pre_trend_cell[-1] and obj1.Post_trend_cell[:2]==pre_trend_cell[:2] :
+#                                      obj=obj1
+#                                      ins=True
+#                                      print("pre-",Pre_cell_name," ","Post-",obj.Post_cell_name)
+#                                      break
+                                  
+                               
+#                         if ins:
+#                             obj.Pre_cell_name=Pre_cell_name
+#                             obj.Pre_trend_cell=pre_trend_cell
+#                             obj.Pre_cell_site_id=site
+#                             obj.Relocation_date = OldSiteMapping_dic[site][1]
+                           
+#                             obj.Pre_Volte_Traffic_Day1=round(d[10],2)
+#                             obj.Pre_Volte_Traffic_Day2=round(d[11],2)
+#                             obj.Pre_Volte_Traffic_Day3=round(d[12],2)
+#                             obj.Pre_Volte_Traffic_Day4=round(d[13],2)
+#                             obj.Pre_Volte_Traffic_Day5=round(d[14],2)
+#                             obj.Pre_Volte_Traffic_Day6=round(d[15],2)
+#                             obj.Pre_Volte_Traffic_Day7=round(d[16],2)
+
+#                             obj.Pre_Data_Volume_Day1=round(d[3],2)
+#                             obj.Pre_Data_Volume_Day2=round(d[4],2)
+#                             obj.Pre_Data_Volume_Day3=round(d[5],2)
+#                             obj.Pre_Data_Volume_Day4=round(d[6],2)
+#                             obj.Pre_Data_Volume_Day5=round(d[7],2)
+#                             obj.Pre_Data_Volume_Day6=round(d[8],2)
+#                             obj.Pre_Data_Volume_Day7=round(d[9],2)
+
+#                             lis_DV=[d[3],d[4],d[5],d[6],d[7],d[8],d[9]]
+#                             lis_VT=[d[10],d[11],d[12],d[13],d[14],d[15],d[16]]
+#                             DV_avg=round(mean(lis_DV),2)
+#                             VT_avg=round(mean(lis_VT),2)
+#                             obj.Pre_Data_Volume_AVG=DV_avg
+#                             obj.Pre_Volte_Traffic_AVG=VT_avg      
+
+
+#                             obj.save()
+                              
+#             else:
+#                   context={"status":False,"message":"DPR Report is empty"}
+#                   return Response(context)
+
+
+           
+           
+            
+
+#            ############################################ to fill average Change ##############################################
+#             objs=pre_post_report2.objects.all()
+#             for obj in objs:
+#                    pre_DV_avg=obj.Pre_Data_Volume_AVG
+#                    post_DV_avg=obj.Post_Data_Volume_AVG
+                   
+#                    if pre_DV_avg !=0:
+#                         obj.Percentage_change_Data_Volume=round(((post_DV_avg-pre_DV_avg)/pre_DV_avg)*100,2)
+#                    else:
+#                         obj.Percentage_change_Data_Volume=0
+                          
+#                    pre_VT_avg=obj.Pre_Volte_Traffic_AVG
+#                    post_VT_avg=obj.Post_Volte_Traffic_AVG
+
+#                    if pre_VT_avg !=0:     
+#                         obj.Percentage_change_Volte_Traffic=round(((post_VT_avg-pre_VT_avg)/pre_VT_avg)*100,2)
+#                    else:
+#                           obj.Percentage_change_Volte_Traffic=0
+#                    obj.save()
+           
+            
+#         #     dr=pd.DataFrame.from_records(pre_post_report2.objects.all().values())
+#         ################################ sitewise Report making ###################################################
+#             unique_site_list=list(pre_post_report2.objects.values_list("Post_cell_site_id",flat=True).distinct())
+#             print(unique_site_list)
+
+#             for site in unique_site_list:
+#                    SiteWise_obj,sts=pre_post_report_siteWise.objects.get_or_create(Post_cell_site_id=site)
+#                    obj_set=pre_post_report2.objects.filter(Post_cell_site_id=site)
+
+#                    SiteWise_obj.Today_date=obj_set[0].Today_date
+
+#                    SiteWise_obj.Relocation_date=obj_set[0].Relocation_date
+
+#                    SiteWise_obj.Pre_cell_site_id=obj_set[0].Pre_cell_site_id
+
+
+#                    Pre_VT_Day1=SiteWise_obj.Pre_Volte_Traffic_Day1=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day1"))["ar"],2)
+#                    Pre_VT_Day2=SiteWise_obj.Pre_Volte_Traffic_Day2=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day2"))["ar"],2)
+#                    Pre_VT_Day3=SiteWise_obj.Pre_Volte_Traffic_Day3=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day3"))["ar"],2)
+#                    Pre_VT_Day4=SiteWise_obj.Pre_Volte_Traffic_Day4=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day4"))["ar"],2)
+#                    Pre_VT_Day5=SiteWise_obj.Pre_Volte_Traffic_Day5=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day5"))["ar"],2)
+#                    Pre_VT_Day6=SiteWise_obj.Pre_Volte_Traffic_Day6=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day6"))["ar"],2)
+#                    Pre_VT_Day7=SiteWise_obj.Pre_Volte_Traffic_Day7=round(obj_set.aggregate(ar=Sum("Pre_Volte_Traffic_Day7"))["ar"],2)
+
+#                    Post_VT_Day1=SiteWise_obj.Post_Volte_Traffic_Day1=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day1"))["ar"],2)
+#                    Post_VT_Day2=SiteWise_obj.Post_Volte_Traffic_Day2=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day2"))["ar"],2)
+#                    Post_VT_Day3=SiteWise_obj.Post_Volte_Traffic_Day3=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day3"))["ar"],2)
+#                    Post_VT_Day4=SiteWise_obj.Post_Volte_Traffic_Day4=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day4"))["ar"],2)
+#                    Post_VT_Day5=SiteWise_obj.Post_Volte_Traffic_Day5=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day5"))["ar"],2)
+#                    Post_VT_Day6=SiteWise_obj.Post_Volte_Traffic_Day6=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day6"))["ar"],2)
+#                    Post_VT_Day7=SiteWise_obj.Post_Volte_Traffic_Day7=round(obj_set.aggregate(ar=Sum("Post_Volte_Traffic_Day7"))["ar"],2)
+
+#                    Pre_DV_Day1=SiteWise_obj.Pre_Data_Volume_Day1=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day1"))["ar"],2)
+#                    Pre_DV_Day2=SiteWise_obj.Pre_Data_Volume_Day2=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day2"))["ar"],2)
+#                    Pre_DV_Day3=SiteWise_obj.Pre_Data_Volume_Day3=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day3"))["ar"],2)
+#                    Pre_DV_Day4=SiteWise_obj.Pre_Data_Volume_Day4=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day4"))["ar"],2)
+#                    Pre_DV_Day5=SiteWise_obj.Pre_Data_Volume_Day5=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day5"))["ar"],2)
+#                    Pre_DV_Day6=SiteWise_obj.Pre_Data_Volume_Day6=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day6"))["ar"],2)
+#                    Pre_DV_Day7=SiteWise_obj.Pre_Data_Volume_Day7=round(obj_set.aggregate(ar=Sum("Pre_Data_Volume_Day7"))["ar"],2)
+
+#                    Post_DV_Day1=SiteWise_obj.Post_Data_Volume_Day1=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day1"))["ar"],2)
+#                    Post_DV_Day2=SiteWise_obj.Post_Data_Volume_Day2=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day2"))["ar"],2)
+#                    Post_DV_Day3=SiteWise_obj.Post_Data_Volume_Day3=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day3"))["ar"],2)
+#                    Post_DV_Day4=SiteWise_obj.Post_Data_Volume_Day4=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day4"))["ar"],2)
+#                    Post_DV_Day5=SiteWise_obj.Post_Data_Volume_Day5=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day5"))["ar"],2)
+#                    Post_DV_Day6=SiteWise_obj.Post_Data_Volume_Day6=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day6"))["ar"],2)
+#                    Post_DV_Day7=SiteWise_obj.Post_Data_Volume_Day7=round(obj_set.aggregate(ar=Sum("Post_Data_Volume_Day7"))["ar"],2)
+
+#                    Pre_VT_AVG= round((
+#                                 Pre_VT_Day1
+#                               + Pre_VT_Day2 
+#                               + Pre_VT_Day3 
+#                               + Pre_VT_Day4 
+#                               + Pre_VT_Day5 
+#                               + Pre_VT_Day6 
+#                               + Pre_VT_Day7
+#                               )/7 ,2)
+                  
+#                    Post_VT_AVG= round((Post_VT_Day1
+#                                + Post_VT_Day2 
+#                                + Post_VT_Day3 
+#                                + Post_VT_Day4 
+#                                + Post_VT_Day5 
+#                                + Post_VT_Day6 
+#                                + Post_VT_Day7
+#                                )/7 ,2)
+
+#                    Pre_DV_AVG= round((
+#                                 Pre_DV_Day1
+#                               + Pre_DV_Day2 
+#                               + Pre_DV_Day3 
+#                               + Pre_DV_Day4 
+#                               + Pre_DV_Day5 
+#                               + Pre_DV_Day6 
+#                               + Pre_DV_Day7
+#                               )/7 ,2)
+#                    Post_DV_AVG=round( (Post_DV_Day1
+#                                + Post_DV_Day2 
+#                                + Post_DV_Day3 
+#                                + Post_DV_Day4 
+#                                + Post_DV_Day5 
+#                                + Post_DV_Day6 
+#                                + Post_DV_Day7
+#                                )/7 ,2)
+                   
+#                    SiteWise_obj.Pre_Volte_Traffic_AVG=Pre_VT_AVG
+#                    SiteWise_obj.Post_Volte_Traffic_AVG=Post_VT_AVG
+
+#                    SiteWise_obj.Pre_Data_Volume_AVG=Pre_DV_AVG
+#                    SiteWise_obj.Post_Data_Volume_AVG=Post_DV_AVG
+
+#                    if Pre_VT_AVG !=0:    
+#                         SiteWise_obj.Percentage_change_Volte_Traffic= round(((Post_VT_AVG-Pre_VT_AVG)/Pre_VT_AVG)*100,2)
+#                    else:
+#                         SiteWise_obj.Percentage_change_Volte_Traffic=0
+#                    if Pre_DV_AVG !=0:
+#                         SiteWise_obj.Percentage_change_Data_Volume= round(((Post_DV_AVG-Pre_DV_AVG)/Pre_DV_AVG)*100,2)
+#                    else:
+#                           SiteWise_obj.Percentage_change_Data_Volume=0
+                          
+#                    SiteWise_obj.save()
+
+
+#         ###############################################################################################################
+
+
+#         ########################################### to create the folder in media to save the generated record ################################
+       
+#             directory =  "Original_trend"
+#             # Parent Directory path
+#             parent_dir =  MEDIA_ROOT 
+           
+#             # Path
+#             path = os.path.join(parent_dir, directory)
+#             print(path)
+#             #Create the directory
+#             if(not (os.path.isdir(path))):
+#                 os.makedirs(path)
+#                 print("Directory '% s' created" % directory)
+            
+            
+           
+#             RecordPath= os.path.join(path ,"record.xlsx")
+   
+   
+   
+   
+#     ############################################# Creating DF from pre_post_report2 model (Sector wise)##################################################################       
+#             # we have assigned objs in the upper section code
+#             df=pd.DataFrame(list(objs.values()))
+#             df["Percentage_change_Volte_Traffic"]=df["Percentage_change_Volte_Traffic"].astype("str") +" %"
+#             df["Percentage_change_Data_Volume"]=df["Percentage_change_Data_Volume"].astype("str") +" %"
+#         #     df.to_excel("report without header.xlsx",index=True)
+#         #     colour_df=df.copy()
+#             tuples=[
+#                    ("","Post_cell_name"),
+#                    ("","Pre_cell_name"),
+#                    ("","Post_cell_site_id"),
+#                    ("","Pre_cell_site_id"),
+#                    ("","Post_trend_cell"),
+#                    ("","Pre_trend_cell"),
+#                    ("","Today Date"),
+#                    ("","Relocation Date"),
+
+#                    ("Pre_Volte_Traffic","Day1"),
+#                    ("Pre_Volte_Traffic","Day2"),
+#                    ("Pre_Volte_Traffic","Day3"),
+#                    ("Pre_Volte_Traffic","Day4"),
+#                    ("Pre_Volte_Traffic","Day5"),
+#                    ("Pre_Volte_Traffic","Day6"),
+#                    ("Pre_Volte_Traffic","Day7"),
+
+#                    ("Post_Volte_Traffic","Day1"),
+#                    ("Post_Volte_Traffic","Day2"),
+#                    ("Post_Volte_Traffic","Day3"),
+#                    ("Post_Volte_Traffic","Day4"),
+#                    ("Post_Volte_Traffic","Day5"),
+#                    ("Post_Volte_Traffic","Day6"),
+#                    ("Post_Volte_Traffic","Day7"),
+
+#                    ("Pre_Data_Volume","Day1"),
+#                    ("Pre_Data_Volume","Day2"),
+#                    ("Pre_Data_Volume","Day3"),
+#                    ("Pre_Data_Volume","Day4"),
+#                    ("Pre_Data_Volume","Day5"),
+#                    ("Pre_Data_Volume","Day6"),
+#                    ("Pre_Data_Volume","Day7"),
+
+#                     ("Post_Data_Volume","Day1"),
+#                     ("Post_Data_Volume","Day2"),
+#                     ("Post_Data_Volume","Day3"),
+#                     ("Post_Data_Volume","Day4"),
+#                     ("Post_Data_Volume","Day5"),
+#                     ("Post_Data_Volume","Day6"),
+#                     ("Post_Data_Volume","Day7"),
+                   
+#                     ("Comparison","Pre_Volte_Traffic_AVG"),
+#                     ("Comparison","Post_Volte_Traffic_AVG"),
+#                     ("Comparison","Pre_Data_Volume_AVG"),
+#                     ("Comparison","Post_Data_Volume_AVG"),
+#                     ("Percentage Change","Volte Traffic"),
+#                     ("Percentage Change","Data Volume"),
+#                    ]
+#             cols = pd.MultiIndex.from_tuples(tuples)
+#             df.columns=cols
+# #################################################### for making colourgradient of every cell (Sector Wise) ######################################
+#             df_style=df.style
+#             idx = pd.IndexSlice
+#             # colors = ["red", "orange", "yellow","#ffff00", "darkgreen"]
+#             Pre_colors=["#cc3300","#ff9933","#ffcc33","#ffff33","#00cc33"]
+#             Post_colors=["#00cc33","#ffff33","#ffcc33","#ff9933","#cc3300"]
+#             Pre_cmap1 = mpl.colors.LinearSegmentedColormap.from_list("mycmap",Pre_colors)
+#             Post_cmap1 = mpl.colors.LinearSegmentedColormap.from_list("mycmap", Post_colors)
+#             index=len(df.index)
+#         #     df=df_style.background_gradient(cmap=cmap1,axis=1)
+#             for i in range(0,index):
+#                     slice_Pre_VT = idx[idx[i], idx["Pre_Volte_Traffic",:]]
+#                     slice_Post_VT = idx[idx[i], idx["Post_Volte_Traffic",:]]
+#                     slice_Pre_DV = idx[idx[i], idx["Pre_Data_Volume",:]]
+#                     slice_Post_DV = idx[idx[i], idx["Post_Data_Volume",:]]
+#                     df_style=df_style.background_gradient(cmap=Pre_cmap1,axis=1,subset=slice_Pre_VT)\
+#                                      .background_gradient(cmap=Post_cmap1,axis=1,subset=slice_Post_VT)\
+#                                      .background_gradient(cmap=Pre_cmap1,axis=1,subset=slice_Pre_DV)\
+#                                      .background_gradient(cmap=Post_cmap1,axis=1,subset=slice_Post_DV) #vmax=mx,vmin=mi
+#                     df_style.set_properties(**{'border':'1px solid black'})
+
+                
+
+
+    
+# ###################################################################################################################################
+#             writer = pd.ExcelWriter(RecordPath, engine='xlsxwriter')
+#             df_style.to_excel(writer,sheet_name="SectorLevel",index=True)
+
+
+# ############################################# Creating DF from pre_post_report2_SiteWise model (Site wise)##################################################################       
+           
+#             objs=pre_post_report_siteWise.objects.all()
+#             df=pd.DataFrame(list(objs.values()))
+#             df["Percentage_change_Volte_Traffic"]=df["Percentage_change_Volte_Traffic"].astype("str") +" %"
+#             df["Percentage_change_Data_Volume"]=df["Percentage_change_Data_Volume"].astype("str") +" %"
+#         #     df.to_excel("report without header.xlsx",index=True)
+#             tuples=[("","ID"),
+                  
+#                    ("","Post_cell_site_id"),
+#                    ("","Pre_cell_site_id"),
+                  
+#                    ("","Today Date"),
+#                    ("","Relocation Date"),
+
+#                    ("Pre_Volte_Traffic","Day1"),
+#                    ("Pre_Volte_Traffic","Day2"),
+#                    ("Pre_Volte_Traffic","Day3"),
+#                    ("Pre_Volte_Traffic","Day4"),
+#                    ("Pre_Volte_Traffic","Day5"),
+#                    ("Pre_Volte_Traffic","Day6"),
+#                    ("Pre_Volte_Traffic","Day7"),
+
+#                    ("Post_Volte_Traffic","Day1"),
+#                    ("Post_Volte_Traffic","Day2"),
+#                    ("Post_Volte_Traffic","Day3"),
+#                    ("Post_Volte_Traffic","Day4"),
+#                    ("Post_Volte_Traffic","Day5"),
+#                    ("Post_Volte_Traffic","Day6"),
+#                    ("Post_Volte_Traffic","Day7"),
+
+#                    ("Pre_Data_Volume","Day1"),
+#                    ("Pre_Data_Volume","Day2"),
+#                    ("Pre_Data_Volume","Day3"),
+#                    ("Pre_Data_Volume","Day4"),
+#                    ("Pre_Data_Volume","Day5"),
+#                    ("Pre_Data_Volume","Day6"),
+#                    ("Pre_Data_Volume","Day7"),
+
+#                     ("Post_Data_Volume","Day1"),
+#                     ("Post_Data_Volume","Day2"),
+#                     ("Post_Data_Volume","Day3"),
+#                     ("Post_Data_Volume","Day4"),
+#                     ("Post_Data_Volume","Day5"),
+#                     ("Post_Data_Volume","Day6"),
+#                     ("Post_Data_Volume","Day7"),
+                   
+#                     ("Comparison","Pre_Volte_Traffic_AVG"),
+#                     ("Comparison","Post_Volte_Traffic_AVG"),
+#                     ("Comparison","Pre_Data_Volume_AVG"),
+#                     ("Comparison","Post_Data_Volume_AVG"),
+#                     ("Percentage Change","Volte Traffic"),
+#                     ("Percentage Change","Data Volume"),
+#                    ]
+#             cols = pd.MultiIndex.from_tuples(tuples)
+#             df.columns=cols
+#             SiteWisePath= path + "/"+"SiteWise_record.xlsx"
+
+# #################################################### for making colourgradient of every cell (Site Wise) ######################################
+#             df_style=df.style
+#             idx = pd.IndexSlice
+#             # colors = ["red", "orange", "yellow","#ffff00", "darkgreen"]
+#             Pre_colors=["#cc3300","#ff9933","#ffcc33","#ffff33","#00cc33"]
+#             Post_colors=["#00cc33","#ffff33","#ffcc33","#ff9933","#cc3300"]
+#             Pre_cmap1 = mpl.colors.LinearSegmentedColormap.from_list("mycmap",Pre_colors)
+#             Post_cmap1 = mpl.colors.LinearSegmentedColormap.from_list("mycmap", Post_colors)
+#             index=len(df.index)
+        
+#             for i in range(0,index):
+#                     test=((1))
+#                     slice_Pre_VT = idx[idx[i], idx["Pre_Volte_Traffic",:]]
+#                     slice_Post_VT = idx[idx[i], idx["Post_Volte_Traffic",:]]
+#                     slice_Pre_DV = idx[idx[i], idx["Pre_Data_Volume",:]]
+#                     slice_Post_DV = idx[idx[i], idx["Post_Data_Volume",:]]
+#                     df_style=df_style.background_gradient(cmap=Pre_cmap1,axis=1,subset=slice_Pre_VT)\
+#                                      .background_gradient(cmap=Post_cmap1,axis=1,subset=slice_Post_VT)\
+#                                      .background_gradient(cmap=Pre_cmap1,axis=1,subset=slice_Pre_DV)\
+#                                      .background_gradient(cmap=Post_cmap1,axis=1,subset=slice_Post_DV) #vmax=mx,vmin=mi
+#                     df_style.set_properties(**{'border':'1px solid black'})
+
+# ###################################################################################################################################
+       
+#             df_style.to_excel(writer,sheet_name="SiteLevel", index=True)
+#             writer.save()
+ 
+ 
+# #################################################################### Code for Colouring the excel headers(Sector wise) #############################################################
+#             print("Performing excel operation.............................")
+#             wb = openpyxl.load_workbook(RecordPath)
+#             ws = wb['SectorLevel']
+#             ws["J1"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["Q1"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["X1"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AE1"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["AL1"].fill=PatternFill(patternType='solid',fgColor="ff148aff")
+#             ws["AP1"].fill=PatternFill(patternType='solid',fgColor="ff33e0ff")
+
+
+#             ws["AL2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AM2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["AN2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AO2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+          
+#             ws["AP2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AQ2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+
+
+#  #################################################################### Code for Colouring the excel headers(Sector wise) #############################################################
+       
+#             ws = wb["SiteLevel"]
+#             ws["G1"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["N1"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["U1"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AB1"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["AI1"].fill=PatternFill(patternType='solid',fgColor="ff148aff")
+#             ws["AM1"].fill=PatternFill(patternType='solid',fgColor="ff33e0ff")
+
+#             ws["AI2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AJ2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+#             ws["AK2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AL2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+          
+#             ws["AM2"].fill=PatternFill(patternType='solid',fgColor="ffff950a")
+#             ws["AN2"].fill=PatternFill(patternType='solid',fgColor="ffffe414")
+
+            
+            
+            
+#             coloured_path=os.path.join( path,"coloured_record.xlsx")
+
+#             wb.save(coloured_path)
+#             print("excel operation done.........................")
+#             download_url=os.path.join(MEDIA_URL,"Original_trend","coloured_record.xlsx")
+            
+#             return Response({"status":"true","message":"Report Generated Succesfully","Download_url":download_url})   
+

@@ -1,0 +1,133 @@
+{% extends 'trend/base.html'%}
+{% load static %}
+{% block css%}
+<link rel="stylesheet" href="{% static 'css/trend/DPR_site_list.css' %}" /> {% endblock %}
+{% block title %} catagory:{{c_head}} {% endblock title %}
+
+{% block content %}
+
+<div id="body_content">
+  <div id="bck_add_btn">
+
+    <!-- <a href="#" ><button type="submit" class="btn"  id="back_button">Back</button></a> -->
+    <div id="search-box">
+      <form class="form">
+        {% csrf_token %}
+        <input type="text" placeholder="Search By Circle" name="circle search" id="user" required />
+        <button type="Submit" value="Search" id="search-button" class="btn">
+          <i class="fa fa-search"></i></button>
+      </form>
+
+
+      <!-- <a href="#">  <button type = " submit " id='add_products' class="btn" >Default</button ></a> -->
+    </div>
+
+    <div id="search-box">
+      <form class="form">
+        {% csrf_token %}
+        <input type="text" placeholder="Search By Site ID" name="id search" id="user" required />
+        <button type="Submit" value="Search" id="search-button" class="btn">
+          <i class="fa fa-search"></i></button>
+      </form>
+
+
+      <!-- <a href="#">  <button type = " submit " id='add_products' class="btn" >Default</button ></a> -->
+    </div>
+    <div id="search-box">
+      <form class="form">
+        {% csrf_token %}
+        <input type="text" placeholder="Search By Project" name="project search" id="user" required />
+        <button type="Submit" value="Search" id="search-button" class="btn">
+          <i class="fa fa-search"></i></button>
+      </form>
+
+
+      <!-- <a href="#">  <button type = " submit " id='add_products' class="btn" >Default</button ></a> -->
+    </div>
+
+
+    <div id="search-box">
+      <form class="form">
+        {% csrf_token %}
+        <input type="text" placeholder="Search By activity" name="activity search" id="user" required />
+        <button type="Submit" value="Search" id="search-button" class="btn">
+          <i class="fa fa-search"></i></button>
+      </form>
+
+
+      <!-- <a href="#">  <button type = " submit " id='add_products' class="btn" >Default</button ></a> -->
+    </div>
+
+
+
+  </div>
+ 
+  <div id="cat_wise_item_table">
+    <table class="table" id="table">
+      <thead>
+        <tr>
+          <th style="width:5%">S/NO.</th>
+          <th>CIRCLE</th>
+          <th>SITE ID<a href="?short=item_name" style="text-decoration:none;"> <span> &#8593; </span> </a> <a
+              href="?short=-item_name" style="text-decoration:none;"> <span> &#8595;</span> </a></th>
+          <th>PROJECT</th>
+          <th>ACTIVITY</th>
+          <th>BAND<a href="?short=short_discription" style="text-decoration:none;"> <span> &#8593; </span> </a> <a
+              href="?short=-short_discription" style="text-decoration:none;"> <span> &#8595;</span> </a></th>
+
+
+          <!-- <th ><h2>Specs</h2></th> -->
+
+
+
+          <th> Actions</th>
+        </tr>
+      </thead>
+      
+      <tbody>
+        
+        {% for site in object %}
+        <tr>
+          <td>{{forloop.counter}}</td>
+          <td>{{site.CIRCLE}}</td>
+          <td> {{ site.SITE_ID}}</td>
+          <td>{{site.Project}}</td>
+          <td>{{site.Activity}}</td>
+          <td> {{ site.BAND}}</td>
+
+
+
+
+          <td>
+
+            <span style="display: inline-block;">
+              <a href="{% url 'single_site_view' site.id  %}"> <button type=" submit " class="btn"
+                  id="view">View</button></a>
+            </span>
+
+            <!-- {% if perms.shop.change_catlist %}
+            <span style="display: inline-block;">
+               <a href="#">  <button type = " submit "  class="btn" id="edit" >Edit</button ></a>
+              </span>
+              {% endif %}
+
+              {% if perms.shop.change_catlist %}
+              <span style="display: inline-block;"> 
+                <form method = "post" action = "#">
+                 {%csrf_token %}
+                 <button type = " submit " id='deactivate' class="btn"> Deactivate </button>
+                 </form >
+              </span>
+              {% endif %} -->
+          </td>
+        </tr>
+        <!--    <td > <a href="#" id="dellink">Delete</a> <a href="#" id="uplink">Update</a></td> -->
+        {% endfor %}
+      </tbody>
+     
+    </table>
+   
+  </div>
+</div>
+
+{% endblock content %}
