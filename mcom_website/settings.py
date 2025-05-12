@@ -155,7 +155,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'mobilecomm',
         'USER':'postgres',
-        'PASSWORD':'2000',
+        'PASSWORD':'mcomnpn',
         'HOST':'localhost'
 }}
 # DATABASES = {
