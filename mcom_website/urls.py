@@ -79,6 +79,7 @@ urlpatterns = [
     path('NOM_AUDIT/', include('NOM_AUDIT.urls')),
     path('universal_alarm/', include('universal_alarm.urls')),
     path("dpr/sdir_status/", include("Daily_Alarm_Status.urls")),
+    path("LKF/", include("LKF_StatusApp.urls")),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

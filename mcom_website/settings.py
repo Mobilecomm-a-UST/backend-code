@@ -98,7 +98,8 @@ INSTALLED_APPS = [
     "RCA_TOOL",
     "NOM_AUDIT",
     "universal_alarm",
-    "Daily_Alarm_Status"
+    "Daily_Alarm_Status",
+    "LKF_StatusApp"
     
   
 ]
@@ -153,7 +154,7 @@ WSGI_APPLICATION = 'mcom_website.wsgi.application'
 DATABASES = {
    'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mobilecomm',
+        'NAME': 'mobliecomm',
         'USER':'postgres',
         'PASSWORD':'mcomnpn',
         'HOST':'localhost'
