@@ -153,7 +153,7 @@ WSGI_APPLICATION = "mcom_website.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mobliecomm",
+        "NAME": "mobilecomm",
         "USER": "postgres",
         "PASSWORD": "mcomnpn",
         "HOST": "localhost",
