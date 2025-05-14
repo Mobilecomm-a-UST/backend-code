@@ -193,83 +193,79 @@ def process_sdir_and_rru_status(request):
     try:
         all_files_df = pd.DataFrame()
 
-        if request.method == "POST":
-            files = request.FILES.getlist("sdir_files")
-            for uploaded_file in files:
-                file_content = [
-                    line.strip()
-                    for line in uploaded_file.read().decode("utf-8").splitlines()
-                ]
-
-                sdir_df = explode_data_from_log(
-                    r"[A-Z0-9_-]+>\ssdir",
-                    r"(ID)\s+(RiL)\s+(Type)\s+(Res)\s(MO1-MO2)\s+(BOARD1-BOARD2)\s+(AlmIDs\sCells\s\(States\))\s+(Issue\s\(Failed\schecks\))",
-                    r"^\s*(\d+)\s+(\d+)\s+([A-Z0-9]+)\s+(OK|NOK)\s+([0-9]\([A-Z]\)\s+[A-Z0-9-]+\(\w+\))\s+([A-Z0-9]+\s+[A-Z0-9]+)\s+((?:(?:TDD|FDD|GT)=[^()]+\s+)*(?:\([^)]+\)))\s+(.*)$",
-                    r"^----{2,}+",
-                    file_content,
-                )
-                sdir_df["RRU CELL MO"] = sdir_df["MO1-MO2"].apply(
-                    lambda x: (
-                        re.search(r"(RRU-\d+)", x).group(1)
-                        if re.search(r"RRU-(\d+)", x)
-                        else None
-                    )
-                )
-
-                st_rru_df = explode_data_from_log(
-                    r"[A-Z0-9_-]+>\sst\srru",
-                    r"(Proxy)\s+(Adm\sState)\s+(Op\.\sState)\s+(MO)",
-                    r"\s*(\d+)\s+(\d+\s+\((?:UNLOCKED|LOCKED)\))\s+(\d+\s+\((?:ENABLED|DISABLED)\))\s+(.*)$",
-                    r"^Total:\s\d+",
-                    file_content,
-                )
-                st_rru_df["RRU CELL MO"] = st_rru_df["MO"].apply(
-                    lambda x: (
-                        x.split(",")[1].split("=")[1]
-                        if "," in x and "=" in x.split(",")[1]
-                        else x
-                    )
-                )
-
-                common_cols = list(set(sdir_df.columns) & set(st_rru_df.columns))
-                merge_cols = ["RRU CELL MO"]
-                if "Node_ID" in common_cols:
-                    merge_cols.append("Node_ID")
-                if "IP ADDR" in common_cols:
-                    merge_cols.append("IP ADDR")
-
-                result_df = pd.merge(sdir_df, st_rru_df, on=merge_cols, how="outer")
-
-                if "BOARD1-BOARD2" in result_df.columns:
-                    result_df.rename(columns={"BOARD1-BOARD2": "BOARD1"}, inplace=True)
-                    result_df.insert(
-                        result_df.columns.get_loc("BOARD1") + 1, "BOARD2", ""
-                    )
-                    result_df["BOARD2"] = result_df["BOARD1"].apply(
-                        lambda x: x.split(" ")[1] if " " in x else ""
-                    )
-                    result_df["BOARD1"] = result_df["BOARD1"].apply(
-                        lambda x: x.split(" ")[0] if " " in x else x
-                    )
-
-                result_df["RRU DOWN STATUS"] = result_df.apply(
-                    lambda row: (
-                        "OK"
-                        if row.get("Op. State", "").startswith("1")
-                        else f"{row.get('RRU CELL MO', 'Unknown')} NOK"
-                    ),
-                    axis=1,
-                )
-
-                all_files_df = pd.concat([all_files_df, result_df], axis=0)
-
-        else:
+        if request.method != "POST":
             return Response(
                 {"error": "GET method not supported"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
 
-        ##################################################### Save to Excel ################################################
+        files = request.FILES.getlist("sdir_files")
+        for uploaded_file in files:
+            file_content = [
+                line.strip()
+                for line in uploaded_file.read().decode("utf-8").splitlines()
+            ]
+            
+            print(f"Processing file: {uploaded_file.name}")
+
+            # Extract sdir command data
+            sdir_df = explode_data_from_log(
+                r"[A-Z0-9_-]+>\ssdir",
+                r"(ID)\s+(RiL)\s+(Type)\s+(Res)\s(MO1-MO2)\s+(BOARD1-BOARD2)\s+(AlmIDs\sCells\s\(States\))\s+(Issue\s\(Failed\schecks\))",
+                r"^\s*(\d+)\s+([A-Z_0-9\-]+)\s+([A-Z0-9]+)\s+(OK|NOK|OKW)\s+([A-Z0-9\(\)]+\s+[A-Z\-\d\(\)\_]+)\s+([A-Z0-9]+\s+[A-Z0-9]+)\s+((?:(?:TDD|FDD|NRC|GT)=[^()]+\s+)*(?:GT=[^()]+\s+)*(?:\([^)]+\)))?\s*(.*)$",
+                r"^----{2,}+",
+                file_content,
+            )
+
+            if sdir_df.empty:
+                sdir_df = pd.DataFrame(columns=['ID', 'RiL', 'Type', 'Res', 'MO1-MO2', 'BOARD1', 'BOARD2', 'AlmIDs Cells (States)', 'Issue (Failed checks)', 'IP ADDR', 'Node_ID', 'RRU CELL MO'])
+
+            sdir_df["RRU CELL MO"] = sdir_df["MO1-MO2"].apply(
+                lambda x: re.search(r"(RRU-\d+)", x).group(1) if re.search(r"RRU-(\d+)", x) else None
+            )
+
+            # Extract st rru command data
+            st_rru_df = explode_data_from_log(
+                r"[A-Z0-9_-]+>\sst\srru",
+                r"(Proxy)\s+(Adm\sState)\s+(Op\.\sState)\s+(MO)",
+                r"\s*(\d+)\s+(\d+\s+\((?:UNLOCKED|LOCKED)\))\s+(\d+\s+\((?:ENABLED|DISABLED)\))\s+(.*)$",
+                r"^Total:\s\d+",
+                file_content,
+            )
+
+            if st_rru_df.empty:
+                print(f"st_rru_df is empty for file: {uploaded_file.name}")
+                st_rru_df = pd.DataFrame(columns=["Proxy", "Adm State", "Op. State", "MO", "RRU CELL MO"])
+            else:
+                st_rru_df["RRU CELL MO"] = st_rru_df["MO"].apply(
+                    lambda x: x.split(",")[1].split("=")[1] if "," in x and "=" in x.split(",")[1] else x
+                )
+
+            # Merge DataFrames
+            merge_cols = ["RRU CELL MO"] + [col for col in ["Node_ID", "IP ADDR"] if col in sdir_df.columns and col in st_rru_df.columns]
+
+            result_df = pd.merge(sdir_df, st_rru_df, on=merge_cols, how="outer")
+
+            if result_df.empty:
+                result_df = pd.DataFrame(columns=['ID', 'RiL', 'Type', 'Res', 'MO1-MO2', 'BOARD1', 'BOARD2', 'AlmIDs Cells (States)', 'Issue (Failed checks)', 'IP ADDR', 'Node_ID', 'RRU CELL MO', 'Proxy', 'Adm State', 'Op. State', 'MO', 'RRU DOWN STATUS'])
+
+            # Split BOARD1-BOARD2
+            if "BOARD1-BOARD2" in result_df.columns:
+                result_df.rename(columns={"BOARD1-BOARD2": "BOARD1"}, inplace=True)
+                result_df[["BOARD1", "BOARD2"]] = result_df["BOARD1"].str.split(" ", n=1, expand=True).fillna("")
+
+            # RRU DOWN STATUS Calculation
+            result_df["RRU DOWN STATUS"] = result_df["Op. State"].apply(
+                lambda x: "OK" if str(x).startswith("1") else None
+            )
+            result_df["RRU DOWN STATUS"] = result_df.apply(
+                lambda row: row["RRU DOWN STATUS"] if row["RRU DOWN STATUS"] else f"NOT OK",
+                axis=1
+            )
+
+            all_files_df = pd.concat([all_files_df, result_df], axis=0)
+
+        # Save to Excel
         timestamp = datetime.now().strftime("%Y-%m-%d %H_%M_%S")
         output_directory = os.path.join(settings.MEDIA_ROOT, "OUTPUT")
         os.makedirs(output_directory, exist_ok=True)
@@ -282,7 +278,12 @@ def process_sdir_and_rru_status(request):
 
         download_url = os.path.join(settings.MEDIA_URL, "OUTPUT", file_name)
         return Response(
-            {"status": True, "message": "Successfully fetched the rru status...","download_url": download_url}, status=status.HTTP_200_OK
+            {
+                "status": True,
+                "message": "Successfully fetched the rru status...",
+                "download_url": download_url
+            },
+            status=status.HTTP_200_OK
         )
 
     except Exception as e:
