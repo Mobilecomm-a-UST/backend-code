@@ -241,7 +241,7 @@ def process_sdir_and_rru_status(request):
                     lambda x: x.split(",")[1].split("=")[1] if "," in x and "=" in x.split(",")[1] else x
                 )
 
-            # Merge DataFrames
+            ################################################################### Merge DataFrames ######################################################
             merge_cols = ["RRU CELL MO"] + [col for col in ["Node_ID", "IP ADDR"] if col in sdir_df.columns and col in st_rru_df.columns]
 
             result_df = pd.merge(sdir_df, st_rru_df, on=merge_cols, how="outer")
@@ -249,12 +249,12 @@ def process_sdir_and_rru_status(request):
             if result_df.empty:
                 result_df = pd.DataFrame(columns=['ID', 'RiL', 'Type', 'Res', 'MO1-MO2', 'BOARD1', 'BOARD2', 'AlmIDs Cells (States)', 'Issue (Failed checks)', 'IP ADDR', 'Node_ID', 'RRU CELL MO', 'Proxy', 'Adm State', 'Op. State', 'MO', 'RRU DOWN STATUS'])
 
-            # Split BOARD1-BOARD2
+            ####################################################################### Split BOARD1-BOARD2 ###################################################
             if "BOARD1-BOARD2" in result_df.columns:
                 result_df.rename(columns={"BOARD1-BOARD2": "BOARD1"}, inplace=True)
                 result_df[["BOARD1", "BOARD2"]] = result_df["BOARD1"].str.split(" ", n=1, expand=True).fillna("")
 
-            # RRU DOWN STATUS Calculation
+            ################################################################# RRU DOWN STATUS Calculation #######################################################
             result_df["RRU DOWN STATUS"] = result_df["Op. State"].apply(
                 lambda x: "OK" if str(x).startswith("1") else None
             )
@@ -264,8 +264,9 @@ def process_sdir_and_rru_status(request):
             )
 
             all_files_df = pd.concat([all_files_df, result_df], axis=0)
+            all_files_df.fillna("", inplace=True).replace('nan', '', inplace=True)
 
-        # Save to Excel
+        ################################################################ Save to Excel #######################################################
         timestamp = datetime.now().strftime("%Y-%m-%d %H_%M_%S")
         output_directory = os.path.join(settings.MEDIA_ROOT, "OUTPUT")
         os.makedirs(output_directory, exist_ok=True)
