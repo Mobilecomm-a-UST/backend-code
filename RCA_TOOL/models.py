@@ -72,6 +72,13 @@ class Daily_4G_KPI(models.Model):
     VoLTE_Inter_Frequency_Handover_Success_Ratio = models.FloatField(null=True, blank=True, default=0)
     VoLTE_Intra_LTE_Handover_Success_Ratio = models.FloatField(null=True, blank=True, default=0)
     MV_RRC_Setup_Success_Rate_DENOM = models.FloatField(null=True, blank=True, default=0)
+    
+    
+    MV_DL_User_Throughput_Kbps_CUBH = models.FloatField(null=True, blank=True, default=0)
+    Sams_Average_UE_Distance_KM = models.FloatField(null=True, blank=True, default=0)
+    
+    MV_VoLTE_Packet_Loss_UL_CBBH = models.FloatField(null=True, blank=True, default=0)
+    MV_VoLTE_Packet_Loss_DL_CBBH = models.FloatField(null=True, blank=True, default=0)
 
     def __str__(self):
         return self.Short_name
