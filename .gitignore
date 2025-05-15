@@ -1,1 +1,10 @@
 /media/
+
+# Ignore Python bytecode
+*.pyc
+__pycache__/
+
+# Ignore Django migrations folders (for all apps)
+**/migrations/
+**/migrations/*.py[cod]
+!**/migrations/__init__.py
