@@ -1229,7 +1229,7 @@ def kpi_trend_4g_api(request):
     current_df = filtered_df
 
     kpi =[
-            'MV_Radio_NW_Availability'
+            'MV_Radio_NW_Availability',
             'MV_4G_Data_Volume_GB', 
             'MV_RRC_Setup_Success_Rate', 
             'MV_RRC_Setup_Success_Rate_DENOM', 
@@ -1251,14 +1251,11 @@ def kpi_trend_4g_api(request):
             'MV_VoLTE_DCR', 
             'VoLTE_Inter_Frequency_Handover_Success_Ratio', 
             'VoLTE_Intra_LTE_Handover_Success_Ratio', 
-            'MV_VoLTE_Packet_Loss_UL', 
-            'MV_VoLTE_Packet_Loss_DL',   
+            'MV_VoLTE_Packet_Loss_UL_CBBH', 
+            'MV_VoLTE_Packet_Loss_DL_CBBH',   
             'MV_Packet_Loss_DL', 
             'MV_Packet_Loss_UL', 
             'MV_CSFB_Redirection_Success_Rate',
-            'dlRsBoost',
-            'RS_Power_dB',
-            'MV_eCell_Data_BH', 
         ]
 
     current_dates = current_df["Date"].unique()
@@ -1355,8 +1352,8 @@ def kpi_trend_4g_api(request):
             ('MV_VoLTE_DCR', 'week-1'),
             ('VoLTE_Inter_Frequency_Handover_Success_Ratio', 'week-1'),
             ('VoLTE_Intra_LTE_Handover_Success_Ratio', 'week-1'),
-            ('MV_VoLTE_Packet_Loss_UL', 'week-1'),
-            ('MV_VoLTE_Packet_Loss_DL', 'week-1'),  
+            ('MV_VoLTE_Packet_Loss_UL_CBBH', 'week-1'),
+            ('MV_VoLTE_Packet_Loss_DL_CBBH', 'week-1'),  
             ('MV_Packet_Loss_DL', 'week-1'),
             ('MV_Packet_Loss_UL', 'week-1'),
             ('MV_CSFB_Redirection_Success_Rate', 'week-1'),
@@ -1391,8 +1388,8 @@ def kpi_trend_4g_api(request):
             ('MV_VoLTE_DCR', 'week-2'),
             ('VoLTE_Inter_Frequency_Handover_Success_Ratio', 'week-2'),
             ('VoLTE_Intra_LTE_Handover_Success_Ratio', 'week-2'),
-            ('MV_VoLTE_Packet_Loss_UL', 'week-2'),  # Not present in original, may need correction
-            ('MV_VoLTE_Packet_Loss_DL', 'week-2'),  # Not present in original, may need correction
+            ('MV_VoLTE_Packet_Loss_UL_CBBH', 'week-2'),  # Not present in original, may need correction
+            ('MV_VoLTE_Packet_Loss_DL_CBBH', 'week-2'),  # Not present in original, may need correction
             ('MV_Packet_Loss_DL', 'week-2'),
             ('MV_Packet_Loss_UL', 'week-2'),
             ('MV_CSFB_Redirection_Success_Rate', 'week-2'),
