@@ -1642,7 +1642,7 @@ def get_table_data(request):
         current_datetime = datetime.now().strftime(
             "%Y%m%d_%H%M%S"
         )  # getting original filename
-        new_filename = f"{node_id[0]}_{filename.replace(".txt", '')}_{current_datetime}.txt"  # renaming file with node_id prefix
+        new_filename = f"{node_id[0]}_{filename.replace('.txt', '')}_{current_datetime}.txt"  # renaming file with node_id prefix
         path = os.path.join(dir_path, new_filename)  # creating final path
 
         ########################################## CELL RELATION SCRIPT ###################################################################

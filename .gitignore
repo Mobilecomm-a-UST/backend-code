@@ -8,3 +8,5 @@ __pycache__/
 **/migrations/
 **/migrations/*.py[cod]
 !**/migrations/__init__.py
+*.pyc
+__pycache__/
