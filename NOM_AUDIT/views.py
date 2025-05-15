@@ -1230,7 +1230,7 @@ def generate_site_scripts(request):
     distinct_4g_sitenames = df_planed_sites["MO Name"].unique()
     total_files_count = 0
 
-    df_planed_sites['Band_tech'] = df_planed_sites['Planned nomenclature'].apply(lambda x: find_band(x))
+    df_planed_sites['Band_tech'] = df_planed_sites['Planned nomenclature'].apply(lambda x: find_band(str(x)))
 
     fdd_string = """lbl EUtranCellFDD={old_cel_name}
 rset EUtranCellFDD={old_cel_name} EUtranCellFDDId {new_cel_name}
