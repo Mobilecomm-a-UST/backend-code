@@ -105,6 +105,8 @@ def old_del_trend(request):
             return Response(response)
 
     door_path = os.path.join(MEDIA_ROOT, "trends", "del", "del4G")
+    if not os.path.exists(door_path):
+        os.makedirs(door_path, exist_ok=True)
 
     for x in kpi:
         df_raw_kpi_4G[x] = df_raw_kpi_4G[x].replace(
@@ -589,14 +591,12 @@ def old_del_trend(request):
         if kpi_name == "MV_E-UTRAN Average CQI [CDBH]":
             overwrite(pivot_fdd, kpi_name, "EG", trend_ws)
 
-    save_wb_L2100 = os.path.join(
-        MEDIA_ROOT,
-        "trends",
-        "del",
-        "output",
-        "toBeZipped",
-        "out_DEL KPIs Submission_L2100.xlsx",
-    )
+    save_wb_L2100 = os.path.join(MEDIA_ROOT,"trends","del","output","toBeZipped","out_DEL KPIs Submission_L2100.xlsx")
+
+
+    # Ensure the directory exists before using the path
+    os.makedirs(os.path.dirname(save_wb_L2100), exist_ok=True)
+ 
     trend_wb_L2100.save(save_wb_L2100)
     save_wb_L2300 = os.path.join(
         MEDIA_ROOT,
@@ -606,6 +606,9 @@ def old_del_trend(request):
         "toBeZipped",
         "out_DEL KPIs Submission_L2300.xlsx",
     )
+    if not os.path.exists(save_wb_L2300):
+        os.makedirs(save_wb_L2300, exist_ok=True)
+        
     trend_wb_L2300.save(save_wb_L2300)
     save_wb_L1800 = os.path.join(
         MEDIA_ROOT,
@@ -615,6 +618,9 @@ def old_del_trend(request):
         "toBeZipped",
         "out_DEL KPIs Submission_L1800.xlsx",
     )
+    if not os.path.exists(save_wb_L1800):
+        os.makedirs(save_wb_L1800, exist_ok=True)
+        
     trend_wb_L1800.save(save_wb_L1800)
     save_wb_L900 = os.path.join(
         MEDIA_ROOT,
@@ -624,11 +630,16 @@ def old_del_trend(request):
         "toBeZipped",
         "out_DEL KPIs Submission_L900.xlsx",
     )
+    if not os.path.exists(save_wb_L900):
+        os.makedirs(save_wb_L900, exist_ok=True)
+        
     trend_wb_L900.save(save_wb_L900)
 
     ##############################2G##################
 
     door_path1 = os.path.join(MEDIA_ROOT, "trends", "del", "del2G")
+    if not os.path.exists(door_path1):
+        os.makedirs(door_path1, exist_ok=True)
 
     df_raw_kpi_2G["Short name"] = df_raw_kpi_2G["Short name"].fillna(method=("ffill"))
     df_raw_kpi_2G.columns.values[1] = "DATE"
@@ -646,6 +657,8 @@ def old_del_trend(request):
     message_2G = site_comparision(a, df_2G_site) 
 
     PsOs_gsm = os.path.join(door_path1, "process_outputs", "fill_2g.xlsx")
+    if not os.path.exists(PsOs_gsm):
+        os.makedirs(PsOs_gsm, exist_ok=True)
 
     df_raw_kpi_2G.to_excel(PsOs_gsm, index=False)
 
@@ -663,7 +676,7 @@ def old_del_trend(request):
     print(G2_filter)
 
 
-    G2Os_filter = os.path.join(door_path1, "process_outputs", "2Gfilter.xlsx")
+    G2Os_filter = os.path.join(door_path1, "process_outputs", "2Gfilter.xlsx") if os.path.exists(os.path.join(door_path1, "process_outputs", "2Gfilter.xlsx")) else os.makedirs(os.path.join(door_path1, "process_outputs", "2Gfilter.xlsx"),exist_ok=True)
     G2_filter.to_excel(G2Os_filter, index=False)
 
     df1 = pd.read_excel(G2Os_filter)
@@ -674,7 +687,8 @@ def old_del_trend(request):
         values=gsm, columns="DATE", index=["Shortname", "Site_ID"]
     )
 
-    G2Os_pivot = os.path.join(door_path1, "process_outputs", "G2_pivot.xlsx")
+    G2Os_pivot = os.path.join(door_path1, "process_outputs", "G2_pivot.xlsx") if os.path.exists(os.path.join(door_path1, "process_outputs", "G2_pivot.xlsx")) else os.makedirs(os.path.join(door_path1, "process_outputs", "G2_pivot.xlsx"),exist_ok=True)
+    
     G2_pivot.to_excel(G2Os_pivot)
 
     str_temp = os.path.join(door_path1, "template", "GSM KPI-OLD.xlsx")
