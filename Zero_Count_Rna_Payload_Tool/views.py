@@ -1255,7 +1255,10 @@ def kpi_trend_4g_api(request):
             'MV_VoLTE_Packet_Loss_DL',   
             'MV_Packet_Loss_DL', 
             'MV_Packet_Loss_UL', 
-            'MV_CSFB_Redirection_Success_Rate', 
+            'MV_CSFB_Redirection_Success_Rate',
+            'dlRsBoost',
+            'RS_Power_dB',
+            'MV_eCell_Data_BH', 
         ]
 
     current_dates = current_df["Date"].unique()
