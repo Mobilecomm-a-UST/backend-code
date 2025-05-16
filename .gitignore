@@ -12,18 +12,5 @@ __pycache__/
 **/migrations/
 **/migrations/*.py[cod]
 !**/migrations/__init__.py
-<<<<<<< HEAD
 *.pyc
 __pycache__/
-=======
-
-
-# Ignore all __pycache__ folders
-__pycache__/
-
-# Ignore all .pyc files (compiled Python files)
-*.pyc
-
-# Ignore virtual environment folder
-mcomenv/
->>>>>>> c759f131577cf5d2195e7592debf91e282f5ccc8
