@@ -4,7 +4,21 @@
 *.pyc
 __pycache__/
 
+*/__pycache__/
+
+
+
 # Ignore Django migrations folders (for all apps)
 **/migrations/
 **/migrations/*.py[cod]
 !**/migrations/__init__.py
+
+
+# Ignore all __pycache__ folders
+__pycache__/
+
+# Ignore all .pyc files (compiled Python files)
+*.pyc
+
+# Ignore virtual environment folder
+mcomenv/
