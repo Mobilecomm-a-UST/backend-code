@@ -308,6 +308,7 @@ def Daily_RAW_KPI_4G(request):
             "MV_DL User Throughput_Kbps [CDBH]",
             "MV_E-UTRAN Average CQI [CDBH]",
             "UL RSSI",
+            "UL RSSI [RSSI-SINR]",
             "UL RSSI PUCCH [CDBH]",
             "MV_Average number of used DL PRBs [CDBH]",
             "MV_RRC Setup Success Rate [CDBH]",
@@ -453,7 +454,7 @@ def Daily_RAW_KPI_4G(request):
                         MV_VoLTE_Packet_Loss_DL_CBBH=row[
                             "MV_VoLTE Packet Loss DL [CBBH]"
                         ],
-                        # MV_UL_RSSI_dBm_PRB = row[""],
+                        # UL_RSSI_Nokia_RSSI_SINR = row["UL RSSI [RSSI-SINR]"],
                     )
                     objects_to_create.append(obj)
             with transaction.atomic():
