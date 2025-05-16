@@ -1236,7 +1236,7 @@ def kpi_trend_4g_api(request):
             'MV_ERAB_Setup_Success_Rate', 
             'MV_PS_Drop_Call_Rate', 
             'MV_DL_User_Throughput_Kbps', 
-            'MV_DL_User_Throughput_CUBH', 
+            'MV_DL_User_Throughput_Kbps_CUBH', 
             'MV_UL_User_Throughput_Kbps', 
             'MV_Average_number_of_used_DL_PRBs', 
             'MV_Max_Connecteda_User', 
