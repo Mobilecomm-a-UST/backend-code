@@ -1,0 +1,21 @@
+{% extends "trend/base.html" %}
+{% load static %}
+{% block title%}Add category item{% endblock title%}
+{% block css %} <link rel="stylesheet" href="{% static 'css/trend/form.css' %}" />  {% endblock css%}
+{% block content%}
+<div id="form_body">
+<form method = "post" enctype = "multipart/form-data" id="form" >
+   <h2 style="text-align:center;">UPDATE {{band}} </h2>
+   {% csrf_token %}
+    
+    {{ form }}
+    <br>
+    <div id="frm_btns">
+   <button type="submit" class="btn" id="add">Submit</button>
+   <a href="{% url 'dpr_update' %}"> <button  type="button" id="cancel" class="btn">cancel</button >
+   </div>  
+</form>
+
+   </div>
+
+    {% endblock content%}

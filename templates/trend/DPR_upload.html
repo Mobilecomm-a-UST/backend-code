@@ -1,0 +1,31 @@
+{% extends "trend/base.html" %}
+{% load static %}
+{% block title%}Add category{% endblock title%}
+{% block css %} <link rel="stylesheet" href="{% static 'css/trend/DPR_upload.css' %}" />  {% endblock css%}
+{% block content%}
+
+<div id="form_body">
+  <div id="wrapper_download">
+      <a href="/{{path}}"> <button type=" submit " id='Download' class="btn"><i class="fa fa-download"></i>
+        Download Template</button>
+      </a>
+    
+  </div>
+<form method = "post" enctype = "multipart/form-data" id="form" >
+   <h2 style="text-align:center;">Upload DPR Keys</h2>
+    {% csrf_token %}
+    <label for="myfile">Select a file:</label>
+    <input type="file" id="myfile" name="myfile">
+    <br>
+  <div id="frm_btns"> <button type = "submit" class="btn" id="add">UPLOAD</button>
+    <a href="/"> <button id="cancel" class="btn" type="button">Cancel</button ></a>
+    </div>
+   </form>
+     {% for message in messages %}
+     
+        <h3 class="message" style="text-align:center;">{{message}}</h3>
+       
+     {% endfor %}
+
+   </div>
+  {% endblock content%}

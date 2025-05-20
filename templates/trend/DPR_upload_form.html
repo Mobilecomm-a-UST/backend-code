@@ -1,0 +1,62 @@
+{% extends "trend/base.html" %}
+{% load static %}
+{% block title%}Add category{% endblock title%}
+{% block css %} <link rel="stylesheet" href="{% static 'css/trend/DPR_circle_wise_upload.css' %}" />  {% endblock css%}
+{% block content%}
+
+<div id="form_body">
+  <div id="wrapper_download">
+    <a href="/{{path}}"> <button type=" submit " id='Download' class="btn"><i class="fa fa-download"></i>
+      Download Template</button>
+    </a>
+  
+</div>
+
+<form method = "post" enctype = "multipart/form-data" id="form" >
+    <h2 style="text-align:center;">Upload DPR</h2>
+     {% csrf_token %}
+     <label for="myfile">Select Dpr file:</label>
+     <input type="file" id="myfile" name="myfile" required >
+     <br>
+     <label for="soft_at">Select Soft AT Acceptance Proof file:</label>
+     <input type="file" id="soft_at" name="soft_at" required >
+     <br>
+     <label for="physical_at">Select Physical AT Acceptance Proof file:</label>
+     <input type="file" id="physical_at" name="physical_at" required >
+     <br>
+     <label>Select Performance AT Acceptance Proof file:</label>
+     <br>
+ 
+    
+     <label for="G1800">G1800:</label>
+     <input type="file" id="G1800" name="G1800">
+     <label for="L900">L900:</label>
+     <input type="file" id="L900" name="L900">
+     <label for="L1800">L1800:</label>
+     <input type="file" id="L1800" name="L1800">
+     <label for="L2300">L2300:</label>
+     <input type="file" id="L2300" name="L2300">
+     <label for="L2100">L2100:</label>
+     <input type="file" id="L2100" name="L2100">
+
+
+
+
+
+   <div id="frm_btns"> <button type = "submit" class="btn" id="add">UPLOAD</button>
+     <a href="/"> <button id="cancel" class="btn" type="button">Cancel</button ></a>
+     </div>
+    </form>
+      {% for message in messages %}
+      
+         <h3 class="message" style="text-align:center;">{{message}}</h3>
+        
+      {% endfor %}
+ 
+    </div>
+
+    
+
+    {% endblock %}
+
+  

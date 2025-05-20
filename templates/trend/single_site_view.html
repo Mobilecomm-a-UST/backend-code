@@ -1,0 +1,648 @@
+{% extends "trend/base.html" %} {% load static %} {% block css%}
+<link rel="stylesheet" href="{% static 'css/trend/single_site_view.css' %}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+{% endblock %}
+
+{% block content %}
+
+
+<h2 style=" text-align:center; margin-top: 10px;">{{object.SITE_ID}}</h2>
+
+<div class="super">
+
+  <div class="all-details">
+
+    <table>
+      <tbody>
+
+        <tr>
+          <td>
+            <h3>CIRCLE :</h3>
+          </td>
+          <td> {{object.CIRCLE}}</td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>BAND :</h3>
+          </td>
+          <td>
+            <p>{{object.BAND}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>Unique_SITE_ID :</h3>
+          </td>
+          <td>
+            <p>{{object.Unique_SITE_ID}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>TOCO_NAME :</h3>
+          </td>
+          <td>
+            <p>{{object.TOCO_NAME}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>Project :</h3>
+          </td>
+          <td>
+            <p>{{object.Project }}</p>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            <h3>MAPA   :</h3>
+          </td>
+          <td>
+            <p>{{object.MAPA_STATUS }}<div style="display: inline-block;width: 50%;"><form method = "post" enctype = "multipart/form-data" id="form" action="{% url 'mapa_single_site_update' object.id %}" > {% csrf_token %}
+              <select name="MAPA" id="cars">
+                <option value="OK">OK</option>
+                <option value="NOT OK">NOT OK</option>
+                
+              </select>
+               <button type="submit">submit</button></form></div></p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>
+              <pre>OA_(COMMERCIAL_TRAFFIC_
+PUT_ON_AIR)_(MS1)_DATE:</pre>
+            </h3>
+          </td>
+          <td>
+            <p>{{object.OA_COMMERCIAL_TRAFFIC_PUT_ON_AIR_MS1_DATE}}</p>
+          </td>
+        </tr>
+
+
+        <!-- ########################################### soft at ###########################################3     -->
+        {% if object.Soft_AT_Status == "ACCEPTED" %}
+
+        <tr>
+          <td>
+            <h3>SOFT_AT_ACCEPTANCE_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.SOFT_AT_ACCEPTANCE_DATE }}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3> SOFT_AT_ACCEPTANCE_MAIL:</h3>
+          </td>
+          <td>
+            <p><a href="{{object.SOFT_AT_ACCEPTANCE_MAIL.url}}">Download</a></p>
+          </td>
+        </tr>
+
+        {% endif %}
+
+
+        {% if object.Soft_AT_Status == "REJECTED" %}
+
+        <tr>
+          <td>
+            <h3>SOFT_AT_REJECTION_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.SOFT_AT_REJECTION_DATE}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>SOFT_AT_REJECTION_REASON:</h3>
+          </td>
+          <td>
+            <p>{{object.SOFT_AT_REJECTION_REASON}}</p>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            <h3>SOFT_AT_REJECTED_TAT_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.SOFT_AT_REJECTED_TAT_DATE}}</p>
+          </td>
+        </tr>
+
+        {% endif %}
+
+        {% if object.Soft_AT_Status == "OFFERED" %}
+
+        <tr>
+          <td>
+            <h3>SOFT_AT_OFFERED_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.SOFT_AT_OFFERED_DATE }}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>SOFT_AT_OFFERED_REMARKS:</h3>
+          </td>
+          <td>
+            <p>{{object.SOFT_AT_OFFERED_REMARKS}}</p>
+          </td>
+        </tr>
+
+        {% endif %}
+
+        {% if object.Soft_AT_Status == "PENDING" %}
+
+        <tr>
+          <td>
+            <h3>SOFT_AT_PENDING_REASON:</h3>
+          </td>
+          <td>
+            <p>{{object.SOFT_AT_PENDING_REASON}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>SOFT_AT_PENDING_REMARK:</h3>
+          </td>
+          <td>
+            <p>{{object.SOFT_AT_PENDING_REMARK}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>SOFT_AT_PENDING_TAT_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.SOFT_AT_PENDING_TAT_DATE}}</p>
+          </td>
+        </tr>
+
+        {% endif %}
+
+        <!-- #################################################pHYSICAL at############################### -->
+
+
+        {% if object.PHYSICAL_AT_Status == "ACCEPTED" %}
+
+        <tr>
+          <td>
+            <h3>PHYSICAL_AT_ACCEPTANCE_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.PHYSICAL_AT_ACCEPTANCE_DATE }}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3> PHYSICAL_AT_ACCEPTANCE_MAIL:</h3>
+          </td>
+          <td>
+            <p><a href="{{object.PHYSICAL_AT_ACCEPTANCE_MAIL.url}}">Download</a></p>
+          </td>
+        </tr>
+
+        {% endif %}
+
+
+        {% if object.PHYSICAL_AT_Status == "REJECTED" %}
+
+        <tr>
+          <td>
+            <h3>PHYSICAL_AT_REJECTION_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.PHYSICAL_AT_REJECTION_DATE}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>PHYSICAL_AT_REJECTION_REASON:</h3>
+          </td>
+          <td>
+            <p>{{object.PHYSICAL_AT_REJECTION_REASON}}</p>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            <h3>PHYSICAL_AT_REJECTED_TAT_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.PHYSICAL_AT_REJECTED_TAT_DATE}}</p>
+          </td>
+        </tr>
+
+        {% endif %}
+
+        {% if object.PHYSICAL_AT_Status == "OFFERED" %}
+
+        <tr>
+          <td>
+            <h3>PHYSICAL_AT_OFFERED_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.PHYSICAL_AT_OFFERED_DATE }}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>PHYSICAL_AT_OFFERED_REMARKS:</h3>
+          </td>
+          <td>
+            <p>{{object.PHYSICAL_AT_OFFERED_REMARKS}}</p>
+          </td>
+        </tr>
+
+        {% endif %}
+
+        {% if object.PHYSICAL_AT_Status == "PENDING" %}
+
+        <tr>
+          <td>
+            <h3>PHYSICAL_AT_PENDING_REASON:</h3>
+          </td>
+          <td>
+            <p>{{object.PHYSICAL_AT_PENDING_REASON}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>PHYSICAL_AT_PENDING_REMARK:</h3>
+          </td>
+          <td>
+            <p>{{object.PHYSICAL_AT_PENDING_REMARK}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>PHYSICAL_AT_PENDING_TAT_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.PHYSICAL_AT_PENDING_TAT_DATE}}</p>
+          </td>
+        </tr>
+
+        {% endif %}
+        <!-- ################################################# PERFORMANCE at ############################### -->
+
+
+        {% if object.Performance_AT_Status == "ACCEPTED" %}
+
+        <tr>
+          <td>
+            <h3>PERFORMANCE_AT_ACCEPTANCE_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.PERFORMANCE_AT_ACCEPTANCE_DATE }}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3> PERFORMANCE_AT_ACCEPTANCE_MAIL:</h3>
+          </td>
+          <td>
+            <p><a href="{{object.PERFORMANCE_AT_ACCEPTANCE_MAIL.url}}">Download</a></p>
+          </td>
+        </tr>
+
+        {% endif %}
+
+
+        {% if object.Performance_AT_Status == "REJECTED" %}
+
+        <tr>
+          <td>
+            <h3>PERFORMANCE_AT_REJECTION_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.PERFORMANCE_AT_REJECTION_DATE}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>PERFORMANCE_AT_REJECTION_REASON:</h3>
+          </td>
+          <td>
+            <p>{{object.PERFORMANCE_AT_REJECTION_REASON}}</p>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            <h3>PERFORMANCE_AT_REJECTED_TAT_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.PERFORMANCE_AT_REJECTED_TAT_DATE}}</p>
+          </td>
+        </tr>
+
+        {% endif %}
+
+        {% if object.Performance_AT_Status == "OFFERED" %}
+
+        <tr>
+          <td>
+            <h3>PERFORMANCE_AT_OFFERED_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.PERFORMANCE_AT_OFFERED_DATE }}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>PERFORMANCE_AT_OFFERED_REMARKS:</h3>
+          </td>
+          <td>
+            <p>{{object.PERFORMANCE_AT_OFFERED_REMARKS}}</p>
+          </td>
+        </tr>
+
+        {% endif %}
+
+        {% if object.Performance_AT_Status == "PENDING" %}
+
+        <tr>
+          <td>
+            <h3>PERFORMANCE_AT_PENDING_REASON:</h3>
+          </td>
+          <td>
+            <p>{{object.PERFORMANCE_AT_PENDING_REASON}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>PERFORMANCE_AT_PENDING_REMARK:</h3>
+          </td>
+          <td>
+            <p>{{object.PERFORMANCE_AT_PENDING_REMARK}}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <h3>PERFORMANCE_AT_PENDING_TAT_DATE:</h3>
+          </td>
+          <td>
+            <p>{{object.PERFORMANCE_AT_PENDING_TAT_DATE}} <div style="display: inline-block;width: 50%;"><form method = "post" enctype = "multipart/form-data" id="form" action="{% url 'performance_at_tat_date' object.id %}" > {% csrf_token %} <input type="date" name="tat_date"> <button type="submit">submit</button></form></div></p>
+          </td>
+        </tr>
+
+        {% endif %}
+      </tbody>
+    </table>
+
+    <!-- <div style="text-align: center;"> <a href="#" id="atc" class="btn">Add to Cart</a> <a href="#" id="bn"
+        class="btn">Buy Now</a></div> -->
+  </div>
+  <div class="at">
+    <div class="at_boxes soft_at">
+
+      <div class="dropdown">SOFT_AT_Status:</div>
+      <div class="dropbtn" onclick="myFunction1()">
+        <div>{{object.Soft_AT_Status}}</div> <i class="fa fa-caret-down"></i>
+      </div>
+
+
+      <div id="myDropdown1" class="dropdown-content">
+
+        {% if object.Soft_AT_Status != "ACCEPTED"%}
+        <a href="{% url 'soft_at_update' object.id 'ACCEPTED' %}">ACCEPTED</a>
+        {% endif %}
+        <a href="{% url 'soft_at_update' object.id 'REJECTED' %}">REJECTED</a>
+
+        <a href="{% url 'soft_at_update' object.id 'OFFERED' %}">OFFERED</a>
+
+        <a href="{% url 'soft_at_update' object.id 'PENDING' %}">PENDING</a>
+
+
+      </div>
+
+    </div>
+
+
+
+
+    <div class="at_boxes physical_at">
+
+      <div class="dropdown">PHYSICAL_AT_Status:</div>
+      <div class="dropbtn" onclick="myFunction2()">
+        <div>{{object.PHYSICAL_AT_Status}}</div> <i class="fa fa-caret-down"></i>
+      </div>
+
+      <div id="myDropdown2" class="dropdown-content">
+        {% if object.PHYSICAL_AT_Status != "ACCEPTED"%}
+        <a href="{% url 'physical_at_update' object.id 'ACCEPTED' %}">ACCEPTED</a>
+        {% endif %}
+        <a href="{% url 'physical_at_update' object.id 'REJECTED' %}">REJECTED</a>
+
+        <a href="{% url 'physical_at_update' object.id 'OFFERED' %}">OFFERED</a>
+
+        <a href="{% url 'physical_at_update' object.id 'PENDING' %}">PENDING</a>
+
+
+      </div>
+    </div>
+
+    <div class="at_boxes performane_at">
+
+      <div class="dropdown">Performance_AT_Status:</div>
+      <div class="dropbtn" onclick="myFunction3()">
+        <div>{{object.Performance_AT_Status}}</div> <i class="fa fa-caret-down"></i>
+      </div>
+      <div id="myDropdown3" class="dropdown-content">
+        {% if object.Performance_AT_Status != "ACCEPTED" %}
+        
+        <div class="dropbtn" onclick="myFunction31()">
+          <div>ACCEPTED</div></div>
+       
+        <div id="myDropdown31" class="dropdown-content tt col">
+            
+          {%  if "L1800" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'ACCEPTED' 'L1800' %}">L1800</a>
+          {% endif %}
+
+          {% if "L900" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'ACCEPTED' 'L900' %}">L900</a>
+          {% endif %}
+
+          {%  if "L1800" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'ACCEPTED' 'G1800' %}">G1800</a>
+          {% endif %}
+          {%  if "L2300" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'ACCEPTED' 'L2300' %}">L2300</a>
+          {% endif %}
+          {%  if "L2100" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'ACCEPTED' 'L2100' %}">L2100</a>
+          {% endif %}
+        </div> 
+        {% endif %}
+
+        <div class="dropbtn" onclick="myFunction32()">
+          <div>REJECTED</div></div>
+       
+        <div id="myDropdown32" class="dropdown-content tt col">
+          {%  if "L1800" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'REJECTED' 'L1800' %}">L1800</a>
+          {% endif %}
+
+          {%  if "L900" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'REJECTED' 'L900' %}">L900</a>
+          {% endif %}
+
+          {%  if "L1800" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'REJECTED' 'G1800' %}">G1800</a>
+          {% endif %}
+          {%  if "L2300" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'REJECTED' 'L2300' %}">L2300</a>
+          {% endif %}
+          {%  if "L2100" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'REJECTED' 'L2100' %}">L2100</a>
+          {% endif %}
+        </div>
+        
+        <div class="dropbtn" onclick="myFunction33()">
+          <div>OFFERED</div></div>
+       
+        <div id="myDropdown33" class="dropdown-content tt col">
+          {%  if "L1800" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'OFFERED' 'L1800' %}">L1800</a>
+          {% endif %}
+          {%  if "L900" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'OFFERED' 'L900' %}">L900</a>
+          {% endif %}
+
+          {%  if "L1800" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'OFFERED' 'G1800' %}">G1800</a>
+          {% endif %}
+          {%  if "L2300" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'OFFERED' 'L2300' %}">L2300</a>
+          {% endif %}
+          {%  if "L2100" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'OFFERED' 'L2100' %}">L2100</a>
+          {% endif %}
+        </div>
+       
+        <div class="dropbtn" onclick="myFunction34()">
+          <div >PENDING</div></div>
+       
+        <div id="myDropdown34" class="dropdown-content tt col">
+          {%  if "L1800" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'PENDING' 'L1800' %}">L1800</a>
+          {% endif %}
+          {%  if "L900" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'PENDING' 'L900' %}">L900</a>
+          {% endif %}
+
+          {%  if "L1800" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'PENDING' 'G1800' %}">G1800</a>
+          {% endif %}
+
+          {%  if "L2300" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'PENDING' 'L2300' %}">L2300</a>
+          {% endif %}
+
+          {%  if "L2100" in band_list %}
+          <a href="{% url 'performance_at_update' object.id 'PENDING' 'L2100' %}">L2100</a>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+
+</div>
+{% for message in messages %}
+
+<h3 class="message" style="text-align:center;">{{message}}</h3>
+
+{% endfor %}
+<!-- #############################################33-->
+<!-- <div class="dropdown">
+    <div onclick="myFunction()" class="dropbtn">{{object.Performance_AT_Status}}</div>
+    <div id="myDropdown" class="dropdown-content">
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div> -->
+
+<script>
+
+
+
+
+  // #################################################3
+
+  function myFunction1() {
+    document.getElementById("myDropdown1").classList.toggle("show");
+  }
+
+
+  function myFunction2() {
+    document.getElementById("myDropdown2").classList.toggle("show");
+  }
+  function myFunction3() {
+    document.getElementById("myDropdown3").classList.toggle("show");
+  }
+  function myFunction31() {
+    document.getElementById("myDropdown31").classList.toggle("show");
+  }
+  function myFunction32() {
+    document.getElementById("myDropdown32").classList.toggle("show");
+  }
+  function myFunction33() {
+    document.getElementById("myDropdown33").classList.toggle("show");
+  }
+  function myFunction34() {
+    document.getElementById("myDropdown34").classList.toggle("show");
+  }
+  // Close the dropdown if the user clicks outside of it
+  window.onclick = function (event) {
+    if (!event.target.matches('.dropbtn')) {
+      var dropdowns = document.getElementsByClassName("dropdown-content");
+      var i;
+      for (i = 0; i < dropdowns.length; i++) {
+        var openDropdown = dropdowns[i];
+        if (openDropdown.classList.contains('show')) {
+          openDropdown.classList.remove('show');
+        }
+      }
+    }
+  }
+
+</script>
+
+
+
+{% endblock %}

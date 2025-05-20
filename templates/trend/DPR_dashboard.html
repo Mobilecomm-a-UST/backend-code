@@ -1,0 +1,179 @@
+{% extends "trend/base.html" %}
+{% load static %}
+{% block title%}Add category item{% endblock title%}
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/trend/DPR_dashboard.css' %}" /> {% endblock css%}
+{% block content%}
+
+<div class="main-body">
+    <div class="">
+        <h2 style="text-align: center;">DASHBOARD</h2>
+    </div>
+    <div class="das-body">
+
+        <div class="soft_at das-box">
+
+            <h3 style="text-align: center;">Total Soft AT Done</h3>
+            <div class="data">
+                <div class="total">
+                    <div class="inner">
+                        <h1>{{total_soft_at_done}}</h1>
+                    </div>
+                </div>
+                <br>
+               <div  class="percent">Percentage: {{percent_soft_at_done}}%</div>
+               <div  class="percent"> Total Ms1 Site: {{total_no_site}}</div>
+               <div  class="percent"> Total Ms2 Site: {{Ms2_site}}</div>
+               <!-- <div  class="percent"> Percentage Ms2 Site: {{percent_ms2_site}}</div> -->
+               <div  class="percent"> Total MAPA: {{total_mapa}}</div>
+               {% if percent_ms2_site >= 90 %}
+               <div  class="percent"  style="color: greenyellow;"> Percentage Ms2 Site: {{percent_ms2_site}}%</div>
+               
+               {% endif %}
+
+               {% if percent_ms2_site < 90 and percent_ms2_site >= 80 %}
+               <div  class="percent"  style="color:  yellow;"> Percentage Ms2 Site: {{percent_ms2_site}}%</div>
+            
+               {% endif %}
+
+               {% if percent_ms2_site < 80 %}
+               <div  class="percent"  style="color: rgb(255, 92, 47);"> Percentage Ms2 Site: {{percent_ms2_site}}%</div>
+               
+               {% endif %}
+            </div>
+        </div>
+        <div class="physical_at das-box">
+
+            <h3 style="text-align: center;">Total Physical AT Done</h3>
+            <div class="data">
+                <div class="total">
+                    <div class="inner">
+
+                        <h1>{{total_physical_at_done}}</h1>
+                    </div>
+                </div>
+                <br>
+                <div class="percent">Percentage: {{percent_physical_at_done}}%</div>
+                <div  class="percent"> Total Ms1 Site: {{total_no_site}}</div>
+               <div  class="percent"> Total Ms2 Site: {{Ms2_site}}</div>
+               <!-- <div  class="percent"> Percentage Ms2 Site: {{percent_ms2_site}}</div> -->
+               <div  class="percent"> Total MAPA: {{total_mapa}}</div>
+                            {% if percent_ms2_site >= 90 %}
+                            <div  class="percent"  style="color: greenyellow;"> Percentage Ms2 Site: {{percent_ms2_site}}%</div>
+                            
+                            {% endif %}
+
+                            {% if percent_ms2_site < 90 and percent_ms2_site >= 80 %}
+                            <div  class="percent"  style="color:  yellow;"> Percentage Ms2 Site: {{percent_ms2_site}}%</div>
+                         
+                            {% endif %}
+
+                            {% if percent_ms2_site < 80 %}
+                            <div  class="percent"  style="color: rgb(255, 92, 47);"> Percentage Ms2 Site: {{percent_ms2_site}}%</div>
+                            
+                            {% endif %}
+            </div>
+        </div>
+
+        <div class="performance_at das-box">
+
+            <h3 style="text-align: center;">Total Performance AT Done</h3>
+            <div class="data">
+                <div class="total">
+                    <div class="inner">
+                        <h1>{{total_performance_at_done}}</h1>
+                    </div>
+                </div>
+                <br>
+               <div  class="percent"> Percentage: {{percent_performance_at_done}}%</div>
+               <div  class="percent"> Total Ms1 Site: {{total_no_site}}</div>
+               <div  class="percent"> Total Ms2 Site: {{Ms2_site}}</div>
+               <!-- <div  class="percent"> Percentage Ms2 Site: {{percent_ms2_site}}</div> -->
+               <div  class="percent"> Total MAPA: {{total_mapa}}</div>
+               {% if percent_ms2_site >= 90 %}
+               <div  class="percent"  style="color: greenyellow;"> Percentage Ms2 Site: {{percent_ms2_site}}%</div>
+               
+               {% endif %}
+
+               {% if percent_ms2_site < 90 and percent_ms2_site >= 80 %}
+               <div  class="percent"  style="color:  yellow;"> Percentage Ms2 Site: {{percent_ms2_site}}%</div>
+            
+               {% endif %}
+
+               {% if percent_ms2_site < 80 %}
+               <div  class="percent"  style="color: rgb(255, 92, 47);"> Percentage Ms2 Site: {{percent_ms2_site}}%</div>
+               
+               {% endif %}
+                
+            </div>
+        </div>
+
+    </div>
+
+    <!-- <div class="">
+        <p>Total Ms1 Site: {{total_no_site}}</p>
+    </div>
+    <div class="">
+        <p>Total Ms2 Site: {{Ms2_site}}</p>
+    </div> -->
+</div>
+<div class="only_status main-body" style="margin-top: 30px; margin-bottom: 30px;">
+
+
+    <div class="">
+        <h2 style="text-align: center;">ONLY STATUS</h2>
+    </div>
+    <div class="das-body">
+
+        <div class="soft_at das-box">
+
+            <h3 style="text-align: center;">Only Soft AT Done</h3>
+            <div class="data">
+                <div class="total">
+                    <div class="inner">
+                        <h1>{{total_soft_at_done}}</h1>
+                    </div>
+                </div>
+               
+            </div>
+        </div>
+        <div class="physical_at das-box">
+
+            <h3 style="text-align: center;">Only Physical AT Done</h3>
+            <div class="data">
+                <div class="total">
+                    <div class="inner">
+
+                        <h1>{{total_physical_at_done}}</h1>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="performance_at das-box">
+
+            <h3 style="text-align: center;">Only Performance AT Done</h3>
+            <div class="data">
+                <div class="total">
+                    <div class="inner">
+                        <h1>{{total_performance_at_done}}</h1>
+                    </div>
+                </div>
+                
+                
+            </div>
+        </div>
+
+    </div>
+
+    <!-- <div class="">
+        <p>Total Ms1 Site: {{total_no_site}}</p>
+    </div>
+    <div class="">
+        <p>Total Ms2 Site: {{Ms2_site}}</p>
+    </div> -->
+</div>
+</div>
+
+{% endblock content%}

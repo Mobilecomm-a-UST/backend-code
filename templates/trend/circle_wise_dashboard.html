@@ -1,0 +1,78 @@
+{% extends "trend/base.html" %}
+{% load static %}
+{% block title%}Add category item{% endblock title%}
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/trend/circle_wise_dashboard.css' %}" />
+<!-- <link rel="stylesheet" href="{% static 'css/trend/DPR_site_list.css' %}" /> -->
+{% endblock css%}
+{% block content%}
+
+<div id="body_content">
+    <div id="wrapper">
+
+        <table class="table" id="table">
+            <thead>
+                <tr>
+                    <th>CIRCLE</th>
+                    <th>Total Ms1 Site</th>
+                    <th>Total Soft At Done</th>
+                    <th>Total Physical At Done</th>
+                    <th>Total Performance At Done</th>
+                    <th>Percentage Soft At Done</th>
+                    <th>Percentage Physical At Done</th>
+                    <th>Percentage Performance At Done</th>
+                    <th>Total Ms2 Sites</th>
+                    <th>Percentage Ms2 Sites</th>
+                    <th>Total MAPA</th>
+
+
+
+                </tr>
+            </thead>
+            <tbody>
+
+
+
+
+
+
+                {% for k,v in data.items %}
+                <tr>
+                    <td> {{k}}</td>
+                     {% for i,j in v.items %}
+                     {% if i == "percent_soft_at_done" or i == "percent_physical_at_done" or i == "percent_performance_at_done" or i == "percent_ms2_site" %}
+                        {% if i == "percent_ms2_site" %}
+                            {% if j >= 90 %}
+                            <td style="background-color: greenyellow;">{{j}}%</td>
+                            {% endif %}
+
+                            {% if j < 90 and j >= 80 %}
+                            <td style="background-color: yellow;">{{j}}%</td>
+                            {% endif %}
+
+                            {% if j < 80 %}
+                            <td style="background-color: rgb(255, 92, 47); color: white;">{{j}}%</td>
+                            {% endif %}
+                            <!-- <td>{{j}}%</td> -->
+
+                        {% else %}
+                        <td>{{j}}%</td>
+                        {% endif %}
+                    {% else %}
+                    <td>{{j}}</td>
+                    {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+
+
+
+            </tbody>
+
+
+
+
+        </table>
+    </div>
+</div>
+{% endblock content%}

@@ -1,0 +1,87 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h2>Task Dashboard</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th> -->
+<!-- <th>Title</th> -->
+<!-- <th>User</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr>
+                <td>{{ task.id }}</td> -->
+<!-- <td>{{ task.title }}</td> -->
+<!-- <td>{{ task.user }}</td>
+                <td>{{ task.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+
+<body>
+    <h2>Task Dashboard</h2>
+    <div id="task-table-container">
+        <!-- Table content will be inserted here -->
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // Function to update the table with data fetched via AJAX
+            function updateTable() {
+                $.ajax({
+                    url: '/AUDIT_TOOL/api/tasks/', // URL of your API endpoint to fetch tasks
+                    method: 'GET',
+                    success: function (data) {
+                        // Clear the table content
+                        $('#task-table-container').empty();
+
+                        // Iterate over the fetched tasks and append rows to the table
+                        $.each(data, function (index, task) {
+                            $('#task-table-container').append(
+                                `<tr>
+                                    <td>${task.id}    </td>
+                                    <td>${task.user}   </td>
+                                     <td>${task.description}  </td>
+                                    <td>${task.status}    </td>
+                                    <td>${task.file_link}   </td>
+                                </tr>`
+                            );
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error fetching tasks:', error);
+                    }
+                });
+            }
+
+            // Initial table update
+            updateTable();
+
+            // Set interval to update the table periodically
+            setInterval(updateTable, 5000); // Update every 5 seconds (adjust as needed)
+        });
+    </script>
+</body>
+
+</html>
