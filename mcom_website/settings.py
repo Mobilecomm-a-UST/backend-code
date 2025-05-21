@@ -102,6 +102,8 @@ INSTALLED_APPS = [
     "Daily_Alarm_Status",
     "LKF_StatusApp",
     "gpl_audit_tool",
+    "Soft_AT_Nokia",
+    
 ]
 
 MIDDLEWARE = [
@@ -156,7 +158,9 @@ DATABASES = {
         "NAME": "mobilecomm",
         "USER": "postgres",
         "PASSWORD": "mcomnpn",
-        "HOST": "localhost",
+        'HOST':'localhost',
+         
+       
     }
 }
 # DATABASES = {

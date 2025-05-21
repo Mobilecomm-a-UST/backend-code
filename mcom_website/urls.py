@@ -81,6 +81,8 @@ urlpatterns = [
     path("dpr/sdir_status/", include("Daily_Alarm_Status.urls")),
     path("LKF/", include("LKF_StatusApp.urls")),
     path("gpl_audit/", include("gpl_audit_tool.urls")),
+    path("soft_at_nokia/", include("Soft_AT_Nokia.urls")),
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
