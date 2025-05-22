@@ -355,6 +355,7 @@ def LKF_Upload(request):
         os.makedirs(output_path_final, exist_ok=True)
         timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M")
         final_output = os.path.join(output_path_final, f'LKF_Status_output_{timestamp}.xlsx')
+        delete_existing_files(output_path_final)
 
         all_dfs = []
         for excel_file in excel_files_paths:
@@ -505,12 +506,8 @@ def LKF_Upload(request):
                                 else:
                                     template_df.loc[0, "TDD-10Mhz"] += count
                                 template_df.loc[0, "TDD Power"] = f"{power}W"
-
-
-
-
-                                    
-#save the output log file----
+                                 
+         #save the output log file----
             base_name = os.path.splitext(os.path.basename(excel_file))[0]
             output_filename = f"{base_name}_output.xlsx"
             individual_output_path = os.path.join(output_path_tem, output_filename)
@@ -522,17 +519,29 @@ def LKF_Upload(request):
 
         wb = load_workbook(final_output)
         ws = wb.active
-        header_fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid", fgColor="FFFFFF")
+
+        # Header formatting
+        header_fill = PatternFill(start_color="215967", end_color="215967", fill_type="solid")
         header_font = Font(color="FFFFFF", bold=True)
         center_alignment = Alignment(horizontal="center", vertical="center")
+
         for cell in ws[1]:
             cell.fill = header_fill
             cell.font = header_font
             cell.alignment = center_alignment
+
+        # Data formatting (bold and center alignment)
         for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
             for cell in row:
                 cell.alignment = center_alignment
+                cell.font = Font(bold=True)  # Bolding all data cells
+                yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+                
+                if str(cell.value).strip().upper() == "NA":
+                  cell.fill = yellow_fill
+
         wb.save(final_output)
+
 
         relative_path = os.path.join(f"LKF_StatusApp/LKF_Final_Output/LKF_Status_output_{timestamp}.xlsx").replace("\\", "/")
         download_url = request.build_absolute_uri(MEDIA_URL + relative_path)
