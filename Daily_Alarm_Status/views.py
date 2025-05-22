@@ -205,7 +205,7 @@ def process_sdir_and_rru_status(request):
                 line.strip()
                 for line in uploaded_file.read().decode("utf-8").splitlines()
             ]
-            
+
             print(f"Processing file: {uploaded_file.name}")
 
             # Extract sdir command data
@@ -218,7 +218,11 @@ def process_sdir_and_rru_status(request):
             )
 
             if sdir_df.empty:
-                sdir_df = pd.DataFrame(columns=['ID', 'RiL', 'Type', 'Res', 'MO1-MO2', 'BOARD1', 'BOARD2', 'AlmIDs Cells (States)', 'Issue (Failed checks)', 'IP ADDR', 'Node_ID', 'RRU CELL MO'])
+                sdir_df = pd.DataFrame(columns=[
+                    'ID', 'RiL', 'Type', 'Res', 'MO1-MO2', 'BOARD1', 'BOARD2',
+                    'AlmIDs Cells (States)', 'Issue (Failed checks)', 'IP ADDR',
+                    'Node_ID', 'RRU CELL MO'
+                ])
 
             sdir_df["RRU CELL MO"] = sdir_df["MO1-MO2"].apply(
                 lambda x: re.search(r"(RRU-\d+)", x).group(1) if re.search(r"RRU-(\d+)", x) else None
@@ -233,40 +237,50 @@ def process_sdir_and_rru_status(request):
                 file_content,
             )
 
+            ############## If st_rru_df is empty, mark as NOT FOUND IN <file> in RRU DOWN STATUS ###########
             if st_rru_df.empty:
                 print(f"st_rru_df is empty for file: {uploaded_file.name}")
-                st_rru_df = pd.DataFrame(columns=["Proxy", "Adm State", "Op. State", "MO", "RRU CELL MO"])
+                sdir_df["Proxy"] = ""
+                sdir_df["Adm State"] = ""
+                sdir_df["Op. State"] = ""
+                sdir_df["MO"] = ""
+                sdir_df["RRU DOWN STATUS"] = f"NOT FOUND IN {uploaded_file.name}"
+                result_df = sdir_df
             else:
                 st_rru_df["RRU CELL MO"] = st_rru_df["MO"].apply(
                     lambda x: x.split(",")[1].split("=")[1] if "," in x and "=" in x.split(",")[1] else x
                 )
 
-            ################################################################### Merge DataFrames ######################################################
-            merge_cols = ["RRU CELL MO"] + [col for col in ["Node_ID", "IP ADDR"] if col in sdir_df.columns and col in st_rru_df.columns]
+                ############## Merge DataFrames ##############
+                merge_cols = ["RRU CELL MO"] + [col for col in ["Node_ID", "IP ADDR"] if col in sdir_df.columns and col in st_rru_df.columns]
+                result_df = pd.merge(sdir_df, st_rru_df, on=merge_cols, how="outer")
 
-            result_df = pd.merge(sdir_df, st_rru_df, on=merge_cols, how="outer")
+                if result_df.empty:
+                    result_df = pd.DataFrame(columns=[
+                        'ID', 'RiL', 'Type', 'Res', 'MO1-MO2', 'BOARD1', 'BOARD2',
+                        'AlmIDs Cells (States)', 'Issue (Failed checks)', 'IP ADDR', 'Node_ID',
+                        'RRU CELL MO', 'Proxy', 'Adm State', 'Op. State', 'MO', 'RRU DOWN STATUS'
+                    ])
 
-            if result_df.empty:
-                result_df = pd.DataFrame(columns=['ID', 'RiL', 'Type', 'Res', 'MO1-MO2', 'BOARD1', 'BOARD2', 'AlmIDs Cells (States)', 'Issue (Failed checks)', 'IP ADDR', 'Node_ID', 'RRU CELL MO', 'Proxy', 'Adm State', 'Op. State', 'MO', 'RRU DOWN STATUS'])
+                ############## Split BOARD1-BOARD2 ##############
+                if "BOARD1-BOARD2" in result_df.columns:
+                    result_df.rename(columns={"BOARD1-BOARD2": "BOARD1"}, inplace=True)
+                    result_df[["BOARD1", "BOARD2"]] = result_df["BOARD1"].str.split(" ", n=1, expand=True).fillna("")
 
-            ####################################################################### Split BOARD1-BOARD2 ###################################################
-            if "BOARD1-BOARD2" in result_df.columns:
-                result_df.rename(columns={"BOARD1-BOARD2": "BOARD1"}, inplace=True)
-                result_df[["BOARD1", "BOARD2"]] = result_df["BOARD1"].str.split(" ", n=1, expand=True).fillna("")
+                ############## RRU DOWN STATUS Calculation ##############
+                result_df["RRU DOWN STATUS"] = result_df["Op. State"].apply(
+                    lambda x: "OK" if str(x).startswith("1") else None
+                )
+                result_df["RRU DOWN STATUS"] = result_df.apply(
+                    lambda row: row["RRU DOWN STATUS"] if row["RRU DOWN STATUS"] else f"NOT OK",
+                    axis=1
+                )
 
-            ################################################################# RRU DOWN STATUS Calculation #######################################################
-            result_df["RRU DOWN STATUS"] = result_df["Op. State"].apply(
-                lambda x: "OK" if str(x).startswith("1") else None
-            )
-            result_df["RRU DOWN STATUS"] = result_df.apply(
-                lambda row: row["RRU DOWN STATUS"] if row["RRU DOWN STATUS"] else f"NOT OK",
-                axis=1
-            )
-
+            ########## Combine result for current file into master DataFrame ##########
             all_files_df = pd.concat([all_files_df, result_df], axis=0)
             all_files_df.fillna("", inplace=True).replace('nan', '', inplace=True)
 
-        ################################################################ Save to Excel #######################################################
+        ############## Save to Excel ##############
         timestamp = datetime.now().strftime("%Y-%m-%d %H_%M_%S")
         output_directory = os.path.join(settings.MEDIA_ROOT, "OUTPUT")
         os.makedirs(output_directory, exist_ok=True)

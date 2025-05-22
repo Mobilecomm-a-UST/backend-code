@@ -1280,13 +1280,7 @@ def kpi_trend_4g_api(request):
     )
     week1_data = pd.DataFrame()
     week2_data = pd.DataFrame()
-    # for week in week_numbers:
-    #     if current_week - week == 1:
-    #         # week1_data = pd.DataFrame(objs.filter(Date__week=week))
-    #         week1_data = objs[objs['Week'] == week]
-    #     if current_week - week == 2:
-    #         # week2_data = pd.DataFrame(objs.filter(Date__week=week))
-    #         week2_data = objs[objs['Week'] == week]
+
     
     week1_data = objs[objs['Week'] == week_numbers[-2]]
     week2_data = objs[objs['Week'] == week_numbers[-3]]

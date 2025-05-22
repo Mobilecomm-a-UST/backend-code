@@ -1,6 +1,6 @@
 /media/
 
-# Ignore Python bytecode
+#..............................................Ignore Python bytecode......................................
 *.pyc
 __pycache__/
 
@@ -8,9 +8,14 @@ __pycache__/
 
 
 
-# Ignore Django migrations folders (for all apps)
+#................................. Ignore Django migrations folders (for all apps) ........................
 **/migrations/
 **/migrations/*.py[cod]
 !**/migrations/__init__.py
 *.pyc
 __pycache__/
+
+
+#.................................................. python Envoirment .......................................................................................
+
+/mcomenv/

@@ -81,6 +81,7 @@ urlpatterns = [
     path("LKF/", include("LKF_StatusApp.urls")),
     path("gpl_audit/", include("gpl_audit_tool.urls")),
     path("Soft_AT_Checklist_Ericsson/", include("Soft_AT_Checklist_Ericsson.urls")),
+    path("LTE/", include("LTE_Integration_Scripting_Automtion.urls")),
 ]
 
 if settings.DEBUG:
