@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from datetime import datetime
 import os
 import json
+from LTE_Integration_Scripting_Automtion.remote_commision_scripts import RRU_2219_B0_B1_B3_2X2, RRU_4412_4418_4427_4471_4X4, RRU_6626_6X6, RRU_8863_8X8, SiteBasic_script, site_equipment_script,RBSSummary_script
 from LTE_Integration_Scripting_Automtion.remote_integration_scripts import *
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 import pandas as pd
@@ -330,6 +331,9 @@ def generate_integration_script(request):
         try:
             integration_file = pd.ExcelFile(integration_input_file)
             lte_df = integration_file.parse("LTE-CELL")
+            rru_hw_df = integration_file.parse("Radio_HW")
+            site_basic_df = integration_file.parse("Site_Basic")
+            nr_cell_df = integration_file.parse("NR-CELL")
         except Exception as e:
             return Response(
                 {"status": "ERROR", "message": f"Failed to parse Excel file: {str(e)}"},
@@ -338,7 +342,8 @@ def generate_integration_script(request):
 
         base_path_url = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
         os.makedirs(base_path_url, exist_ok=True)
-
+        siteBasicFilePath = ''
+        siteEquipmentFilePath = ''
         ################################################ Define required columns for fdd and tdd also ###############################################################
         columns_to_needed_fdd = list(
             dict.fromkeys(
@@ -428,7 +433,7 @@ def generate_integration_script(request):
             for node in unique_nodes
         }
 
-        site_basic_df = integration_file.parse("Site_Basic")
+        
 
         ############################################################## KK Circle-specific Script Generation ####################################################################
         if circle == "KK":
@@ -523,7 +528,7 @@ def generate_integration_script(request):
             with open(OR_LTE_Relation_LTE_ONLY_site_Enter_Gnb_ID_path, "a") as file:
                 file.write(OR_LTE_Relation_LTE_ONLY_site_Enter_Gnb_ID + "\n")
             # .......................................................................... NRCELL CONFIGRATION FOR CELL CREATION IN 5G ................................................
-            nr_cell_df = integration_file.parse("NR-CELL")
+            
             for node in nr_cell_df["gNodeBName"].unique():
                 nr_cell_df: pd.DataFrame = nr_cell_df[nr_cell_df["gNodeBName"] == node]
                 nr_cell_df.rename(
@@ -565,8 +570,116 @@ def generate_integration_script(request):
                         )
                     )
                     file.close()
+            ############################################################### creating the SiteBasic script for 4G and 5G ###############################################################
+            for node in site_basic_df["eNodeBName"].unique():
+                commision_scripts_dir = os.path.join(base_path_url, f'{node}_Commissioning_Scripts')
+                current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                os.makedirs(commision_scripts_dir, exist_ok=True)
+                sitebasic_df: pd.DataFrame = site_basic_df[site_basic_df["eNodeBName"] == node]
+                sitebasic_df_path = os.path.join(commision_scripts_dir, f"01_SiteBasic_{node}_{current_time}.xml")
+                siteBasicFilePath =  sitebasic_df_path\
+                   .replace(base_path_url + os.sep, '') \
+                    .replace('\\', '/')
 
-            site_basic_df
+                for idx, row in sitebasic_df.iterrows():
+                    with open(sitebasic_df_path, "a") as file:
+                        file.write(
+                            SiteBasic_script.format(
+                                eNodeBName = row['eNodeBName'],
+                                fieldReplaceableUnitId = row['fieldReplaceableUnitId'],
+                                tnPortId = row['tnPortId'],
+                                OAM_vlan = row['OAM_vlan'],
+                                OAM_IP = row['OAM_IP'],
+                                LTE_UP_IP = row['LTE_UP_IP'],
+                                NR_ENDC_IP = row['NR_ENDC_IP'],
+                                LTE_UP_GW = row['LTE_UP_GW'],
+                                OAM_GW = row['OAM_GW']
+                            )
+                        )
+                        file.close()
+            
+            for node in rru_hw_df["eNodeBName"].unique():
+                commissioning_scripts_dir = os.path.join(base_path_url, f'{node}_Commissioning_Scripts')
+                current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                os.makedirs(commissioning_scripts_dir, exist_ok=True)
+    
+                site_specific_rru_df = rru_hw_df[rru_hw_df["eNodeBName"] == node]
+                rru_hw_path = os.path.join(commissioning_scripts_dir, f"02_SiteEquipment_{node}_{current_time}.xml")
+                site_equipment_text = ''
+                siteEquipmentFilePath = rru_hw_path \
+                    .replace(base_path_url + os.sep, '') \
+                    .replace('\\', '/')
+
+
+                print("site_equipment_path",siteEquipmentFilePath)
+                site_basic_df_N = site_basic_df[site_basic_df["eNodeBName"] == node]
+                if site_basic_df_N.empty:
+                    print(f"Warning: No basic site data found for {node}")
+                    continue
+
+                site_basic_df_N.rename(columns={'Phy SiteID/Userlabel': 'Phy_SiteID_Userlabel'}, inplace=True)
+    
+                site_equipment_script_text = site_equipment_script.format(
+                    fieldReplaceableUnitId=site_basic_df_N['fieldReplaceableUnitId'].values[0],
+                    Phy_SiteID_Userlabel=site_basic_df_N['Phy_SiteID_Userlabel'].values[0]
+                )
+
+                for idx, row in site_specific_rru_df.iterrows():
+                    radio_type = row['Radio_Type']
+    
+                    if radio_type.startswith('RRU22'):
+                        site_equipment_text += RRU_2219_B0_B1_B3_2X2.format(
+                            eNodeBName=row['eNodeBName'],
+                            Radio_UnitId=row['Radio_UnitId'],
+                            fieldReplaceableUnitId=site_basic_df_N['fieldReplaceableUnitId'].values[0],
+                            RiPort_BB=row['RiPort_BB'],
+                            RiPort_Radio=row['RiPort_Radio'],
+                            sectorEquipmentFunctionId=row['sectorEquipmentFunctionId']
+                        )
+                    elif radio_type.startswith('RRU44'):
+                        site_equipment_text += RRU_4412_4418_4427_4471_4X4.format(
+                            eNodeBName=row['eNodeBName'],
+                            Radio_UnitId=row['Radio_UnitId'],
+                            fieldReplaceableUnitId=site_basic_df_N['fieldReplaceableUnitId'].values[0],
+                            RiPort_BB=row['RiPort_BB'],
+                            RiPort_Radio=row['RiPort_Radio'],
+                            sectorEquipmentFunctionId=row['sectorEquipmentFunctionId']
+                        )
+                    elif radio_type.startswith('RRU66'):
+                        site_equipment_text += RRU_6626_6X6.format(
+                            eNodeBName=row['eNodeBName'],
+                            Radio_UnitId=row['Radio_UnitId'],
+                            fieldReplaceableUnitId=site_basic_df_N['fieldReplaceableUnitId'].values[0],
+                            RiPort_BB=row['RiPort_BB'],
+                            RiPort_Radio=row['RiPort_Radio'],
+                            sectorEquipmentFunctionId=row['sectorEquipmentFunctionId']
+                        )
+                    elif radio_type.startswith('RRU88'):
+                        site_equipment_text += RRU_8863_8X8.format(
+                            eNodeBName=row['eNodeBName'],
+                            Radio_UnitId=row['Radio_UnitId'],
+                            fieldReplaceableUnitId=site_basic_df_N['fieldReplaceableUnitId'].values[0],
+                            RiPort_BB=row['RiPort_BB'],
+                            RiPort_Radio=row['RiPort_Radio'],
+                            sectorEquipmentFunctionId=row['sectorEquipmentFunctionId']
+                        )
+
+                with open(rru_hw_path, 'a') as file:
+                    file.write(site_equipment_script_text + "\n" + site_equipment_text + "\n")
+
+                
+                site_equipment_script_path = os.path.join(commissioning_scripts_dir, f"RBSSummary_{node}_{current_time}.xml")
+                with open(site_equipment_script_path, 'a') as file:
+                    file.write(
+                        RBSSummary_script.format(
+                            siteEquipmentFilePath = siteEquipmentFilePath,
+                            siteBasicFilePath = siteBasicFilePath,
+                        )
+                    )
+
+
+
+            
         ###############################################################################################################################################################################################################
         elif circle == "TN":
             # ..................................................... TN 4G Script ....................................................#
