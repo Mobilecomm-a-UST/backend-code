@@ -102,6 +102,7 @@ INSTALLED_APPS = [
     "Daily_Alarm_Status",
     "LKF_StatusApp",
     "gpl_audit_tool",
+    "LTE_Integration_Scripting_Automtion",
 ]
 
 MIDDLEWARE = [
