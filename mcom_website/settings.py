@@ -103,6 +103,7 @@ INSTALLED_APPS = [
     "LKF_StatusApp",
     "gpl_audit_tool",
     "Soft_AT_Checklist_Ericsson",
+    "LTE_Integration_Scripting_Automtion",
 ]
 
 MIDDLEWARE = [
