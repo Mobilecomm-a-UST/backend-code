@@ -102,6 +102,8 @@ INSTALLED_APPS = [
     "Daily_Alarm_Status",
     "LKF_StatusApp",
     "gpl_audit_tool",
+    "Soft_AT_Checklist_Ericsson",
+    "LTE_Integration_Scripting_Automtion",
 ]
 
 MIDDLEWARE = [

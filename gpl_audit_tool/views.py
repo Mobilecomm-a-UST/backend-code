@@ -738,11 +738,12 @@ def get_table_data(request):
                     print(f"Error processing TDD cells: {e}")
 
             all_dfs["cell_data"][i] = pd.concat([df_fdd, df_tdd], ignore_index=True)
+            print(all_dfs)
 
         ############################################################### Merge all DataFrames ##############################################################
         all_merged_df = {
             key: pd.concat(dfs, ignore_index=False, axis=0) if dfs else pd.DataFrame()
-            for key, dfs in all_dfs.items()
+            for key, dfs in all_dfs.items() if key != 'CellRelation'
         }
 
         ################################################################ Prepare post cell data ###########################################################
@@ -1104,9 +1105,6 @@ def get_table_data(request):
                     )
 
                 elif sheet_name == "EutranfreqRelation":
-
-
-             
                     pre_freq_relation_df = pre_df_data.parse(sheet_name)
                     cell_id_df = all_merged_df["Summary"]
                     post_freq_relation_df = df.copy()
@@ -1505,7 +1503,7 @@ def get_table_data(request):
             )
 
             mos_content.extend(generate_crn_section(df_crn))
-            print("relation cen cell realtion:- ", crn_cell_relation_df)
+            # print("relation cen cell realtion:- ", crn_cell_relation_df)
             # if not cell_rel_df.empty:
             #     mos_content.append(
             #         f"""\n ############################## CELL RELATION SCRIPT ##################################### \n """
@@ -1647,52 +1645,52 @@ def get_table_data(request):
 
         ########################################## CELL RELATION SCRIPT ###################################################################
 
-        cell_relation_df = pre_post_df_data.parse("CellRelation")
+        # cell_relation_df = pre_post_df_data.parse("CellRelation")
 
-        cell_relation_df = cell_relation_df[cell_relation_df["MO"] != "OK"]
-        crn_cell_relation_df = cell_relation_df[
-            cell_relation_df["Node_ID"] == "cell not found in post"
-        ]
-        cell_relation_df.drop(
-            columns=["cellId", "Status", "Node_ID", "neighborCellRef"], inplace=True
-        )
+        # cell_relation_df = cell_relation_df[cell_relation_df["MO"] != "OK"]
+        # crn_cell_relation_df = cell_relation_df[
+        #     cell_relation_df["Node_ID"] == "cell not found in post"
+        # ]
+        # cell_relation_df.drop(
+        #     columns=["cellId", "Status", "Node_ID", "neighborCellRef"], inplace=True
+        # )
 
-        crn_cell_relation_df.drop(
-            columns=["cellId", "Status", "Node_ID", "neighborCellRef"], inplace=True
-        )
-        id_vars = ["MO"]
-        value_vars = [col for col in cell_relation_df.columns if col not in id_vars]
-        cell_relation_df = cell_relation_df.melt(
-            id_vars=id_vars,
-            value_vars=value_vars,
-            var_name="Relation Parameter",
-            value_name="Value",
-        )
-        crn_cell_relation_df = crn_cell_relation_df.melt(
-            id_vars=id_vars,
-            value_vars=value_vars,
-            var_name="Relation Parameter",
-            value_name="Value",
-        )
+        # crn_cell_relation_df.drop(
+        #     columns=["cellId", "Status", "Node_ID", "neighborCellRef"], inplace=True
+        # )
+        # id_vars = ["MO"]
+        # value_vars = [col for col in cell_relation_df.columns if col not in id_vars]
+        # cell_relation_df = cell_relation_df.melt(
+        #     id_vars=id_vars,
+        #     value_vars=value_vars,
+        #     var_name="Relation Parameter",
+        #     value_name="Value",
+        # )
+        # crn_cell_relation_df = crn_cell_relation_df.melt(
+        #     id_vars=id_vars,
+        #     value_vars=value_vars,
+        #     var_name="Relation Parameter",
+        #     value_name="Value",
+        # )
 
         # cell_relation_df["Value"] = cell_relation_df["Value"].apply(
         #     lambda x: str(x).split("|")[0] if "|" in str(x) else x
         # )
 
-        cell_relation_df = cell_relation_df[
-            (
-                cell_relation_df["Value"]
-                .astype(str)
-                .str.contains(r"\|", regex=True, na=False)
-            )
-        ]
+        # cell_relation_df = cell_relation_df[
+        #     (
+        #         cell_relation_df["Value"]
+        #         .astype(str)
+        #         .str.contains(r"\|", regex=True, na=False)
+        #     )
+        # ]
 
-        cell_relation_df.drop_duplicates(
-            subset=["MO", "Relation Parameter"], inplace=True
-        )
+        # cell_relation_df.drop_duplicates(
+        #     subset=["MO", "Relation Parameter"], inplace=True
+        # )
 
-        cell_relation_df = cell_relation_df[cell_relation_df["MO"] != "Missing"]
-        cell_relation_df.sort_values(by="MO", inplace=True)
+        # cell_relation_df = cell_relation_df[cell_relation_df["MO"] != "Missing"]
+        # cell_relation_df.sort_values(by="MO", inplace=True)
 
         generate_mos_file(
             eutran_freq_relation_df,
@@ -1702,7 +1700,7 @@ def get_table_data(request):
             output_file=path,
         )
 
-        print(cell_relation_df)
+        # print(cell_relation_df)
 
         # download url
         relative_url = path.replace(str(settings.MEDIA_ROOT), "").lstrip("/")
