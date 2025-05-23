@@ -396,35 +396,33 @@ def generate_integration_script(request):
 
         ############################################################# Generate FDD/TDD Cell Scripts ####################################################################
         lte_df["earfcnul"] = lte_df["earfcnul"].astype("Int64")
-        for _, row in lte_df.iterrows():
-            node_name = row.get("eNodeBName", "UnknownNode")
+        unique_nodes = lte_df["eNodeBName"].dropna().unique()
+
+        for node_name in unique_nodes:
             current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-            node_dir = os.path.join(
-                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
-            )
-            node_dir_5g = os.path.join(
-                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "NR_5G"
-            )
+            node_dir = os.path.join(base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G")
+            node_dir_5g = os.path.join(base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "NR_5G")
             os.makedirs(node_dir, exist_ok=True)
-            unique_nodes = lte_df["eNodeBName"].unique()
+            os.makedirs(node_dir_5g, exist_ok=True)
+            node_rows = lte_df[lte_df["eNodeBName"] == node_name]
+            output_file_path = os.path.join(node_dir, f"3 Cell_Def_script_{node_name}_{current_time}.txt")
+            script_lines = []
+            for _, row in node_rows.iterrows():
+                cell_id = row.get("eUtranCellFDDId", "")
 
-            if any(
-                f in row.get("eUtranCellFDDId", "") for f in ["_F1_", "_F3_", "_F8_"]
-            ):
-                fdd_file_name = f"3 Cell_Def_script_{node_name}_{current_time}.txt"
-                formatted_text = fdd_cell_script.format(
-                    **{key: row.get(key, "") for key in columns_to_needed_fdd}
-                )
-                with open(os.path.join(node_dir, fdd_file_name), "a") as file:
-                    file.write(formatted_text + "\n")
-
-            elif any(t in row.get("eUtranCellFDDId", "") for t in ["_T1_", "_T2_"]):
-                tdd_file_name = f"3 Cell_Def_script_{node_name}_{current_time}.txt"
-                formatted_text = tdd_cell_script.format(
-                    **{key: row.get(key, "") for key in columns_to_needed_tdd}
-                )
-                with open(os.path.join(node_dir, tdd_file_name), "a") as file:
-                    file.write(formatted_text + "\n")
+                if any(f in cell_id for f in ["_F1_", "_F3_", "_F8_"]):
+                    formatted = fdd_cell_script.format(
+                        **{key: row.get(key, "") for key in columns_to_needed_fdd}
+                    )
+                    script_lines.append(formatted)
+                elif any(t in cell_id for t in ["_T1_", "_T2_"]):
+                    formatted = tdd_cell_script.format(
+                        **{key: row.get(key, "") for key in columns_to_needed_tdd}
+                    )
+                    script_lines.append(formatted)
+            if script_lines:
+                with open(output_file_path, "w") as file:
+                    file.write("\n".join(script_lines) + "\n")
 
         ##################################################################### Map Node -> Cell IDs ############################################################################
         unique_nodes = lte_df["eNodeBName"].unique()
@@ -501,75 +499,74 @@ def generate_integration_script(request):
             ############################################################################### 5G Cell Scripts ##########################################################################
             rru_5G_creation = rru_5G_creation_xml
             os.makedirs(node_dir_5g, exist_ok=True)
+            if not nr_cell_df.empty:
+                rru_5g_creation_path = os.path.join(node_dir_5g, f"1_5G RRU creation.xml")
+                with open(rru_5g_creation_path, "a") as file:
+                    file.write(rru_5G_creation + "\n")
 
-            rru_5g_creation_path = os.path.join(node_dir_5g, f"1_5G RRU creation.xml")
-            with open(rru_5g_creation_path, "a") as file:
-                file.write(rru_5G_creation + "\n")
-
-            sctp_5g_endpoint_path = os.path.join(
-                node_dir_5g, f"3_5G Sctp Endpoint Creation.txt"
-            )
-            with open(sctp_5g_endpoint_path, "a") as file:
-                file.write(sctp_5g_endpoint_creation + "\n")
-
-            Standalone_LTE_TERM_Enter_NR_IP_path = os.path.join(
-                node_dir_5g, f"4_Standalone_LTE_TERM_Enter NR IP.mos"
-            )
-            with open(Standalone_LTE_TERM_Enter_NR_IP_path, "a") as file:
-                file.write(Standalone_LTE_TERM_Enter_NR_IP + "\n")
-
-            NR_GPL_LMS_path = os.path.join(node_dir_5g, f"5_NR_GPL_LMS.txt")
-            with open(NR_GPL_LMS_path, "a") as file:
-                file.write(nr_gpl_lms_script + "\n")
-
-            OR_LTE_Relation_LTE_ONLY_site_Enter_Gnb_ID_path = os.path.join(
-                node_dir_5g, f"6_OR_LTE-Relation-LTE-ONLY-site_Enter Gnb ID.txt"
-            )
-            with open(OR_LTE_Relation_LTE_ONLY_site_Enter_Gnb_ID_path, "a") as file:
-                file.write(OR_LTE_Relation_LTE_ONLY_site_Enter_Gnb_ID + "\n")
-            # .......................................................................... NRCELL CONFIGRATION FOR CELL CREATION IN 5G ................................................
-            
-            for node in nr_cell_df["gNodeBName"].unique():
-                nr_cell_df: pd.DataFrame = nr_cell_df[nr_cell_df["gNodeBName"] == node]
-                nr_cell_df.rename(
-                    columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True
+                sctp_5g_endpoint_path = os.path.join(
+                    node_dir_5g, f"3_5G Sctp Endpoint Creation.txt"
                 )
-                nr_cell_df_path = os.path.join(node_dir_5g, f"2_5G Cell creation.txt")
-                gnbid = nr_cell_df["gNBId"].unique()[0]
-                print(nr_cell_df)
+                with open(sctp_5g_endpoint_path, "a") as file:
+                    file.write(sctp_5g_endpoint_creation + "\n")
 
-                gnbdu_fuction_element = ""
-                gnbcucp_fuction_element = ""
+                Standalone_LTE_TERM_Enter_NR_IP_path = os.path.join(
+                    node_dir_5g, f"4_Standalone_LTE_TERM_Enter NR IP.mos"
+                )
+                with open(Standalone_LTE_TERM_Enter_NR_IP_path, "a") as file:
+                    file.write(Standalone_LTE_TERM_Enter_NR_IP + "\n")
 
-                for idx, row in nr_cell_df.iterrows():
-                    gnbdu_fuction_element += KK_GNBDUFUNCTION_ELEMENT.format(
-                        nRSectorCarrierId=row["nRSectorCarrierId"],
-                        arfcnDL=row["arfcnDL"],
-                        arfcnUL=row["arfcnUL"],
-                        bSChannelBwDLUL=row["bSChannelBwDL-UL"],
-                        configuredMaxTxPower=row["configuredMaxTxPower"],
-                        Latitude=row["Latitude"],
-                        Longitude=row["Longitude"],
-                        sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
-                        gUtranCell=row["gUtranCell"],
-                        cellLocalId=row["cellLocalId"],
-                        nRPCI=row["nRPCI"],
-                        nRTAC=row["nRTAC"],
+                NR_GPL_LMS_path = os.path.join(node_dir_5g, f"5_NR_GPL_LMS.txt")
+                with open(NR_GPL_LMS_path, "a") as file:
+                    file.write(nr_gpl_lms_script + "\n")
+
+                OR_LTE_Relation_LTE_ONLY_site_Enter_Gnb_ID_path = os.path.join(
+                    node_dir_5g, f"6_OR_LTE-Relation-LTE-ONLY-site_Enter Gnb ID.txt"
+                )
+                with open(OR_LTE_Relation_LTE_ONLY_site_Enter_Gnb_ID_path, "a") as file:
+                    file.write(OR_LTE_Relation_LTE_ONLY_site_Enter_Gnb_ID + "\n")
+            # .......................................................................... NRCELL CONFIGRATION FOR CELL CREATION IN 5G ................................................
+                for node in nr_cell_df["gNodeBName"].unique():
+                    nr_cell_df: pd.DataFrame = nr_cell_df[nr_cell_df["gNodeBName"] == node]
+                    nr_cell_df.rename(
+                        columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True
                     )
+                    nr_cell_df_path = os.path.join(node_dir_5g, f"2_5G Cell creation.txt")
+                    gnbid = nr_cell_df["gNBId"].unique()[0]
+                    print(nr_cell_df)
 
-                    gnbcucp_fuction_element += KK_GNBCUCPFUNCTION_ELEMENT.format(
-                        gUtranCell=row["gUtranCell"],
-                        cellLocalId=row["cellLocalId"],
-                    )
-                with open(nr_cell_df_path, "a") as file:
-                    file.write(
-                        cell_creation_5g_script.format(
-                            gNBId=gnbid,
-                            GNBDUFUNCTION_SCRIPT_ELEMENT=gnbdu_fuction_element,
-                            GNBCUCPFUNCTION_SCRIPT_ELEMENT=gnbcucp_fuction_element,
+                    gnbdu_fuction_element = ""
+                    gnbcucp_fuction_element = ""
+
+                    for idx, row in nr_cell_df.iterrows():
+                        gnbdu_fuction_element += KK_GNBDUFUNCTION_ELEMENT.format(
+                            nRSectorCarrierId=row["nRSectorCarrierId"],
+                            arfcnDL=row["arfcnDL"],
+                            arfcnUL=row["arfcnUL"],
+                            bSChannelBwDLUL=row["bSChannelBwDL-UL"],
+                            configuredMaxTxPower=row["configuredMaxTxPower"],
+                            Latitude=row["Latitude"],
+                            Longitude=row["Longitude"],
+                            sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
+                            gUtranCell=row["gUtranCell"],
+                            cellLocalId=row["cellLocalId"],
+                            nRPCI=row["nRPCI"],
+                            nRTAC=row["nRTAC"],
                         )
-                    )
-                    file.close()
+
+                        gnbcucp_fuction_element += KK_GNBCUCPFUNCTION_ELEMENT.format(
+                            gUtranCell=row["gUtranCell"],
+                            cellLocalId=row["cellLocalId"],
+                        )
+                    with open(nr_cell_df_path, "a") as file:
+                        file.write(
+                            cell_creation_5g_script.format(
+                                gNBId=gnbid,
+                                GNBDUFUNCTION_SCRIPT_ELEMENT=gnbdu_fuction_element,
+                                GNBCUCPFUNCTION_SCRIPT_ELEMENT=gnbcucp_fuction_element,
+                            )
+                        )
+                        file.close()
             ############################################################### creating the SiteBasic script for 4G and 5G ###############################################################
             for node in site_basic_df["eNodeBName"].unique():
                 commision_scripts_dir = os.path.join(base_path_url, f'{node}_Commissioning_Scripts')
@@ -677,9 +674,6 @@ def generate_integration_script(request):
                         )
                     )
 
-
-
-            
         ###############################################################################################################################################################################################################
         elif circle == "TN":
             # ..................................................... TN 4G Script ....................................................#
@@ -783,6 +777,7 @@ def generate_integration_script(request):
                 )
                 with open(TN_05_5G_LMS_GPL_ROTN_path, "a") as file:
                     file.write(TN_05_5G_LMS_GPL_ROTN + "\n")
+
         return Response(
             {"status": "OK", "message": "Integration scripts generated successfully."},
             status=status.HTTP_200_OK,

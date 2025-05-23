@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q, Index
 
 class RCA_TABLE(models.Model):
     KPI = models.CharField(max_length=255, null=True, blank=True)
@@ -79,6 +80,15 @@ class Daily_4G_KPI(models.Model):
     
     MV_VoLTE_Packet_Loss_UL_CBBH = models.FloatField(null=True, blank=True, default=0)
     MV_VoLTE_Packet_Loss_DL_CBBH = models.FloatField(null=True, blank=True, default=0)
+    
+    class Meta:
+        indexes = [
+            Index(fields=['Date'], name='idx_date'),
+            Index(fields=['Short_name'], name='idx_short_name'),
+            Index(fields=['ECGI_4G'], name='idx_ecgi'),
+            Index(fields=['Date', 'Short_name'], name='idx_date_short_name'),
+            Index(fields=['Date', 'ECGI_4G'], name='idx_date_ecgi'),
+        ]
 
     def __str__(self):
         return self.Short_name
