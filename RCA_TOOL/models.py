@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Q, Index
 
+
 class RCA_TABLE(models.Model):
     KPI = models.CharField(max_length=255, null=True, blank=True)
     Probable_causes = models.CharField(max_length=255, null=True, blank=True)
@@ -12,14 +13,13 @@ class RCA_TABLE(models.Model):
     Proposed_solution = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
-        return self.KPI  
+        return self.KPI
 
 
 class KPI_TABLE(models.Model):
     KPI = models.CharField(max_length=500)
     threshold_value = models.FloatField()
     operator = models.CharField(max_length=100)
-     
 
     def __str__(self) -> str:
         return self.KPI
@@ -38,12 +38,10 @@ class Daily_4G_KPI(models.Model):
     MV_VoLTE_raffic = models.FloatField(default=0)
     name_SiteA = models.FloatField(default=0)
     name_SiteB = models.FloatField(default=0)
-    MV_DL_User_Throughput_Kbps = models.FloatField()   
+    MV_DL_User_Throughput_Kbps = models.FloatField()
     MV_E_UTRAN_Average_CQI = models.FloatField(default=0)
     UL_RSSI = models.FloatField(default=0)
-    MV_Average_number_of_used_DL_PRBs = models.FloatField(
-        default=0
-    )
+    MV_Average_number_of_used_DL_PRBs = models.FloatField(default=0)
     MV_UL_RSSI_dBm_PRB = models.FloatField(default=0)
     MV_RRC_Setup_Success_Rate = models.FloatField(default=0)
     MV_ERAB_Setup_Success_Rate = models.FloatField(default=0)
@@ -52,42 +50,46 @@ class Daily_4G_KPI(models.Model):
     MV_Max_Connecteda_User = models.FloatField(default=0)
     MV_PUCCH_SINR = models.FloatField(default=0)
     MV_Average_UE_Distance_KM = models.FloatField(default=0)
-    MV_PS_handover_success_rate_LTE_INTER_SYSTEM = models.FloatField(
-        default=0
-    )
-    MV_PS_handover_success_rate_LTE_INTRA_SYSTEM = models.FloatField(
-        default=0
-    )
+    MV_PS_handover_success_rate_LTE_INTER_SYSTEM = models.FloatField(default=0)
+    MV_PS_handover_success_rate_LTE_INTRA_SYSTEM = models.FloatField(default=0)
     UL_RSSI_Nokia_RSSI_SINR = models.FloatField(default=0)
     MV_VoLTE_DCR = models.FloatField(default=0)
     MV_Packet_Loss_DL = models.FloatField(default=0)
     MV_Packet_Loss_UL = models.FloatField(default=0)
     PS_InterF_HOSR = models.FloatField(default=0)
-    PS_IntraF_HOSR =  models.FloatField(default=0)
+    PS_IntraF_HOSR = models.FloatField(default=0)
     MV_eCell_Data_BH = models.TimeField(null=True, blank=True)
     dlRsBoost = models.FloatField(null=True, blank=True, default=0)
     RS_Power_dB = models.FloatField(null=True, blank=True, default=0)
 
+    MV_CSFB_Redirection_Success_Rate = models.FloatField(
+        null=True, blank=True, default=0
+    )
+    VoLTE_Inter_Frequency_Handover_Success_Ratio = models.FloatField(
+        null=True, blank=True, default=0
+    )
+    VoLTE_Intra_LTE_Handover_Success_Ratio = models.FloatField(
+        null=True, blank=True, default=0
+    )
+    MV_RRC_Setup_Success_Rate_DENOM = models.FloatField(
+        null=True, blank=True, default=0
+    )
 
-    MV_CSFB_Redirection_Success_Rate = models.FloatField(null=True, blank=True, default=0)
-    VoLTE_Inter_Frequency_Handover_Success_Ratio = models.FloatField(null=True, blank=True, default=0)
-    VoLTE_Intra_LTE_Handover_Success_Ratio = models.FloatField(null=True, blank=True, default=0)
-    MV_RRC_Setup_Success_Rate_DENOM = models.FloatField(null=True, blank=True, default=0)
-    
-    
-    MV_DL_User_Throughput_Kbps_CUBH = models.FloatField(null=True, blank=True, default=0)
+    MV_DL_User_Throughput_Kbps_CUBH = models.FloatField(
+        null=True, blank=True, default=0
+    )
     Sams_Average_UE_Distance_KM = models.FloatField(null=True, blank=True, default=0)
-    
+
     MV_VoLTE_Packet_Loss_UL_CBBH = models.FloatField(null=True, blank=True, default=0)
     MV_VoLTE_Packet_Loss_DL_CBBH = models.FloatField(null=True, blank=True, default=0)
-    
+
     class Meta:
         indexes = [
-            Index(fields=['Date'], name='idx_date'),
-            Index(fields=['Short_name'], name='idx_short_name'),
-            Index(fields=['ECGI_4G'], name='idx_ecgi'),
-            Index(fields=['Date', 'Short_name'], name='idx_date_short_name'),
-            Index(fields=['Date', 'ECGI_4G'], name='idx_date_ecgi'),
+            Index(fields=["Date"], name="idx_date"),
+            Index(fields=["Short_name"], name="idx_short_name"),
+            Index(fields=["ECGI_4G"], name="idx_ecgi"),
+            Index(fields=["Date", "Short_name"], name="idx_date_short_name"),
+            Index(fields=["Date", "ECGI_4G"], name="idx_date_ecgi"),
         ]
 
     def __str__(self):
@@ -137,22 +139,33 @@ class Tantitive_Counters_24_Hours(models.Model):
     TNL_Failure_Percent = models.FloatField(null=True, blank=True)
     LRRC_DISC_RRC_PAGING = models.FloatField(null=True, blank=True)
     MV_Radio_NW_Availability = models.FloatField(null=True, blank=True)
-    
+
     UL_RSSI = models.FloatField(max_length=500, default=0)
-    DL_BLER = models.FloatField(null=True, blank=True, default=0) 
-    UL_BLER = models.FloatField(null=True, blank=True,default=0) 
+    DL_BLER = models.FloatField(null=True, blank=True, default=0)
+    UL_BLER = models.FloatField(null=True, blank=True, default=0)
 
     LEPSB_ERAB_INI_SETUP_FAIL_RNL_RIP = models.FloatField(null=True, blank=True)
-    LEPSB_ERAB_INI_SETUP_FAIL_RNL_RNA = models.FloatField(null=True, blank=True, default=0)
-    LEPSB_ERAB_INI_SETUP_FAIL_RNL_UEL = models.FloatField(null=True, blank=True, default=0)
-    LEPSB_ERAB_INI_SETUP_FAIL_TNL_TRU = models.FloatField(null=True, blank=True, default=0)
+    LEPSB_ERAB_INI_SETUP_FAIL_RNL_RNA = models.FloatField(
+        null=True, blank=True, default=0
+    )
+    LEPSB_ERAB_INI_SETUP_FAIL_RNL_UEL = models.FloatField(
+        null=True, blank=True, default=0
+    )
+    LEPSB_ERAB_INI_SETUP_FAIL_TNL_TRU = models.FloatField(
+        null=True, blank=True, default=0
+    )
     LEPSB_ERAB_REL_ENB_TNL_TRU = models.FloatField(null=True, blank=True, default=0)
-    LUEST_SIGN_CONN_ESTAB_FAIL_PUCCH = models.FloatField(null=True, blank=True, default=0)
-    LUEST_SIGN_CONN_ESTAB_FAIL_MAXRRC = models.FloatField(null=True, blank=True, default=0)
-    LUEST_SIGN_EST_F_RRCCOMPL_MISSING = models.FloatField(null=True, blank=True, default=0)
-    
-    # to be added in the tentative excel sheet
+    LUEST_SIGN_CONN_ESTAB_FAIL_PUCCH = models.FloatField(
+        null=True, blank=True, default=0
+    )
+    LUEST_SIGN_CONN_ESTAB_FAIL_MAXRRC = models.FloatField(
+        null=True, blank=True, default=0
+    )
+    LUEST_SIGN_EST_F_RRCCOMPL_MISSING = models.FloatField(
+        null=True, blank=True, default=0
+    )
 
+    # to be added in the tentative excel sheet
 
     class Meta:
         verbose_name = "Tentative Counter"
@@ -161,7 +174,7 @@ class Tantitive_Counters_24_Hours(models.Model):
     def __str__(self):
         return self.Short_name
 
- 
+
 class AlarmNotification(models.Model):
     NotificationId = models.CharField(max_length=255)
     AlarmNumber = models.CharField(max_length=255)
@@ -198,28 +211,30 @@ class AlarmNotification(models.Model):
     AlarmSound = models.CharField(max_length=50)
     InstanceCounter = models.IntegerField()
     ConsecutiveNumber = models.IntegerField()
-    AlarmInsertionTime = models.CharField(max_length=255,blank=True, null=True)
-    AlarmUpdateTime = models.CharField(max_length=255,blank=True, null=True)
+    AlarmInsertionTime = models.CharField(max_length=255, blank=True, null=True)
+    AlarmUpdateTime = models.CharField(max_length=255, blank=True, null=True)
     ControllingObjectName = models.CharField(max_length=255)
-    OriginAlarmTime = models.CharField(max_length=255,blank=True, null=True)
-    OriginAlarmUpdateTime = models.CharField(max_length=255,blank=True, null=True)
-    OriginAcknowledgementOrUnacknowledgementTime = models.CharField(max_length=255,blank=True, null=True)
-    OriginCancelTime = models.CharField(max_length=255,blank=True, null=True)
+    OriginAlarmTime = models.CharField(max_length=255, blank=True, null=True)
+    OriginAlarmUpdateTime = models.CharField(max_length=255, blank=True, null=True)
+    OriginAcknowledgementOrUnacknowledgementTime = models.CharField(
+        max_length=255, blank=True, null=True
+    )
+    OriginCancelTime = models.CharField(max_length=255, blank=True, null=True)
     RelatedDns = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.NotificationId} - {self.AlarmNumber} - {self.AlarmType}"
-    
-    def save(self, *args, **kwargs): 
-        if self.AlarmTime: 
-            if self.AlarmTime.tzinfo is not None: 
-                raise ValueError("datetime_field must be naive (timezone-unaware)") 
+
+    def save(self, *args, **kwargs):
+        if self.AlarmTime:
+            if self.AlarmTime.tzinfo is not None:
+                raise ValueError("datetime_field must be naive (timezone-unaware)")
         super().save(*args, **kwargs)
 
 
 class RCA_output_table(models.Model):
     Cell_name = models.CharField(max_length=100)
-    OEM_GGSN= models.CharField(max_length=100)
+    OEM_GGSN = models.CharField(max_length=100)
     KPI = models.CharField(max_length=100)
     cell_value = models.FloatField()
     threshold_value = models.FloatField()
@@ -229,12 +244,15 @@ class RCA_output_table(models.Model):
     history_alarms = models.TextField()
     circle = models.CharField(max_length=100)
     date = models.DateField()  # Add this line for the date column
+
     class meta:
-        constraints=[models.UniqueConstraint(fields=['Cell_name ','date'],name='daywise_cells')]
+        constraints = [
+            models.UniqueConstraint(fields=["Cell_name ", "date"], name="daywise_cells")
+        ]
 
     def __str__(self):
         return self.Cell_name
-    
+
 
 class RCA_payload_table(models.Model):
     KPI = models.CharField(max_length=255, null=True, blank=True)
