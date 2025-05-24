@@ -229,7 +229,7 @@ qRxLevMin -128
 rachPreambleFormat 0
 rachPreambleRecTargetPower -110
 rachPreambleTransMax 10
-rachRootSequence 273
+rachRootSequence {rachRootSequence}
 secondaryCellOnly false
 siWindowLength 20
 ssbDuration 1
@@ -570,6 +570,8 @@ def generate_integration_script(request):
                             cellLocalId=row["cellLocalId"],
                             nRPCI=row["nRPCI"],
                             nRTAC=row["nRTAC"],
+                            rachRootSequence = row["rachRootSequence"],  # Added rachRootSequence
+
                         )
 
                         gnbcucp_fuction_element += KK_GNBCUCPFUNCTION_ELEMENT.format(
