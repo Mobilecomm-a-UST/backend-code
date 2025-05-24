@@ -26,10 +26,10 @@ MEDIA_ROOT = settings.MEDIA_ROOT
 
 
 
-def create_script_paths(base_dir, node_name, current_time):
+def create_script_paths(base_dir, node_name):
     base_node_dir = os.path.join(
         base_dir,
-        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS_{current_time}",
+        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",
         f"{node_name}_REMOTE_INTEGRATION_SCRIPTS"
     )
 
@@ -38,7 +38,7 @@ def create_script_paths(base_dir, node_name, current_time):
         "nr": os.path.join(base_node_dir, "NR_5G"),
         "commissioning": os.path.join(
             base_dir,
-            f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS_{current_time}",
+            f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",
             f"{node_name}_Commissioning_Scripts"
         )
     }
@@ -438,6 +438,7 @@ def generate_integration_script(request):
             node_dir = os.path.join(
                 base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
             )
+
             node_dir_5g = os.path.join(
                 base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "NR_5G"
             )
@@ -600,7 +601,7 @@ def generate_integration_script(request):
                             cellLocalId=row["cellLocalId"],
                             nRPCI=row["nRPCI"],
                             nRTAC=row["nRTAC"],
-                            rachRootSequence = row["rachRootSequence"],  # Added rachRootSequence
+                            rachRootSequence = row["rachRootSequence"],  ############################################################################ Added rachRootSequence
 
                         )
 
@@ -633,6 +634,12 @@ def generate_integration_script(request):
                 siteBasicFilePath = sitebasic_df_path.replace(
                     base_path_url + os.sep, ""
                 ).replace("\\", "/")
+                relative_path = os.path.relpath(
+                    sitebasic_df_path,
+                    os.path.join(base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
+                )
+                siteBasicFilePath = relative_path.replace("\\", "/")
+
 
                 for idx, row in sitebasic_df.iterrows():
                     with open(sitebasic_df_path, "a") as file:
@@ -664,9 +671,12 @@ def generate_integration_script(request):
                     f"02_SiteEquipment_{node}_{current_time}.xml",
                 )
                 site_equipment_text = ""
-                siteEquipmentFilePath = rru_hw_path.replace(
-                    base_path_url + os.sep, ""
-                ).replace("\\", "/")
+                relative_path = os.path.relpath(
+                    rru_hw_path,
+                    os.path.join(base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
+                )
+                siteEquipmentFilePath = relative_path.replace("\\", "/")
+
 
                 print("site_equipment_path", siteEquipmentFilePath)
                 site_basic_df_N = site_basic_df[site_basic_df["eNodeBName"] == node]
