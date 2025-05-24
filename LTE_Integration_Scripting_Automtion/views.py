@@ -19,7 +19,34 @@ import pandas as pd
 import stat
 from django.conf import settings
 
+
+
+
 MEDIA_ROOT = settings.MEDIA_ROOT
+
+
+
+def create_script_paths(base_dir, node_name, current_time):
+    base_node_dir = os.path.join(
+        base_dir,
+        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS_{current_time}",
+        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS"
+    )
+
+    directories = {
+        "lte": os.path.join(base_node_dir, "LTE_4G"),
+        "nr": os.path.join(base_node_dir, "NR_5G"),
+        "commissioning": os.path.join(
+            base_dir,
+            f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS_{current_time}",
+            f"{node_name}_Commissioning_Scripts"
+        )
+    }
+
+    for path in directories.values():
+        os.makedirs(path, exist_ok=True)
+
+    return directories
 
 
 ####################################################### --- TN ----- ##########################################################
@@ -409,10 +436,10 @@ def generate_integration_script(request):
         for node_name in unique_nodes:
             current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
             node_dir = os.path.join(
-                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
+                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
             )
             node_dir_5g = os.path.join(
-                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "NR_5G"
+                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "NR_5G"
             )
             os.makedirs(node_dir, exist_ok=True)
             os.makedirs(node_dir_5g, exist_ok=True)
@@ -420,6 +447,7 @@ def generate_integration_script(request):
             output_file_path = os.path.join(
                 node_dir, f"3 Cell_Def_script_{node_name}_{current_time}.txt"
             )
+            #os.makedirs(output_file_path, exist_ok=True)
             script_lines = []
             for _, row in node_rows.iterrows():
                 cell_id = row.get("eUtranCellFDDId", "")
@@ -451,7 +479,7 @@ def generate_integration_script(request):
                 node_name = row.get("eNodeBName", "UnknownNode")
                 current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
                 node_dir = os.path.join(
-                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
+                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
                 )
                 os.makedirs(node_dir, exist_ok=True)
 
@@ -486,6 +514,7 @@ def generate_integration_script(request):
                 with open(
                     os.path.join(
                         base_path_url,
+                        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",
                         f"{node}_REMOTE_INTEGRATION_SCRIPTS",
                         "LTE_4G",
                         gps_mme_path,
@@ -500,6 +529,7 @@ def generate_integration_script(request):
                 with open(
                     os.path.join(
                         base_path_url,
+                        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",
                         f"{node}_REMOTE_INTEGRATION_SCRIPTS",
                         "LTE_4G",
                         gpl_lms_path,
@@ -590,7 +620,7 @@ def generate_integration_script(request):
             ############################################################### creating the SiteBasic script for 4G and 5G ###############################################################
             for node in site_basic_df["eNodeBName"].unique():
                 commision_scripts_dir = os.path.join(
-                    base_path_url, f"{node}_Commissioning_Scripts"
+                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node}_Commissioning_Scripts"
                 )
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 os.makedirs(commision_scripts_dir, exist_ok=True)
@@ -623,7 +653,7 @@ def generate_integration_script(request):
 
             for node in rru_hw_df["eNodeBName"].unique():
                 commissioning_scripts_dir = os.path.join(
-                    base_path_url, f"{node}_Commissioning_Scripts"
+                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node}_Commissioning_Scripts"
                 )
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 os.makedirs(commissioning_scripts_dir, exist_ok=True)
@@ -729,10 +759,10 @@ def generate_integration_script(request):
                 node_name = row.get("eNodeBName", "UnknownNode")
                 current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
                 node_dir = os.path.join(
-                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
+                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
                 )
                 node_dir_5g = os.path.join(
-                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "NR_5G"
+                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "NR_5G"
                 )
                 os.makedirs(node_dir, exist_ok=True)
                 formatted_text = TN_s1_FOR_TN_IDL_B_PORT.format(eNBId=row["enbId"])
