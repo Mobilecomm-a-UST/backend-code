@@ -278,7 +278,9 @@ def process_sdir_and_rru_status(request):
 
             ########## Combine result for current file into master DataFrame ##########
             all_files_df = pd.concat([all_files_df, result_df], axis=0)
-            all_files_df.fillna("", inplace=True).replace('nan', '', inplace=True)
+            all_files_df.fillna("", inplace=True)
+
+            all_files_df.replace('nan', '', inplace=True)
 
         ############## Save to Excel ##############
         timestamp = datetime.now().strftime("%Y-%m-%d %H_%M_%S")
