@@ -1,8 +1,10 @@
 ################################################################################################################################################################################
+from ssl import SSL_ERROR_WANT_X509_LOOKUP
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from datetime import datetime
+import shutil
 import os
 import json
 from LTE_Integration_Scripting_Automtion.circles.KK.KK_INTEGRATION_SCRIPT import (
@@ -136,6 +138,7 @@ def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
 def generate_integration_script(request):
     if request.method == "POST":
         integration_input_file = request.FILES.get("integration_input_file")
+        circle_name = None  ########################## circle name for different frequency and configreation as per circle:- ['KK','TN', 'AP', 'DEL',...]
         circle = request.POST.get(
             "Circle"
         )  ########################## circle for different frequency and configreation as per circle:- ['AP','KK', 'DEL',...]
@@ -169,6 +172,10 @@ def generate_integration_script(request):
 
         
         base_path_url = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
+        if os.path.exists(base_path_url):
+            # Remove read-only attribute if set
+            os.chmod(base_path_url, stat.S_IWRITE)
+            shutil.rmtree(base_path_url)
         os.makedirs(base_path_url, exist_ok=True)
 
         siteBasicFilePath = ""
@@ -190,6 +197,7 @@ def generate_integration_script(request):
         }
         ############################################################## KK Circle-specific Script Generation ####################################################################
         if circle == "KK":
+            circle_name = circle
             current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
             
             for idx, row in site_basic_df.iterrows():
@@ -438,6 +446,7 @@ def generate_integration_script(request):
 
         ###############################################################################################################################################################################################################
         elif circle == "TN":
+            circle_name = circle
             # ..................................................... TN 4G Script ....................................................#
             for _, row in lte_df.iterrows():
                 node_name = row.get("eNodeBName", "UnknownNode")
@@ -537,10 +546,21 @@ def generate_integration_script(request):
                     file.write(TN_05_5G_LMS_GPL_ROTN + "\n")
         ########################################################## MAKING THE ZIP FILE #############################################################
         
-        ZIP_OUTPUT_PATH = ...
+        ZIP_OUTPUT_PATH = base_path_url + f"/{circle}_Integration_Scripts_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.zip"
+        folder_path = os.path.join(
+            MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES"
+        )
+        if os.path.exists(ZIP_OUTPUT_PATH):
+            # Remove read-only attribute if set
+            os.chmod(ZIP_OUTPUT_PATH, stat.S_IWRITE)
+            os.remove(ZIP_OUTPUT_PATH)
+
+        ZipFolder(folder_path, ZIP_OUTPUT_PATH)
+
+        download_link = MEDIA_URL + "LTE_INTEGRATION_CONFIG_FILES/" + os.path.basename(ZIP_OUTPUT_PATH)
         
         ############################################################################################################################################
         return Response(
-            {"status": "OK", "message": "Integration scripts generated successfully."},
+            {"status": "OK", "message": "Integration scripts generated successfully.", 'download_link': download_link},
             status=status.HTTP_200_OK,
         )
