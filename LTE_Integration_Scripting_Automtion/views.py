@@ -602,6 +602,7 @@ def generate_integration_script(request):
 
         ZipFolder(folder_path, ZIP_OUTPUT_PATH)
 
+
         download_link = MEDIA_URL + "LTE_INTEGRATION_CONFIG_FILES/" + os.path.basename(ZIP_OUTPUT_PATH)
         
         ############################################################################################################################################
