@@ -23,6 +23,7 @@ from rest_framework.pagination import PageNumberPagination
 import requests
 from mailapp.tasks import send_email
 from Zero_Count_Rna_Payload_Tool.send_mail_spoc import send_email_spoc_circle
+
 # from Zero_Count_Rna_Payload_App.pagination import *
 from django.db.models import Q
 from django.db.models import Avg, F, Value, CharField, DateField
@@ -37,16 +38,19 @@ from rest_framework.exceptions import ValidationError
 import logging
 from Zero_Count_Rna_Payload_Tool.Zero_count_database_conn import get_data_from_table
 from rest_framework import viewsets
+from asgiref.sync import sync_to_async
+import asyncio
+from django.http import JsonResponse
+
+
 class level1View(viewsets.ModelViewSet):
     queryset = level1.objects.all()
     serializer_class = level1Serializer
 
 
-
 class level2View(viewsets.ModelViewSet):
     queryset = level2.objects.all()
     serializer_class = level2Serializer
-
 
 
 class level3View(viewsets.ModelViewSet):
@@ -60,11 +64,13 @@ class level4View(viewsets.ModelViewSet):
 
 
 class ThresholdView(viewsets.ModelViewSet):
-     queryset = Threshold.objects.all()
-     serializer_class = ThresholdSerializer
+    queryset = Threshold.objects.all()
+    serializer_class = ThresholdSerializer
 
 
 logger = logging.getLogger(__name__)
+
+
 @api_view(["POST"])
 def save_database_RAW_4G(request):
     Raw_Kpi_4G = request.FILES["4G"] if "4G" in request.FILES else None
@@ -234,10 +240,18 @@ def Daily_RAW_KPI_4G(request):
                     dlRsBoost=row["dlRsBoost"],
                     RS_Power_dB=row["RS Power [dB]"],
                     UL_RSSI_Nokia_RSSI_SINR=row["UL RSSI_Nokia[RSSI-SINR]"],
-                    MV_CSFB_Redirection_Success_Rate = row["MV_CSFB Redirection Success Rate [CDBH]"],
-                    VoLTE_Inter_Frequency_Handover_Success_Ratio = row["VoLTE Inter-Frequency Handover Success Ratio [CBBH]"],
-                    VoLTE_Intra_LTE_Handover_Success_Ratio = row["VoLTE Intra-LTE Handover Success Ratio [CBBH]"],
-                    MV_RRC_Setup_Success_Rate_DENOM = row["MV_RRC Setup Success Rate_DENOM"]
+                    MV_CSFB_Redirection_Success_Rate=row[
+                        "MV_CSFB Redirection Success Rate [CDBH]"
+                    ],
+                    VoLTE_Inter_Frequency_Handover_Success_Ratio=row[
+                        "VoLTE Inter-Frequency Handover Success Ratio [CBBH]"
+                    ],
+                    VoLTE_Intra_LTE_Handover_Success_Ratio=row[
+                        "VoLTE Intra-LTE Handover Success Ratio [CBBH]"
+                    ],
+                    MV_RRC_Setup_Success_Rate_DENOM=row[
+                        "MV_RRC Setup Success Rate_DENOM"
+                    ],
                 )
                 objects_to_create.append(obj)
     except Exception as e:
@@ -548,7 +562,7 @@ def cleaned_data(df):
     removed_nokia_NE_ik_nospace_df.shape
 
     return df
-  
+
 
 def get_circle(short_name):
     if "NE-ik" in short_name:
@@ -615,7 +629,7 @@ def get_last_five_days_of_week_current_week(df):
 
 def latest_date_to_past_7_days(objs):
     # latest_date = objs.aggregate(latest_date=Max("Date"))
-    latest_date = objs['Date'].max()
+    latest_date = objs["Date"].max()
     latest_date = latest_date
     # latest_date = latest_date["latest_date"]
     print(latest_date)
@@ -790,8 +804,8 @@ def mark_rows_vectorized(df):
         "OEM_GGSN",
         "ECGI_4G",
         "MV_Site_Name",
-        "MV_Freq_Band",
-        "MV_Freq_Bandwidth",
+        # "MV_Freq_Band",
+        # "MV_Freq_Bandwidth",
     ]
 
     complete_empty_mask = (
@@ -857,70 +871,6 @@ def rename_columns(cols):
             new_columns.append(col)
 
     return new_columns
-
-
-# def get_site_id(short_name):
-#     check_short_names = ["Sams", "BH", "WB", "MU","UE","MP","OD","UW","TN","JH","JK","KK","KO","DL","HR","CH","MP","PB","RJ"]
-
-#     if "_" in short_name and not any(sub in short_name for sub in check_short_names):
-#         return short_name.split("_")[4][:6]
-#     elif "Sams-" in short_name:
-#         return short_name.split(",")[1].split("_")[-1]
-#     elif "BH_" in short_name:
-#         return short_name.split("_")[-2][:8]
-#     elif "WB_" in short_name and "@Nokia" not in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "MU_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "UE_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "MP_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "OD_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "UW_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "TN_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "JH_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "KK_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "KO_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "MP_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "HR_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "DL_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "JK_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "CH_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "PB_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "RJ_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     else:
-#         return ""
 
 
 def get_site_id(short_name):
@@ -1085,135 +1035,123 @@ class CustomPagination(PageNumberPagination):
     page_size_query_param = "page_size"
     max_page_size = 1000
 
-# def save_daily_4g_kpi_report(data):
-#     """
-#     Save function to insert or update Daily_4G_KPI_REPORT data.
 
-#     Args:
-#         data (list of dict): A list of dictionaries, each containing the data to save.
+CHUNK_SIZE = 500
 
-#     Example:
-#         data = [
-#             {
-#                 "Short_name": "Site1",
-#                 "OEM_GGSN": "VendorX",
-#                 "ECGI_4G": "12345",
-#                 "week_1_val": 10.5,
-#                 "week_2_val": 12.3,
-#                 "date_1_val": 8.9,
-#                 "date_2_val": 9.0,
-#                 "date_3_val": 10.1,
-#                 "date_4_val": 11.2,
-#                 "date_5_val": 12.0,
-#                 "date_6_val": 13.5,
-#                 "date_7_val": 14.2,
-#                 "date_8_val": 15.1,
-#                 "kpi_name": "Sample KPI",
-#                 "Date": "2024-01-01",
-#             },
-#             ...
-#         ]
-#     """
-    
-    
-#     with transaction.atomic():
-#         for _,record in data.iterrows():
-#             try:
-#                 obj, created = Daily_4G_KPI_REPORT.objects.update_or_create(
-#                     Short_name=record.get("Short_name"),
-#                     Date=datetime.strftime(record.get("Date"), "%Y-%m-%d"),
-#                     oem =  record.get("OEM_GGSN"),
-#                     ECGI_4G =  record.get("ECGI_4G"),
-#                     kpi_name = record.get("kpi_name", "No KPI Found"),
-#                     defaults={
-#                         "week_1_val": record.get("week_1_val", 0),
-#                         "week_2_val": record.get("week_2_val", 0),
-#                         "date_1_val": record.get("date_1_val", 0),
-#                         "date_2_val": record.get("date_2_val", 0),
-#                         "date_3_val": record.get("date_3_val", 0),
-#                         "date_4_val": record.get("date_4_val", 0),
-#                         "date_5_val": record.get("date_5_val", 0),
-#                         "date_6_val": record.get("date_6_val", 0),
-#                         "date_7_val": record.get("date_7_val", 0),
-#                         "date_8_val": record.get("date_8_val", 0),
-#                     },
-#                 )
-#                 if created:
-#                     print(f"Created new record: {obj.Short_name} for date {obj.Date}")
-#                 else:
-#                     print(f"Updated record: {obj.Short_name} for date {obj.Date}")
-#             except Exception as e:
-#                 print(f"Error saving record {record}: {e}")
 
+@sync_to_async
 def save_daily_4g_kpi_report(data):
     print("saving to database started...")
     data_dict = data.to_dict(orient="records")
-    create_obj_list=[]
+    create_obj_list = []
     for record in data_dict:
-       obj= Daily_4G_KPI_REPORT(
-           Short_name=record.get("Short_name"),
-           Site_ID = record.get("Site_ID"),
-           Date=datetime.strftime(record.get("Date"), "%Y-%m-%d"),
-           oem =  record.get("OEM_GGSN"),
-           ECGI_4G =  record.get("ECGI_4G"),
-           kpi_name = record.get("kpi_name", "No KPI Found"),
-           week_1_val = record.get("week_1_val", 0),
-           week_2_val = record.get("week_2_val", 0),
-           date_1_val = record.get("date_1_val", 0),
-           date_2_val = record.get("date_2_val", 0),
-           date_3_val = record.get("date_3_val", 0),
-           date_4_val = record.get("date_4_val", 0),
-           date_5_val = record.get("date_5_val", 0),
-           date_6_val = record.get("date_6_val", 0),
-           date_7_val = record.get("date_7_val", 0),
-           date_8_val = record.get("date_8_val", 0),
-       )
-       create_obj_list.append(obj)
-    Daily_4G_KPI_REPORT.objects.bulk_create(create_obj_list)
+        obj = Daily_4G_KPI_REPORT(
+            Short_name=record.get("Short_name"),
+            Site_ID=record.get("Site_ID"),
+            Date=datetime.strftime(record.get("Date"), "%Y-%m-%d"),
+            oem=record.get("OEM_GGSN"),
+            ECGI_4G=record.get("ECGI_4G"),
+            kpi_name=record.get("kpi_name", "No KPI Found"),
+            week_1_val=record.get("week_1_val", 0),
+            week_2_val=record.get("week_2_val", 0),
+            date_1_val=record.get("date_1_val", 0),
+            date_2_val=record.get("date_2_val", 0),
+            date_3_val=record.get("date_3_val", 0),
+            date_4_val=record.get("date_4_val", 0),
+            date_5_val=record.get("date_5_val", 0),
+            date_6_val=record.get("date_6_val", 0),
+            date_7_val=record.get("date_7_val", 0),
+            date_8_val=record.get("date_8_val", 0),
+        )
+        create_obj_list.append(obj)
+
+    ############################################################ Chunking for better performance and memory usage #####################################################
+    print(f"Total objects to create: {len(create_obj_list)}")
+    for i in range(0, len(create_obj_list), CHUNK_SIZE):
+        chunk = create_obj_list[i : i + CHUNK_SIZE]
+        Daily_4G_KPI_REPORT.objects.bulk_create(chunk)
+        print(f"Inserted records {i+1} to {i+len(chunk)}")
+
     print("saving to database completed...")
-  
+
 
 @api_view(["GET"])
 def kpi_trend_4g_api(request):
     # objs = Daily_4G_KPI.objects.all().values()
     from_required_date = datetime.now().date() - timedelta(days=17)
     to_required_date = datetime.now().date() - timedelta(days=1)
+
+    # Use parameterized query or ORM filter instead of raw f-string SQL to avoid SQL injection
     query = f"""
-        SELECT * FROM public."RCA_TOOL_daily_4g_kpi" where "Date" between '{from_required_date}' and '{to_required_date}'
+        SELECT
+            "Short_name", 
+            "Date", 
+            "ECGI_4G", 
+            "MV_Site_Name", 
+            "OEM_GGSN", 
+            "MV_Radio_NW_Availability", 
+            "MV_4G_Data_Volume_GB",
+            "MV_VoLTE_raffic", 
+            "name_SiteA", 
+            "name_SiteB", 
+            "MV_DL_User_Throughput_Kbps",
+            "MV_E_UTRAN_Average_CQI", 
+            "UL_RSSI", 
+            "MV_Average_number_of_used_DL_PRBs",
+            "MV_UL_RSSI_dBm_PRB", 
+            "MV_RRC_Setup_Success_Rate", 
+            "MV_ERAB_Setup_Success_Rate",
+            "MV_PS_Drop_Call_Rate", 
+            "MV_UL_User_Throughput_Kbps", 
+            "MV_Max_Connecteda_User",
+            "MV_PUCCH_SINR", 
+            "MV_Average_UE_Distance_KM",
+            "MV_PS_handover_success_rate_LTE_INTER_SYSTEM",
+            "MV_PS_handover_success_rate_LTE_INTRA_SYSTEM", 
+            "UL_RSSI_Nokia_RSSI_SINR",
+            "MV_VoLTE_DCR", 
+            "MV_Packet_Loss_DL", 
+            "MV_Packet_Loss_UL", 
+            "PS_InterF_HOSR",
+            "PS_IntraF_HOSR", 
+            "MV_eCell_Data_BH", 
+            "MV_CSFB_Redirection_Success_Rate",
+            "VoLTE_Inter_Frequency_Handover_Success_Ratio",
+            "VoLTE_Intra_LTE_Handover_Success_Ratio",
+            "MV_RRC_Setup_Success_Rate_DENOM",
+            "MV_DL_User_Throughput_Kbps_CUBH", 
+            "Sams_Average_UE_Distance_KM",
+            "MV_VoLTE_Packet_Loss_UL_CBBH", 
+            "MV_VoLTE_Packet_Loss_DL_CBBH"
+        FROM public."RCA_TOOL_daily_4g_kpi"
+        WHERE "Date" BETWEEN '{from_required_date}' AND '{to_required_date}';
     """
-    
+
+    # objs = get_data_from_table(query)
+
     objs = get_data_from_table(query)
-    
-    
-    objs.drop(
-        columns=["id"], inplace=True
-    )
-    
+
     print(objs)
-    objs['Date'] = pd.to_datetime(objs['Date'], errors='coerce')
+
+    # objs.drop(columns=["id"], inplace=True)
+
+    objs["Date"] = pd.to_datetime(objs["Date"], errors="coerce")
     current_date = datetime.now().date()
 
     current_week = current_date.isocalendar()[1]
 
-    objs['Week'] = objs['Date'].dt.isocalendar().week
-    objs['year'] = objs['Date'].dt.year
-    
-    annual_weeks = objs[['Week', 'year']].drop_duplicates()
-    print(annual_weeks)
-    # annual_weeks = (
-    #     objs.(week=ExtractWeek("Date"), year=ExtractYear("Date"))
-    #     .values("week", "year")
-    #     .distinct()
-    # )
-    week_numbers = annual_weeks['Week'].tolist()
+    objs["Week"] = objs["Date"].dt.isocalendar().week
+    objs["year"] = objs["Date"].dt.year
+
+    annual_weeks = objs[["Week", "year"]].drop_duplicates()
+    week_numbers = annual_weeks["Week"].tolist()
 
     print(week_numbers)
-    
 
     date_list = latest_date_to_past_7_days(objs)
     print(date_list)
-    # exit(0)
-    filtered_obj = objs[objs['Date'].isin(date_list)]
+
+    filtered_obj = objs[objs["Date"].isin(date_list)]
 
     current_df = filtered_obj
     current_df = cleaned_data(current_df)
@@ -1221,45 +1159,45 @@ def kpi_trend_4g_api(request):
     current_df = current_df.replace("nan", 0)
 
     current_df.drop(
-        columns=["dlRsBoost", "RS_Power_dB", "name_SiteA", "name_SiteB"], inplace=True
+        columns=["name_SiteA", "name_SiteB"], inplace=True
     )
 
     filtered_df = process_remove_duplicates(current_df)
 
     current_df = filtered_df
 
-    kpi =[
-            'MV_Radio_NW_Availability',
-            'MV_4G_Data_Volume_GB', 
-            'MV_RRC_Setup_Success_Rate', 
-            'MV_RRC_Setup_Success_Rate_DENOM', 
-            'MV_ERAB_Setup_Success_Rate', 
-            'MV_PS_Drop_Call_Rate', 
-            'MV_DL_User_Throughput_Kbps', 
-            'MV_DL_User_Throughput_Kbps_CUBH', 
-            'MV_UL_User_Throughput_Kbps', 
-            'MV_Average_number_of_used_DL_PRBs', 
-            'MV_Max_Connecteda_User', 
-            'MV_E_UTRAN_Average_CQI', 
-            'MV_PUCCH_SINR', 
-            'MV_Average_UE_Distance_KM',
-            'Sams_Average_UE_Distance_KM', 
-            'MV_PS_handover_success_rate_LTE_INTER_SYSTEM', 
-            'MV_PS_handover_success_rate_LTE_INTRA_SYSTEM', 
-            'PS_InterF_HOSR', 
-            'PS_IntraF_HOSR', 
-            'UL_RSSI',
-            'UL_RSSI_Nokia_RSSI_SINR', 
-            'MV_VoLTE_raffic', 
-            'MV_VoLTE_DCR', 
-            'VoLTE_Inter_Frequency_Handover_Success_Ratio', 
-            'VoLTE_Intra_LTE_Handover_Success_Ratio', 
-            'MV_VoLTE_Packet_Loss_UL_CBBH', 
-            'MV_VoLTE_Packet_Loss_DL_CBBH',   
-            'MV_Packet_Loss_DL', 
-            'MV_Packet_Loss_UL', 
-            'MV_CSFB_Redirection_Success_Rate',
-        ]
+    kpi = [
+        "MV_Radio_NW_Availability",
+        "MV_4G_Data_Volume_GB",
+        "MV_RRC_Setup_Success_Rate",
+        "MV_RRC_Setup_Success_Rate_DENOM",
+        "MV_ERAB_Setup_Success_Rate",
+        "MV_PS_Drop_Call_Rate",
+        "MV_DL_User_Throughput_Kbps",
+        "MV_DL_User_Throughput_Kbps_CUBH",
+        "MV_UL_User_Throughput_Kbps",
+        "MV_Average_number_of_used_DL_PRBs",
+        "MV_Max_Connecteda_User",
+        "MV_E_UTRAN_Average_CQI",
+        "MV_PUCCH_SINR",
+        "MV_Average_UE_Distance_KM",
+        "Sams_Average_UE_Distance_KM",
+        "MV_PS_handover_success_rate_LTE_INTER_SYSTEM",
+        "MV_PS_handover_success_rate_LTE_INTRA_SYSTEM",
+        "PS_InterF_HOSR",
+        "PS_IntraF_HOSR",
+        "UL_RSSI",
+        "UL_RSSI_Nokia_RSSI_SINR",
+        "MV_VoLTE_raffic",
+        "MV_VoLTE_DCR",
+        "VoLTE_Inter_Frequency_Handover_Success_Ratio",
+        "VoLTE_Intra_LTE_Handover_Success_Ratio",
+        "MV_VoLTE_Packet_Loss_UL_CBBH",
+        "MV_VoLTE_Packet_Loss_DL_CBBH",
+        "MV_Packet_Loss_DL",
+        "MV_Packet_Loss_UL",
+        "MV_CSFB_Redirection_Success_Rate",
+    ]
 
     current_dates = current_df["Date"].unique()
 
@@ -1280,18 +1218,11 @@ def kpi_trend_4g_api(request):
     )
     week1_data = pd.DataFrame()
     week2_data = pd.DataFrame()
-    # for week in week_numbers:
-    #     if current_week - week == 1:
-    #         # week1_data = pd.DataFrame(objs.filter(Date__week=week))
-    #         week1_data = objs[objs['Week'] == week]
-    #     if current_week - week == 2:
-    #         # week2_data = pd.DataFrame(objs.filter(Date__week=week))
-    #         week2_data = objs[objs['Week'] == week]
-    
-    week1_data = objs[objs['Week'] == week_numbers[-2]]
-    week2_data = objs[objs['Week'] == week_numbers[-3]]
-            
-    print("Week-1 data:- ",week1_data)
+
+    week1_data = objs[objs["Week"] == week_numbers[-2]]
+    week2_data = objs[objs["Week"] == week_numbers[-3]]
+
+    print("Week-1 data:- ", week1_data)
     week1_data = get_last_five_days_of_week(week1_data)
     week2_data = get_last_five_days_of_week(week2_data)
 
@@ -1329,76 +1260,11 @@ def kpi_trend_4g_api(request):
     n1 = pd.DataFrame(week11)
 
     n1.columns = pd.MultiIndex.from_tuples(
-        [
-            ('MV_Radio_NW_Availability', 'week-1'),
-            ('MV_4G_Data_Volume_GB', 'week-1'),
-            ('MV_RRC_Setup_Success_Rate', 'week-1'),
-            ('MV_RRC_Setup_Success_Rate_DENOM', 'week-1'),
-            ('MV_ERAB_Setup_Success_Rate', 'week-1'),
-            ('MV_PS_Drop_Call_Rate', 'week-1'),
-            ('MV_DL_User_Throughput_Kbps', 'week-1'),
-            ('MV_DL_User_Throughput_Kbps_CUBH', 'week-1'),  # Duplicate - CUBH not present, repeated for order
-            ('MV_UL_User_Throughput_Kbps', 'week-1'),
-            ('MV_Average_number_of_used_DL_PRBs', 'week-1'),
-            ('MV_Max_Connecteda_User', 'week-1'),
-            ('MV_E_UTRAN_Average_CQI', 'week-1'),
-            ('MV_PUCCH_SINR', 'week-1'),
-            ('MV_Average_UE_Distance_KM', 'week-1'),
-            ('Sams_Average_UE_Distance_KM', 'week-1'),  # Duplicate label for Average UE Distance_KM
-            ('MV_PS_handover_success_rate_LTE_INTER_SYSTEM', 'week-1'),
-            ('MV_PS_handover_success_rate_LTE_INTRA_SYSTEM', 'week-1'),
-            ('PS_InterF_HOSR', 'week-1'),
-            ('PS_IntraF_HOSR', 'week-1'),
-            ('UL_RSSI', 'week-1'),
-            ('UL_RSSI_Nokia_RSSI_SINR', 'week-1'),
-            ('MV_VoLTE_raffic', 'week-1'),
-            ('MV_VoLTE_DCR', 'week-1'),
-            ('VoLTE_Inter_Frequency_Handover_Success_Ratio', 'week-1'),
-            ('VoLTE_Intra_LTE_Handover_Success_Ratio', 'week-1'),
-            ('MV_VoLTE_Packet_Loss_UL_CBBH', 'week-1'),
-            ('MV_VoLTE_Packet_Loss_DL_CBBH', 'week-1'),  
-            ('MV_Packet_Loss_DL', 'week-1'),
-            ('MV_Packet_Loss_UL', 'week-1'),
-            ('MV_CSFB_Redirection_Success_Rate', 'week-1'),
-        ]
+        [(f"{kpi_name}", "week-1") for kpi_name in kpi]
     )
 
     n2 = pd.DataFrame(week22)
-    n2.columns = pd.MultiIndex.from_tuples(
-        [
-            ('MV_Radio_NW_Availability', 'week-2'),
-            ('MV_4G_Data_Volume_GB', 'week-2'),
-            ('MV_RRC_Setup_Success_Rate', 'week-2'),
-            ('MV_RRC_Setup_Success_Rate_DENOM', 'week-2'),
-            ('MV_ERAB_Setup_Success_Rate', 'week-2'),
-            ('MV_PS_Drop_Call_Rate', 'week-2'),
-            ('MV_DL_User_Throughput_Kbps', 'week-2'),
-            ('MV_DL_User_Throughput_Kbps_CUBH', 'week-2'),  # Duplicate - CUBH not present, repeated for order
-            ('MV_UL_User_Throughput_Kbps', 'week-2'),
-            ('MV_Average_number_of_used_DL_PRBs', 'week-2'),
-            ('MV_Max_Connecteda_User', 'week-2'),
-            ('MV_E_UTRAN_Average_CQI', 'week-2'),
-            ('MV_PUCCH_SINR', 'week-2'),
-            ('MV_Average_UE_Distance_KM', 'week-2'),
-            ('Sams_Average_UE_Distance_KM', 'week-2'),  # Duplicate label for Average UE Distance_KM
-            ('MV_PS_handover_success_rate_LTE_INTER_SYSTEM', 'week-2'),
-            ('MV_PS_handover_success_rate_LTE_INTRA_SYSTEM', 'week-2'),
-            ('PS_InterF_HOSR', 'week-2'),
-            ('PS_IntraF_HOSR', 'week-2'),
-            ('UL_RSSI', 'week-2'),
-            ('UL_RSSI_Nokia_RSSI_SINR', 'week-2'),
-            ('MV_VoLTE_raffic', 'week-2'),
-            ('MV_VoLTE_DCR', 'week-2'),
-            ('VoLTE_Inter_Frequency_Handover_Success_Ratio', 'week-2'),
-            ('VoLTE_Intra_LTE_Handover_Success_Ratio', 'week-2'),
-            ('MV_VoLTE_Packet_Loss_UL_CBBH', 'week-2'),  # Not present in original, may need correction
-            ('MV_VoLTE_Packet_Loss_DL_CBBH', 'week-2'),  # Not present in original, may need correction
-            ('MV_Packet_Loss_DL', 'week-2'),
-            ('MV_Packet_Loss_UL', 'week-2'),
-            ('MV_CSFB_Redirection_Success_Rate', 'week-2'),
-
-        ]
-    )
+    n2.columns = pd.MultiIndex.from_tuples([(kpi_name, "week-2") for kpi_name in kpi])
 
     dfs = []
     for cell in kpi:
@@ -1424,11 +1290,11 @@ def kpi_trend_4g_api(request):
     result_df = pd.concat(dfs1, axis=1)
 
     result_df.fillna(value=0, inplace=True)
-    print( "index as you want.......",result_df.index)
-    
+    print("index as you want.......", result_df.index)
+
     ######################################## adding new database values ######################################################
     print(date_list[-1].date())
-    trend_obj=Daily_4G_KPI_REPORT.objects.filter(Date = date_list[-1].date()) 
+    trend_obj = Daily_4G_KPI_REPORT.objects.filter(Date=date_list[-1].date())
     if not trend_obj.exists():
         print("creating new records......")
         trend_4g_df = pd.DataFrame()
@@ -1436,16 +1302,16 @@ def kpi_trend_4g_api(request):
             df_1 = result_df[k]
             print(df_1.columns)
             print(df_1.index)
-            
-            df_1['kpi_name'] = k
+
+            df_1["kpi_name"] = k
             trend_4g_df = pd.concat([trend_4g_df, df_1], axis=0)
-        
+
         print(trend_4g_df)
 
         trend_4g_df.columns = [
-            'week_1_val',
-            'week_2_val',
-            'date_1_val', 
+            "week_1_val",
+            "week_2_val",
+            "date_1_val",
             "date_2_val",
             "date_3_val",
             "date_4_val",
@@ -1453,20 +1319,28 @@ def kpi_trend_4g_api(request):
             "date_6_val",
             "date_7_val",
             "date_8_val",
-            'kpi_name',
-        ]    
+            "kpi_name",
+        ]
         # trend_4g_df.to_csv("trend_4g_df.csv")
         # exit(0)
         print(trend_4g_df)
         trend_4g_df.reset_index(inplace=True)
-        
-        trend_4g_df["Date"] = trend_4g_df['Short_name'].apply(lambda x: date_list[-1])
+
+        trend_4g_df["Date"] = trend_4g_df["Short_name"].apply(lambda x: date_list[-1])
         # trend_4g_df["Site_ID"] = trend_4g_df['Short_name'].apply(lambda x: get_site_id)
-        trend_4g_df["Site_ID"] = trend_4g_df["Short_name"].astype(str).apply(get_site_id)
-        print("here is the merged df \n:- ", list(trend_4g_df.columns)) #print(trend_4g_df.columns)
-        
+        trend_4g_df["Site_ID"] = (
+            trend_4g_df["Short_name"].astype(str).apply(get_site_id)
+        )
+        print(
+            "here is the merged df \n:- ", list(trend_4g_df.columns)
+        )  # print(trend_4g_df.columns)
+
+        # Run the async function in the event loop
+        # loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(loop)
         save_daily_4g_kpi_report(trend_4g_df)
-    
+        # loop.close()
+
     else:
         print("data already exist")
     #################################################################### end the new Code....... #################################################
@@ -1475,7 +1349,7 @@ def kpi_trend_4g_api(request):
     download_link = get_LTE_download_link(download_df)
 
     print(download_link)
-    
+
     result_df.columns = [
         "_".join([str(c) for c in col]).strip() for col in result_df.columns.values
     ]
@@ -1493,13 +1367,12 @@ def kpi_trend_4g_api(request):
     result_df = result_df[cols]
     # result_df2 = drop_rows(result_df2)
 
-    #for site id
+    # for site id
     new_cols = result_df.columns.tolist()
     new_cols = [new_cols[-1]] + new_cols[:-1]
     result_df = result_df[new_cols]
 
     result_df = result_df.dropna(subset=["Short_name"])
-
 
     # paginator = CustomPagination()
     # paginated_result = paginator.paginate_queryset(result_df.to_dict('records'), request)
@@ -1523,7 +1396,7 @@ def kpi_trend_4g_api(request):
 
 
 @api_view(["GET", "POST"])
-def  circle_based_rna_count(request):
+def circle_based_rna_count(request):
     objs = Daily_4G_KPI.objects.all()
 
     latest_date = objs.aggregate(latest_date=Max("Date"))
@@ -2330,18 +2203,20 @@ def get_data_from_url(request):
         )
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 def ticket_counter_api(request):
     try:
         # Fetching the database table name and latest date
         db_name = Daily_4G_KPI._meta.db_table
-        latest_date = Daily_4G_KPI.objects.aggregate(latest_date=Max("Date"))['latest_date']
+        latest_date = Daily_4G_KPI.objects.aggregate(latest_date=Max("Date"))[
+            "latest_date"
+        ]
 
         if not latest_date:
             raise ValueError("No data available in the database for processing.")
 
-        latest_date_str = latest_date.strftime('%Y-%m-%d')
-        previous_date_str = (latest_date - timedelta(1)).strftime('%Y-%m-%d')
+        latest_date_str = latest_date.strftime("%Y-%m-%d")
+        previous_date_str = (latest_date - timedelta(1)).strftime("%Y-%m-%d")
 
         # Constructing the SQL query
         query_n = f"""
@@ -2354,48 +2229,68 @@ def ticket_counter_api(request):
             latest_date_df = process_remove_duplicates(get_data_from_table(query_n))
         except Exception as e:
             logger.error(f"Error processing data from the table: {e}")
-            return Response({"status": False, "message": "Error processing data from the table."}, status=500)
+            return Response(
+                {"status": False, "message": "Error processing data from the table."},
+                status=500,
+            )
 
         # Ensuring necessary columns exist
         if "mark_value" in latest_date_df.columns:
             latest_date_df.drop(columns=["mark_value"], inplace=True)
 
         latest_date_df.fillna(value=0, inplace=True)
-        latest_date_df["Date"] = pd.to_datetime(latest_date_df["Date"]).dt.strftime("%Y-%m-%d")
+        latest_date_df["Date"] = pd.to_datetime(latest_date_df["Date"]).dt.strftime(
+            "%Y-%m-%d"
+        )
 
         kpi = ["MV_Radio_NW_Availability", "MV_4G_Data_Volume_GB"]
 
         # Creating the pivot table
         try:
             pivot_table = latest_date_df.pivot_table(
-                index=['Short_name', 'OEM_GGSN'],
+                index=["Short_name", "OEM_GGSN"],
                 columns="Date",
                 values=kpi,
-                aggfunc="mean"
+                aggfunc="mean",
             )
         except KeyError as e:
             logger.error(f"Error creating pivot table: {e}")
-            return Response({"status": False, "message": "Required columns are missing for pivot table."}, status=500)
+            return Response(
+                {
+                    "status": False,
+                    "message": "Required columns are missing for pivot table.",
+                },
+                status=500,
+            )
 
         pivot_table.reset_index(inplace=True)
 
         # Calculating deltas and priorities
         try:
-            pivot_table["delta"] = pivot_table[(kpi[1], previous_date_str)] - pivot_table[(kpi[1], latest_date_str)]
+            pivot_table["delta"] = (
+                pivot_table[(kpi[1], previous_date_str)]
+                - pivot_table[(kpi[1], latest_date_str)]
+            )
             column_to_drop = (kpi[0], previous_date_str)
             if column_to_drop in pivot_table.columns:
                 pivot_table.drop(columns=[column_to_drop], inplace=True)
         except KeyError as e:
             logger.error(f"Error calculating deltas or dropping columns: {e}")
-            return Response({"status": False, "message": "Error calculating deltas or dropping columns."}, status=500)
+            return Response(
+                {
+                    "status": False,
+                    "message": "Error calculating deltas or dropping columns.",
+                },
+                status=500,
+            )
 
         priority_map = {100: "P0", 50: "P1", 30: "P2", 10: "P3", 0: "P4"}
 
-        pivot_table['del_value'] = pivot_table['delta'].apply(
+        pivot_table["del_value"] = pivot_table["delta"].apply(
             lambda x: next((v for k, v in priority_map.items() if x >= k), "P4")
         )
 
-        pivot_table['Circle'] = pivot_table['Short_name'].apply(
+        pivot_table["Circle"] = pivot_table["Short_name"].apply(
             lambda x: get_circle(x) if x else "Unknown"
         )
 
@@ -2408,11 +2303,11 @@ def ticket_counter_api(request):
         pivot_table = pivot_table[pivot_table["del_value"].isin(["P0", "P1", "P2"])]
 
         # Splitting and merging data
-        print("pivot_table \n",pivot_table)
+        print("pivot_table \n", pivot_table)
         ericsson_df = pivot_table[pivot_table["OEM_GGSN"] == "Ericsson"]
         remaining_df = pivot_table[
-            (pivot_table["OEM_GGSN"] != "Ericsson") &
-            (pivot_table['Short_name'].str.contains("_ZQ_", na=False))
+            (pivot_table["OEM_GGSN"] != "Ericsson")
+            & (pivot_table["Short_name"].str.contains("_ZQ_", na=False))
         ]
         result_df = pd.concat([ericsson_df, remaining_df], axis=0)
 
@@ -2421,7 +2316,8 @@ def ticket_counter_api(request):
                 f"MV_4G_Data_Volume_GB {latest_date_str}": "MV_4G_Data_Volume_GB_current_date",
                 f"MV_4G_Data_Volume_GB {previous_date_str}": "MV_4G_Data_Volume_GB_previous_date",
                 f"MV_Radio_NW_Availability {latest_date_str}": "MV_Radio_NW_Availability_current_date",
-            }, inplace=True
+            },
+            inplace=True,
         )
 
         print(result_df)
@@ -2436,13 +2332,15 @@ def ticket_counter_api(request):
         json_data = result_df.to_json(orient="records")
         new_json = json.loads(json_data)
 
-        return Response({
-            "status": True,
-            "message": "Data successfully fetched",
-            "latest_date": latest_date_str,
-            "previous_date": previous_date_str,
-            "all_data": new_json,
-        })
+        return Response(
+            {
+                "status": True,
+                "message": "Data successfully fetched",
+                "latest_date": latest_date_str,
+                "previous_date": previous_date_str,
+                "all_data": new_json,
+            }
+        )
 
     except ValueError as ve:
         logger.error(f"ValueError: {ve}")
@@ -2450,20 +2348,16 @@ def ticket_counter_api(request):
 
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
-        return Response({"status": False, "message": "An unexpected error occurred."}, status=500)
-
-    
-
-
-
-
+        return Response(
+            {"status": False, "message": "An unexpected error occurred."}, status=500
+        )
 
 
 # @api_view(["GET"])
 # def ticket_counter_api(request):
 #     try:
 #         # Fetch data from the database
-        
+
 #         latest_date = Daily_4G_KPI.objects.aggregate(latest_date=Max("Date"))["latest_date"]
 #         objs = Daily_4G_KPI.objects.filter(Q(Date__in = [latest_date, latest_date - timedelta(1)]))
 #         if not latest_date:
@@ -2510,7 +2404,7 @@ def ticket_counter_api(request):
 #         df_pivot["del_value"] = df_pivot["delta"].apply(
 #             lambda x: next((v for k, v in priority_map.items() if x >= k), "P4")
 #         )
-        
+
 
 #         new_dataframe = df_pivot.reset_index()
 #         new_dataframe["Circle"] = new_dataframe["Short_name"].apply(get_circle)
@@ -2548,7 +2442,7 @@ def ticket_counter_api(request):
 
 #         # print("result_df",result_df)
 
-        
+
 #         all_data_df = result_df.to_json(orient="records")
 #         all_data = json.loads(all_data_df)
 
@@ -2683,63 +2577,63 @@ def hyperlink_Date_wise_dashboard_payload_dip(request):
 
 circle_spoc_dict = {
     "AP": {
-        "Name": "Ummalaneni Sai Teja", 
+        "Name": "Ummalaneni Sai Teja",
         "Email": "saiteja.u@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "BH": {
-        "Name": "Sonu Kumar Singh", 
+        "Name": "Sonu Kumar Singh",
         "Email": "sonu.kumar1@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "CH": {
-        "Name": "Baratheeswaran Arugakeerthi / Shubham Gupta", 
+        "Name": "Baratheeswaran Arugakeerthi / Shubham Gupta",
         "Email": "Baratheeswaran.Arugakeerthi@ust.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "DL": {
-        "Name": "Nishant Kumar Sharma", 
+        "Name": "Nishant Kumar Sharma",
         "Email": "nishant.kumar@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "WB": {
-        "Name": "Masud Rana", 
+        "Name": "Masud Rana",
         "Email": "masud.rana@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "HR": {
-        "Name": "Tarun Rakecha", 
+        "Name": "Tarun Rakecha",
         "Email": "tarun.rakecha@mcpsinc.com;Shivam.Pandey@ust.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "JH": {
-        "Name": "Avnish Kumar Mishra", 
+        "Name": "Avnish Kumar Mishra",
         "Email": "avnish.mishra@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "JK": {
-        "Name": "Rohit Bansal", 
+        "Name": "Rohit Bansal",
         "Email": "Rohit.Bansal@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "KK": {
-        "Name": "Karamalla Khader Valli", 
+        "Name": "Karamalla Khader Valli",
         "Email": "Khader.valli@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
@@ -2753,78 +2647,76 @@ circle_spoc_dict = {
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "UW": {
-        "Name": "Rajan Agarwal / Shubham Gupta", 
+        "Name": "Rajan Agarwal / Shubham Gupta",
         "Email": "rajan.agarwal@mcpsinc.com;shubham.gupta@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "MP": {
-        "Name": "Shashikant Jaiswal", 
+        "Name": "Shashikant Jaiswal",
         "Email": "shashikant.Jaiswal@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "MU": {
-        "Name": "Bharat Bhagwan Kamble/Aman Kumar Kashyap", 
+        "Name": "Bharat Bhagwan Kamble/Aman Kumar Kashyap",
         "Email": "bharat.kamble@mcpsinc.com;aman.kashyap@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "OD": {
-        "Name": "Manish Chobisa", 
+        "Name": "Manish Chobisa",
         "Email": "manish.chobisa@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "PB": {
-        "Name": "Devesh Pant / Manoj Kumar", 
+        "Name": "Devesh Pant / Manoj Kumar",
         "Email": "devesh.pant@mcpsinc.com;manoj.k2@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "UPE": {
-        "Name": "Rakesh Kumar Dubey / Manish Singh", 
+        "Name": "Rakesh Kumar Dubey / Manish Singh",
         "Email": "rakesh.dubey@mcpsinc.com;Manish.KumarSingh@ust.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "RJ": {
-        "Name": "Rohit Bansal", 
+        "Name": "Rohit Bansal",
         "Email": "Rohit.Bansal@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "KO": {
-        "Name": "Masud Rana", 
+        "Name": "Masud Rana",
         "Email": "masud.rana@mcpsinc.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "TN": {
-        "Name": "Baratheeswaran Arugakeerthi / Shubham Gupta / Prakash", 
+        "Name": "Baratheeswaran Arugakeerthi / Shubham Gupta / Prakash",
         "Email": "Baratheeswaran.Arugakeerthi@ust.com;Prakashpandi.T@ust.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
     "UE": {
-        "Name": "Rakesh Kumar Dubey / Manish Singh", 
+        "Name": "Rakesh Kumar Dubey / Manish Singh",
         "Email": "rakesh.dubey@mcpsinc.com;Manish.KumarSingh@ust.com",
         "l2_management_email": "krishna.kantverma@ust.com",
         "l3_management_email": "nilesh.jain@ust.com",
         "l4_management_email": "saurabh.rathore@ust.com",
     },
 }
-
-
 
 
 # def get_ticket_status_by_date(request, Date):
@@ -2929,6 +2821,7 @@ circle_spoc_dict = {
 #         json_data = new_df_pivot.to_json(orient="records")
 #         new_json = json.loads(json_data)
 
+
 #         return Response(
 #             {
 #                 "status": True,
@@ -2948,15 +2841,14 @@ def creating_ticket_for_sleeping_cells():
     print(latest_date)
 
     latest_date = latest_date["latest_date"]
-    objs= objs.filter(Date=latest_date)
+    objs = objs.filter(Date=latest_date)
     df = pd.DataFrame(list(objs.values()))
 
     print(df)
 
     new_df = df[
-            (df[f"MV_4G_Data_Volume_GB"] == 0)
-            & (df[f"MV_Radio_NW_Availability"] >= 90)
-        ]
+        (df[f"MV_4G_Data_Volume_GB"] == 0) & (df[f"MV_Radio_NW_Availability"] >= 90)
+    ]
     new_df["Circle"] = (
         new_df["Short_name"].apply(lambda x: str(x).strip()).apply(get_circle)
     )
@@ -2965,54 +2857,74 @@ def creating_ticket_for_sleeping_cells():
     for _, row in new_df.iterrows():
         short_name = row["Short_name"] if row["Short_name"] is not None else ""
 
-        pre_exist_data = Ticket_Counter_Table_Data.objects.filter(Short_name=short_name).first()
-        if pre_exist_data and pre_exist_data.Status == 'CLOSE':
+        pre_exist_data = Ticket_Counter_Table_Data.objects.filter(
+            Short_name=short_name
+        ).first()
+        if pre_exist_data and pre_exist_data.Status == "CLOSE":
             with transaction.atomic():
                 try:
                     ticket_counter = Ticket_Counter_Table_Data.objects.create(
-                        Short_name=short_name,
-                        Site_ID=row.get("Site ID", "") if row.get("Site ID") is not None else "",
-                        Status=row["Status"] if row["Status"] is not None else "",
-                        Remarks=" ",
-                        Ownership=row.get("Ownership", "") if row.get("Ownership") is not None else "",
-                        priority=row["del_value"] if row["del_value"] is not None else "",
-                        Circle_Spoc=circle_spoc_dict.get(row["Circle"], {}).get("Name") if row["Circle"] is not None else "",
-                        auto_rca= "",
-                        proposed_solution= "",
-                        ticket_type="Sleeping Cell",
-                        Date=row["Date"]
-                    )
-                    print(f"Created new ticket for Short_name: {short_name} as the previous ticket was CLOSE")
-                except IntegrityError:
-                    continue
-        else:
-            with transaction.atomic():
-                try:
-                    ticket_counter, created = Ticket_Counter_Table_Data.objects.update_or_create(
                         Short_name=short_name,
                         Site_ID=(
                             row.get("Site ID", "")
                             if row.get("Site ID") is not None
                             else ""
                         ),
-                        defaults={
-                            "Status": "OPEN",
-                            "Remarks": " ",
-                            "Ownership": (
-                                row.get("Ownership", "")
-                                if row.get("Ownership") is not None
+                        Status=row["Status"] if row["Status"] is not None else "",
+                        Remarks=" ",
+                        Ownership=(
+                            row.get("Ownership", "")
+                            if row.get("Ownership") is not None
+                            else ""
+                        ),
+                        priority=(
+                            row["del_value"] if row["del_value"] is not None else ""
+                        ),
+                        Circle_Spoc=(
+                            circle_spoc_dict.get(row["Circle"], {}).get("Name")
+                            if row["Circle"] is not None
+                            else ""
+                        ),
+                        auto_rca="",
+                        proposed_solution="",
+                        ticket_type="Sleeping Cell",
+                        Date=row["Date"],
+                    )
+                    print(
+                        f"Created new ticket for Short_name: {short_name} as the previous ticket was CLOSE"
+                    )
+                except IntegrityError:
+                    continue
+        else:
+            with transaction.atomic():
+                try:
+                    ticket_counter, created = (
+                        Ticket_Counter_Table_Data.objects.update_or_create(
+                            Short_name=short_name,
+                            Site_ID=(
+                                row.get("Site ID", "")
+                                if row.get("Site ID") is not None
                                 else ""
                             ),
-                            "priority": "P0",
-                            "Circle_Spoc": (
-                                circle_spoc_dict.get(row["Circle"], {}).get("Name")
-                                if row["Circle"] is not None
-                                else ""
-                            ),
-                            "auto_rca": "",
-                            "proposed_solution": "",
-                            "ticket_type": "Sleeping Cell",
-                        },
+                            defaults={
+                                "Status": "OPEN",
+                                "Remarks": " ",
+                                "Ownership": (
+                                    row.get("Ownership", "")
+                                    if row.get("Ownership") is not None
+                                    else ""
+                                ),
+                                "priority": "P0",
+                                "Circle_Spoc": (
+                                    circle_spoc_dict.get(row["Circle"], {}).get("Name")
+                                    if row["Circle"] is not None
+                                    else ""
+                                ),
+                                "auto_rca": "",
+                                "proposed_solution": "",
+                                "ticket_type": "Sleeping Cell",
+                            },
+                        )
                     )
                 except IntegrityError:
                     continue
@@ -3030,7 +2942,9 @@ def ticket_counter_upload_report():
     get_response_from_ticlet = ticket_counter_api(get_ticket_api)
 
     if get_response_from_ticlet.status_code != 200:
-        return Response({"error": "Failed to fetch data from the first API"}, status=500)
+        return Response(
+            {"error": "Failed to fetch data from the first API"}, status=500
+        )
 
     try:
         logger.info("Sending request to get_data_from_url")
@@ -3043,7 +2957,9 @@ def ticket_counter_upload_report():
             if rca_df.empty:
                 logger.warning("Received an empty response for 'resposne_data'.")
         else:
-            logger.error(f"Failed API call. Status code: {response_rca_api.status_code}")
+            logger.error(
+                f"Failed API call. Status code: {response_rca_api.status_code}"
+            )
             rca_df = pd.DataFrame()
     except Exception as e:
         logger.exception(f"An unexpected error occurred while calling RCA API: {e}")
@@ -3106,55 +3022,83 @@ def ticket_counter_upload_report():
     ]
 
     for _, row in merged_df.iterrows():
-        short_name = row["Short_name"] if row["Short_name"] is not None else ""                          
-        pre_exist_data = Ticket_Counter_Table_Data.objects.filter(Short_name = short_name).first()
-        if pre_exist_data and pre_exist_data.Status == 'CLOSE':
+        short_name = row["Short_name"] if row["Short_name"] is not None else ""
+        pre_exist_data = Ticket_Counter_Table_Data.objects.filter(
+            Short_name=short_name
+        ).first()
+        if pre_exist_data and pre_exist_data.Status == "CLOSE":
             with transaction.atomic():
                 try:
                     ticket_counter = Ticket_Counter_Table_Data.objects.create(
-                        Short_name=short_name,
-                        Site_ID=row.get("Site ID", "") if row.get("Site ID") is not None else "",
-                        Status=row["Status"] if row["Status"] is not None else "",
-                        Remarks=" ",
-                        Ownership=row.get("Ownership", "") if row.get("Ownership") is not None else "",
-                        priority=row["del_value"] if row["del_value"] is not None else "",
-                        Circle_Spoc=circle_spoc_dict.get(row["Circle"], {}).get("Name") if row["Circle"] is not None else "",
-                        auto_rca=row["RCA"] if row["RCA"] is not None else "",
-                        proposed_solution=row["Proposed_Solution"],
-                        ticket_type="Payload",
-                        Date=row["Date"]
-                    )
-                    print(f"Created new ticket for Short_name: {short_name} as the previous ticket was CLOSE")
-                except IntegrityError:
-                    continue
-        else:
-            with transaction.atomic():
-                try:
-                    ticket_counter, created = Ticket_Counter_Table_Data.objects.update_or_create(
                         Short_name=short_name,
                         Site_ID=(
                             row.get("Site ID", "")
                             if row.get("Site ID") is not None
                             else ""
                         ),
-                        defaults={
-                            "Status": row["Status"] if row["Status"] is not None else "",
-                            "Remarks": " ",
-                            "Ownership": (
-                                row.get("Ownership", "")
-                                if row.get("Ownership") is not None
+                        Status=row["Status"] if row["Status"] is not None else "",
+                        Remarks=" ",
+                        Ownership=(
+                            row.get("Ownership", "")
+                            if row.get("Ownership") is not None
+                            else ""
+                        ),
+                        priority=(
+                            row["del_value"] if row["del_value"] is not None else ""
+                        ),
+                        Circle_Spoc=(
+                            circle_spoc_dict.get(row["Circle"], {}).get("Name")
+                            if row["Circle"] is not None
+                            else ""
+                        ),
+                        auto_rca=row["RCA"] if row["RCA"] is not None else "",
+                        proposed_solution=row["Proposed_Solution"],
+                        ticket_type="Payload",
+                        Date=row["Date"],
+                    )
+                    print(
+                        f"Created new ticket for Short_name: {short_name} as the previous ticket was CLOSE"
+                    )
+                except IntegrityError:
+                    continue
+        else:
+            with transaction.atomic():
+                try:
+                    ticket_counter, created = (
+                        Ticket_Counter_Table_Data.objects.update_or_create(
+                            Short_name=short_name,
+                            Site_ID=(
+                                row.get("Site ID", "")
+                                if row.get("Site ID") is not None
                                 else ""
                             ),
-                            "priority": row["del_value"] if row["del_value"] is not None else "",
-                            "Circle_Spoc": (
-                                circle_spoc_dict.get(row["Circle"], {}).get("Name")
-                                if row["Circle"] is not None
-                                else ""
-                            ),
-                            "auto_rca": row["RCA"] if row["RCA"] is not None else "",
-                            "proposed_solution": row["Proposed_Solution"],
-                            "ticket_type": "Payload"
-                        },
+                            defaults={
+                                "Status": (
+                                    row["Status"] if row["Status"] is not None else ""
+                                ),
+                                "Remarks": " ",
+                                "Ownership": (
+                                    row.get("Ownership", "")
+                                    if row.get("Ownership") is not None
+                                    else ""
+                                ),
+                                "priority": (
+                                    row["del_value"]
+                                    if row["del_value"] is not None
+                                    else ""
+                                ),
+                                "Circle_Spoc": (
+                                    circle_spoc_dict.get(row["Circle"], {}).get("Name")
+                                    if row["Circle"] is not None
+                                    else ""
+                                ),
+                                "auto_rca": (
+                                    row["RCA"] if row["RCA"] is not None else ""
+                                ),
+                                "proposed_solution": row["Proposed_Solution"],
+                                "ticket_type": "Payload",
+                            },
+                        )
                     )
                 except IntegrityError:
                     continue
@@ -3163,29 +3107,29 @@ def ticket_counter_upload_report():
                 print(f"Created new record for Short_name: {short_name}")
             else:
                 print(f"Updated existing record for Short_name: {short_name}")
-                
+
     creating_ticket_for_sleeping_cells()
-    
+
     objs = Ticket_Counter_Table_Data.objects.filter(Date=latest_date)
-    
+
     serializer = ser_Ticket_Counter(objs, many=True)
 
     return serializer.data
 
 
-
-
-
 def convert_unix_to_date(timestamp_ms):
-    """ Convert Unix timestamp in milliseconds to a readable date format. """
+    """Convert Unix timestamp in milliseconds to a readable date format."""
     timestamp_s = timestamp_ms / 1000
-    return datetime.utcfromtimestamp(timestamp_s).strftime('%Y-%m-%d')
+    return datetime.utcfromtimestamp(timestamp_s).strftime("%Y-%m-%d")
+
 
 def format_dates(obj):
-    """ Recursively format date values in a JSON-like object. """
+    """Recursively format date values in a JSON-like object."""
     if isinstance(obj, dict):
         for key, value in obj.items():
-            if isinstance(value, int) and (key.lower().endswith('date') or key.lower().endswith('timestamp')):
+            if isinstance(value, int) and (
+                key.lower().endswith("date") or key.lower().endswith("timestamp")
+            ):
                 obj[key] = convert_unix_to_date(value)
             else:
                 # Recursively format nested dictionaries and lists
@@ -3198,7 +3142,7 @@ def format_dates(obj):
 
 def update_aging_count():
 
-    objs = Ticket_Counter_Table_Data.objects.filter(Status = 'OPEN')
+    objs = Ticket_Counter_Table_Data.objects.filter(Status="OPEN")
 
     for obj in objs:
         obj.Date = datetime.now().date()
@@ -3211,7 +3155,7 @@ def get_ticket_status_data(request):
     """
     Fetch ticket status data and integrate it with RCA API data.
     """
-    
+
     factory = APIRequestFactory()
     logger.info("Entering get_ticket_status_data function")
 
@@ -3222,18 +3166,21 @@ def get_ticket_status_data(request):
     logger.debug(f"Latest date fetched: {latest_date}")
 
     # Fetch data for the latest date from Ticket_Counter_Table_Data model
-    data = Ticket_Counter_Table_Data.objects.filter(Open_Date=latest_date + timedelta(1))
+    data = Ticket_Counter_Table_Data.objects.filter(
+        Open_Date=latest_date + timedelta(1)
+    )
     logger.debug(f"Data exists for latest date: {data.exists()}")
 
-    rca_table_data = RCA_output_table.objects.filter(date = latest_date)
-
+    rca_table_data = RCA_output_table.objects.filter(date=latest_date)
 
     if not data.exists() and rca_table_data.exists():
         print("baar baar yaha mat aana............")
         logger.info("Processing ticket_counter_upload_report due to missing data.")
         update_aging_count()
         json_data = ticket_counter_upload_report()
-        instance = Ticket_Counter_Table_Data.objects.filter(Open_Date=latest_date + timedelta(1))
+        instance = Ticket_Counter_Table_Data.objects.filter(
+            Open_Date=latest_date + timedelta(1)
+        )
         new_df = pd.DataFrame(instance.values())
 
         logger.debug(f"New DataFrame columns: {new_df.columns}")
@@ -3252,8 +3199,6 @@ def get_ticket_status_data(request):
         logger.info("Sending request to ticket_counter_api")
         request_for_first_api = factory.get(reverse("ticket_counter_api"))
         response_from_first_api = ticket_counter_api(request_for_first_api)
-
-
 
         if response_from_first_api.status_code == 200:
             logger.info("Successfully received response from ticket_counter_api")
@@ -3409,8 +3354,6 @@ def get_ticket_status_data(request):
 #         )
 
 
-
-
 @api_view(["POST"])
 def ticket_status_open_close_all(request):
 
@@ -3524,14 +3467,12 @@ def ticket_status_open_close(request, ticket_id):
         instance = Ticket_Counter_Table_Data.objects.get(ticket_id=ticket_id)
         print(f"Ticket ID: {instance.ticket_id}, Short Name: {instance.Short_name}")
 
-        
-        for date_field in ['Date', 'Open_Date']:
+        for date_field in ["Date", "Open_Date"]:
             if date_field in request.data:
                 request.data[date_field] = datetime.utcfromtimestamp(
                     int(request.data[date_field]) / 1000
-                ).strftime('%Y-%m-%d')
-        
-  
+                ).strftime("%Y-%m-%d")
+
         remarks = request.data.get("Remarks", "")
         pre_remarks = request.data.get("Pre_Remarks", "")
         print(pre_remarks)
@@ -3540,11 +3481,15 @@ def ticket_status_open_close(request, ticket_id):
             instance.Pre_Remarks = []
         pre_remarks.append(previous_remarks)
 
-        pre_remarks.sort(key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d %H:%M:%S.%f' if ' ' in x['date'] else '%Y-%m-%d'), reverse=True)
+        pre_remarks.sort(
+            key=lambda x: datetime.strptime(
+                x["date"], "%Y-%m-%d %H:%M:%S.%f" if " " in x["date"] else "%Y-%m-%d"
+            ),
+            reverse=True,
+        )
 
         instance.Pre_Remarks = pre_remarks
         instance.save()
-
 
     except Ticket_Counter_Table_Data.DoesNotExist:
         return Response(
@@ -3572,14 +3517,12 @@ def ticket_status_open_close(request, ticket_id):
 
             if "Pre_Remarks" in response_data.keys():
                 for remark in response_data["Pre_Remarks"]:
-                    remark["date"] = str(remark['date'])[:19]
-            
-            
-            
+                    remark["date"] = str(remark["date"])[:19]
+
             return Response(
                 {
-                    **response_data,  
-                    # "previous_remarks": previous_remarks, 
+                    **response_data,
+                    # "previous_remarks": previous_remarks,
                 },
                 status=status.HTTP_200_OK,
             )
@@ -3607,32 +3550,30 @@ def ticket_status_open_close(request, ticket_id):
         )
 
 
-
 from datetime import date
+
+
 @api_view(["POST", "GET"])
 def circle_wise_open_close_dashboard(request):
     print(request.POST)
     ticket_type = request.POST.get("ticket_type")
     # ticket_type ="Payload"
-    start_date =date(2025,1 , 1)
+    start_date = date(2025, 1, 1)
     objs = Ticket_Counter_Table_Data.objects.filter(Open_Date__gte=start_date)
     if ticket_type == "Sleeping Cell":
         objs = objs.filter(ticket_type="Sleeping Cell")
         MAX_DATE = objs.aggregate(Max("Open_Date"))["Open_Date__max"]
         MIN_DATE = objs.aggregate(Min("Open_Date"))["Open_Date__min"]
-        
-        print("MAX_DATE: ",MAX_DATE)
-        print("MIN_DATE: ",MIN_DATE)
+
+        print("MAX_DATE: ", MAX_DATE)
+        print("MIN_DATE: ", MIN_DATE)
     if ticket_type == "Payload":
         objs = objs.filter(ticket_type="Payload")
         MAX_DATE = objs.aggregate(Max("Open_Date"))["Open_Date__max"]
         MIN_DATE = objs.aggregate(Min("Open_Date"))["Open_Date__min"]
-        
 
-        
-
-        print("MAX_DATE: ",MAX_DATE)
-        print("MIN_DATE: ",MIN_DATE)
+        print("MAX_DATE: ", MAX_DATE)
+        print("MIN_DATE: ", MIN_DATE)
 
     unique_circle = list(objs.values_list("Circle", flat=True).distinct())
 
@@ -3644,29 +3585,26 @@ def circle_wise_open_close_dashboard(request):
 
     from_date = request.POST.get("from_date")
     to_date = request.POST.get("to_date")
-    priority = request.POST.get("priority") 
+    priority = request.POST.get("priority")
 
-
-
-        
     # ageing = request.POST.get("bucket")
 
-
-    max_ageing_fe =request.POST.get("max_ageing")
-    min_ageing_fe =request.POST.get("min_ageing")
-    if min_ageing_fe ==''and max_ageing_fe == '':
-            max_ageing =objs.aggregate(Max("aging"))["aging__max"]
-            min_ageing =objs.aggregate(Min("aging"))["aging__min"]
+    max_ageing_fe = request.POST.get("max_ageing")
+    min_ageing_fe = request.POST.get("min_ageing")
+    if min_ageing_fe == "" and max_ageing_fe == "":
+        max_ageing = objs.aggregate(Max("aging"))["aging__max"]
+        min_ageing = objs.aggregate(Min("aging"))["aging__min"]
     else:
-            max_ageing = max_ageing_fe
-            min_ageing = min_ageing_fe
+        max_ageing = max_ageing_fe
+        min_ageing = min_ageing_fe
 
+    objs = objs.filter(
+        aging__gte=min_ageing, aging__lte=max_ageing, ticket_type=ticket_type
+    )
+    priority_list = priority.split(",")
 
-    objs= objs.filter(aging__gte = min_ageing, aging__lte = max_ageing, ticket_type = ticket_type)
-    priority_list = priority.split(",") 
-    
-    if '' in priority_list:
-        priority_list = priority_list.remove('')
+    if "" in priority_list:
+        priority_list = priority_list.remove("")
     # print("Type: ",type(priority_list))
     # print("priority_list len;;;;;",len(priority_list))
     # ageing_list = ageing.split(",")
@@ -3674,36 +3612,34 @@ def circle_wise_open_close_dashboard(request):
     print(from_date, to_date, priority, priority_list)
 
     # priority_val = request.POST.get("priority")
-    
-    # aging_bucket = request.POST.get("bucket")
-    
-    counts = {circle: {"OPEN": 0, "CLOSE": 0} for circle in unique_circle}
 
+    # aging_bucket = request.POST.get("bucket")
+
+    counts = {circle: {"OPEN": 0, "CLOSE": 0} for circle in unique_circle}
 
     if from_date and to_date:
         from_date = datetime.strptime(str(from_date), "%Y-%m-%d").date()
         to_date = datetime.strptime(str(to_date), "%Y-%m-%d").date()
 
         objs = objs.filter(Open_Date__range=[from_date, to_date])
-        
+
     else:
         from_date = MIN_DATE
         to_date = MAX_DATE
-    
-    if priority_list :
+
+    if priority_list:
         print("priority_list:- ", priority_list)
-        objs = objs.filter(priority__in = priority_list)
-        
+        objs = objs.filter(priority__in=priority_list)
+
     # if aging_bucket and '-' in aging_bucket:
     #     from_bucket, to_bucket = str(aging_bucket).split('-')
     #     objs = objs.filter(aging__range = [int(from_bucket), int(to_bucket)])
-    
+
     # if aging_bucket and  '>' in aging_bucket:
     #     aging_value = int(''.join(str(aging_bucket).split('>')))
     #     print(aging_value)
     #     objs = objs.filter(aging__gt = aging_value)
-    
-        
+
     for obj in objs:
         ageing = (latest_date - obj.Open_Date).days
         obj.aging = ageing
@@ -3729,11 +3665,11 @@ def circle_wise_open_close_dashboard(request):
             "Status": True,
             "message": "Successfully fetched the data",
             "from_date": from_date,
-            "to_date": to_date ,
+            "to_date": to_date,
             "result": result,
             "data": serializer.data,
             "max_ageing": max_ageing,
-            "min_ageing": min_ageing
+            "min_ageing": min_ageing,
         },
         status=status.HTTP_200_OK,
     )
@@ -3742,43 +3678,52 @@ def circle_wise_open_close_dashboard(request):
 ###
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def get_unique_category(request):
     category_list = [
-        'RNA issue',
-        'HW issue',
-        'Tx issue',
-        'Quality alarm',
-        'Soft optimization done/Payload shifted within sector',
-        'Optimization done as per customer requirements',
-        'Optimization done for KPI improvement',
-        'Physical optimization planned',
-        'New layer /Sector coming in site',
-        'New site / Sector come in neighobur',
-        'Soft optimization planned'
+        "RNA issue",
+        "HW issue",
+        "Tx issue",
+        "Quality alarm",
+        "Soft optimization done/Payload shifted within sector",
+        "Optimization done as per customer requirements",
+        "Optimization done for KPI improvement",
+        "Physical optimization planned",
+        "New layer /Sector coming in site",
+        "New site / Sector come in neighobur",
+        "Soft optimization planned",
     ]
 
-    return Response({
-        'category' : category_list
-    })
+    return Response({"category": category_list})
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def get_daily_4g_kpi_report_by_date_and_kpi(request):
-    date = request.data.get('date')
-    kpi_name = request.data.get('kpi_name')
-    
+    date = request.data.get("date")
+    kpi_name = request.data.get("kpi_name")
+
     if date and kpi_name:
         try:
-            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
-            report = Daily_4G_KPI_REPORT.objects.filter(Date=date_obj, kpi_name=kpi_name)
+            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+            report = Daily_4G_KPI_REPORT.objects.filter(
+                Date=date_obj, kpi_name=kpi_name
+            )
             serializer = Daily4GKPIReportSerializer(report, many=True)
             return Response(serializer.data)
         except ValueError:
-            return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Invalid date format"}, status=status.HTTP_400_BAD_REQUEST
+            )
     elif not date and not kpi_name:
-        return Response({'error': 'Date and KPI name are required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": "Date and KPI name are required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     elif not date:
-        return Response({'error': 'Date is required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": "Date is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
     elif not kpi_name:
-        return Response({'error': 'KPI name is required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": "KPI name is required"}, status=status.HTTP_400_BAD_REQUEST
+        )

@@ -23,6 +23,15 @@ def inbetween(x, a, b):
     return not (a <= x <= b)
 
 
+def clean_dataframe(df):
+    bad_values = ['âˆž', '∞', 'NaN', 'nan', 'Inf', '-Inf', 'inf', '-inf']
+    df.replace(bad_values, np.nan, inplace=True)
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df = df.apply(pd.to_numeric, errors='coerce')
+    # df.dropna(inplace=True)
+    return df
+
+
 OPERATORS_dict = {
     "+": operator.add,
     "-": operator.sub,
@@ -357,15 +366,21 @@ def Daily_RAW_KPI_4G(request):
     exists = Daily_4G_KPI.objects.filter(Date__in=present_dates).values_list(
         "Date", flat=True
     )
-    kpiStrToZero = [
-        "MV_UL User Throughput_Kbps [CDBH]",
-        "MV_DL User Throughput_Kbps [CDBH]",
-        "MV_DL User Throughput_Kbps [CUBH]",
-    ]
-    for x in kpiStrToZero:
-        # df[x] = df[x].replace(to_replace='.*', value=0, regex=True)
-        df[x] = pd.to_numeric(df[x], errors="coerce").fillna(0)
+    # df = clean_dataframe(df)
+    # kpiStrToZero = [
+    #     "MV_UL User Throughput_Kbps [CDBH]",
+    #     "MV_DL User Throughput_Kbps [CDBH]",
+    #     "MV_DL User Throughput_Kbps [CUBH]",
+    # ]
+    kpiStrToZero = df.select_dtypes(include=["float64", "Int64"]).columns.to_list()
+    print("list type of:- ",kpiStrToZero)
 
+    for x in kpiStrToZero:
+        df[x] = df[x].replace(['âˆž', '∞'], np.inf) 
+        df[x] = pd.to_numeric(df[x], errors="coerce")  # convert invalid strings to NaN
+        df[x] = df[x].replace([np.inf, -np.inf], 0)    # replace inf and -inf with 0
+        df[x] = df[x].fillna(0)
+  
     if not exists:
         objects_to_create = []
         try:
@@ -444,7 +459,9 @@ def Daily_RAW_KPI_4G(request):
                         MV_RRC_Setup_Success_Rate_DENOM=row[
                             "MV_RRC Setup Success Rate_DENOM"
                         ],
-                        MV_DL_User_Throughput_Kbps_CUBH=row["MV_DL User Throughput_Kbps [CUBH]"],
+                        MV_DL_User_Throughput_Kbps_CUBH=row[
+                            "MV_DL User Throughput_Kbps [CUBH]"
+                        ],
                         Sams_Average_UE_Distance_KM=row[
                             "Average UE Distance_KM [CDBH]"
                         ],
