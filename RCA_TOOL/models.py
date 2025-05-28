@@ -84,12 +84,13 @@ class Daily_4G_KPI(models.Model):
     MV_VoLTE_Packet_Loss_DL_CBBH = models.FloatField(null=True, blank=True, default=0)
 
     class Meta:
+        managed = False
         indexes = [
             Index(fields=["Date"], name="idx_date"),
-            Index(fields=["Short_name"], name="idx_short_name"),
-            Index(fields=["ECGI_4G"], name="idx_ecgi"),
-            Index(fields=["Date", "Short_name"], name="idx_date_short_name"),
-            Index(fields=["Date", "ECGI_4G"], name="idx_date_ecgi"),
+            # Index(fields=["Short_name"], name="idx_short_name"),
+            # Index(fields=["ECGI_4G"], name="idx_ecgi"),
+            # Index(fields=["Date", "Short_name"], name="idx_date_short_name"),
+            # Index(fields=["Date", "ECGI_4G"], name="idx_date_ecgi"),
         ]
 
     def __str__(self):

@@ -743,7 +743,7 @@ def get_table_data(request):
         ############################################################### Merge all DataFrames ##############################################################
         all_merged_df = {
             key: pd.concat(dfs, ignore_index=False, axis=0) if dfs else pd.DataFrame()
-            for key, dfs in all_dfs.items() if key != 'CellRelation'
+            for key, dfs in all_dfs.items()
         }
 
         ################################################################ Prepare post cell data ###########################################################
@@ -1417,7 +1417,9 @@ def get_table_data(request):
 
         ###### GPL parameter script generation ###############
         gpl_para_df = pre_post_df_data.parse("gpl-para").copy()
-        node_id = gpl_para_df["Node_ID"].unique()[1]
+        print(gpl_para_df["Node_ID"].unique())
+        
+        node_id = [node for node in gpl_para_df["Node_ID"].unique() if node != "Cell is not Found in Post"][0]
         # Filter out rows with OK status and ensure Current Value is not NA
         mask = (gpl_para_df["Parameter Setting Status"] != "OK") & pd.notna(
             gpl_para_df["Current value"]

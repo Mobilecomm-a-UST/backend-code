@@ -1,35 +1,72 @@
+################################################################################################################################################################################
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from datetime import datetime
 import os
 import json
-from LTE_Integration_Scripting_Automtion.remote_commision_scripts import (
-    RRU_2219_B0_B1_B3_2X2,
-    RRU_4412_4418_4427_4471_4X4,
-    RRU_6626_6X6,
-    RRU_8863_8X8,
-    SiteBasic_script,
-    site_equipment_script,
-    RBSSummary_script,
+from LTE_Integration_Scripting_Automtion.circles.KK.KK_INTEGRATION_SCRIPT import (
+    kk_GPL_LMS_script,
+    kk_GPS_MMS_script,
+    kk_TN_script_text,
+    NR_CELL_CREATION_AND_SCTP_5G_ENDPOINT_CREATION,
+    NR_GPL_LMS,
+    KK_GNBCUCPFUNCTION_ELEMENT,
+    KK_GNBDUFUNCTION_ELEMENT,
+    TREMPOINT_GUTRANCELL_FREQ_RELATION
 )
-from LTE_Integration_Scripting_Automtion.remote_integration_scripts import *
+from LTE_Integration_Scripting_Automtion.circles.KK.KK_COMISSIONING_SCRIPT import (
+    KK_SITE_BASIC_SCRIPT, KK_SITE_EQUIPMENT_SCRIPT, kk_5G_RRU_creation
+)
+
+from LTE_Integration_Scripting_Automtion.universal_SCRIPTS.UNIVERSAL_SCRIPTS import (
+    tdd_cell_script, 
+    fdd_cell_script, 
+    RRU_2219_B0_B1_B3_2X2, 
+    RRU_4412_4418_4427_4471_4X4, 
+    RRU_6626_6X6, RRU_8863_8X8, 
+    RRU_5G_CREATION,
+    RBSSummary_script
+)
+from LTE_Integration_Scripting_Automtion.circles.TN.TN_INTEGRATION_SCRIPT import (
+    TN_02_IPV6creationforanchor, 
+    TN_03_ENDCanchornode_ROTN, 
+    TN_04_FreqRelation, 
+    TN_05_5G_LMS_GPL_ROTN, 
+    TN_s1_FOR_TN_IDL_B_PORT, 
+    TN_s3_LTE_GPL_LMS, 
+    NR_TN_RN_Cell_Def,
+    TN_GNBCUCPFUNCTION_ELEMENT,
+    TN_GNBDUFUNCTION_ELEMENT
+)
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 import pandas as pd
 import stat
 from django.conf import settings
+import zipfile
 
+############################################################## END IMPORT STATEMENTS ############################################################################################
 
-
-
+################################################################ MEDIA URL ######################################################################################################
 MEDIA_ROOT = settings.MEDIA_ROOT
 
+def ZipFolder(folder_path, ZIP_OUPUT_PATH):
+    with zipfile.ZipFile(ZIP_OUPUT_PATH, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                
+                arcname = os.path.relpath(file_path, folder_path)
+                zipf.write(file_path, arcname)
 
 
-def create_script_paths(base_dir, node_name, current_time):
+
+
+
+def create_script_paths(base_dir, node_name):
     base_node_dir = os.path.join(
         base_dir,
-        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS_{current_time}",
+        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",
         f"{node_name}_REMOTE_INTEGRATION_SCRIPTS"
     )
 
@@ -38,7 +75,7 @@ def create_script_paths(base_dir, node_name, current_time):
         "nr": os.path.join(base_node_dir, "NR_5G"),
         "commissioning": os.path.join(
             base_dir,
-            f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS_{current_time}",
+            f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",
             f"{node_name}_Commissioning_Scripts"
         )
     }
@@ -49,295 +86,50 @@ def create_script_paths(base_dir, node_name, current_time):
     return directories
 
 
-####################################################### --- TN ----- ##########################################################
+def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
+    ##################################################### Define required columns for FDD and TDD #######################################################################
+    columns_to_needed_fdd = [
+        "sectorCarrierId", "configuredMaxTxPower", "noOfTxAntennas",
+        "noOfRxAntennas", "sectorEquipmentFunctionId", "eUtranCellFDDId",
+        "cellId", "crsGain", "dlChannelBandwidth", "earfcndl", "earfcnul",
+        "Latitude", "Longitude", "physicalLayerCellIdGroup",
+        "physicalLayerSubCellId", "rachRootSequence", "tac",
+        "ulChannelBandwidth"
+    ]
 
+    columns_to_needed_tdd = [
+        "sectorCarrierId", "configuredMaxTxPower", "noOfTxAntennas",
+        "noOfRxAntennas", "sectorEquipmentFunctionId", "eUtranCellFDDId",
+        "cellId", "crsGain", "dlChannelBandwidth", "earfcndl",
+        "Latitude", "Longitude", "physicalLayerCellIdGroup",
+        "physicalLayerSubCellId", "rachRootSequence", "tac",
+        "ulChannelBandwidth"
+    ]
 
-TN_GNBDUFUNCTION_ELEMENT = """ 
-crn GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId}
-administrativeState 1
-arfcnDL {arfcnDL}
-arfcnUL {arfcnUL}
-bSChannelBwDL {bSChannelBwDLUL}
-bSChannelBwUL {bSChannelBwDLUL}
-configuredMaxTxPower {configuredMaxTxPower}
-latitude {Latitude}
-longitude {Longitude}
-sectorEquipmentFunctionRef NodeSupport=1,SectorEquipmentFunction={sectorEquipmentFunctionId}
-txDirection 0
-txPowerChangeRate 1
-txPowerPersistentLock false
-txPowerRatio 100
-end
-#END GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId} --------------------
+    node_rows = lte_df[lte_df["eNodeBName"] == node_name]
+    output_file_path = os.path.join(
+        directories["lte"], f"3_Cell_Def_script_{node_name}_{current_time}.txt"
+    )
 
-crn GNBDUFunction=1,NRCellDU={gUtranCell}
-csiRsConfig16P csiRsControl16Ports=0
-csiRsConfig2P aRestriction=3F,csiRsControl2Ports=1
-csiRsConfig32P csiRsControl32Ports=0
-csiRsConfig4P csiRsControl4Ports=1,i11Restriction=FF
-csiRsConfig8P csiRsControl8Ports=1,i11Restriction=FFFF
-pLMNIdList mcc=404,mnc=94
-sibType2 siBroadcastStatus=0,siPeriodicity=64
-sibType4 siBroadcastStatus=0,siPeriodicity=64
-sibType5 siBroadcastStatus=0,siPeriodicity=64
-sibType6 siBroadcastStatus=0,siPeriodicity=16
-sibType7 siBroadcastStatus=0,siPeriodicity=64
-sibType8 siBroadcastStatus=0,siPeriodicity=64
-ailgDlPrbLoadLevel 0
-ailgModType 0
-ailgPdcchLoadLevel 0
-bandListManual 78
-cellBarred 1
-cellLocalId {cellLocalId}
-cellRange 12000
-cellReservedForOperator 1
-csiReportFormat 0
-csiRsPeriodicity 40
-dftSOfdmMsg3Enabled false
-dftSOfdmPuschEnabled false
-dl256QamEnabled true
-dlMaxMuMimoLayers 0
-dlStartCrb 0
-endcUlLegSwitchEnabled true
-endcUlNrLowQualThresh -4
-endcUlNrQualHyst 6
-maxUeSpeed 2
-nRPCI {nRPCI}
-nRSectorCarrierRef GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId}
-nRTAC {nRTAC}
-pdschStartPrbStrategy 3
-pMax 23
-puschStartPrbStrategy 3
-pZeroNomPucch -110
-pZeroNomPuschGrant -102
-qRxLevMin -128
-rachPreambleFormat 0
-rachPreambleRecTargetPower -110
-rachPreambleTransMax 10
-rachRootSequence 733
-secondaryCellOnly false
-siWindowLength 20
-ssbDuration 1
-ssbFrequency {ssbFrequency}
-ssbOffset 0
-ssbPeriodicity 20
-ssbSubCarrierSpacing 30
-subCarrierSpacing 30
-tddSpecialSlotPattern 1
-tddUlDlPattern 1
-trsPeriodicity 40
-trsPowerBoosting 0
-ul256QamEnabled true
-ulMaxMuMimoLayers 0
-ulStartCrb 0
-userLabel {gUtranCell}
-end
-#END GNBDUFunction=1,NRCellDU={gUtranCell} --------------------
+    script_lines = []
+    for _, row in node_rows.iterrows():
+        cell_id = row.get("eUtranCellFDDId", "")
+        if any(f in cell_id for f in ["_F1_", "_F3_", "_F8_"]):
+            formatted = fdd_cell_script.format(
+                **{key: row.get(key, "") for key in columns_to_needed_fdd}
+            )
+            script_lines.append(formatted)
+        elif any(t in cell_id for t in ["_T1_", "_T2_"]):
+            formatted = tdd_cell_script.format(
+                **{key: row.get(key, "") for key in columns_to_needed_tdd}
+            )
+            script_lines.append(formatted)
 
+    if script_lines:
+        with open(output_file_path, "w") as file:
+            file.write("\n".join(script_lines) + "\n")
+            
 
-crn GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId},CommonBeamforming=1
-cbfMacroTaperType 0
-coverageShape 1
-digitalTilt 30
-end
-#END GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId},CommonBeamforming=1 --------------------
-"""
-
-
-TN_GNBCUCPFUNCTION_ELEMENT = """ 
-crn GNBCUCPFunction=1,NRCellCU={gUtranCell}
-cellLocalId {cellLocalId}
-qHyst 4
-sNonIntraSearchP 0
-threshServingLowP 0
-transmitSib2 false
-transmitSib4 false
-transmitSib5 false
-userLabel {gUtranCell}
-end
-#END GNBCUCPFunction=1,NRCellCU={gUtranCell} --------------------
-
-crn GNBCUCPFunction=1,NRNetwork=1
-end
-#END GNBCUCPFunction=1,NRNetwork=1 --------------------
-
-crn GNBCUCPFunction=1,NRNetwork=1,NRFrequency=629952-30
-arfcnValueNRDl 629952
-bandListManual 78
-smtcDuration 1
-smtcOffset 0
-smtcPeriodicity 20
-smtcScs 30
-end
-#END GNBCUCPFunction=1,NRNetwork=1,NRFrequency=629952-30 --------------------
-
-crn GNBCUCPFunction=1,NRCellCU={gUtranCell},NRFreqRelation=629952
-anrMeasOn true
-cellReselectionPriority 7
-nRFrequencyRef GNBCUCPFunction=1,NRNetwork=1,NRFrequency=629952-30
-end
-#END GNBCUCPFunction=1,NRCellCU={gUtranCell},NRFreqRelation=629952 --------------------
-"""
-
-
-KK_GNBDUFUNCTION_ELEMENT = """
-##########################################GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId}##########################################################################
-
-
-crn GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId}
-administrativeState 1
-arfcnDL {arfcnDL}                                          
-arfcnUL {arfcnUL}                                           
-bSChannelBwDL {bSChannelBwDLUL}                                        
-bSChannelBwUL {bSChannelBwDLUL}                                        
-configuredMaxTxPower {configuredMaxTxPower}
-latitude {Latitude}                                         
-longitude {Longitude}                                        
-sectorEquipmentFunctionRef NodeSupport=1,SectorEquipmentFunction={sectorEquipmentFunctionId}
-txDirection 0
-txPowerChangeRate 1
-txPowerPersistentLock false
-txPowerRatio 100
-end
-#END GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId} --------------------
-
-##########################################GNBDUFunction=1,{gUtranCell}##########################################################################
-
-
-crn GNBDUFunction=1,NRCellDU={gUtranCell}                  
-csiRsConfig16P csiRsControl16Ports=0
-csiRsConfig2P aRestriction=3F,csiRsControl2Ports=1
-csiRsConfig32P csiRsControl32Ports=0
-csiRsConfig4P csiRsControl4Ports=1,i11Restriction=FF
-csiRsConfig8P csiRsControl8Ports=1,i11Restriction=FFFF
-pLMNIdList mcc=404,mnc=45
-sibType2 siBroadcastStatus=0,siPeriodicity=64
-sibType4 siBroadcastStatus=0,siPeriodicity=64
-sibType5 siBroadcastStatus=0,siPeriodicity=64
-sibType6 siBroadcastStatus=0,siPeriodicity=16
-sibType7 siBroadcastStatus=0,siPeriodicity=64
-sibType8 siBroadcastStatus=0,siPeriodicity=64
-administrativeState 1
-ailgDlPrbLoadLevel 0
-ailgModType 0
-ailgPdcchLoadLevel 0
-bandListManual 78
-bfrEnabled true
-cellBarred 1
-cellLocalId {cellLocalId}                                                          
-cellRange 15000
-cellReservedForOperator 1
-csiReportFormat 0
-csiRsPeriodicity 40
-dftSOfdmMsg3Enabled false
-dftSOfdmPuschEnabled false
-dl256QamEnabled true
-dlMaxMuMimoLayers 0
-dlStartCrb 0
-drxEnable false
-drxInactivityTimer 15
-drxLongCycle 10
-drxOnDurationTimer 39
-endcDlNrLowQualThresh 3
-endcDlNrQualHyst 5
-endcUlLegSwitchEnabled true
-endcUlNrLowQualThresh -4
-endcUlNrQualHyst 6
-maxUeSpeed 2
-nRPCI {nRPCI}                                                                     
-nRSectorCarrierRef GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId}
-nRTAC {nRTAC}                                                                   
-pdschStartPrbStrategy 3
-pMax 23
-puschStartPrbStrategy 3
-pZeroNomPucch -110
-pZeroNomPuschGrant -102
-qRxLevMin -128
-rachPreambleFormat 0
-rachPreambleRecTargetPower -110
-rachPreambleTransMax 10
-rachRootSequence {rachRootSequence}
-secondaryCellOnly false
-siWindowLength 20
-ssbDuration 1
-ssbFrequency 627936
-ssbOffset 0
-ssbPeriodicity 20
-ssbSubCarrierSpacing 30
-subCarrierSpacing 30
-tddSpecialSlotPattern 3
-tddUlDlPattern 1
-trsPeriodicity 40
-trsPowerBoosting 0
-ul256QamEnabled true
-ulMaxMuMimoLayers 0
-ulStartCrb 0
-userLabel {gUtranCell}
-end
-#END GNBDUFunction=1,NRCellDU={gUtranCell} --------------------
-
-
-
-crn GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId},CommonBeamforming=1
-cbfMacroTaperType 0
-coverageShape 1
-digitalTilt 30
-end
-#END GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId},CommonBeamforming=1 --------------------
-
-crn GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId},CommonBeamforming=1
-cbfMacroTaperType 0
-coverageShape 1
-digitalTilt 30
-end
-#END GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId},CommonBeamforming=1 --------------------
-
-crn GNBDUFunction=1,TermPointToGNBCUCP=1
-administrativeState 1
-ipv4Address 10.0.0.1
-ipv6Address ::
-end
-#END GNBDUFunction=1,TermPointToGNBCUCP=1 --------------------
-
-ld GNBDUFunction=1
-lset GNBDUFunction=1$ endpointResourceRef GNBDUFunction=1,EndpointResource=1
-"""
-
-
-KK_GNBCUCPFUNCTION_ELEMENT = """
-##########################################GNBCUCPFunction=1,{gUtranCell}##########################################################################
-
-
-crn GNBCUCPFunction=1,NRCellCU={gUtranCell}
-cellLocalId {cellLocalId}
-qHyst 4
-sNonIntraSearchP 0
-threshServingLowP 0
-transmitSib2 false
-transmitSib4 false
-transmitSib5 false
-userLabel {gUtranCell}
-end
-#END GNBCUCPFunction=1,NRCellCU={gUtranCell} --------------------
-
-crn GNBCUCPFunction=1,NRNetwork=1
-end
-#END GNBCUCPFunction=1,NRNetwork=1 --------------------
-
-
-crn GNBCUCPFunction=1,NRNetwork=1,NRFrequency=627936-30
-arfcnValueNRDl 627936
-smtcScs 30
-end
-#END GNBCUCPFunction=1,NRNetwork=1,NRFrequency=627936-30 --------------------
-
-crn GNBCUCPFunction=1,NRCellCU={gUtranCell},NRFreqRelation=627936
-anrMeasOn true
-cellReselectionPriority 7
-nRFrequencyRef GNBCUCPFunction=1,NRNetwork=1,NRFrequency=627936-30
-end
-#END GNBCUCPFunction=1,NRCellCU={gUtranCell},NRFreqRelation=627936 --------------------
-"""
 
 
 @api_view(["GET", "POST"])
@@ -375,96 +167,20 @@ def generate_integration_script(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        
         base_path_url = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
         os.makedirs(base_path_url, exist_ok=True)
+
         siteBasicFilePath = ""
         siteEquipmentFilePath = ""
         ################################################ Define required columns for fdd and tdd also ###############################################################
-        columns_to_needed_fdd = list(
-            dict.fromkeys(
-                [
-                    "sectorCarrierId",
-                    "configuredMaxTxPower",
-                    "noOfTxAntennas",
-                    "noOfRxAntennas",
-                    "sectorEquipmentFunctionId",
-                    "eUtranCellFDDId",
-                    "cellId",
-                    "crsGain",
-                    "dlChannelBandwidth",
-                    "earfcndl",
-                    "earfcnul",
-                    "Latitude",
-                    "Longitude",
-                    "physicalLayerCellIdGroup",
-                    "physicalLayerSubCellId",
-                    "rachRootSequence",
-                    "tac",
-                    "ulChannelBandwidth",
-                ]
-            )
-        )
-
-        columns_to_needed_tdd = list(
-            dict.fromkeys(
-                [
-                    "sectorCarrierId",
-                    "configuredMaxTxPower",
-                    "noOfTxAntennas",
-                    "noOfRxAntennas",
-                    "sectorEquipmentFunctionId",
-                    "eUtranCellFDDId",
-                    "cellId",
-                    "crsGain",
-                    "dlChannelBandwidth",
-                    "earfcndl",
-                    "Latitude",
-                    "Longitude",
-                    "physicalLayerCellIdGroup",
-                    "physicalLayerSubCellId",
-                    "rachRootSequence",
-                    "tac",
-                    "ulChannelBandwidth",
-                ]
-            )
-        )
-
-        ############################################################# Generate FDD/TDD Cell Scripts ####################################################################
         lte_df["earfcnul"] = lte_df["earfcnul"].astype("Int64")
         unique_nodes = lte_df["eNodeBName"].dropna().unique()
 
         for node_name in unique_nodes:
-            current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-            node_dir = os.path.join(
-                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
-            )
-            node_dir_5g = os.path.join(
-                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "NR_5G"
-            )
-            os.makedirs(node_dir, exist_ok=True)
-            os.makedirs(node_dir_5g, exist_ok=True)
-            node_rows = lte_df[lte_df["eNodeBName"] == node_name]
-            output_file_path = os.path.join(
-                node_dir, f"3 Cell_Def_script_{node_name}_{current_time}.txt"
-            )
-            #os.makedirs(output_file_path, exist_ok=True)
-            script_lines = []
-            for _, row in node_rows.iterrows():
-                cell_id = row.get("eUtranCellFDDId", "")
-
-                if any(f in cell_id for f in ["_F1_", "_F3_", "_F8_"]):
-                    formatted = fdd_cell_script.format(
-                        **{key: row.get(key, "") for key in columns_to_needed_fdd}
-                    )
-                    script_lines.append(formatted)
-                elif any(t in cell_id for t in ["_T1_", "_T2_"]):
-                    formatted = tdd_cell_script.format(
-                        **{key: row.get(key, "") for key in columns_to_needed_tdd}
-                    )
-                    script_lines.append(formatted)
-            if script_lines:
-                with open(output_file_path, "w") as file:
-                    file.write("\n".join(script_lines) + "\n")
+            current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            directories = create_script_paths(base_path_url, node_name)        
+            generate_lte_cell_def_scripts(lte_df=lte_df, directories=directories, node_name=node_name, current_time=current_time)
 
         ##################################################################### Map Node -> Cell IDs ############################################################################
         unique_nodes = lte_df["eNodeBName"].unique()
@@ -472,15 +188,15 @@ def generate_integration_script(request):
             node: lte_df[lte_df["eNodeBName"] == node]["eUtranCellFDDId"].to_list()
             for node in unique_nodes
         }
-
         ############################################################## KK Circle-specific Script Generation ####################################################################
         if circle == "KK":
+            current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+            
             for idx, row in site_basic_df.iterrows():
+                print(site_basic_df)
                 node_name = row.get("eNodeBName", "UnknownNode")
-                current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-                node_dir = os.path.join(
-                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
-                )
+                
+                node_dir = create_script_paths(base_path_url, node_name)['lte']
                 os.makedirs(node_dir, exist_ok=True)
 
                 if node_name in cell_mapped_node:
@@ -511,65 +227,20 @@ def generate_integration_script(request):
             ######################################################################### GPS/MME Script #######################################################################
             gps_mme_path = f"2 GPS_MME_script_{node_name}_{current_time}.txt"
             for node in unique_nodes:
-                with open(
-                    os.path.join(
-                        base_path_url,
-                        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",
-                        f"{node}_REMOTE_INTEGRATION_SCRIPTS",
-                        "LTE_4G",
-                        gps_mme_path,
-                    ),
-                    "a",
-                ) as file:
+                script_path = os.path.join(create_script_paths(base_path_url, node)['lte'], gps_mme_path)
+                with open(script_path,"a") as file:
                     file.write(kk_GPS_MMS_script + "\n")
 
             ########################################################################## GPL/LMS Script ###########################################################################
             gpl_lms_path = f"4 GPL_LMS_script_{node_name}_{current_time}.txt"
             for node in unique_nodes:
-                with open(
-                    os.path.join(
-                        base_path_url,
-                        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",
-                        f"{node}_REMOTE_INTEGRATION_SCRIPTS",
-                        "LTE_4G",
-                        gpl_lms_path,
-                    ),
-                    "a",
-                ) as file:
+                script_path = os.path.join(create_script_paths(base_path_url, node)['lte'], gpl_lms_path)
+                with open(script_path,"a") as file:
                     file.write(kk_GPL_LMS_script + "\n")
 
             ############################################################################### 5G Cell Scripts ##########################################################################
-            rru_5G_creation = rru_5G_creation_xml
-            os.makedirs(node_dir_5g, exist_ok=True)
+            #---------------------------------------------------------------------------------------------------
             if not nr_cell_df.empty:
-                rru_5g_creation_path = os.path.join(
-                    node_dir_5g, f"1_5G RRU creation.xml"
-                )
-                with open(rru_5g_creation_path, "a") as file:
-                    file.write(rru_5G_creation + "\n")
-
-                sctp_5g_endpoint_path = os.path.join(
-                    node_dir_5g, f"3_5G Sctp Endpoint Creation.txt"
-                )
-                with open(sctp_5g_endpoint_path, "a") as file:
-                    file.write(sctp_5g_endpoint_creation + "\n")
-
-                Standalone_LTE_TERM_Enter_NR_IP_path = os.path.join(
-                    node_dir_5g, f"4_Standalone_LTE_TERM_Enter NR IP.mos"
-                )
-                with open(Standalone_LTE_TERM_Enter_NR_IP_path, "a") as file:
-                    file.write(Standalone_LTE_TERM_Enter_NR_IP + "\n")
-
-                NR_GPL_LMS_path = os.path.join(node_dir_5g, f"5_NR_GPL_LMS.txt")
-                with open(NR_GPL_LMS_path, "a") as file:
-                    file.write(nr_gpl_lms_script + "\n")
-
-                OR_LTE_Relation_LTE_ONLY_site_Enter_Gnb_ID_path = os.path.join(
-                    node_dir_5g, f"6_OR_LTE-Relation-LTE-ONLY-site_Enter Gnb ID.txt"
-                )
-                with open(OR_LTE_Relation_LTE_ONLY_site_Enter_Gnb_ID_path, "a") as file:
-                    file.write(OR_LTE_Relation_LTE_ONLY_site_Enter_Gnb_ID + "\n")
-                # .......................................................................... NRCELL CONFIGRATION FOR CELL CREATION IN 5G ................................................
                 for node in nr_cell_df["gNodeBName"].unique():
                     nr_cell_df: pd.DataFrame = nr_cell_df[
                         nr_cell_df["gNodeBName"] == node
@@ -578,7 +249,7 @@ def generate_integration_script(request):
                         columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True
                     )
                     nr_cell_df_path = os.path.join(
-                        node_dir_5g, f"2_5G Cell creation.txt"
+                        create_script_paths(base_path_url, node)['nr'], f"1_{node}_5G Cell creation_Sctp Endpoint Creation_{current_time}.txt"
                     )
                     gnbid = nr_cell_df["gNBId"].unique()[0]
                     print(nr_cell_df)
@@ -591,7 +262,7 @@ def generate_integration_script(request):
                             nRSectorCarrierId=row["nRSectorCarrierId"],
                             arfcnDL=row["arfcnDL"],
                             arfcnUL=row["arfcnUL"],
-                            bSChannelBwDLUL=row["bSChannelBwDL-UL"],
+                            bSChannelBwDL_UL=row["bSChannelBwDL-UL"],
                             configuredMaxTxPower=row["configuredMaxTxPower"],
                             Latitude=row["Latitude"],
                             Longitude=row["Longitude"],
@@ -601,6 +272,7 @@ def generate_integration_script(request):
                             nRPCI=row["nRPCI"],
                             nRTAC=row["nRTAC"],
                             rachRootSequence = row["rachRootSequence"],  # Added rachRootSequence
+                            ssbFrequency = row['ssbFrequency']
 
                         )
 
@@ -610,18 +282,29 @@ def generate_integration_script(request):
                         )
                     with open(nr_cell_df_path, "a") as file:
                         file.write(
-                            cell_creation_5g_script.format(
+                            NR_CELL_CREATION_AND_SCTP_5G_ENDPOINT_CREATION.format(
                                 gNBId=gnbid,
                                 GNBDUFUNCTION_SCRIPT_ELEMENT=gnbdu_fuction_element,
                                 GNBCUCPFUNCTION_SCRIPT_ELEMENT=gnbcucp_fuction_element,
                             )
                         )
                         file.close()
+                
+
+                    NR_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node)['nr'], f"2_{node}_NR_GPL_LMS_{current_time}.txt")
+                    with open(NR_GPL_LMS_path, "a") as file:
+                        file.write(NR_GPL_LMS + "\n")
+
+                    Termpoint_GUtranFreqRelation_path = os.path.join(
+                        create_script_paths(base_path_url, node_name)['nr'], f"3_{node_name}_Termpoint_GUtranFreqRelation_{current_time}.txt"
+                    )
+                    with open(Termpoint_GUtranFreqRelation_path, "a") as file:
+                        file.write(TREMPOINT_GUTRANCELL_FREQ_RELATION + "\n")
+                # .......................................................................... NRCELL CONFIGRATION FOR CELL CREATION IN 5G ................................................
+
             ############################################################### creating the SiteBasic script for 4G and 5G ###############################################################
             for node in site_basic_df["eNodeBName"].unique():
-                commision_scripts_dir = os.path.join(
-                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node}_Commissioning_Scripts"
-                )
+                commision_scripts_dir = create_script_paths(base_path_url, node)['commissioning']
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 os.makedirs(commision_scripts_dir, exist_ok=True)
                 sitebasic_df: pd.DataFrame = site_basic_df[
@@ -630,14 +313,15 @@ def generate_integration_script(request):
                 sitebasic_df_path = os.path.join(
                     commision_scripts_dir, f"01_SiteBasic_{node}_{current_time}.xml"
                 )
-                siteBasicFilePath = sitebasic_df_path.replace(
-                    base_path_url + os.sep, ""
+                siteBasicFilePath = os.path.relpath(
+                    sitebasic_df_path,
+                    os.path.join(base_path_url, f"{node}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
                 ).replace("\\", "/")
 
                 for idx, row in sitebasic_df.iterrows():
                     with open(sitebasic_df_path, "a") as file:
                         file.write(
-                            SiteBasic_script.format(
+                            KK_SITE_BASIC_SCRIPT.format(
                                 eNodeBName=row["eNodeBName"],
                                 fieldReplaceableUnitId=row["fieldReplaceableUnitId"],
                                 tnPortId=row["tnPortId"],
@@ -652,9 +336,7 @@ def generate_integration_script(request):
                         file.close()
 
             for node in rru_hw_df["eNodeBName"].unique():
-                commissioning_scripts_dir = os.path.join(
-                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node}_Commissioning_Scripts"
-                )
+                commissioning_scripts_dir = create_script_paths(base_path_url, node)['commissioning']
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 os.makedirs(commissioning_scripts_dir, exist_ok=True)
 
@@ -664,9 +346,11 @@ def generate_integration_script(request):
                     f"02_SiteEquipment_{node}_{current_time}.xml",
                 )
                 site_equipment_text = ""
-                siteEquipmentFilePath = rru_hw_path.replace(
-                    base_path_url + os.sep, ""
+                siteEquipmentFilePath = os.path.relpath(
+                    rru_hw_path,
+                    os.path.join(base_path_url, f"{node}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
                 ).replace("\\", "/")
+
 
                 print("site_equipment_path", siteEquipmentFilePath)
                 site_basic_df_N = site_basic_df[site_basic_df["eNodeBName"] == node]
@@ -679,7 +363,7 @@ def generate_integration_script(request):
                     inplace=True,
                 )
 
-                site_equipment_script_text = site_equipment_script.format(
+                site_equipment_script_text = KK_SITE_EQUIPMENT_SCRIPT.format(
                     fieldReplaceableUnitId=site_basic_df_N[
                         "fieldReplaceableUnitId"
                     ].values[0],
@@ -758,12 +442,8 @@ def generate_integration_script(request):
             for _, row in lte_df.iterrows():
                 node_name = row.get("eNodeBName", "UnknownNode")
                 current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-                node_dir = os.path.join(
-                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
-                )
-                node_dir_5g = os.path.join(
-                    base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "NR_5G"
-                )
+                node_dir = create_script_paths(base_path_url, node_name)['lte']
+                node_dir_5g = create_script_paths(base_path_url, node_name)['nr']
                 os.makedirs(node_dir, exist_ok=True)
                 formatted_text = TN_s1_FOR_TN_IDL_B_PORT.format(eNBId=row["enbId"])
                 script_path = os.path.join(
@@ -855,7 +535,11 @@ def generate_integration_script(request):
                 )
                 with open(TN_05_5G_LMS_GPL_ROTN_path, "a") as file:
                     file.write(TN_05_5G_LMS_GPL_ROTN + "\n")
-
+        ########################################################## MAKING THE ZIP FILE #############################################################
+        
+        ZIP_OUTPUT_PATH = ...
+        
+        ############################################################################################################################################
         return Response(
             {"status": "OK", "message": "Integration scripts generated successfully."},
             status=status.HTTP_200_OK,
