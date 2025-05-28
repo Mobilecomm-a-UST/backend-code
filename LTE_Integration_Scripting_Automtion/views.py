@@ -62,9 +62,6 @@ def ZipFolder(folder_path, ZIP_OUPUT_PATH):
                 zipf.write(file_path, arcname)
 
 
-
-
-
 def create_script_paths(base_dir, node_name):
     base_node_dir = os.path.join(
         base_dir,
@@ -88,6 +85,8 @@ def create_script_paths(base_dir, node_name):
     return directories
 
 
+
+####################################################### --- TN circle code for generating scripts GNBDU and GNBCUCP ----- #############################################################################################################
 def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
     ##################################################### Define required columns for FDD and TDD #######################################################################
     columns_to_needed_fdd = [
@@ -185,6 +184,39 @@ def generate_integration_script(request):
         unique_nodes = lte_df["eNodeBName"].dropna().unique()
 
         for node_name in unique_nodes:
+            current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+            node_dir = os.path.join(
+                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
+            )
+
+            node_dir_5g = os.path.join(
+                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "NR_5G"
+            )
+            os.makedirs(node_dir, exist_ok=True)
+            os.makedirs(node_dir_5g, exist_ok=True)
+            node_rows = lte_df[lte_df["eNodeBName"] == node_name]
+            output_file_path = os.path.join(
+                node_dir, f"3 Cell_Def_script_{node_name}_{current_time}.txt"
+            )
+            #os.makedirs(output_file_path, exist_ok=True)
+            script_lines = []
+            for _, row in node_rows.iterrows():
+                cell_id = row.get("eUtranCellFDDId", "")
+
+                if any(f in cell_id for f in ["_F1_", "_F3_", "_F8_"]):
+                    formatted = fdd_cell_script.format(
+                        **{key: row.get(key, "") for key in columns_to_needed_fdd}
+                    )
+                    script_lines.append(formatted)
+                elif any(t in cell_id for t in ["_T1_", "_T2_"]):
+                    formatted = tdd_cell_script.format(
+                        **{key: row.get(key, "") for key in columns_to_needed_tdd}
+                    )
+                    script_lines.append(formatted)
+            if script_lines:
+                with open(output_file_path, "w") as file:
+                    file.write("\n".join(script_lines) + "\n")
+                    
             current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             directories = create_script_paths(base_path_url, node_name)        
             generate_lte_cell_def_scripts(lte_df=lte_df, directories=directories, node_name=node_name, current_time=current_time)
@@ -279,6 +311,7 @@ def generate_integration_script(request):
                             cellLocalId=row["cellLocalId"],
                             nRPCI=row["nRPCI"],
                             nRTAC=row["nRTAC"],
+                            rachRootSequence = row["rachRootSequence"],  ############################################################################ Added rachRootSequence
                             rachRootSequence = row["rachRootSequence"],  # Added rachRootSequence
                             ssbFrequency = row['ssbFrequency']
 
@@ -325,6 +358,12 @@ def generate_integration_script(request):
                     sitebasic_df_path,
                     os.path.join(base_path_url, f"{node}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
                 ).replace("\\", "/")
+                relative_path = os.path.relpath(
+                    sitebasic_df_path,
+                    os.path.join(base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
+                )
+                siteBasicFilePath = relative_path.replace("\\", "/")
+
 
                 for idx, row in sitebasic_df.iterrows():
                     with open(sitebasic_df_path, "a") as file:
@@ -354,6 +393,12 @@ def generate_integration_script(request):
                     f"02_SiteEquipment_{node}_{current_time}.xml",
                 )
                 site_equipment_text = ""
+                relative_path = os.path.relpath(
+                    rru_hw_path,
+                    os.path.join(base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
+                )
+                siteEquipmentFilePath = relative_path.replace("\\", "/")
+
                 siteEquipmentFilePath = os.path.relpath(
                     rru_hw_path,
                     os.path.join(base_path_url, f"{node}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
