@@ -60,12 +60,6 @@ def ZipFolder(folder_path, ZIP_OUPUT_PATH):
                 zipf.write(file_path, arcname)
 
 
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> 56265a0748ce46dced280db17444e8d6ead71b44
 def create_script_paths(base_dir, node_name):
     base_node_dir = os.path.join(
         base_dir,
@@ -89,9 +83,8 @@ def create_script_paths(base_dir, node_name):
     return directories
 
 
-<<<<<<< HEAD
+
 ####################################################### --- TN circle code for generating scripts GNBDU and GNBCUCP ----- #############################################################################################################
-=======
 def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
     ##################################################### Define required columns for FDD and TDD #######################################################################
     columns_to_needed_fdd = [
@@ -102,7 +95,6 @@ def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
         "physicalLayerSubCellId", "rachRootSequence", "tac",
         "ulChannelBandwidth"
     ]
->>>>>>> 56265a0748ce46dced280db17444e8d6ead71b44
 
     columns_to_needed_tdd = [
         "sectorCarrierId", "configuredMaxTxPower", "noOfTxAntennas",
@@ -185,7 +177,6 @@ def generate_integration_script(request):
         unique_nodes = lte_df["eNodeBName"].dropna().unique()
 
         for node_name in unique_nodes:
-<<<<<<< HEAD
             current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
             node_dir = os.path.join(
                 base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
@@ -218,11 +209,10 @@ def generate_integration_script(request):
             if script_lines:
                 with open(output_file_path, "w") as file:
                     file.write("\n".join(script_lines) + "\n")
-=======
+                    
             current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             directories = create_script_paths(base_path_url, node_name)        
             generate_lte_cell_def_scripts(lte_df=lte_df, directories=directories, node_name=node_name, current_time=current_time)
->>>>>>> 56265a0748ce46dced280db17444e8d6ead71b44
 
         ##################################################################### Map Node -> Cell IDs ############################################################################
         unique_nodes = lte_df["eNodeBName"].unique()
@@ -313,12 +303,9 @@ def generate_integration_script(request):
                             cellLocalId=row["cellLocalId"],
                             nRPCI=row["nRPCI"],
                             nRTAC=row["nRTAC"],
-<<<<<<< HEAD
                             rachRootSequence = row["rachRootSequence"],  ############################################################################ Added rachRootSequence
-=======
                             rachRootSequence = row["rachRootSequence"],  # Added rachRootSequence
                             ssbFrequency = row['ssbFrequency']
->>>>>>> 56265a0748ce46dced280db17444e8d6ead71b44
 
                         )
 
@@ -398,19 +385,16 @@ def generate_integration_script(request):
                     f"02_SiteEquipment_{node}_{current_time}.xml",
                 )
                 site_equipment_text = ""
-<<<<<<< HEAD
                 relative_path = os.path.relpath(
                     rru_hw_path,
                     os.path.join(base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
                 )
                 siteEquipmentFilePath = relative_path.replace("\\", "/")
 
-=======
                 siteEquipmentFilePath = os.path.relpath(
                     rru_hw_path,
                     os.path.join(base_path_url, f"{node}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
                 ).replace("\\", "/")
->>>>>>> 56265a0748ce46dced280db17444e8d6ead71b44
 
 
                 print("site_equipment_path", siteEquipmentFilePath)
