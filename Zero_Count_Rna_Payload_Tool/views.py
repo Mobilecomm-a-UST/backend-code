@@ -804,8 +804,8 @@ def mark_rows_vectorized(df):
         "OEM_GGSN",
         "ECGI_4G",
         "MV_Site_Name",
-        "MV_Freq_Band",
-        "MV_Freq_Bandwidth",
+        # "MV_Freq_Band",
+        # "MV_Freq_Bandwidth",
     ]
 
     complete_empty_mask = (
@@ -871,70 +871,6 @@ def rename_columns(cols):
             new_columns.append(col)
 
     return new_columns
-
-
-# def get_site_id(short_name):
-#     check_short_names = ["Sams", "BH", "WB", "MU","UE","MP","OD","UW","TN","JH","JK","KK","KO","DL","HR","CH","MP","PB","RJ"]
-
-#     if "_" in short_name and not any(sub in short_name for sub in check_short_names):
-#         return short_name.split("_")[4][:6]
-#     elif "Sams-" in short_name:
-#         return short_name.split(",")[1].split("_")[-1]
-#     elif "BH_" in short_name:
-#         return short_name.split("_")[-2][:8]
-#     elif "WB_" in short_name and "@Nokia" not in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "MU_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "UE_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "MP_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "OD_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "UW_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "TN_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "JH_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "KK_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "KO_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "MP_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "HR_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "DL_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "JK_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "CH_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "PB_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     elif "RJ_" in short_name:
-#         site_id = short_name.split("_")[-2]
-#         return site_id[:-1] if site_id[-1] in "ABCDEF" else site_id
-#     else:
-#         return ""
 
 
 def get_site_id(short_name):
@@ -1147,17 +1083,58 @@ def kpi_trend_4g_api(request):
 
     # Use parameterized query or ORM filter instead of raw f-string SQL to avoid SQL injection
     query = f"""
-        SELECT * FROM public."RCA_TOOL_daily_4g_kpi" WHERE "Date" BETWEEN '{from_required_date}' AND '{to_required_date}'
+        SELECT
+            "Short_name", 
+            "Date", 
+            "ECGI_4G", 
+            "MV_Site_Name", 
+            "OEM_GGSN", 
+            "MV_Radio_NW_Availability", 
+            "MV_4G_Data_Volume_GB",
+            "MV_VoLTE_raffic", 
+            "name_SiteA", 
+            "name_SiteB", 
+            "MV_DL_User_Throughput_Kbps",
+            "MV_E_UTRAN_Average_CQI", 
+            "UL_RSSI", 
+            "MV_Average_number_of_used_DL_PRBs",
+            "MV_UL_RSSI_dBm_PRB", 
+            "MV_RRC_Setup_Success_Rate", 
+            "MV_ERAB_Setup_Success_Rate",
+            "MV_PS_Drop_Call_Rate", 
+            "MV_UL_User_Throughput_Kbps", 
+            "MV_Max_Connecteda_User",
+            "MV_PUCCH_SINR", 
+            "MV_Average_UE_Distance_KM",
+            "MV_PS_handover_success_rate_LTE_INTER_SYSTEM",
+            "MV_PS_handover_success_rate_LTE_INTRA_SYSTEM", 
+            "UL_RSSI_Nokia_RSSI_SINR",
+            "MV_VoLTE_DCR", 
+            "MV_Packet_Loss_DL", 
+            "MV_Packet_Loss_UL", 
+            "PS_InterF_HOSR",
+            "PS_IntraF_HOSR", 
+            "MV_eCell_Data_BH", 
+            "MV_CSFB_Redirection_Success_Rate",
+            "VoLTE_Inter_Frequency_Handover_Success_Ratio",
+            "VoLTE_Intra_LTE_Handover_Success_Ratio",
+            "MV_RRC_Setup_Success_Rate_DENOM",
+            "MV_DL_User_Throughput_Kbps_CUBH", 
+            "Sams_Average_UE_Distance_KM",
+            "MV_VoLTE_Packet_Loss_UL_CBBH", 
+            "MV_VoLTE_Packet_Loss_DL_CBBH"
+        FROM public."RCA_TOOL_daily_4g_kpi"
+        WHERE "Date" BETWEEN '{from_required_date}' AND '{to_required_date}';
     """
+
     # objs = get_data_from_table(query)
 
     objs = get_data_from_table(query)
 
     print(objs)
 
-    objs.drop(columns=["id"], inplace=True)
+    # objs.drop(columns=["id"], inplace=True)
 
-    print(objs)
     objs["Date"] = pd.to_datetime(objs["Date"], errors="coerce")
     current_date = datetime.now().date()
 
@@ -1182,7 +1159,7 @@ def kpi_trend_4g_api(request):
     current_df = current_df.replace("nan", 0)
 
     current_df.drop(
-        columns=["dlRsBoost", "RS_Power_dB", "name_SiteA", "name_SiteB"], inplace=True
+        columns=["name_SiteA", "name_SiteB"], inplace=True
     )
 
     filtered_df = process_remove_duplicates(current_df)
