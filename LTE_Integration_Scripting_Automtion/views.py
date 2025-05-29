@@ -628,10 +628,59 @@ def generate_integration_script(request):
                  )
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
                      file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid) + "\n")
+<<<<<<< HEAD
+                #--------------------------------------------------------------------------------------- 5G Cell Scripts ---------------------------------------------------------------------
+            if not nr_cell_df.empty:
+                for node in nr_cell_df["gNodeBName"].unique():
+                    nr_cell_df: pd.DataFrame = nr_cell_df[nr_cell_df["gNodeBName"] == node]
+                    nr_cell_df.rename(
+                        columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True
+                    )
+                    nr_cell_df_path = os.path.join(
+                        create_script_paths(base_path_url, node_name)['nr'], f"1_{node}_5G Cell creation_Sctp Endpoint Creation_{current_time}.txt"
+                    )
+                    gnbid = nr_cell_df["gNBId"].unique()[0]
+                    print(nr_cell_df)
+                    gnbdu_fuction_element = ""
+                    gnbcucp_fuction_element = ""
+                    for idx, row in nr_cell_df.iterrows():
+                        gnbdu_fuction_element += KK_GNBDUFUNCTION_ELEMENT.format(
+                            nRSectorCarrierId=row["nRSectorCarrierId"],
+                            arfcnDL=row["arfcnDL"],
+                            arfcnUL=row["arfcnUL"],
+                            bSChannelBwDL_UL=row["bSChannelBwDL-UL"],
+                            configuredMaxTxPower=row["configuredMaxTxPower"],
+                            Latitude=row["Latitude"],
+                            Longitude=row["Longitude"],
+                            sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
+                            gUtranCell=row["gUtranCell"],
+                            cellLocalId=row["cellLocalId"],
+                            nRPCI=row["nRPCI"],
+                            nRTAC=row["nRTAC"],
+                            rachRootSequence = row["rachRootSequence"],  ############################################################################ Added rachRootSequence
+                            ssbFrequency = row['ssbFrequency']
+                        )
+                        gnbcucp_fuction_element += KK_GNBCUCPFUNCTION_ELEMENT.format(
+                            gUtranCell=row["gUtranCell"],
+                            cellLocalId=row["cellLocalId"],
+                        )
+                    with open(nr_cell_df_path, "a") as file:
+                        file.write(
+                            NR_CELL_CREATION_AND_SCTP_5G_ENDPOINT_CREATION.format(
+                                gNBId=gnbid,
+                                GNBDUFUNCTION_SCRIPT_ELEMENT=gnbdu_fuction_element,
+                                GNBCUCPFUNCTION_SCRIPT_ELEMENT=gnbcucp_fuction_element,
+                            )
+                        )
+                        file.close()
+                    NR_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node_name)['
+
+=======
             #_________________________________________________________________________________________________ 5G ___________________________________________________________________#
 
             # Not Yet Implemented RJ Circle-specific 5G Script Generation Logic
             #________________________________________________________________________________________________________________________________________________________________________#
+>>>>>>> 2e22f6a43c58f133bdb2b402259269912aae87df
             
             ########################################## RJ Commissioning Scripts Generation Logic ###############################################################
             #
