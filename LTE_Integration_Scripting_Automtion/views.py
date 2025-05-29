@@ -628,6 +628,7 @@ def generate_integration_script(request):
                  )
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
                      file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid) + "\n")
+
                 #--------------------------------------------------------------------------------------- 5G Cell Scripts ---------------------------------------------------------------------
             if not nr_cell_df.empty:
                 for node in nr_cell_df["gNodeBName"].unique():
@@ -674,6 +675,10 @@ def generate_integration_script(request):
                         file.close()
                     NR_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node_name)['nr'], f"01_{node}_Route_GPL_LMS_{current_time}.txt")
 
+            #_________________________________________________________________________________________________ 5G ___________________________________________________________________#
+
+            # Not Yet Implemented RJ Circle-specific 5G Script Generation Logic
+            #________________________________________________________________________________________________________________________________________________________________________#
             
             ########################################## RJ Commissioning Scripts Generation Logic ###############################################################
             #
