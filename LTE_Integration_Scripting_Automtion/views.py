@@ -534,7 +534,7 @@ def generate_integration_script(request):
                 )
                 nr_cell_df_path = os.path.join(
                     node_dir_5g,
-                    f"01_NR_TN_RN_Cell_Def_{node_name}_{datetime.now().strftime("%Y-%m-%d %H-%M-%S")}.txt",
+                    f"01_NR_TN_RN_Cell_Def_{node_name}_{datetime.now().strftime('%Y-%m-%d %H-%M-%S')}.txt",
                 )
                 os.makedirs(node_dir_5g, exist_ok=True)
                 gnbid = nr_cell_df["gNBId"].unique()[0]
@@ -628,6 +628,52 @@ def generate_integration_script(request):
                  )
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
                      file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid) + "\n")
+
+                #--------------------------------------------------------------------------------------- 5G Cell Scripts ---------------------------------------------------------------------
+            if not nr_cell_df.empty:
+                for node in nr_cell_df["gNodeBName"].unique():
+                    nr_cell_df: pd.DataFrame = nr_cell_df[nr_cell_df["gNodeBName"] == node]
+                    nr_cell_df.rename(
+                        columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True
+                    )
+                    nr_cell_df_path = os.path.join(
+                        create_script_paths(base_path_url, node_name)['nr'], f"1_{node}_5G Cell creation_Sctp Endpoint Creation_{current_time}.txt"
+                    )
+                    gnbid = nr_cell_df["gNBId"].unique()[0]
+                    print(nr_cell_df)
+                    gnbdu_fuction_element = ""
+                    gnbcucp_fuction_element = ""
+                    for idx, row in nr_cell_df.iterrows():
+                        gnbdu_fuction_element += KK_GNBDUFUNCTION_ELEMENT.format(
+                            nRSectorCarrierId=row["nRSectorCarrierId"],
+                            arfcnDL=row["arfcnDL"],
+                            arfcnUL=row["arfcnUL"],
+                            bSChannelBwDL_UL=row["bSChannelBwDL-UL"],
+                            configuredMaxTxPower=row["configuredMaxTxPower"],
+                            Latitude=row["Latitude"],
+                            Longitude=row["Longitude"],
+                            sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
+                            gUtranCell=row["gUtranCell"],
+                            cellLocalId=row["cellLocalId"],
+                            nRPCI=row["nRPCI"],
+                            nRTAC=row["nRTAC"],
+                            rachRootSequence = row["rachRootSequence"],  ############################################################################ Added rachRootSequence
+                            ssbFrequency = row['ssbFrequency']
+                        )
+                        gnbcucp_fuction_element += KK_GNBCUCPFUNCTION_ELEMENT.format(
+                            gUtranCell=row["gUtranCell"],
+                            cellLocalId=row["cellLocalId"],
+                        )
+                    with open(nr_cell_df_path, "a") as file:
+                        file.write(
+                            NR_CELL_CREATION_AND_SCTP_5G_ENDPOINT_CREATION.format(
+                                gNBId=gnbid,
+                                GNBDUFUNCTION_SCRIPT_ELEMENT=gnbdu_fuction_element,
+                                GNBCUCPFUNCTION_SCRIPT_ELEMENT=gnbcucp_fuction_element,
+                            )
+                        )
+                        file.close()
+                    NR_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node_name)['nr'], f"01_{node}_Route_GPL_LMS_{current_time}.txt")
 
             #_________________________________________________________________________________________________ 5G ___________________________________________________________________#
 
