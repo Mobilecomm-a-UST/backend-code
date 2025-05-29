@@ -628,6 +628,7 @@ def generate_integration_script(request):
                  )
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
                      file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid) + "\n")
+
             #_________________________________________________________________________________________________ 5G ___________________________________________________________________#
 
             # Not Yet Implemented RJ Circle-specific 5G Script Generation Logic
