@@ -534,7 +534,7 @@ def generate_integration_script(request):
                 )
                 nr_cell_df_path = os.path.join(
                     node_dir_5g,
-                    f"01_NR_TN_RN_Cell_Def_{node_name}_{datetime.now().strftime("%Y-%m-%d %H-%M-%S")}.txt",
+                    f"01_NR_TN_RN_Cell_Def_{node_name}_{datetime.now().strftime('%Y-%m-%d %H-%M-%S')}.txt",
                 )
                 os.makedirs(node_dir_5g, exist_ok=True)
                 gnbid = nr_cell_df["gNBId"].unique()[0]
@@ -628,7 +628,6 @@ def generate_integration_script(request):
                  )
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
                      file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid) + "\n")
-<<<<<<< HEAD
                 #--------------------------------------------------------------------------------------- 5G Cell Scripts ---------------------------------------------------------------------
             if not nr_cell_df.empty:
                 for node in nr_cell_df["gNodeBName"].unique():
@@ -673,14 +672,8 @@ def generate_integration_script(request):
                             )
                         )
                         file.close()
-                    NR_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node_name)['
+                    NR_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node_name)['nr'], f"01_{node}_Route_GPL_LMS_{current_time}.txt")
 
-=======
-            #_________________________________________________________________________________________________ 5G ___________________________________________________________________#
-
-            # Not Yet Implemented RJ Circle-specific 5G Script Generation Logic
-            #________________________________________________________________________________________________________________________________________________________________________#
->>>>>>> 2e22f6a43c58f133bdb2b402259269912aae87df
             
             ########################################## RJ Commissioning Scripts Generation Logic ###############################################################
             #
