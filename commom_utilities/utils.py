@@ -8,14 +8,15 @@ def required_col_check(file,required_col_list,):
     missing_col=[]
     sts=False
     for col in required_col_list:
-          if col in col_in_file:
-                pass
-          else:
+        if col in col_in_file:
+            pass
+        else:
             sts=True
             missing_col.append(col)
     
     message= 'Did not get Some columns in uploaded ' +str(file.name)
     response={"status":False,"missing_sites":missing_col,"message":message}
+    print(response)
     return sts,response
 
 

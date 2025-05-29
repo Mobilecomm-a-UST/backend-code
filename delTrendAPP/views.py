@@ -840,4 +840,3 @@ def old_del_trend(request):
             "Download_url": download_path,
         }
     )
-
