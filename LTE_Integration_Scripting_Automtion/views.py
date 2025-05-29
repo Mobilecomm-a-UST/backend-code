@@ -205,24 +205,6 @@ def generate_integration_script(request):
             output_file_path = os.path.join(
                 node_dir, f"3 Cell_Def_script_{node_name}_{current_time}.txt"
             )
-            #os.makedirs(output_file_path, exist_ok=True)
-            script_lines = []
-            for _, row in node_rows.iterrows():
-                cell_id = row.get("eUtranCellFDDId", "")
-
-                if any(f in cell_id for f in ["_F1_", "_F3_", "_F8_"]):
-                    formatted = fdd_cell_script.format(
-                        **{key: row.get(key, "") for key in columns_to_needed_fdd}
-                    )
-                    script_lines.append(formatted)
-                elif any(t in cell_id for t in ["_T1_", "_T2_"]):
-                    formatted = tdd_cell_script.format(
-                        **{key: row.get(key, "") for key in columns_to_needed_tdd}
-                    )
-                    script_lines.append(formatted)
-            if script_lines:
-                with open(output_file_path, "w") as file:
-                    file.write("\n".join(script_lines) + "\n")
                     
             current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             directories = create_script_paths(base_path_url, node_name)        
@@ -319,7 +301,6 @@ def generate_integration_script(request):
                             nRPCI=row["nRPCI"],
                             nRTAC=row["nRTAC"],
                             rachRootSequence = row["rachRootSequence"],  ############################################################################ Added rachRootSequence
-                            rachRootSequence = row["rachRootSequence"],  # Added rachRootSequence
                             ssbFrequency = row['ssbFrequency']
 
                         )
@@ -596,6 +577,7 @@ def generate_integration_script(request):
                 )
                 with open(TN_05_5G_LMS_GPL_ROTN_path, "a") as file:
                     file.write(TN_05_5G_LMS_GPL_ROTN + "\n")
+        #--------------------------------------------------------------- RJ Circle-specific Script Generation ---------------------------------------------------------------------
         if circle == "RJ":
             circle_name = circle
             unique_nodes = lte_df["eNodeBName"].dropna().unique()
@@ -608,16 +590,21 @@ def generate_integration_script(request):
 
             #---------------------------------------------------------- RJ Circle-specific Script Generation ---------------------------------------------------------------------
                 RJ_Route_4G_GPL_LMS_path = os.path.join(
-                     create_script_paths(base_path_url, node_name), f"04_FreqRelation.txt"
-                 )
-                with open(TN_04_FreqRelation_path, "a") as file:
-                     file.write(TN_04_FreqRelation + "\n")
+                     create_script_paths(base_path_url, node_name)['lte'], f"01_{node_name}_Route_GPL_LMS_{current_time}.txt"
+                )
+                with open(RJ_Route_4G_GPL_LMS_path, "a", encoding='utf-8') as file:
+                     file.write(RJ_Route_4G_GPL_LMS + "\n")
 
-            TN_05_5G_LMS_GPL_ROTN_path = os.path.join(
-                 node_dir_5g, f"05_5G_LMS_GPL ROTN.txt"
-             )
-            with open(TN_05_5G_LMS_GPL_ROTN_path, "a") as file:
-                 file.write(TN_05_5G_LMS_GPL_ROTN + "\n")
+                temp_lte_df = lte_df[lte_df["eNodeBName"] == node_name].copy()
+
+                enodebname = temp_lte_df["eNodeBName"].values[0] if not temp_lte_df.empty else "UnknownNode"
+                enbid = temp_lte_df["enbId"].values[0] if not temp_lte_df.empty else "UnknownENBId"
+
+                RJ_TN_RN_GPS_MME_path = os.path.join(
+                     create_script_paths(base_path_url, node_name)['lte'], f"02_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
+                 )
+                with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
+                     file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid) + "\n")
             
 
             # Add RJ specific script generation logic here if needed
