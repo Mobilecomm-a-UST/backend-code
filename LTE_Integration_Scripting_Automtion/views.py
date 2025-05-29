@@ -284,24 +284,24 @@ def generate_integration_script(request):
 
             ############################################################################### 5G Cell Scripts ##########################################################################
             #---------------------------------------------------------------------------------------------------
+            # Make sure current_time is in a safe format for filenames (no colons!)
+            
+
+            # ---------------------------------------------------------------------------------------------------
             if not nr_cell_df.empty:
+                current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
                 for node in nr_cell_df["gNodeBName"].unique():
-                    nr_cell_df: pd.DataFrame = nr_cell_df[
-                        nr_cell_df["gNodeBName"] == node
-                    ]
-                    nr_cell_df.rename(
-                        columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True
-                    )
-                    nr_cell_df_path = os.path.join(
-                        create_script_paths(base_path_url, node)['nr'], f"1_{node}_5G Cell creation_Sctp Endpoint Creation_{current_time}.txt"
-                    )
-                    gnbid = nr_cell_df["gNBId"].unique()[0]
-                    print(nr_cell_df)
+                    filtered_df = nr_cell_df[nr_cell_df["gNodeBName"] == node].copy()
+
+                    filtered_df.rename(columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True)
+
+                    gnbid = filtered_df["gNBId"].unique()[0]
+                    print(filtered_df)
 
                     gnbdu_fuction_element = ""
                     gnbcucp_fuction_element = ""
 
-                    for idx, row in nr_cell_df.iterrows():
+                    for idx, row in filtered_df.iterrows():
                         gnbdu_fuction_element += KK_GNBDUFUNCTION_ELEMENT.format(
                             nRSectorCarrierId=row["nRSectorCarrierId"],
                             arfcnDL=row["arfcnDL"],
@@ -315,24 +315,26 @@ def generate_integration_script(request):
                             cellLocalId=row["cellLocalId"],
                             nRPCI=row["nRPCI"],
                             nRTAC=row["nRTAC"],
-                            rachRootSequence = row["rachRootSequence"],  ############################################################################ Added rachRootSequence
-                            ssbFrequency = row['ssbFrequency']
-
+                            rachRootSequence=row["rachRootSequence"],  # Added rachRootSequence
+                            ssbFrequency=row["ssbFrequency"]
                         )
 
                         gnbcucp_fuction_element += KK_GNBCUCPFUNCTION_ELEMENT.format(
                             gUtranCell=row["gUtranCell"],
                             cellLocalId=row["cellLocalId"],
                         )
+                    nr_cell_df_path = os.path.join(
+                        create_script_paths(base_path_url, node)['nr'],
+                        f"1_{node}_5G Cell creation_Sctp Endpoint Creation_{current_time}.txt"
+                    )
                     with open(nr_cell_df_path, "a") as file:
                         file.write(
                             NR_CELL_CREATION_AND_SCTP_5G_ENDPOINT_CREATION.format(
                                 gNBId=gnbid,
                                 GNBDUFUNCTION_SCRIPT_ELEMENT=gnbdu_fuction_element,
-                           
+                                GNBCUCPFUNCTION_SCRIPT_ELEMENT=gnbcucp_fuction_element
                             )
                         )
-                        file.close()
                 
 
                     NR_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node)['nr'], f"2_{node}_NR_GPL_LMS_{current_time}.txt")
@@ -346,16 +348,20 @@ def generate_integration_script(request):
                         file.write(TREMPOINT_GUTRANCELL_FREQ_RELATION + "\n")
                 # .......................................................................... NRCELL CONFIGRATION FOR CELL CREATION IN 5G ................................................
 
+            
             ############################################################### creating the SiteBasic script for 4G and 5G ###############################################################
+            print("Creating SiteBasic and SiteEquipment scripts for 4G and 5G...")
+            print(site_basic_df)
+            current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             for node in site_basic_df["eNodeBName"].unique():
                 commision_scripts_dir = create_script_paths(base_path_url, node)['commissioning']
-                current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                
                 os.makedirs(commision_scripts_dir, exist_ok=True)
                 sitebasic_df: pd.DataFrame = site_basic_df[
                     site_basic_df["eNodeBName"] == node
                 ]
                 sitebasic_df_path = os.path.join(
-                    commision_scripts_dir, f"01_SiteBasic_{node}_{current_time}.xml"
+                    commision_scripts_dir, f"01_{node}_SiteBasic_{current_time}.xml"
                 )
                 siteBasicFilePath = os.path.relpath(
                     sitebasic_df_path,
@@ -367,9 +373,9 @@ def generate_integration_script(request):
                 )
                 siteBasicFilePath = relative_path.replace("\\", "/")
 
-
+                print(site_basic_df)
                 for idx, row in sitebasic_df.iterrows():
-                    with open(sitebasic_df_path, "a") as file:
+                    with open(sitebasic_df_path, "w") as file:
                         file.write(
                             KK_SITE_BASIC_SCRIPT.format(
                                 eNodeBName=row["eNodeBName"],
