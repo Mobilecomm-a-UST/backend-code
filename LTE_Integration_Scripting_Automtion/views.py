@@ -41,6 +41,9 @@ from LTE_Integration_Scripting_Automtion.circles.TN.TN_INTEGRATION_SCRIPT import
     TN_GNBCUCPFUNCTION_ELEMENT,
     TN_GNBDUFUNCTION_ELEMENT
 )
+from LTE_Integration_Scripting_Automtion.circles.RJ.RJ_INTEGRATION_SCRIPT import (
+    RJ_Route_4G_GPL_LMS, RJ_TN_RN_GPS_MME
+)
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 import pandas as pd
 import stat
@@ -52,14 +55,18 @@ import zipfile
 ################################################################ MEDIA URL ######################################################################################################
 MEDIA_ROOT = settings.MEDIA_ROOT
 
-def ZipFolder(folder_path, ZIP_OUPUT_PATH):
-    with zipfile.ZipFile(ZIP_OUPUT_PATH, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(folder_path):
+def zip_folder(folder_path, zip_output_path):
+    """
+    Compresses the contents of `folder_path` into a ZIP file at `zip_output_path`.
+    Maintains the directory structure relative to `folder_path`.
+    """
+    with zipfile.ZipFile(zip_output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(folder_path):
             for file in files:
-                file_path = os.path.join(root, file)
-                
-                arcname = os.path.relpath(file_path, folder_path)
-                zipf.write(file_path, arcname)
+                abs_file_path = os.path.join(root, file)
+                rel_path = os.path.relpath(abs_file_path, start=folder_path)
+                zipf.write(abs_file_path, arcname=rel_path)
+
 
 
 def create_script_paths(base_dir, node_name):
@@ -589,21 +596,52 @@ def generate_integration_script(request):
                 )
                 with open(TN_05_5G_LMS_GPL_ROTN_path, "a") as file:
                     file.write(TN_05_5G_LMS_GPL_ROTN + "\n")
+        if circle == "RJ":
+            circle_name = circle
+            unique_nodes = lte_df["eNodeBName"].dropna().unique()
+
+            for node_name in unique_nodes:
+                current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                directories = create_script_paths(base_path_url, node_name)        
+                generate_lte_cell_def_scripts(lte_df=lte_df, directories=directories, node_name=node_name, current_time=current_time)
+
+
+            #---------------------------------------------------------- RJ Circle-specific Script Generation ---------------------------------------------------------------------
+                RJ_Route_4G_GPL_LMS_path = os.path.join(
+                     create_script_paths(base_path_url, node_name), f"04_FreqRelation.txt"
+                 )
+                with open(TN_04_FreqRelation_path, "a") as file:
+                     file.write(TN_04_FreqRelation + "\n")
+
+            TN_05_5G_LMS_GPL_ROTN_path = os.path.join(
+                 node_dir_5g, f"05_5G_LMS_GPL ROTN.txt"
+             )
+            with open(TN_05_5G_LMS_GPL_ROTN_path, "a") as file:
+                 file.write(TN_05_5G_LMS_GPL_ROTN + "\n")
+            
+
+            # Add RJ specific script generation logic here if needed
         ########################################################## MAKING THE ZIP FILE #############################################################
+        folder_path = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
         
-        ZIP_OUTPUT_PATH = base_path_url + f"/{circle}_Integration_Scripts_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.zip"
-        folder_path = os.path.join(
-            MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES"
-        )
-        if os.path.exists(ZIP_OUTPUT_PATH):
-            # Remove read-only attribute if set
-            os.chmod(ZIP_OUTPUT_PATH, stat.S_IWRITE)
-            os.remove(ZIP_OUTPUT_PATH)
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        zip_filename = f"LTE_INTEGRATION_CONFIG_FILES_{circle}_Integration_Scripts_{timestamp}.zip"
+        zip_output_path = os.path.join(MEDIA_ROOT, zip_filename)  # NOT inside folder_path
 
-        ZipFolder(folder_path, ZIP_OUTPUT_PATH)
+        # Clean up old zips (optional)
+        for file in os.listdir(MEDIA_ROOT):
+            if file.endswith(".zip"):
+                os.remove(os.path.join(MEDIA_ROOT, file))
 
 
-        download_link = MEDIA_URL + "LTE_INTEGRATION_CONFIG_FILES/" + os.path.basename(ZIP_OUTPUT_PATH)
+
+        # Create ZIP archive
+        zip_folder(folder_path, zip_output_path)
+
+        # Create download link relative to MEDIA_URL
+        download_link = os.path.join(MEDIA_URL, zip_filename).replace("\\", "/")
+
+
         
         ############################################################################################################################################
         return Response(
