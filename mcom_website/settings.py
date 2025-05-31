@@ -30,9 +30,8 @@ DEBUG = True
 # settings.py
 
 
-# ALLOWED_HOSTS = ["192.168.0.29","127.0.0.1","192.168.0.67","192.168.0.21","192.168.0.31"]
-# ALLOWED_HOSTS = ['npn-technologies.com', 'sharmasteel.in']
 ALLOWED_HOSTS = ["*"]
+#ALLOWED_HOSTS = ['122.176.141.197', 'localhost', '127.0.0.1', '0.0.0.0']
 
 
 # Application definition
@@ -119,8 +118,13 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://122.176.141.197:3000",  # If React is hosted here
+    # Add other frontend origins as needed
+]
+CORS_ALLOW_ALL_ORIGINS = True
 # CORS_ORIGIN_ALLOW_ALL = False
 # CORS_ORIGIN_WHITELIST = (
 #   'http://192.168.0.55:3000',

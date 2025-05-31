@@ -1,5 +1,6 @@
 ################################################################################################################################################################################
-from ssl import SSL_ERROR_WANT_X509_LOOKUP
+from email.mime import base
+from venv import create
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -87,8 +88,8 @@ def zip_folder(folder_path, zip_output_path):
 def create_script_paths(base_dir, node_name):
     base_node_dir = os.path.join(
         base_dir,
-        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",
-        f"{node_name}_REMOTE_INTEGRATION_SCRIPTS"
+        f"{node_name}_Integration_Sripts",
+        f"{node_name}_Remote_Integration_Scripts"
     )
 
     directories = {
@@ -96,7 +97,7 @@ def create_script_paths(base_dir, node_name):
         "nr": os.path.join(base_node_dir, "NR_5G"),
         "commissioning": os.path.join(
             base_dir,
-            f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",
+            f"{node_name}_Integration_Sripts",
             f"{node_name}_Commissioning_Scripts"
         )
     }
@@ -109,6 +110,7 @@ def create_script_paths(base_dir, node_name):
 
 
 ####################################################### --- TN circle code for generating scripts GNBDU and GNBCUCP ----- #############################################################################################################
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
     ##################################################### Define required columns for FDD and TDD #######################################################################
     columns_to_needed_fdd = [
@@ -152,7 +154,7 @@ def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
         with open(output_file_path, "w") as file:
             file.write("\n".join(script_lines) + "\n")
             
-
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 @api_view(["GET", "POST"])
@@ -191,13 +193,14 @@ def generate_integration_script(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        
+        #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+        #-        -                    -          - ----------------------- defining the output path -------------------- -           -                 -          
         base_path_url = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
         if os.path.exists(base_path_url):
-            # Remove read-only attribute if set
             os.chmod(base_path_url, stat.S_IWRITE)
             shutil.rmtree(base_path_url)
         os.makedirs(base_path_url, exist_ok=True)
+        #___________________________________________________________________________________________________________________________________________________________
 
         siteBasicFilePath = ""
         siteEquipmentFilePath = ""
@@ -207,13 +210,9 @@ def generate_integration_script(request):
 
         for node_name in unique_nodes:
             current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-            node_dir = os.path.join(
-                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "LTE_4G"
-            )
+            node_dir = create_script_paths(base_path_url , node_name)['lte']
 
-            node_dir_5g = os.path.join(
-                base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS",f"{node_name}_REMOTE_INTEGRATION_SCRIPTS", "NR_5G"
-            )
+            node_dir_5g = create_script_paths(base_path_url , node_name)['nr']
             os.makedirs(node_dir, exist_ok=True)
             os.makedirs(node_dir_5g, exist_ok=True)
             node_rows = lte_df[lte_df["eNodeBName"] == node_name]
@@ -329,6 +328,7 @@ def generate_integration_script(request):
                             NR_CELL_CREATION_AND_SCTP_5G_ENDPOINT_CREATION.format(
                                 gNBId=gnbid,
                                 GNBDUFUNCTION_SCRIPT_ELEMENT=gnbdu_fuction_element,
+                                GNBCUCPFUNCTION_SCRIPT_ELEMENT = gnbcucp_fuction_element
                            
                             )
                         )
@@ -355,7 +355,7 @@ def generate_integration_script(request):
                     site_basic_df["eNodeBName"] == node
                 ]
                 sitebasic_df_path = os.path.join(
-                    commision_scripts_dir, f"01_SiteBasic_{node}_{current_time}.xml"
+                    commision_scripts_dir, f"01_{node}_SiteBasic_{current_time}.xml"
                 )
                 siteBasicFilePath = os.path.relpath(
                     sitebasic_df_path,
@@ -367,6 +367,10 @@ def generate_integration_script(request):
                 )
                 siteBasicFilePath = relative_path.replace("\\", "/")
 
+                if not os.path.exists(sitebasic_df_path):
+                    os.makedirs(sitebasic_df_path, exist_ok=True)
+                else:
+                    print(f"File does not exist: {sitebasic_df_path}")
 
                 for idx, row in sitebasic_df.iterrows():
                     with open(sitebasic_df_path, "a") as file:
@@ -385,13 +389,7 @@ def generate_integration_script(request):
                         )
                         file.close()
 
-                    new_file_path = os.path.join(commision_scripts_dir, f"01_SiteBasic_{node}_{current_time}.xml")
-                    if os.path.exists(new_file_path):
-                        os.remove(new_file_path)
-                    if os.path.exists(sitebasic_df_path):
-                        shutil.move(sitebasic_df_path, new_file_path)
-                    else:
-                        print(f"File does not exist: {sitebasic_df_path}")
+
 
             for node in rru_hw_df["eNodeBName"].unique():
                 commissioning_scripts_dir = create_script_paths(base_path_url, node)['commissioning']
@@ -401,8 +399,9 @@ def generate_integration_script(request):
                 site_specific_rru_df = rru_hw_df[rru_hw_df["eNodeBName"] == node]
                 rru_hw_path = os.path.join(
                     commissioning_scripts_dir,
-                    f"02_SiteEquipment_{node}_{current_time}.xml",
+                    f"02_{node}_SiteEquipment_{current_time}.xml",
                 )
+
                 site_equipment_text = ""
                 relative_path = os.path.relpath(
                     rru_hw_path,
@@ -534,7 +533,7 @@ def generate_integration_script(request):
                 )
                 nr_cell_df_path = os.path.join(
                     node_dir_5g,
-                    f"01_NR_TN_RN_Cell_Def_{node_name}_{datetime.now().strftime("%Y-%m-%d %H-%M-%S")}.txt",
+                    f"01_NR_TN_RN_Cell_Def_{node_name}_{datetime.now().strftime('%Y-%m-%d %H-%M-%S')}.txt",
                 )
                 os.makedirs(node_dir_5g, exist_ok=True)
                 gnbid = nr_cell_df["gNBId"].unique()[0]
@@ -628,6 +627,10 @@ def generate_integration_script(request):
                  )
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
                      file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid) + "\n")
+
+                #--------------------------------------------------------------------------------------- 5G Cell Scripts ---------------------------------------------------------------------
+ 
+
             #_________________________________________________________________________________________________ 5G ___________________________________________________________________#
 
             # Not Yet Implemented RJ Circle-specific 5G Script Generation Logic
@@ -665,63 +668,71 @@ def generate_integration_script(request):
                             return "IPv6"
                         except socket.error:
                             return "Unknown"
-
+                print("string", site_basic_df)
                 for idx, row in sitebasic_df.iterrows():
 
                     bbu_type = row.get("BB_Type", "UnknownType")
-                    oam_ip = row.get("OAM_IP", "UnknownOAMID")
+                    oam_ip, subnet = row.get("OAM_IP", "UnknownOAMID").split('/')[0], row.get("OAM_IP", "UnknownOAMID").split('/')[1]
+
+                    print(oam_ip)
                     ip_type = ip_type(oam_ip)
 
-                    if ip_type in ["IPv4", "IPv6"]:
-                        bbu_script_mapping_ipv4 = {
-                            "BB6651" : SiteBasic_ipv4_6651,
-                            "BB6631" : SiteBasic_ipv4_6631,
-                            "BB6630" : SiteBasic_ipv4_6630,
-                            "BB6353" : SiteBasic_ipv4_6353,
-                            "BB6339" : SiteBasic_ipv4_6339,
-                            "BB6303" : SiteBasic_ipv4_6303,
+                    #if ip_type in ["IPv4", "IPv6"]:
+                    print("inside ip tracker.....")
+                    print(ip_type)
+                    bbu_script_mapping_ipv4 = {
+                        "BB6651" : SiteBasic_ipv4_6651,
+                        "BB6631" : SiteBasic_ipv4_6631,
+                        "BB6630" : SiteBasic_ipv4_6630,
+                        "BB6353" : SiteBasic_ipv4_6353,
+                        "BB6339" : SiteBasic_ipv4_6339,
+                        "BB6303" : SiteBasic_ipv4_6303,
 
-                        }
+                    }
 
-                        bbu_script_mapping_ipv6 = {
-                            "BB6651" : SiteBasic_ipv6_6651,
-                            "BB6631" : SiteBasic_ipv6_6631,
-                            "BB6630" : SiteBasic_ipv6_6630,
-                            "BB6339" : SiteBasic_ipv6_6339,
-                            "BB6303" : SiteBasic_ipv6_6303,
-                        }
-                        bbu_script_mapping = bbu_script_mapping_ipv4 if ip_type == "IPv4" else bbu_script_mapping_ipv6
+                    bbu_script_mapping_ipv6 = {
+                        "BB6651" : SiteBasic_ipv6_6651,
+                        "BB6631" : SiteBasic_ipv6_6631,
+                        "BB6630" : SiteBasic_ipv6_6630,
+                        "BB6339" : SiteBasic_ipv6_6339,
+                        "BB6303" : SiteBasic_ipv6_6303,
+                    }
+                    bbu_script_mapping = bbu_script_mapping_ipv4 if ip_type == "IPv4" else bbu_script_mapping_ipv6
 
-
-                        for bbu_prefix , template in bbu_script_mapping.items():
-                            if bbu_type.startswith(bbu_prefix):
-                                site_basic_file_name = f"01_SiteBasic_{bbu_type}_{node}_{current_time}.xml"
-                                formatted_text = template.format(
-                                    eNodeBName=row["eNodeBName"],
-                                    fieldReplaceableUnitId=row["fieldReplaceableUnitId"],
-                                    tnPortId=row["tnPortId"],
-                                    OAM_vlan=row["OAM_vlan"],
-                                    OAM_IP=row["OAM_IP"],
-                                    LTE_S1_GW = row['LTE_S1_GW'],
-                                    LTE_UP_GW=row["LTE_UP_GW"],
-                                    OAM_GW=row["OAM_GW"],
-                                    LTE_UP_IP=row["LTE_UP_IP"],
-                                    LTE_UP_vlan = row["LTE_UP_vlan"],
-                                    LTE_S1_IP = row["LTE_S1_IP"],
+                    
+                    for bbu_prefix , template in bbu_script_mapping.items():
+                        print(bbu_prefix)
+                        if bbu_type.startswith(bbu_prefix):
+                            site_basic_file_name = f"01_{node}_SiteBasic_{current_time}.xml"
+                            formatted_text = template.format(
+                                eNodeBName=row["eNodeBName"],
+                                fieldReplaceableUnitId=row["fieldReplaceableUnitId"],
+                                tnPortId=row["tnPortId"],
+                                OAM_vlan=row["OAM_vlan"],
+                                OAM_IP=row["OAM_IP"],
+                                LTE_S1_GW = row['LTE_S1_GW'],
+                                LTE_UP_GW=row["LTE_UP_GW"],
+                                OAM_GW=row["OAM_GW"],
+                                LTE_UP_IP=row["LTE_UP_IP"],
+                                LTE_UP_vlan = row["LTE_UP_vlan"],
+                                LTE_S1_IP = row["LTE_S1_IP"],
  
-                                )                                
-                                with open(sitebasic_df_path, "a") as file:
-                                    file.write(formatted_text + "\n")
-                                    file.close()
+                            )                                
+                            with open(sitebasic_df_path, "a") as file:
+                                file.write(formatted_text + "\n")
+                                file.close()
 
-                                new_file_path = os.path.join(commision_scripts_dir, site_basic_file_name)
-                                if os.path.exists(new_file_path):
-                                    os.remove(new_file_path)
-                                if os.path.exists(sitebasic_df_path):
-                                    shutil.move(sitebasic_df_path, new_file_path)
-                                else:
-                                    print(f"File does not exist: {sitebasic_df_path}")
-                                break
+                            new_file_path = os.path.join(commision_scripts_dir, site_basic_file_name)
+                            if os.path.exists(new_file_path):
+                                os.remove(new_file_path)
+                            if os.path.exists(sitebasic_df_path):
+                                shutil.move(sitebasic_df_path, new_file_path)
+                            else:
+                                print(f"File does not exist: {sitebasic_df_path}")
+                            break
+
+                for idx, row in rru_hw_df.iterrows():
+                    pass
 
             #####################################################################################################################################################
 
