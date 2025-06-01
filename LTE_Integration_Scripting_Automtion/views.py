@@ -636,11 +636,7 @@ def generate_integration_script(request):
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
                      file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid) + "\n")
 
-                #--------------------------------------------------------------------------------------- 5G Cell Scripts ---------------------------------------------------------------------
- 
-
-            #_________________________________________________________________________________________________ 5G ___________________________________________________________________#
-
+            #--------------------------------------------------------------------------------------- 5G Cell Scripts ----------------------------------------------------------------#
             # Not Yet Implemented RJ Circle-specific 5G Script Generation Logic
             #________________________________________________________________________________________________________________________________________________________________________#
             
@@ -858,7 +854,7 @@ def generate_integration_script(request):
         zip_filename = f"LTE_INTEGRATION_CONFIG_FILES_{circle}_Integration_Scripts_{timestamp}.zip"
         zip_output_path = os.path.join(MEDIA_ROOT, zip_filename)  # NOT inside folder_path
 
-        # Clean up old zips (optional)
+        ################################################ Clean up old zips (optional) ######################################################################
         for file in os.listdir(MEDIA_ROOT):
             if file.endswith(".zip"):
                 os.remove(os.path.join(MEDIA_ROOT, file))
@@ -868,7 +864,7 @@ def generate_integration_script(request):
         # Create ZIP archive
         zip_folder(folder_path, zip_output_path)
 
-        # Create download link relative to MEDIA_URL
+        ##################################################### Create download link relative to MEDIA_URL ####################################################
         download_link = os.path.join(MEDIA_URL, zip_filename).replace("\\", "/")
 
 
