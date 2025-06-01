@@ -367,18 +367,14 @@ def generate_integration_script(request):
                 )
                 siteBasicFilePath = os.path.relpath(
                     sitebasic_df_path,
-                    os.path.join(base_path_url, f"{node}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
+                    os.path.join(base_path_url, f"{node}_Integration_Sripts")
                 ).replace("\\", "/")
                 relative_path = os.path.relpath(
                     sitebasic_df_path,
-                    os.path.join(base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
+                    os.path.join(base_path_url, f"{node_name}_Integration_Sripts")
                 )
                 siteBasicFilePath = relative_path.replace("\\", "/")
 
-                if not os.path.exists(sitebasic_df_path):
-                    os.makedirs(sitebasic_df_path, exist_ok=True)
-                else:
-                    print(f"File does not exist: {sitebasic_df_path}")
 
                 for idx, row in sitebasic_df.iterrows():
                     with open(sitebasic_df_path, "a") as file:
