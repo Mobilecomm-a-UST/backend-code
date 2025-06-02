@@ -1,0 +1,51 @@
+#table th,td{
+    text-align: center;
+}
+#table  table, th, td {
+    border: 1px solid;
+  }
+
+ #table th{
+    height: 31px;
+    background-color:rgb(91 248 197);
+  }
+
+#table tr:hover{
+   
+    background-color:rgb(234 251 255);
+    box-shadow: 0px 3px 9px grey;
+}
+#update-table{
+    margin-top: 40px;
+    width: 80%;
+    margin: auto;
+    margin-bottom: 40px;
+    max-height: 400px;
+    overflow-x:auto;
+    border: 3px solid black;
+}
+
+table{
+    border-collapse: collapse;
+    min-width: max-content;
+width: 100%; 
+
+}
+
+#head-update-status{
+    font-size: 20px;
+    margin-top: 20px;
+    font-weight: bolder;
+    color: #028ffa;
+    /* font-style: italic; */
+    /* font-family: Garamond, serif; */
+    font-family: 'Courier New', monospace;
+}
+
+#table thead{
+    border: 1px solid black;
+    height: 31px;
+    background-color: rgb(190, 224, 213);
+    position: sticky;
+    top: 0px;
+  }
