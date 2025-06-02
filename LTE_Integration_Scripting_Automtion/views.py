@@ -141,7 +141,7 @@ def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
 
     node_rows = lte_df[lte_df["eNodeBName"] == node_name]
     output_file_path = os.path.join(
-        directories["lte"], f"3_Cell_Def_script_{node_name}_{current_time}.txt"
+        directories["lte"], f"02_Cell_Def_script_{node_name}_{current_time}.txt"
     )
 
     script_lines = []
@@ -225,7 +225,7 @@ def generate_integration_script(request):
             os.makedirs(node_dir_5g, exist_ok=True)
             node_rows = lte_df[lte_df["eNodeBName"] == node_name]
             output_file_path = os.path.join(
-                node_dir, f"3 Cell_Def_script_{node_name}_{current_time}.txt"
+                node_dir, f"03 Cell_Def_script_{node_name}_{current_time}.txt"
             )
                     
             current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -260,30 +260,29 @@ def generate_integration_script(request):
                             eNodeBName=row["eNodeBName"], eNBId=row["eNBId"]
                         )
                         script_path = os.path.join(
-                            node_dir, f"1 TN_Script_{node_name}_{current_time}.txt"
+                            node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
                         )
                         with open(script_path, "a") as file:
-                            file.write(formatted_text + "\n")
+                            file.write(formatted_text + "\n" + kk_GPS_MMS_script)
 
                     elif any(tech in "".join(cell_ids) for tech in ["_T1_", "_T2_"]):
                         formatted_text = kk_TN_script_text.format(
                             eNodeBName=row["eNodeBName"], eNBId=row["eNBId"]
                         )
                         script_path = os.path.join(
-                            node_dir, f"1 TN_Script_{node_name}_{current_time}.txt"
+                            node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
                         )
                         with open(script_path, "a") as file:
-                            file.write(formatted_text + "\n")
+                            file.write(formatted_text + "\n" + kk_GPS_MMS_script)
 
             ######################################################################### GPS/MME Script #######################################################################
-            gps_mme_path = f"2 GPS_MME_script_{node_name}_{current_time}.txt"
-            for node in unique_nodes:
-                script_path = os.path.join(create_script_paths(base_path_url, node)['lte'], gps_mme_path)
-                with open(script_path,"a") as file:
-                    file.write(kk_GPS_MMS_script + "\n")
-
+            #gps_mme_path = f"01 GPS_MME_script_{node_name}_{current_time}.txt"
+            #for node in unique_nodes:
+            #    script_path = os.path.join(create_script_paths(base_path_url, node)['lte'], gps_mme_path)
+            #    with open(script_path,"a") as file:
+            #        file.write(kk_GPS_MMS_script + "\n")
             ########################################################################## GPL/LMS Script ###########################################################################
-            gpl_lms_path = f"4 GPL_LMS_script_{node_name}_{current_time}.txt"
+            gpl_lms_path = f"03 GPL_LMS_script_{node_name}_{current_time}.txt"
             for node in unique_nodes:
                 script_path = os.path.join(create_script_paths(base_path_url, node)['lte'], gpl_lms_path)
                 with open(script_path,"a") as file:
@@ -377,7 +376,7 @@ def generate_integration_script(request):
 
 
                 for idx, row in sitebasic_df.iterrows():
-                    with open(sitebasic_df_path, "a") as file:
+                    with open(sitebasic_df_path, "a", encoding='utf-8') as file:
                         file.write(
                             KK_SITE_BASIC_SCRIPT.format(
                                 eNodeBName=row["eNodeBName"],
@@ -487,7 +486,7 @@ def generate_integration_script(request):
                             sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
                         )
 
-                with open(rru_hw_path, "a") as file:
+                with open(rru_hw_path, "a", encoding='utf-8') as file:
                     file.write(
                         site_equipment_script_text + "\n" + site_equipment_text + "\n"
                     )
@@ -495,7 +494,7 @@ def generate_integration_script(request):
                 site_equipment_script_path = os.path.join(
                     commissioning_scripts_dir, f"RBSSummary_{node}_{current_time}.xml"
                 )
-                with open(site_equipment_script_path, "a") as file:
+                with open(site_equipment_script_path, "a", encoding='utf-8') as file:
                     file.write(
                         RBSSummary_script.format(
                             siteEquipmentFilePath=siteEquipmentFilePath,
@@ -507,29 +506,30 @@ def generate_integration_script(request):
         elif circle == "TN":
             circle_name = circle
             # ..................................................... TN 4G Script ....................................................#
-            for _, row in lte_df.iterrows():
-                node_name = row.get("eNodeBName", "UnknownNode")
-                current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-                node_dir = create_script_paths(base_path_url, node_name)['lte']
-                node_dir_5g = create_script_paths(base_path_url, node_name)['nr']
-                os.makedirs(node_dir, exist_ok=True)
-                formatted_text = TN_s1_FOR_TN_IDL_B_PORT.format(eNBId=row["enbId"])
-                script_path = os.path.join(
-                    node_dir, f"01_TN_FOR_TN_IDL_B_PORT_{node_name}_{current_time}.txt"
-                )
-                with open(script_path, "a") as file:
-                    file.write(formatted_text + "\n")
-                    file.close()
+            for node_name in lte_df["eNodeBName"].unique(): 
+                for _, row in lte_df.iterrows():
+                    node_name = row.get("eNodeBName", "UnknownNode")
+                    current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+                    node_dir = create_script_paths(base_path_url, node_name)['lte']
+                    node_dir_5g = create_script_paths(base_path_url, node_name)['nr']
+                    os.makedirs(node_dir, exist_ok=True)
+                    formatted_text = TN_s1_FOR_TN_IDL_B_PORT.format(eNBId=row["enbId"])
+                    #########################################################################
+                    script_path = os.path.join(
+                        node_dir, f"01_{node_name}_TN_FOR_TN_IDL_B_PORT_{current_time}.txt"
+                    )
+                    with open(script_path, "a") as file:
+                        file.write(formatted_text + "\n")
+                        file.close()
 
-                TN_GPL_script_path = os.path.join(
-                    node_dir, f"02_TN_LTE_GPL_LMS_{node_name}_{current_time}.txt"
-                )
-                formatted_text = TN_s3_LTE_GPL_LMS
-                with open(TN_GPL_script_path, "a", encoding="utf-8") as file:
-                    file.write(formatted_text + "\n")
-                    file.close()
+                    TN_GPL_script_path = os.path.join(
+                        node_dir, f"03_TN_LTE_GPL_LMS_{node_name}_{current_time}.txt"
+                    )
+                    formatted_text = TN_s3_LTE_GPL_LMS
+                    with open(TN_GPL_script_path, "a", encoding="utf-8") as file:
+                        file.write(formatted_text + "\n")
+                        file.close()
             # -------------------------------------------------------------------------- 5g ______________________________________________
-            nr_cell_df = integration_file.parse("NR-CELL")
             for node in nr_cell_df["gNodeBName"].unique():
                 nr_cell_df: pd.DataFrame = nr_cell_df[nr_cell_df["gNodeBName"] == node]
                 nr_cell_df.rename(
@@ -616,7 +616,7 @@ def generate_integration_script(request):
 
             #---------------------------------------------------------- RJ Circle-specific Script Generation ---------------------------------------------------------------------
                 RJ_Route_4G_GPL_LMS_path = os.path.join(
-                     create_script_paths(base_path_url, node_name)['lte'], f"01_{node_name}_Route_GPL_LMS_{current_time}.txt"
+                     create_script_paths(base_path_url, node_name)['lte'], f"03_{node_name}_Route_GPL_LMS_{current_time}.txt"
                 )
                 with open(RJ_Route_4G_GPL_LMS_path, "a", encoding='utf-8') as file:
                      file.write(RJ_Route_4G_GPL_LMS + "\n")
@@ -627,7 +627,7 @@ def generate_integration_script(request):
                 enbid = temp_lte_df["enbId"].values[0] if not temp_lte_df.empty else "UnknownENBId"
 
                 RJ_TN_RN_GPS_MME_path = os.path.join(
-                     create_script_paths(base_path_url, node_name)['lte'], f"02_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
+                     create_script_paths(base_path_url, node_name)['lte'], f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
                  )
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
                      file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid) + "\n")
@@ -651,11 +651,11 @@ def generate_integration_script(request):
                 
                 siteBasicFilePath = os.path.relpath(
                     sitebasic_df_path,
-                    os.path.join(base_path_url, f"{node}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
+                    os.path.join(base_path_url, f"{node}_Integration_Sripts")
                 ).replace("\\", "/")
                 relative_path = os.path.relpath(
                     sitebasic_df_path,
-                    os.path.join(base_path_url, f"{node_name}_REMOTE_INTEGRATION_SCRIPTS_COMMISSIONING_SCRIPTS")
+                    os.path.join(base_path_url, f"{node_name}_Integration_Sripts")
                 )
                 siteBasicFilePath = relative_path.replace("\\", "/")
                 def ip_type(ip_address):
