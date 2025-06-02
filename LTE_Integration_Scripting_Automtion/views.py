@@ -809,7 +809,8 @@ def generate_integration_script(request):
 
                 for idx, row in site_specific_rru_df.iterrows():
                     for rru, rru_template in rru_type.items():
-                        if rru in row["Radio_Type"]:
+                        print(rru)
+                        if rru in str(row["Radio_Type"]):
                             site_equipment_text += rru_template.format(
                                 eNodeBName=row["eNodeBName"],
                                 Radio_UnitId=row["Radio_UnitId"],
