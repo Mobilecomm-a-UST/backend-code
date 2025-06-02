@@ -1,0 +1,66 @@
+.main-body{ height: 100%;
+    width: 80%;
+    margin: auto;}
+
+.das-body{
+    
+       
+        display: flex;
+        justify-content: space-between;
+           
+          }
+
+.das-box{
+        /* height: 170px; */
+        background-image: linear-gradient(to bottom right,#479fdc,#44b7aa);
+        width:30%;
+        background-color:rgb(244, 113, 113);
+        box-sizing: border-box;
+        margin: 4px;
+        border-radius: 5px;
+        padding: 5px;
+        color: white;
+        box-shadow: -8px 8px 5px grey;
+        }
+
+/* .das-box h3{color: white;} */
+
+h3{margin:0px;
+padding:0px;}
+
+
+.data{
+
+    margin: 20px;
+    text-align: center;
+}
+
+.total{
+    width: 61px;
+    height: 60px;
+    display: inline-block;
+    background-color: rgb(252 255 253);
+    display: inline-block;
+    border-radius: 50%;
+    box-shadow: 3px 2px 8px black;
+    color: black;
+}
+
+.inner{ 
+    margin-top: 10px;
+}
+
+
+.red {
+    background-color: red;
+}
+.orange {
+    background-color: orange;
+}
+.green {
+    background-color: green;
+}
+
+.percent{
+    margin-top: 13px;
+}
