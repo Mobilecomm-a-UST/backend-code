@@ -1,0 +1,119 @@
+#form_body {
+    width: 80%;
+    margin:auto;
+ 
+}
+
+#form{
+    margin-top: 77px;
+    align-items: center;
+    background-color: rgb(53, 255, 205);
+    padding: 189px;
+    padding-top: 10px;
+    padding-bottom: 45px;
+    background-color: #c8ebff;
+    border: 1px solid black;
+    border-radius: 14px;
+
+}
+
+#id_cat{    width: 100%;
+  
+    height: 40px;}
+  
+
+
+ #id_item_name{
+    width: 100%;
+    height: 40px;
+  
+    border: 1px solid black;
+   
+}
+
+#id_short_discription{
+    width: 100%;
+   
+   padding-left: 5px;
+}
+
+#id_long_discription{
+        width: 100%;
+        
+   
+}
+
+#id_image{
+    height: 40px;
+    width: 100%;
+   
+    background-color: white;
+    padding-top: 10px;
+    box-sizing: border-box;
+    padding-left: 22px;
+    border: 1px solid black;
+}
+
+
+#id_specs{
+    width: 100%;
+   
+
+}
+ label{
+    font-size: large;
+    font-weight: 800;
+
+}
+.btn{
+
+   
+        border: none;
+        
+        padding: 3px 14px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius:5px;
+       
+        font-weight: 700;
+        padding-top:7px;
+        padding-bottom: 7px;
+    }
+
+    #frm_btns{
+        text-align: center;
+        margin-top: 34px;
+    }
+
+    #add{
+        color: white;
+        background-color: #7e0099db;
+       border: 1px solid #262626;
+       margin-right: 5px;
+    }
+
+
+    #cancel{
+        color: white;
+        background-color:#e62d2ddb;
+       
+        border:1px solid red;
+        margin-left: 5px;
+    }
+
+.fm-input{ width: 100%;
+    height: 40px;
+  
+    border: 1px solid black;
+    box-sizing: border-box;
+    margin-bottom: 16px;
+    border-radius: 11px;
+    border: 1px solid black;
+    padding-left: 10px;
+    padding-right: 10px;
+    box-shadow: -10px 10px 10px gray;
+}
