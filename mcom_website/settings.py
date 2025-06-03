@@ -163,7 +163,7 @@ DATABASES = {
         "NAME": "mobilecomm",
         "USER": "postgres",
         "PASSWORD": "mcomnpn",
-        "HOST": "122.176.141.197",
+        "HOST": "localhost",
         'PORT' : '5432',  # Default PostgreSQL port
     }
 }

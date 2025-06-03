@@ -6032,7 +6032,7 @@ qRxLevMin -128
 rachPreambleFormat 0
 rachPreambleRecTargetPower -110
 rachPreambleTransMax 10
-rachRootSequence 733
+rachRootSequence {rachRootSequence}
 secondaryCellOnly false
 siWindowLength 20
 ssbDuration 1
