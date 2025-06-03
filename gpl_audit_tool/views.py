@@ -1126,14 +1126,14 @@ def get_table_data(request):
                         post_freq_relation_df[col] = post_freq_relation_df[col].astype('int64')
                     ####################################################################################################################################
 
-                    merged_df = pd.merge(left=pre_freq_relation_df, right=post_freq_relation_df, on=['cellId'], how='left', suffixes=('_x', '_y'))
+                    merged_df = pd.merge(left=pre_freq_relation_df, right=post_freq_relation_df, on=['cellId', 'eutranFrequencyRef'], how='left', suffixes=('_x', '_y'))
                     ##################################################### selecting columns with float64 to int64 ######################################
                     float64_to_int64 = merged_df.select_dtypes(include='float64').columns.tolist()
                     for column in float64_to_int64:
                         merged_df[column] = (pd.to_numeric(merged_df[column], errors='coerce').replace([np.inf, -np.inf], pd.NA).astype('Int64'))
                     ####################################################################################################################################
-                    merged_df.drop(columns=['eutranFrequencyRef_x'], inplace=True)
-                    merged_df.rename(columns={'eutranFrequencyRef_y': "eutranFrequencyRef"}, inplace=True) 
+                    # merged_df.drop(columns=['eutranFrequencyRef_x'], inplace=True)
+                    # merged_df.rename(columns={'eutranFrequencyRef_y': "eutranFrequencyRef"}, inplace=True) 
                     merged_df["MO_y"] = merged_df["MO_y"].fillna(merged_df["MO_x"])
                     
                     merged_df["Node_ID_y"] = merged_df["Node_ID_y"].fillna("Cell is not Found in Post")
@@ -1159,7 +1159,6 @@ def get_table_data(request):
                                 post_value = merged_df.at[idx, post_col] 
                                 if pd.isna(post_value) or post_value in ["nan",0,'0','<na>', '<NA>']:
                                     merged_df.at[idx, pre_col] = f"{pre_value}"
-                                    # temp_merged_df.at[idx, 'Status'] = "Missing"
                                 else:
                                     merged_df.at[idx, pre_col] = (f"{pre_value}|{post_value}")
                                     
@@ -1190,6 +1189,7 @@ def get_table_data(request):
                     pre_freq_cell_relation_df["MO"] = pre_freq_cell_relation_df[
                         "MO"
                     ].astype(str)
+
                     post_freq_cell_relation_df["MO"] = post_freq_cell_relation_df[
                         "MO"
                     ].astype(str)

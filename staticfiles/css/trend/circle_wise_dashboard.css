@@ -1,0 +1,20 @@
+th, td{ border: 1px solid black;
+    text-align: center;}
+
+.table{
+
+    border: 1px solid;
+    border-radius: 6px;
+    box-shadow: -3px 5px 5px grey;
+}
+
+#wrapper{
+    margin: auto;
+    width: 80%;
+    margin-top: 23px;
+}
+
+th{
+
+    background-color:rgb(146 229 255);  
+}
