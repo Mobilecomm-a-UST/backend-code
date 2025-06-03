@@ -570,6 +570,7 @@ def generate_integration_script(request):
                         nRPCI=row["nRPCI"],
                         nRTAC=row["nRTAC"],
                         ssbFrequency=row["ssbFrequency"],
+                        rachRootSequence = row['rachRootSequence']  ############################################################################ Added rachRootSequence']
                     )
 
                     gnbcucp_fuction_element += TN_GNBCUCPFUNCTION_ELEMENT.format(
