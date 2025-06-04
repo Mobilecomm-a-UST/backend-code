@@ -3462,9 +3462,10 @@ deb Transport=1,Synchronization=1,RadioEquipmentClock=1,NodeGroupSyncMember=1
 ldeb RadioEquipmentClockReference=1
 
 
+"""
 
-###################################### MME SCRIPT ######################################
-
+###################################### CISCO MME SCRIPT ####################################################################################################
+CISCO_MME_SCRIPT = """
 gs+
 
 crn ENodeBFunction=1,TermPointToMme=MME_RAJ_2                                                                                                     
@@ -3562,3 +3563,37 @@ gs-
 
 """
 
+######################################################## NOKIA MME SCRIPT ####################################################################################################
+
+NOKIA_MME_SCRIPT = """
+###################################### NOKIA MME SCRIPT ######################################
+
+gs+
+
+crn ENodeBFunction=1,TermPointToMme=NokiaCMM-Uda
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.103.37.69
+ipAddress2 10.103.37.70
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+
+crn ENodeBFunction=1,TermPointToMme=NokiaCMM-Jod
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.103.37.21
+ipAddress2 10.103.37.22
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+gs-
+"""

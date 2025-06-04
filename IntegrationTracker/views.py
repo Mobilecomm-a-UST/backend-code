@@ -419,13 +419,13 @@ def datewise_integration_data(request):
                         FROM 
                             (SELECT DISTINCT UPPER("CIRCLE") as "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
                         CROSS JOIN
-                            (SELECT unnest(ARRAY['5G SECTOR ADDITION','5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC','OPERATIONS','OTHERS','RECTIFICATION', 'RELOCATION', 'RET','TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE']) AS "Activity_Name") AS "Activity_Name"
+                            (SELECT unnest(ARRAY['5G SECTOR ADDITION','5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC','OPERATIONS','OTHERS','RECTIFICATION', 'RELOCATION', 'RET','TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE' ,'RRU_UPGRADE']) AS "Activity_Name") AS "Activity_Name"
                         LEFT JOIN
                             (select "CIRCLE","Activity_Name", count("id") as cnt from 
                                             (select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" where "Integration_Date"='{date1}' ) in_0
                     group by "CIRCLE","Activity_Name") as r
                         USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-                    ct(cir text,"D1_5G_RELOCATION" INTEGER,"D1_5G_SECTOR_ADDITION" INTEGER ,"D1_DE_GROW" INTEGER,"D1_FEMTO" INTEGER,"D1_HT_INCREMENT" INTEGER,"D1_IBS" INTEGER,"D1_IDSC" INTEGER,"D1_MACRO" INTEGER,"D1_ODSC" INTEGER,"D1_OPERATIONS" INTEGER,"D1_OTHERS" INTEGER,"D1_RECTIFICATION" INTEGER,"D1_RELOCATION" INTEGER,"D1_RET" INTEGER,"D1_TRAFFIC_SHIFTING" INTEGER,"D1_ULS_HPSC" INTEGER,"D1_UPGRADE" INTEGER)) as d1
+                    ct(cir text,"D1_5G_RELOCATION" INTEGER,"D1_5G_SECTOR_ADDITION" INTEGER ,"D1_DE_GROW" INTEGER,"D1_FEMTO" INTEGER,"D1_HT_INCREMENT" INTEGER,"D1_IBS" INTEGER,"D1_IDSC" INTEGER,"D1_MACRO" INTEGER,"D1_ODSC" INTEGER,"D1_OPERATIONS" INTEGER,"D1_OTHERS" INTEGER,"D1_RECTIFICATION" INTEGER,"D1_RELOCATION" INTEGER,"D1_RET" INTEGER,"D1_TRAFFIC_SHIFTING" INTEGER,"D1_ULS_HPSC" INTEGER,"D1_UPGRADE" INTEGER,"RRU_UPGRADE" INTEGER)) as d1
 
                     FULL OUTER JOIN 
 
@@ -436,13 +436,13 @@ def datewise_integration_data(request):
                         FROM 
                             (SELECT DISTINCT UPPER("CIRCLE") as "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
                         CROSS JOIN
-                            (SELECT unnest(ARRAY['5G SECTOR ADDITION', '5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC', 'OPERATIONS','OTHERS','RECTIFICATION', 'RELOCATION', 'RET', 'TRAFFIC SHIFTING' , 'ULS_HPSC', 'UPGRADE']) AS "Activity_Name") AS "Activity_Name"
+                            (SELECT unnest(ARRAY['5G SECTOR ADDITION', '5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC', 'OPERATIONS','OTHERS','RECTIFICATION', 'RELOCATION', 'RET', 'TRAFFIC SHIFTING' , 'ULS_HPSC', 'UPGRADE', 'RRU_UPGRADE']) AS "Activity_Name") AS "Activity_Name"
                         LEFT JOIN
                             (select "CIRCLE","Activity_Name", count("id") as cnt from 
                                             (select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" where "Integration_Date"='{date2}' ) in_0
                     group by "CIRCLE","Activity_Name") as r
                         USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-                    ct(cir text,"D2_5G_RELOCATION" INTEGER,"D2_5G_SECTOR_ADDITION" INTEGER, "D2_DE_GROW" INTEGER,"D2_FEMTO" INTEGER,"D2_HT_INCREMENT" INTEGER,"D2_IBS" INTEGER,"D2_IDSC" INTEGER,"D2_MACRO" INTEGER,"D2_ODSC" INTEGER,"D2_OPERATIONS" INTEGER,"D2_OTHERS" INTEGER,"D2_RECTIFICATION" INTEGER,"D2_RELOCATION" INTEGER,"D2_RET" INTEGER, "D2_TRAFFIC_SHIFTING" INTEGER, "D2_ULS_HPSC" INTEGER,"D2_UPGRADE" INTEGER)) as d2
+                    ct(cir text,"D2_5G_RELOCATION" INTEGER,"D2_5G_SECTOR_ADDITION" INTEGER, "D2_DE_GROW" INTEGER,"D2_FEMTO" INTEGER,"D2_HT_INCREMENT" INTEGER,"D2_IBS" INTEGER,"D2_IDSC" INTEGER,"D2_MACRO" INTEGER,"D2_ODSC" INTEGER,"D2_OPERATIONS" INTEGER,"D2_OTHERS" INTEGER,"D2_RECTIFICATION" INTEGER,"D2_RELOCATION" INTEGER,"D2_RET" INTEGER, "D2_TRAFFIC_SHIFTING" INTEGER, "D2_ULS_HPSC" INTEGER,"D2_UPGRADE" INTEGER, "RRU_UPGRADE" INTEGER)) as d2
                     using("cir")
 
                     FULL OUTER JOIN 
@@ -454,13 +454,13 @@ def datewise_integration_data(request):
                         FROM 
                             (SELECT DISTINCT UPPER("CIRCLE") as "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
                         CROSS JOIN
-                            (SELECT unnest(ARRAY['5G SECTOR ADDITION','5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC','OPERATIONS','OTHERS', 'RECTIFICATION', 'RELOCATION', 'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE']) AS "Activity_Name") AS "Activity_Name"
+                            (SELECT unnest(ARRAY['5G SECTOR ADDITION','5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC','OPERATIONS','OTHERS', 'RECTIFICATION', 'RELOCATION', 'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU_UPGRADE', 'RRU_UPGRADE']) AS "Activity_Name") AS "Activity_Name"
                         LEFT JOIN
                             (select "CIRCLE","Activity_Name", count("id") as cnt from 
                                             (select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" where "Integration_Date"='{date3}') in_0
                     group by "CIRCLE","Activity_Name") as r
                         USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-                    ct(cir text,  "D3_5G_RELOCATION" INTEGER ,"D3_5G_SECTOR_ADDITION" INTEGER,"D3_DE_GROW" INTEGER,"D3_FEMTO" INTEGER,"D3_HT_INCREMENT" INTEGER,"D3_IBS" INTEGER,"D3_IDSC" INTEGER,"D3_MACRO" INTEGER,"D3_ODSC" INTEGER,"D3_OPERATIONS" INTEGER,"D3_OTHERS" INTEGER,"D3_RECTIFICATION" INTEGER,"D3_RELOCATION" INTEGER,"D3_RET" INTEGER, "D3_TRAFFIC_SHIFTING" INTEGER, "D3_ULS_HPSC" INTEGER,"D3_UPGRADE" INTEGER)) as d3
+                    ct(cir text,  "D3_5G_RELOCATION" INTEGER ,"D3_5G_SECTOR_ADDITION" INTEGER,"D3_DE_GROW" INTEGER,"D3_FEMTO" INTEGER,"D3_HT_INCREMENT" INTEGER,"D3_IBS" INTEGER,"D3_IDSC" INTEGER,"D3_MACRO" INTEGER,"D3_ODSC" INTEGER,"D3_OPERATIONS" INTEGER,"D3_OTHERS" INTEGER,"D3_RECTIFICATION" INTEGER,"D3_RELOCATION" INTEGER,"D3_RET" INTEGER, "D3_TRAFFIC_SHIFTING" INTEGER, "D3_ULS_HPSC" INTEGER,"D3_UPGRADE" INTEGER,"RRU_UPGRADE" INTEGER)) as d3
                     using("cir")
 
         
