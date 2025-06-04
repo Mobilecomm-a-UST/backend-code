@@ -79,6 +79,7 @@ class IntegrationData(models.Model):
   
     def __str__(self):
         return self.Site_ID  # or any other field to represent the object
+
 from django.utils import timezone
 from django.contrib.auth.models import User
 class Document(models.Model):

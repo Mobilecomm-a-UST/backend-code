@@ -570,6 +570,7 @@ def generate_integration_script(request):
                         nRPCI=row["nRPCI"],
                         nRTAC=row["nRTAC"],
                         ssbFrequency=row["ssbFrequency"],
+                        rachRootSequence = row['rachRootSequence']  ############################################################################ Added rachRootSequence']
                     )
 
                     gnbcucp_fuction_element += TN_GNBCUCPFUNCTION_ELEMENT.format(
@@ -1028,3 +1029,6 @@ def generate_integration_script(request):
             {"status": "OK", "message": "Integration scripts generated successfully.", 'download_link': download_link},
             status=status.HTTP_200_OK,
         )
+
+
+
