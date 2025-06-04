@@ -51,7 +51,7 @@ from LTE_Integration_Scripting_Automtion.circles.TN.TN_COMISSIONING_SCRIPT impor
 )
 
 from LTE_Integration_Scripting_Automtion.circles.RJ.RJ_INTEGRATION_SCRIPT import (
-    RJ_Route_4G_GPL_LMS, RJ_TN_RN_GPS_MME
+    RJ_Route_4G_GPL_LMS, RJ_TN_RN_GPS_MME, CISCO_MME_SCRIPT, NOKIA_MME_SCRIPT
 )
 from LTE_Integration_Scripting_Automtion.circles.RJ.RJ_COMISSION_SCRIPT import (
     SiteBasic_ipv4_6303,
@@ -786,9 +786,12 @@ def generate_integration_script(request):
 
                 RJ_TN_RN_GPS_MME_path = os.path.join(
                      create_script_paths(base_path_url, node_name)['lte'], f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
-                 )
+                )
+
+                
+                mme_type = NOKIA_MME_SCRIPT if temp_lte_df['MME'].unique()[0].startswith("Nokia") else CISCO_MME_SCRIPT
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
-                     file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid) + "\n")
+                     file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid)+mme_type + "\n")
 
             #--------------------------------------------------------------------------------------- 5G Cell Scripts ----------------------------------------------------------------#
             # Not Yet Implemented RJ Circle-specific 5G Script Generation Logic
