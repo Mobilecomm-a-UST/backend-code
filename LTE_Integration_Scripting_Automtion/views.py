@@ -1029,3 +1029,6 @@ def generate_integration_script(request):
             {"status": "OK", "message": "Integration scripts generated successfully.", 'download_link': download_link},
             status=status.HTTP_200_OK,
         )
+
+
+
