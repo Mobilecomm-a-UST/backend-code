@@ -164,6 +164,7 @@ DATABASES = {
         "USER": "postgres",
         "PASSWORD": "mcomnpn",
         "HOST": "localhost",
+        'PORT' : '5432',  # Default PostgreSQL port
     }
 }
 # DATABASES = {
