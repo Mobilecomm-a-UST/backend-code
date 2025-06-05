@@ -1,6 +1,3 @@
-
-
-# Create your views here.
 from django.shortcuts import render
 from django.conf import settings
 from rest_framework.decorators import api_view
@@ -33,7 +30,7 @@ def on_rm_error(func, path, exc_info):
       # Change the permission and retry
       os.chmod(path, stat.S_IWRITE)
       func(path)
-
+      
 
 
 
@@ -232,8 +229,9 @@ def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
 def soft_at_checkpoint(request):
       # try:
 
+###########################################
       all_files_df = pd.DataFrame()
-      # st_cell_df = pd.DataFrame()
+      # St_cell_df = pd.DataFrame()
       # latitude_df = pd.DataFrame()
       # longitude_df = pd.DataFrame()
       # st_mme_df = pd.DataFrame()
@@ -254,10 +252,10 @@ def soft_at_checkpoint(request):
       # FeatureState_CXC4011378_df = pd.DataFrame()
       # stz_df = pd.DataFrame()
       # alarm_df = pd.DataFrame()
+#################################################### 
       circle = request.POST.get("circle")
       files = request.FILES.getlist("files")
       base_name = None
-
       if not files:
             return Response(
                   {"status": "ERROR", "message": "No files uploaded"},
@@ -296,8 +294,10 @@ def soft_at_checkpoint(request):
             except PermissionError as e:
                   print("Permission denied:- ", str(e))
 ########################################################################
-      for file_path in saved_files:
-            with open(file_path, "r") as file:
+      for uploaded_file in saved_files:
+            node_name = os.path.splitext(os.path.basename(uploaded_file))[0]
+            excel_filename = os.path.join(log_excel_folder, f"{node_name}_{timestamp}.xlsx")
+            with open(uploaded_file, "r") as file:
                   file_content = file.readlines()
             st_cell_df = explode_data_from_log(
                   r'[A-Z0-9_-]+>\sst\scell',
@@ -308,7 +308,7 @@ def soft_at_checkpoint(request):
             )
 
             latitude_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\sget\s\.\sLatitude',
+                  r'[A-Z0-9_-]+>\sget\s\.\slatitude',
                   r'MO\s+Attribute\s+Value',
                   r'^\s*(EUtranCell(?:FDD|TDD)=\S+)\s+(latitude)\s+(\d+)\s*$',
                   r'^Total:\s\d+',
@@ -316,7 +316,7 @@ def soft_at_checkpoint(request):
             )
 
             longitude_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\sget\s\.\sLongitude',
+                  r'[A-Z0-9_-]+>\sget\s\.\slongitude',
                   r'MO\s+Attribute\s+Value',
                   r'^\s*(EUtranCell(?:FDD|TDD)=\S+)\s+(longitude)\s+(\d+)\s*$',
                   r'^Total:\s\d+',
@@ -332,15 +332,15 @@ def soft_at_checkpoint(request):
             )
 
             Vswrsupervision_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\sget\s\.\sVswrsuper',
-                  r'MO\s+Attribute\s+Value',
-                  r'^\s*(FieldReplaceableUnit=\S+)\s+(vswrSupervisionActive)\s+(true|false)\s*$',
-                  r'^Total:\s\d+',
+                        r'[A-Z0-9_-]+>\sget\s\.\svswrsuper',                  # Start pattern (e.g., prompt + command)
+                        r'MO\s+Attribute\s+Value',                            # Header pattern
+                        r'^\s*(FieldReplaceableUnit=[^,]+,RfPort=\S+)\s+(vswrSupervisionActive|vswrSupervisionSensitivity)\s+(\S+)\s*$',  # Data line pattern
+                        r'^Total:\s\d+',     
                   file_content
             )
 
             snmp_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\sget\s\.\sSnmp',
+                  r'[A-Z0-9_-]+>\sget\s\.\ssnmp',
                   r'MO\s+Attribute\s+Value',
                   r'^\s*(SysM=\S+.*?)\s+(snmp\w+)\s+(.*?)\s*$',
                   r'^Total:\s\d+',
@@ -348,7 +348,7 @@ def soft_at_checkpoint(request):
             )
 
             twamp_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\sget\s\.\sTwamp',
+                  r'[A-Z0-9_-]+>\sget\s\.\stwamp',
                   r'MO\s+Attribute\s+Value',
                   r'^\s*(Router=\S+.*?)\s+(twampResponderId)\s+(.*?)\s*$',
                   r'^Total:\s\d+',
@@ -356,7 +356,7 @@ def soft_at_checkpoint(request):
             )
 
             Pathmaxrtx_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\sget\s\.\sPathmaxrtx',
+                  r'[A-Z0-9_-]+>\sget\s\.\spathmaxrtx',
                   r'MO\s+Attribute\s+Value',
                   r'^\s*(SctpProfile=\S+)\s+(\S+)\s+(.*?)\s*$',
                   r'^Total:\s\d+',
@@ -370,7 +370,7 @@ def soft_at_checkpoint(request):
                   r'^Total:\s\d+',
                   file_content
             )
-
+            
             heartbeatInterval_df = explode_data_from_log(
                   r'[A-Z0-9_-]+>\sget\sFm=1\sheartbeatInterval',
                   r'MO\s+Attribute\s+Value',
@@ -388,7 +388,7 @@ def soft_at_checkpoint(request):
             )
 
             sync_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\sget\s\.\sSync',
+                  r'[A-Z0-9_-]+>\sget\s\.\ssync',
                   r'MO\s+Attribute\s+Value',
                   r'^\s*(\S.*?)\s{2,}(\S+)\s+(.*?)\s*$',
                   r'^Total:\s\d+',
@@ -404,12 +404,13 @@ def soft_at_checkpoint(request):
             )
 
             st_ret_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\sSt\sret',
+                  r'[A-Z0-9_-]+>\sst\sret',
                   r'(Proxy)\s+(Adm\sState)\s+(Op\.\sState)\s+(MO)',
-                  r'^\s*(\d+)\s+(\d+\s+\((?:UNLOCKED|LOCKED)\))\s+(\d+\s+\((?:ENABLED|DISABLED)\))\s+(.*)$',
-                  r'^Total:\s\d+',
+                  r'^\s*(\d+)\s+(\d*\s*\(?(?:UNLOCKED|LOCKED|DISABLED|ENABLED)?\)?)\s+(\d+\s+\((?:DISABLED|ENABLED)\))\s+(.*)$',
+                  r'^Total:\s+\d+\s+MOs',
                   file_content
-            )
+)
+            
 
             print("st ret- ",st_ret_df)
 
@@ -421,12 +422,13 @@ def soft_at_checkpoint(request):
                   file_content
             )
             print("FeatureState_CXC4011958_df.columns:- ",FeatureState_CXC4011958_df.columns)
-            FeatureState_CXC4011958_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011958_df.columns.tolist()[2:]]
+            # if not FeatureState_CXC4011958_df.empty:
+            #       expected_cols = FeatureState_CXC4011958_df.columns.tolist()
+            #       if len(expected_cols) >= 2:
+            #             FeatureState_CXC4011958_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
 
-      #     FeatureState_CXC4011958_df.rename(columns={
-      #    r " ": "MO",
-      #     "" : "Attribute"
-      # }, inplace=True, regex=True)
+            FeatureState_CXC4011958_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011958_df.columns.tolist()[2:]]
+            
 
             FeatureState_CXC4011808_df = explode_data_from_log(
                   r'[A-Z0-9_-]+>\sget\sLm=1,FeatureState=CXC4011808',
@@ -435,21 +437,27 @@ def soft_at_checkpoint(request):
                   r'^Total:\s\d+',
                   file_content
             )
+            # if not FeatureState_CXC4011958_df.empty:
+            #       expected_cols = FeatureState_CXC4011958_df.columns.tolist()
+            #       if len(expected_cols) >= 2:
+            #             FeatureState_CXC4011958_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
+#
             FeatureState_CXC4011808_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011808_df.columns.tolist()[2:]]
 
 
-            # FeatureState_CXC4011803_df = explode_data_from_log(
-            #       r'[A-Z0-9_-]+>\sget\sLm=1,FeatureState=CXC4011803',
-            #       r'^(\d+)\s+([A-Za-z0-9=,]+)\s*',
-            #       r'^([a-zA-Z0-9]+)\s+(.+?)\s*$',
-            #       r'Total:\s\d+',
-            #       file_content
-            # )
-            # # FeatureState_CXC4011803_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011803_df.columns.tolist()[2:]] if not FeatureState_CXC4011803_df.columns else pd.DataFrame(columns=['MO', 'Attribute'])
-            # if not FeatureState_CXC4011803_df.empty:
-            #       FeatureState_CXC4011803_df.columns = ['MO', 'Attribute'] + FeatureState_CXC4011803_df.columns.tolist()[2:]
-            # else:
-            #       FeatureState_CXC4011803_df = pd.DataFrame(columns=['MO', 'Attribute'])
+            FeatureState_CXC4011803_df = explode_data_from_log(
+                  r'[A-Z0-9_-]+>\sget\sLm=1,FeatureState=CXC4011803',
+                  r'^(\d+)\s+([A-Za-z0-9=,]+)\s*',
+                  r'^([a-zA-Z0-9]+)\s+(.+?)\s*$',
+                  r'Total:\s\d+',
+                  file_content
+            )
+            # FeatureState_CXC4011803_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011803_df.columns.tolist()[2:]] if not FeatureState_CXC4011803_df.columns else pd.DataFrame(columns=['MO', 'Attribute'])
+            if not FeatureState_CXC4011803_df.empty:
+                  expected_cols = FeatureState_CXC4011803_df.columns.tolist()
+                  if len(expected_cols) >= 2:
+                        FeatureState_CXC4011803_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
+
 
 
             FeatureState_CXC4011983_df = explode_data_from_log(
@@ -459,6 +467,11 @@ def soft_at_checkpoint(request):
                   r'^Total:\s',
                   file_content
             )
+            # if not FeatureState_CXC4011958_df.empty:
+            #       expected_cols = FeatureState_CXC4011958_df.columns.tolist()
+            #       if len(expected_cols) >= 2:
+            #             FeatureState_CXC4011958_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
+
             FeatureState_CXC4011983_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011983_df.columns.tolist()[2:]]
 
 
@@ -469,19 +482,26 @@ def soft_at_checkpoint(request):
                   r'^Total:\s\d+',
                   file_content
             )
+            # if not FeatureState_CXC4011958_df.empty:
+            #       expected_cols = FeatureState_CXC4011958_df.columns.tolist()
+            #       if len(expected_cols) >= 2:
+            #             FeatureState_CXC4011958_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
+
             FeatureState_CXC4011378_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011378_df.columns.tolist()[2:]]
 
 
             stz_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\s+stz',
+                  r'[A-Z0-9_-]+>\s+stz',                                                                                     
                   r'Id\s+LTECell\s+S\s+TABREMDF\s+Alm\s+UEs\s+cId\s+tac\s+pci\s+rsi\s+eci\s+arfcnDL\s+arfcnUL\s+freqDL\s+freqUL\s+dlBW\s+ulBW\s+Band\s+cnfP\s+maxP\s+C-T/R\s+U-T/R\s+M-T\s+Ess\s+Fru',  # table_header_pattern
-                  r'(\d+)\s+([^\s]+)\s+(\d+)\s+([^\s]+)\s+(-|\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+/\d+)\s+(\d+/\d+)\s+(\d+)\s+(-|\d+)\s+(\d+)',  # data_row_pattern
-                  r'^Total:\s+\d+\s+Cells\s+\(\d+\s+up\)',
-                  file_content
+                  r'(\d+)\s+([^\s]+)\s+([A-Z\d]+)\s+([^\s]+)\s+(-|\d+|\d+,\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+/\d+)\s+(-?\d+/-?\d+)\s+(\d+)\s+(-|\d+)\s+(\d+)',
+                  # r'(\d+)\s+([^\s]+)\s+(\d+)\s+([^\s]+)\s+(-|\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+/\d+)\s+(\d+/\d+)\s+(\d+)\s+(-|\d+)\s+(\d+)',  # data_row_pattern
+                  r'^Total:\s+\d+\s+Cells\s+\(\d+\s+up\)',                                                               
+                  file_content                                                                                                 
             )
+            
 
             alarm_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\sSt\salarmport',
+                  r'[A-Z0-9_-]+>\sst\salarmport',
                   r'(Proxy)\s+(Adm\sState)\s+(Op\.\sState)\s+(MO)',
                   r'^\s*(\d+)\s+(\d+\s+\((?:UNLOCKED|LOCKED)\))\s+(\d+\s+\((?:ENABLED|DISABLED)\))\s+(.*)$',
                   r'^Total:\s\d+',
@@ -493,7 +513,7 @@ def soft_at_checkpoint(request):
                   'get . latitude': latitude_df,
                   'get . longitude': longitude_df,
                   'St mme': st_mme_df,
-                  'grt . Vswrsupervision': Vswrsupervision_df,
+                  'get . Vswrsupervision': Vswrsupervision_df,
                   'get . Snmp': snmp_df,
                   'get . Twamp': twamp_df,
                   'get . Pathmaxrtx': Pathmaxrtx_df,
@@ -502,10 +522,10 @@ def soft_at_checkpoint(request):
                   'St Sync': st_sync_df,
                   'get . Sync': sync_df,
                   'Hget Ret User': ret_user_df,
-                  'St Ret': st_ret_df,
+                  'st Ret': st_ret_df,
                   'FeatureState_CXC4011958': FeatureState_CXC4011958_df,
                   'FeatureState_CXC4011808': FeatureState_CXC4011808_df,
-                  # 'FeatureState_CXC4011803': FeatureState_CXC4011803_df,
+                  'FeatureState_CXC4011803': FeatureState_CXC4011803_df,
                   'FeatureState_CXC4011983': FeatureState_CXC4011983_df,
                   'FeatureState_CXC4011378': FeatureState_CXC4011378_df,
                   'Stz': stz_df,
@@ -516,35 +536,10 @@ def soft_at_checkpoint(request):
             # print("df_list:- ",[df_list])
             all_files_df = pd.concat([all_files_df,*df_list], axis=0,ignore_index=True)
             # print("all_files_df:- ",all_files_df)
-
-
-
-#################################################################################
-            # Loop over uploaded files and their corresponding sheets
-            for uploaded_file in saved_files:
-                  ...
-                  # process file and get `sheets = {sheet_name: df, ...}` as you did
-
-                  # Use the file name without extension as identifier
-                  node_name = os.path.splitext(os.path.basename(uploaded_file))[0]
-                  excel_filename = os.path.join(log_excel_folder, f"{node_name}_{timestamp}.xlsx")
-
-                  # Write only non-empty DataFrames to Excel
-                  with pd.ExcelWriter(excel_filename, engine="xlsxwriter") as writer:
-                        for sheet_name, df in sheets.items():
-                              df.to_excel(writer, sheet_name=sheet_name, index=False)
-                              format_excel_sheet(writer, sheet_name, df)
-                  # with pd.ExcelWriter(excel_filename, engine="openpyxl") as writer:
-                  #       for sheet_name, df in sheets.items():
-                  #             print("sheet_name:- ",sheet_name)
-                  #             if not df.empty:
-                  #                   safe_sheet_name = sheet_name[:31]
-                  #                   df.to_excel(writer, sheet_name=safe_sheet_name, index=False)
-
-
-
-
-
+            with pd.ExcelWriter(excel_filename, engine="xlsxwriter") as writer:
+                  for sheet_name, df in sheets.items():
+                        df.to_excel(writer, sheet_name=sheet_name, index=False)
+                        format_excel_sheet(writer, sheet_name, df)
 
 ################################## Making the template file path and template file existance #######################################
             template_file_path = os.path.join(base_media_url, "template_file")
@@ -568,409 +563,579 @@ def soft_at_checkpoint(request):
             print(xls.sheet_names)
             for idx,sheet_name in enumerate(xls.sheet_names, start=1):
                   print(sheet_name)
+                  required_columns_present = lambda df, columns: all(col in df.columns for col in columns)
+
                   if sheet_name == "St Cell":
                         df = xls.parse(sheet_name).copy()
-                        df['Adm State'] = df['Adm State'].astype(str).str.strip()
-                        df['Op. State'] = df['Op. State'].astype(str).str.strip()
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['Adm State'] == "1 (UNLOCKED)" and x['Op. State'] == "1 (ENABLED)" else "NOT OK",
-                        axis=1
-                        ).tolist()
-                        # print(ok_status_list)
-                        template_df.at[idx,"Site_ID"] = df['Node_ID'].unique()[0]
-                        template_df.at[idx,'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx,'Checkpoint'] = str(sheet_name)
-
+                        if required_columns_present(df, ["Adm State", "Op. State", "Node_ID"]):
+                              df['Adm State'] = df['Adm State'].astype(str).str.strip()
+                              df['Op. State'] = df['Op. State'].astype(str).str.strip()
+                              ok_status_list = df.apply(
+                                    lambda x: "OK" if x['Adm State'] == "1 (UNLOCKED)" and x['Op. State'] == "1 (ENABLED)" else "NOT OK",
+                                    axis=1
+                              ).tolist()
+                              template_df.at[idx,"Site_ID"] = df['Node_ID'].unique()[0]
+                              template_df.at[idx,'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              template_df.at[idx,'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
                   elif sheet_name == "get . latitude":
                         df = xls.parse(sheet_name).copy()
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        df["Value"] = df["Value"].astype(str).str.strip()
-
-                        # Compute OK/NOT OK status
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['Attribute'] == "latitude" and x['Value'] != 0 else "NOT OK",
-                        axis=1
-                        ).tolist()
-                        # print(ok_status_list)
-                        # Assign result to template
-                        template_df.at[idx,"Site_ID"] = df['Node_ID'].unique()[0]
-                        template_df.at[idx,'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx,'Checkpoint'] = str(sheet_name)
-
+                        if required_columns_present(df, ["Attribute", "Value", "Node_ID"]):
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              df["Value"] = df["Value"].astype(str).str.strip()
+                              ok_status_list = df.apply(
+                                    lambda x: "OK" if x['Attribute'] == "latitude" and x['Value'] != "0" else "NOT OK",
+                                    axis=1
+                              ).tolist()
+                              template_df.at[idx,"Site_ID"] = df['Node_ID'].unique()[0]
+                              template_df.at[idx,'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              template_df.at[idx,'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
                   elif sheet_name == "get . longitude":
                         df = xls.parse(sheet_name).copy()
-
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        df["Value"] = df["Value"].astype(str).str.strip()
-                        # Compute OK/NOT OK status
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['Attribute'] == "longitude" and x['Value'] != 0 else "NOT OK",
-                        axis=1
-                        ).tolist()
-                        # print(ok_status_list)
-                        # Assign result to template
-                        template_df.at[idx,"Site_ID"] = df['Node_ID'].unique()[0]
-                        template_df.at[idx,'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx,'Checkpoint'] = str(sheet_name)
+                        if required_columns_present(df, ["Attribute", "Value", "Node_ID"]):
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              df["Value"] = df["Value"].astype(str).str.strip()
+                              ok_status_list = df.apply(
+                                    lambda x: "OK" if x['Attribute'] == "longitude" and x['Value'] != "0" else "NOT OK",
+                                    axis=1
+                              ).tolist()
+                              template_df.at[idx,"Site_ID"] = df['Node_ID'].unique()[0]
+                              template_df.at[idx,'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              template_df.at[idx,'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
                   elif sheet_name == "St mme":
                         df = xls.parse(sheet_name).copy()
-                        df["Adm State"] = df["Adm State"].astype(str).str.strip()
-                        df["Op. State"] = df["Op. State"].astype(str).str.strip()
-                        # Compute OK/NOT OK status
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['Adm State'] == "1 (UNLOCKED)" and x['Op. State'] == "1 (ENABLED)" else "NOT OK",
-                        axis=1
-                        ).tolist()
-                        # print(ok_status_list)
-                        # Assign result to template
-                        template_df.at[idx,"Site_ID"] = df['Node_ID'].unique()[0]
-                        template_df.at[idx,'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx,'Checkpoint'] = str(sheet_name)
-
-
-
-                  elif sheet_name == "grt . Vswrsupervision":
-                        df = xls.parse(sheet_name).copy()
-
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        df["Value"] = df["Value"].astype(str).str.strip().str.lower()
-
-                        df = df[df["Attribute"] == "vswrSupervisionActive"].copy()
-
-                        df['RRU'] = df['MO'].astype(str).str.extract(r'(RRU-\d+)')
-                        df['RfPort'] = df['MO'].astype(str).str.extract(r'RfPort=([A-Z])')
-
-                        final_status = 'OK'
-
-                        # Group by RRU to apply condition
-                        for rru, group in df.groupby('RRU'):
-                              non_r_ports_ok = group[group['RfPort'] != 'R']['Value'].eq('true').all()
-                              r_ports_ok = group[group['RfPort'] == 'R']['Value'].eq('false').all()
-                              # print("non_r_ports_ok:", non_r_ports_ok)
-                              # print("r_ports_ok:", r_ports_ok)
-                              if not (non_r_ports_ok and r_ports_ok):
-                                    final_status = 'NOT OK'
-                                    break
-                              # print("Final status:", final_status)
-                              # Assign to template
+                        if required_columns_present(df, ["Adm State", "Op. State", "Node_ID"]):
+                              df["Adm State"] = df["Adm State"].astype(str).str.strip()
+                              df["Op. State"] = df["Op. State"].astype(str).str.strip()
+                              ok_status_list = df.apply(
+                                    lambda x: "OK" if x['Adm State'] == "1 (UNLOCKED)" and x['Op. State'] == "1 (ENABLED)" else "NOT OK",
+                                    axis=1
+                              ).tolist()
                               template_df.at[idx,"Site_ID"] = df['Node_ID'].unique()[0]
-                              template_df.at[idx,'Remark '] = final_status
+                              template_df.at[idx,'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
                               template_df.at[idx,'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+
+                  elif sheet_name == "get . Vswrsupervision":
+                        df = xls.parse(sheet_name).copy()
+                        if required_columns_present(df, ["Attribute", "Value", "MO", "Node_ID"]):
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              df["Value"] = df["Value"].astype(str).str.strip().str.lower()
+                              df["MO"] = df["MO"].astype(str)
+
+                              # Extract RRU and RfPort
+                              df['RRU'] = df['MO'].str.extract(r'(RRU-\d+)')
+                              df['RfPort'] = df['MO'].str.extract(r'RfPort=([A-Z])')
+
+                              # Normalize value types
+                              df["Value"] = df.apply(
+                                    lambda row: int(row["Value"]) if row["Attribute"] == "vswrSupervisionSensitivity" and row["Value"].isdigit() else row["Value"],
+                                    axis=1
+                              )
+
+                              final_status = 'OK'
+                              for rru, group in df.groupby('RRU'):
+                                    # Check that non-R ports have vswrSupervisionActive = true
+                                    active_check = group[
+                                    (group['Attribute'] == 'vswrSupervisionActive') & (group['RfPort'] != 'R')
+                                    ]['Value'].eq('true').all()
+
+                                    # Check that R ports have vswrSupervisionActive = false
+                                    r_check = group[
+                                    (group['Attribute'] == 'vswrSupervisionActive') & (group['RfPort'] == 'R')
+                                    ]['Value'].eq('false').all()
+
+                                    # Check that all ports have vswrSupervisionSensitivity = 100
+                                    sensitivity_check = group[
+                                    group['Attribute'] == 'vswrSupervisionSensitivity'
+                                    ]['Value'].eq(100).all()
+
+                                    if not (active_check and r_check and sensitivity_check):
+                                          final_status = 'NOT OK'
+                                          break 
+
+                              template_df.at[idx, "Site_ID"] = df['Node_ID'].unique()[0]
+                              template_df.at[idx, 'Remark '] = final_status
+                              template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                        else:
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
 
                   elif sheet_name == "get . Snmp":
                         df = xls.parse(sheet_name).copy()
-
-                        # Clean up whitespace
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        df["Value"] = df["Value"].astype(str).str.strip()
-
-                        # Expected attribute-value pairs
-                        expected_values = {
-                        "snmpId": "1",
-                        "snmpTargetV2CId": "ENMFM",
-                        "snmpSecurityLevel": "1 (NO_AUTH_NO_PRIV)",
-                        "snmpTargetV3Id": "1"
-                        }
-
-                        # Filter only relevant attributes
-                        filtered_df = df[df["Attribute"].isin(expected_values.keys())]
-
-                        # Convert to dictionary for comparison
-                        actual_values = dict(zip(filtered_df["Attribute"], filtered_df["Value"]))
-
-                        # Check if all expected attribute-value pairs match
-                        all_match = all(actual_values.get(attr) == expected for attr, expected in expected_values.items())
-
-                        # Assign status
-                        template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx, 'Remark '] = "OK" if all_match else "NOT OK"
-                        template_df.at[idx, 'Checkpoint'] = sheet_name
-
+                        
+                        if required_columns_present(df, ["Attribute", "Value", "Node_ID"]):
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              df["Value"] = df["Value"].astype(str).str.strip()
+                              
+                              expected_values = {
+                                    "snmpId": "1",
+                                    "snmpTargetV2CId": "ENMFM",
+                                    "snmpSecurityLevel": "1 (NO_AUTH_NO_PRIV)",
+                                    "snmpTargetV3Id": "1"
+                              }
+                              
+                              filtered_df = df[df["Attribute"].isin(expected_values.keys())]
+                              actual_values = dict(zip(filtered_df["Attribute"], filtered_df["Value"]))
+                              
+                              all_match = all(actual_values.get(attr) == expected for attr, expected in expected_values.items())
+                              
+                              template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx, 'Remark '] = "OK" if all_match else "NOT OK"
+                              template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found or required columns missing
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
                   elif sheet_name == "get . Twamp":
                         df = xls.parse(sheet_name).copy()
-                        df['MO'] = df['MO'].astype(str).str.strip()
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        df["Value"] = df["Value"].astype(str).str.strip()
-                        expected = {
-                        "Router=LTEUP,TwampResponder=1": "1",
-                        "Router=LTEUP,TwampResponder=NR": "NR"
-                        }
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if (
-                              x['Attribute'] == "twampResponderId" and
-                              x['MO'] in expected and
-                              x['Value'] == expected[x['MO']]
-                        ) else "NOT OK",
-                        axis=1
-                        ).tolist()
-                        # print(ok_status_list)
-                        template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx, 'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list if status) else 'NOT OK'
-                        template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                        
+                        if required_columns_present(df, ["MO", "Attribute", "Value", "Node_ID"]):
+                              df['MO'] = df['MO'].astype(str).str.strip()
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              df["Value"] = df["Value"].astype(str).str.strip()
 
+                              expected = {
+                                    "Router=LTEUP,TwampResponder=1": "1",
+                                    "Router=LTEUP,TwampResponder=NR": "NR"
+                              }
+
+                              # Add status column using lambda
+                              df["Status"] = df.apply(
+                                    lambda x: "OK" if (
+                                    x["Attribute"] == "twampResponderId" and 
+                                    x["MO"] in expected and 
+                                    x["Value"] == expected[x["MO"]]
+                                    ) else (
+                                    "SKIP" if x["MO"] not in expected else "NOT OK"
+                                    ), axis=1
+                              )
+
+                              # Print only MOs present in expected
+                              for mo in expected:
+                                    rows = df[df["MO"] == mo]
+                                    if not rows.empty:
+                                          for _, row in rows.iterrows():
+                                                print(f"{mo}: {row['Status']}")
+
+                              # Collect overall status for final template
+                              ok_status_list = df[df["MO"].isin(expected.keys())]["Status"].tolist()
+                              final_status = "OK" if all(s == "OK" for s in ok_status_list) else "NOT OK"
+
+                              template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx, 'Remark '] = final_status
+                              template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
                   elif sheet_name == "get . Pathmaxrtx":
                         df = xls.parse(sheet_name).copy()
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        df["Value"] = df["Value"].astype(str).str.strip()
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['Attribute'] == "pathMaxRtx" and x['Value'] == "4" else "NOT OK",
-                        axis=1
-                        ).tolist()
-                        # print(ok_status_list)
-                        template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx, 'Remark '] = 'OK' if any(status == 'OK' for status in ok_status_list)  else 'NOT OK'
-                        template_df.at[idx, 'Checkpoint'] = str(sheet_name)
-
-
+                        if required_columns_present(df, ["Attribute", "Value", "Node_ID"]):
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              df["Value"] = df["Value"].astype(str).str.strip()
+                              ok_status_list = df.apply(
+                              lambda x: "OK" if 
+                              (x['Attribute'] == "pathMaxRtx" and x['Value'] == "4") or 
+                              (x['Attribute'] == "primaryPathMaxRtx" and x['Value'] == "0")
+                              else "NOT OK",
+                              axis=1
+                              ).tolist()
+                              template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx, 'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list)  else 'NOT OK'
+                              template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                                          
                   elif sheet_name == "get . assocMaxRtx":
                         df = xls.parse(sheet_name).copy()
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        df["Value"] = df["Value"].astype(str).str.strip()
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['Attribute'] == "assocMaxRtx" and x['Value'] == "8" else "NOT OK",
-                        axis=1
-                        ).tolist()
-                        # print(ok_status_list)
-                        template_df.at[idx,'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx,'Remark '] = 'OK' if any(status == 'OK' for status in ok_status_list if status)  else 'NOT OK'
-                        template_df.at[idx,'Checkpoint'] = str(sheet_name)
-
+                        if required_columns_present(df, ["Attribute", "Value", "Node_ID"]):
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              df["Value"] = df["Value"].astype(str).str.strip()
+                              ok_status_list = df.apply(
+                              lambda x: "OK" if x['Attribute'] == "assocMaxRtx" and x['Value'] == "8" else "NOT OK",
+                              axis=1
+                              ).tolist()
+                              # print(ok_status_list)
+                              template_df.at[idx,'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx,'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list if status)  else 'NOT OK'
+                              template_df.at[idx,'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                        
                   elif sheet_name == "get Fm=1 heartbeatInterval":
                         df = xls.parse(sheet_name).copy()
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        df["Value"] = df["Value"].astype(str).str.strip()
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['Attribute'] == "heartbeatInterval" and x['Value'] == "100" else "NOT OK",
-                        axis=1
-                        ).tolist()
-                        # print(ok_status_list)
-                        template_df.at[idx,'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx,'Remark '] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx,'Checkpoint'] = str(sheet_name)
+                        if required_columns_present(df, ["Attribute", "Value", "Node_ID"]):
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              df["Value"] = df["Value"].astype(str).str.strip()
+                              ok_status_list = df.apply(
+                              lambda x: "OK" if x['Attribute'] == "heartbeatInterval" and x['Value'] == "100" else "NOT OK",
+                              axis=1
+                              ).tolist()
+                              # print(ok_status_list)
+                              template_df.at[idx,'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx,'Remark '] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              template_df.at[idx,'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
 
                   elif sheet_name == "St Sync":
                         df = xls.parse(sheet_name).copy()
-                        df["Op. State"] = df["Op. State"].astype(str).str.strip()
-                        df["MO"] = df["MO"].astype(str).str.strip()
-                        expected_mo ={
-                        "Equipment=1,FieldReplaceableUnit=DU-1,SyncPort=1",
-                        "Transport=1,Synchronization=1,TimeSyncIO=1"
-                        }
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if (x['Op. State'] == "ENABLED" and any(mo in x['MO'] for mo in expected_mo)) else "NOT OK",
-                        axis=1
-                        ).tolist()
-                        # print(ok_status_list)
-                        template_df.at[idx,'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx,'Remark '] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx,'Checkpoint'] = str(sheet_name)
-
-
+                        if required_columns_present(df, ["Op. State", "MO", "Node_ID"]):
+                              df["Op. State"] = df["Op. State"].astype(str).str.strip()
+                              df["MO"] = df["MO"].astype(str).str.strip()
+                              expected_mo ={ 
+                              "Equipment=1,FieldReplaceableUnit=DU-1,SyncPort=1",
+                              "Transport=1,Synchronization=1,TimeSyncIO=1"
+                              }
+                              ok_status_list = df.apply(
+                              lambda x: "OK" if (x['Op. State'] == "ENABLED" and any(mo in x['MO'] for mo in expected_mo)) else "NOT OK",
+                              axis=1
+                              ).tolist()
+                              # print(ok_status_list)
+                              template_df.at[idx,'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx,'Remark '] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              template_df.at[idx,'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                        
+                  
                   elif sheet_name == "get . Sync":
                         df = xls.parse(sheet_name).copy()
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        df["Value"] = df["Value"].astype(str).str.strip()
-                        expected_pairs = {
-                        "timeAndPhaseSynchAlignment": "true",
-                        "timeSyncIOStatus": "0 (NO_FAULT)"
-                        }
-                        df["Status"] = df.apply(
-                        lambda x: "OK" if x["Attribute"] in expected_pairs and x["Value"] == expected_pairs[x["Attribute"]] else "NOT OK",
-                        axis=1
-                        )
-                        filtered_status = df[df["Attribute"].isin(expected_pairs.keys())]["Status"].tolist()
-                        final_status = "OK" if all(s == "OK" for s in filtered_status) and len(filtered_status) == len(expected_pairs) else "NOT OK"
-                        template_df.at[idx,'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx, 'Remark '] = final_status
-                        template_df.at[idx, 'Checkpoint'] = str(sheet_name)
-
+                        if required_columns_present(df, ["Attribute", "Value", "Node_ID"]):
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              df["Value"] = df["Value"].astype(str).str.strip()
+                              expected_pairs = {
+                              "timeAndPhaseSynchAlignment": "true",
+                              "timeSyncIOStatus": "0 (NO_FAULT)"
+                              }
+                              df["Status"] = df.apply(
+                              lambda x: "OK" if x["Attribute"] in expected_pairs and x["Value"] == expected_pairs[x["Attribute"]] else "NOT OK",
+                              axis=1
+                              )
+                              filtered_status = df[df["Attribute"].isin(expected_pairs.keys())]["Status"].tolist()
+                              final_status = "OK" if all(s == "OK" for s in filtered_status) and len(filtered_status) == len(expected_pairs) else "NOT OK"    
+                              template_df.at[idx,'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx, 'Remark '] = final_status
+                              template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                              
                   elif sheet_name == "Hget Ret User":
                         df = xls.parse(sheet_name).copy()
-                        df["MO"] = df["MO"].astype(str).str.strip()
-                        df["userLabel"] = df["userLabel"].astype(str).str.strip()
-                        df["AntennaUnitGroup"] = df["MO"].str.extract(r"AntennaUnitGroup=(\d+)")
-                        group_checks = df.groupby("AntennaUnitGroup").apply(
-                        lambda g: any(g["userLabel"] == "FREE PORT") and
-                                    any(
-                                    label.endswith(chr(64 + int(g.name)))
-                                    for label in g["userLabel"]
-                                    if label != "FREE PORT"
-                                    )
-                        )
-                        template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0] if not df.empty else ""
-                        template_df.at[idx, 'Remark '] = 'OK' if all(status =='OK' for status in group_checks) else 'NOT OK'
-                        template_df.at[idx, 'Checkpoint'] = str(sheet_name)
-
+                        if required_columns_present(df, ["MO", "userLabel", "Node_ID"]):
+                              df["MO"] = df["MO"].astype(str).str.strip()
+                              df["userLabel"] = df["userLabel"].astype(str).str.strip()
+                              df["AntennaUnitGroup"] = df["MO"].str.extract(r"AntennaUnitGroup=(\d+)")
+                              group_checks = df.groupby("AntennaUnitGroup").apply(
+                              lambda g: any(g["userLabel"] == "FREE PORT") and
+                                          any(
+                                          label.endswith(chr(64 + int(g.name)))
+                                          for label in g["userLabel"]
+                                          if label != "FREE PORT"
+                                          )
+                              )
+                              template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0] if not df.empty else ""
+                              template_df.at[idx, 'Remark '] = 'OK' if all(status =='OK' for status in group_checks) else 'NOT OK'
+                              template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
                   elif sheet_name == "St Ret":
                         df = xls.parse(sheet_name).copy()
-                        df["Adm State"] = df["Adm State"].astype(str).str.strip()
-                        df["Op. State"] = df["Op. State"].astype(str).str.strip()
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['Adm State'] == "1 (UNLOCKED)" and x['Op. State'] == "1 (ENABLED)" else "NOT OK",
-                        axis=1
-                        ).tolist()
-                        # print(ok_status_list)
-                        template_df.at[idx,'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx,'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx,'Checkpoint'] = str(sheet_name)
-
+                        if required_columns_present(df, ["Adm State", "Op. State", "Node_ID"]):
+                              # Handle case when DataFrame is empty
+                              if df.empty:
+                                    template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                                    template_df.at[idx, 'Remark '] = 'OK'
+                                    template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                              else:
+                                    df["Adm State"] = df["Adm State"].ffill().astype(str).str.strip()
+                                    df["Op. State"] = df["Op. State"].ffill().astype(str).str.strip()
+                                    ok_status_list = df.apply(
+                                    lambda x: "OK" if x['Adm State'] == "1 (UNLOCKED)" and x['Op. State'] == "1 (ENABLED)" else "NOT OK",
+                                    axis=1
+                                    ).tolist()
+                                    print(ok_status_list)
+                                    template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                                    template_df.at[idx, 'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                                    template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                        else:
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
                   elif sheet_name == "FeatureState_CXC4011958":
                         df = xls.parse(sheet_name).copy()
                         # print(df)
-                        df.columns = df.columns.astype(str).str.strip()
-                        # print(df.columns)
-                        df["MO"] = df["MO"].astype(str).str.strip()
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        expected = {
-                        "featureState": "1 (ACTIVATED)",
-                        "licenseState": "1 (ENABLED)",
-                        "serviceState": "1 (OPERABLE)",
-                        }
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['MO'] in expected and x['Attribute'] == expected[x['MO']] else "NOT OK" if x['MO'] in expected else None,
-                        axis=1
-                        ).dropna().tolist()
-                        print(ok_status_list)
-                        template_df.at[idx,'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx,'Remark '] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx,'Checkpoint'] = str(sheet_name)
-
-
-                  elif sheet_name == "FeatureState_CXC4011808":
-                        df = xls.parse(sheet_name).copy()
-                        df.columns = df.columns.astype(str).str.strip()
-                        df["MO"] = df["MO"].astype(str).str.strip()
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        expected = {
-                        "featureState": "1 (ACTIVATED)",
-                        "licenseState": "1 (ENABLED)",
-                        "serviceState": "1 (OPERABLE)",
-                        }
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['MO'] in expected and x['Attribute'] == expected[x['MO']] else "NOT OK" if x['MO'] in expected else None,
-                        axis=1
-                        ).dropna().tolist()
-
-                        print(ok_status_list)
-                        template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx, 'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx, 'Checkpoint'] = str(sheet_name)
-
-
-                  elif sheet_name in ["FeatureState_CXC4011808", "FeatureState_CXC4011803"]:
-                        df = xls.parse(sheet_name).copy()
-                        df.columns = df.columns.astype(str).str.strip()
-                        print(df.columns.tolist())
-                        required_cols = {"MO", "Attribute"}
-                        has_required_cols = required_cols.issubset(df.columns)
-                        if not df.empty and has_required_cols:
+                        if required_columns_present(df, ["MO", "Attribute","Node_ID"]):
+                              df.columns = df.columns.astype(str).str.strip()
+                              # print(df.columns)
                               df["MO"] = df["MO"].astype(str).str.strip()
                               df["Attribute"] = df["Attribute"].astype(str).str.strip()
                               expected = {
-                                    "featureState": "1 (ACTIVATED)",
-                                    "licenseState": "1 (ENABLED)",
-                                    "serviceState": "1 (OPERABLE)",
+                              "featureState": "1 (ACTIVATED)",
+                              "licenseState": "1 (ENABLED)",
+                              "serviceState": "1 (OPERABLE)",
                               }
                               ok_status_list = df.apply(
-                                    lambda x: "OK" if x['MO'] in expected and x['Attribute'] == expected[x['MO']] else "NOT OK" if x['MO'] in expected else None,
-                                    axis=1
+                              lambda x: "OK" if x['MO'] in expected and x['Attribute'] == expected[x['MO']] else "NOT OK" if x['MO'] in expected else None,
+                              axis=1
                               ).dropna().tolist()
-                              print(f"OK Status List: {ok_status_list}")
-                              template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              print(ok_status_list)
+                              template_df.at[idx,'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx,'Remark '] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              template_df.at[idx,'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                        
+                  elif sheet_name == "FeatureState_CXC4011808":
+                        df = xls.parse(sheet_name).copy()
+                        if required_columns_present(df, [ "MO","Attribute", "Node_ID"]):
+                              df.columns = df.columns.astype(str).str.strip()
+                              df["MO"] = df["MO"].astype(str).str.strip()
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              expected = {
+                              "featureState": "1 (ACTIVATED)",
+                              "licenseState": "1 (ENABLED)",
+                              "serviceState": "1 (OPERABLE)",
+                              }
+                              ok_status_list = df.apply(
+                              lambda x: "OK" if x['MO'] in expected and x['Attribute'] == expected[x['MO']] else "NOT OK" if x['MO'] in expected else None,
+                              axis=1
+                              ).dropna().tolist()
+
+                              print(ok_status_list)
+                              template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0] 
                               template_df.at[idx, 'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
                               template_df.at[idx, 'Checkpoint'] = str(sheet_name)
                         else:
+                              # Sheet not found
                               # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
-                              template_df.at[idx, 'Remark '] = 'OK'
-                              template_df.at[idx, 'Checkpoint'] = sheet_name
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+
+                  elif sheet_name in ["FeatureState_CXC4011803", "FeatureState_CXC4011803"]:
+                        df = xls.parse(sheet_name).copy()
+                        if required_columns_present(df, ["MO","Attribute", "Node_ID"]):
+                              df.columns = df.columns.astype(str).str.strip()
+                              print(df.columns.tolist())
+                              required_cols = {"MO", "Attribute"}
+                              has_required_cols = required_cols.issubset(df.columns)
+                              if not df.empty and has_required_cols:
+                                    df["MO"] = df["MO"].astype(str).str.strip()
+                                    df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                                    expected = {
+                                          "featureState": "1 (ACTIVATED)",
+                                          "licenseState": "1 (ENABLED)",
+                                          "serviceState": "1 (OPERABLE)",
+                                    }
+                                    ok_status_list = df.apply(
+                                          lambda x: "OK" if x['MO'] in expected and x['Attribute'] == expected[x['MO']] else "NOT OK" if x['MO'] in expected else None,
+                                          axis=1
+                                    ).dropna().tolist()
+                                    print(f"OK Status List: {ok_status_list}")
+                                    template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0] 
+                                    template_df.at[idx, 'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                                    template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                              else:
+                                    # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                                    template_df.at[idx, 'Remark '] = 'OK'
+                                    template_df.at[idx, 'Checkpoint'] = sheet_name
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
 
 
                   elif sheet_name == "FeatureState_CXC4011983":
                         df = xls.parse(sheet_name).copy()
-                        df.columns = df.columns.astype(str).str.strip()
-                        df["MO"] = df["MO"].astype(str).str.strip()
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        expected = {
-                        "featureState": "1 (ACTIVATED)",
-                        "licenseState": "1 (ENABLED)",
-                        "serviceState": "1 (OPERABLE)",
-                        }
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['MO'] in expected and x['Attribute'] == expected[x['MO']] else "NOT OK" if x['MO'] in expected else None,
-                        axis=1
-                        ).dropna().tolist()
-                        print(ok_status_list)
-                        template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx, 'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx, 'Checkpoint'] = str(sheet_name)
-
+                        if required_columns_present(df, ["MO", "Attribute", "Node_ID"]):
+                              df.columns = df.columns.astype(str).str.strip()
+                              df["MO"] = df["MO"].astype(str).str.strip()
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              expected = {
+                              "featureState": "1 (ACTIVATED)",
+                              "licenseState": "1 (ENABLED)",
+                              "serviceState": "1 (OPERABLE)",
+                              }
+                              ok_status_list = df.apply(
+                              lambda x: "OK" if x['MO'] in expected and x['Attribute'] == expected[x['MO']] else "NOT OK" if x['MO'] in expected else None,
+                              axis=1
+                              ).dropna().tolist()
+                              print(ok_status_list)
+                              template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0] 
+                              template_df.at[idx, 'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                        
 
                   elif sheet_name == "FeatureState_CXC4011378":
                         df = xls.parse(sheet_name).copy()
-                        df.columns = df.columns.astype(str).str.strip()
-                        df["MO"] = df["MO"].astype(str).str.strip()
-                        df["Attribute"] = df["Attribute"].astype(str).str.strip()
-                        expected = {
-                        "featureState": "1 (ACTIVATED)",
-                        "licenseState": "1 (ENABLED)",
-                        "serviceState": "1 (OPERABLE)",
-                        }
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['MO'] in expected and x['Attribute'] == expected[x['MO']] else "NOT OK" if x['MO'] in expected else None,
-                        axis=1
-                        ).dropna().tolist()
-                        print(ok_status_list)
-                        template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx, 'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                        if required_columns_present(df, ["MO","Attribute", "Node_ID"]):
+                              df.columns = df.columns.astype(str).str.strip()
+                              df["MO"] = df["MO"].astype(str).str.strip()
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              expected = {
+                              "featureState": "1 (ACTIVATED)",
+                              "licenseState": "1 (ENABLED)",
+                              "serviceState": "1 (OPERABLE)",
+                              }
+                              ok_status_list = df.apply(
+                              lambda x: "OK" if x['MO'] in expected and x['Attribute'] == expected[x['MO']] else "NOT OK" if x['MO'] in expected else None,
+                              axis=1
+                              ).dropna().tolist()
+                              print(ok_status_list)
+                              template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0] 
+                              template_df.at[idx, 'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              template_df.at[idx, 'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+
 
                   elif sheet_name == "Stz":
                         df = xls.parse(sheet_name).copy()
-                        # TAC Check
-                        df['tac'] = df['tac'].astype(str).str.strip()
-                        tac_status = "OK" if df['tac'].nunique() == 1 else "NOT OK"
-                        template_df.loc[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.loc[idx, 'Remark '] = tac_status
-                        template_df.loc[idx, 'Checkpoint'] = f"{sheet_name}_tac"
-                        # ARFCNDL Check
-                        df['arfcnDL'] = df['arfcnDL'].astype(str).str.strip()
-                        df['Tech'] = df['LTECell'].str.extract(r'(F\d+|T\d+)', expand=False)
-                        ok_status_dict = df.groupby('Tech').apply(
-                        lambda x: "OK" if x['arfcnDL'].nunique() == 1 else "NOT OK"
-                        ).to_dict()
 
-                        for tech, status in ok_status_dict.items():
-                              print(f"Tech: {tech}, Status: {status}")
-                              arfcn_status = "OK" if all(status == 'OK' for status in ok_status_dict.values()) else "NOT OK"
-                              print(f"ARFCNDL Status: {arfcn_status}")
-                              template_df.loc[idx+1, 'Site_ID'] = df['Node_ID'].unique()[0]
-                              template_df.loc[idx+1, 'Remark '] = arfcn_status
-                              template_df.loc[idx+1 , 'Checkpoint'] = f"{sheet_name}_arfcnDL"
+                        if required_columns_present(df, ["tac", "arfcnDL", "Node_ID"]):
+                              # Clean up fields
+                              df["tac"] = df["tac"].astype(str).str.strip()
+                              df["arfcnDL"] = df["arfcnDL"].astype(str).str.strip()
 
+                              site_id = df["Node_ID"].unique()[0] if not df["Node_ID"].empty else "NA"
+
+                              # TAC Check
+                              tac_status = "OK" if df["tac"].nunique() == 1 else "NOT OK"
+                              template_df.loc[idx, "Site_ID"] = site_id
+                              template_df.loc[idx, "Remark "] = tac_status
+                              template_df.loc[idx, "Checkpoint"] = f"{sheet_name}_tac"
+
+                              # ARFCNDL Check
+                              if "LTECell" in df.columns:
+                                    df["Tech"] = df["LTECell"].str.extract(r"(F\d+|T\d+)", expand=False)
+
+                                    # Group by Tech and check unique arfcnDL
+                                    ok_status_dict = df.groupby("Tech").apply(
+                                    lambda x: "OK" if x["arfcnDL"].nunique() == 1 else "NOT OK"
+                                    ).to_dict()
+
+                                    arfcn_status = "OK" if all(status == "OK" for status in ok_status_dict.values()) else "NOT OK"
+
+                                    template_df.loc[idx + 1, "Site_ID"] = site_id
+                                    template_df.loc[idx + 1, "Remark "] = arfcn_status
+                                    template_df.loc[idx + 1, "Checkpoint"] = f"{sheet_name}_arfcnDL"              
+                        else:
+                              # Required columns are missing
+                              # template_df.loc[idx, "Site_ID"] = "NA"
+                              template_df.loc[idx, "Remark "] = 'Missing'
+                              template_df.loc[idx, "Checkpoint"] = f"{sheet_name}_tac"
+                              # template_df.loc[idx + 1, "Site_ID"] = site_id
+                              template_df.loc[idx + 1, "Remark "] = 'Missing'
+                              template_df.loc[idx + 1, "Checkpoint"] = f"{sheet_name}_arfcnDL"
+
+
+                  # elif sheet_name == "Stz":
+                  #       df = xls.parse(sheet_name).copy() 
+                  #       if required_columns_present(df, ["tac","arfcnDL","Node_ID"]):
+                  #       # TAC Check
+                  #             df['tac'] = df['tac'].astype(str).str.strip()
+                  #             tac_status = "OK" if df['tac'].nunique() == 1 else "NOT OK"
+                  #             template_df.loc[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                  #             template_df.loc[idx, 'Remark '] = tac_status
+                  #             template_df.loc[idx, 'Checkpoint'] = f"{sheet_name}_tac"
+                  #             # ARFCNDL Check
+                  #             df['arfcnDL'] = df['arfcnDL'].astype(str).str.strip()
+                  #             df['Tech'] = df['LTECell'].str.extract(r'(F\d+|T\d+)', expand=False)
+                  #             ok_status_dict = df.groupby('Tech').apply(
+                  #             lambda x: "OK" if x['arfcnDL'].nunique() == 1 else "NOT OK"
+                  #             ).to_dict()
+
+                  #             for tech, status in ok_status_dict.items():
+                  #                   print(f"Tech: {tech}, Status: {status}")
+                  #                   arfcn_status = "OK" if all(status == 'OK' for status in ok_status_dict.values()) else "NOT OK"
+                  #                   print(f"ARFCNDL Status: {arfcn_status}")
+                  #                   template_df.loc[idx+1, 'Site_ID'] = df['Node_ID'].unique()[0]
+                  #                   template_df.loc[idx+1, 'Remark '] = arfcn_status
+                  #                   template_df.loc[idx+1 , 'Checkpoint'] = f"{sheet_name}_arfcnDL"
+                  #       else:
+                  #             # Sheet not found
+                  #             # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                  #             template_df.at[idx + 1, 'Remark '] = 'Missing'
+                  #             template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                  
                   elif sheet_name == "St alarmport":
                         df = xls.parse(sheet_name).copy()
-                        df["Adm State"] = df["Adm State"].astype(str).str.strip()
-                        df["Op. State"] = df["Op. State"].astype(str).str.strip()
-                        # Compute OK/NOT OK status
-                        ok_status_list = df.apply(
-                        lambda x: "OK" if x['Adm State'] == "1 (UNLOCKED)" and x['Op. State'] == "1 (ENABLED)" else "NOT OK",
-                        axis=1
-                        ).tolist()
-                        # print(ok_status_list)
-                        # Assign result to template
-                        template_df.at[idx +1,'Site_ID'] = df['Node_ID'].unique()[0]
-                        template_df.at[idx +1,'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
-                        template_df.at[idx +1,'Checkpoint'] = str(sheet_name)
+                        if required_columns_present(df, ["Adm State", "Op. State", "Node_ID"]):
+                              df["Adm State"] = df["Adm State"].astype(str).str.strip()
+                              df["Op. State"] = df["Op. State"].astype(str).str.strip()
+                              ok_status_list = df.apply(
+                                    lambda x: "OK" if x['Adm State'] == "1 (UNLOCKED)" and x['Op. State'] == "1 (ENABLED)" else "NOT OK",
+                                    axis=1
+                              ).tolist()
+                              # Assign result to template
+                              template_df.at[idx + 1, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'OK' if all(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                        else:
+                              # Sheet not found
+                              # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
+                              template_df.at[idx + 1, 'Remark '] = 'Missing'
+                              template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                  print(template_df,"template_df")
 
             ####################################### getting folders for final output #########################################
             output_path = os.path.join(base_media_url, "OUTPUT")
@@ -981,7 +1146,7 @@ def soft_at_checkpoint(request):
             output_path = os.path.join(output_path, output_filename)
 
             with pd.ExcelWriter(output_path, engine="xlsxwriter") as writer:
-
+                  
                   template_df.to_excel(writer, index=False)
                   format_excel_sheet(writer, "Sheet1", template_df)
 
@@ -998,14 +1163,15 @@ def soft_at_checkpoint(request):
                               arcname = os.path.relpath(file_path, base_media_url)
                               zipf.write(file_path, arcname)
 
+            download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
             print(f"Output file created: {output_path}")
             print(f"Zip file created: {zip_filename}")
       ###########################################################################################################################
       return Response(
             {
-            "status": "OK",
+            "status": True,
             "message": "Files processed successfully",
-            "download_url": zip_filename,
+            "download_url": download_link,
             },
             status=HTTP_200_OK,
       )
@@ -1016,30 +1182,3 @@ def soft_at_checkpoint(request):
       #             {"status": "ERROR", "message": str(e)}, status=HTTP_400_BAD_REQUEST
       #       )
 
-                  #       output_filename = f"_output.xlsx"
-                  #       output_path = os.path.join(temperory_path, output_filename)
-
-                  #       with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
-                  #             template_df.to_excel(writer, index=False)
-
-                  #             format_excel_sheet(writer, "Sheet1", template_df)
-                  #       print(f"Output file created: {output_path}")
-
-                  # template_df.tail(15)
-
-
-
-
-      #       with pd.ExcelWriter(full_file_path, engine="xlsxwriter") as writer:
-      #             for sheet_name, df in sheets.items():
-      #                   df.to_excel(writer, sheet_name=sheet_name, index=False)
-      #                   format_excel_sheet(writer, sheet_name, df)
-      #             return Response(
-      #             { "message": "Successfully uploaded..."}, status=HTTP_200_OK
-      #             )
-
-      # except Exception as e:
-      #       return Response({"error": str(e)}, status=HTTP_400_BAD_REQUEST)
-
-
-      # return Response({"status": True, "message": "Successfully uploaded..."}, status=HTTP_200_OK)
