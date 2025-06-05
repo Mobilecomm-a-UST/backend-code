@@ -223,6 +223,8 @@ def generate_integration_script(request):
         lte_df["earfcnul"] = lte_df["earfcnul"].astype("Int64")
         unique_nodes = lte_df["eNodeBName"].dropna().unique()
 
+        site_id_name = lte_df["eUtranCellFDDId"].apply(lambda x: x.split("_")[4][:-1]).unique()[0]
+
         for node_name in unique_nodes:
             current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
             node_dir = create_script_paths(base_path_url , node_name)['lte']
@@ -570,7 +572,7 @@ def generate_integration_script(request):
                         nRPCI=row["nRPCI"],
                         nRTAC=row["nRTAC"],
                         ssbFrequency=row["ssbFrequency"],
-                        rachRootSequence = row['rachRootSequence']  ############################################################################ Added rachRootSequence']
+                        rachRootSequence = row['rachRootSequence']  ############################################################################ Added rachRootSequence ################################################
                     )
 
                     gnbcucp_fuction_element += TN_GNBCUCPFUNCTION_ELEMENT.format(
@@ -855,7 +857,7 @@ def generate_integration_script(request):
                     print(oam_ip)
                     ip_type = ip_type(oam_ip)
 
-                    #if ip_type in ["IPv4", "IPv6"]:git 
+                    ############################################################ if ip_type in ["IPv4", "IPv6"]:git #####################################################################
                     print("inside ip tracker.....")
                     print(ip_type)
                     bbu_script_mapping_ipv4 = {
@@ -1003,24 +1005,23 @@ def generate_integration_script(request):
                         )
                     )
 
-            #####################################################################################################################################################
-
-            # Add RJ specific script generation logic here if needed
+        #####################################################################################################################################################
+        # Add RJ specific script generation logic here if needed
         ########################################################## MAKING THE ZIP FILE #############################################################
         folder_path = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
         
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        zip_filename = f"LTE_INTEGRATION_CONFIG_FILES_{circle}_Integration_Scripts_{timestamp}.zip"
-        zip_output_path = os.path.join(MEDIA_ROOT, zip_filename)  # NOT inside folder_path
+        zip_filename = f"{site_id_name}_LTE_Integration_Scripts_{timestamp}.zip"
+        zip_output_path = os.path.join(MEDIA_ROOT, zip_filename)  
 
         ################################################ Clean up old zips (optional) ######################################################################
-        for file in os.listdir(MEDIA_ROOT):
-            if file.endswith(".zip"):
-                os.remove(os.path.join(MEDIA_ROOT, file))
+#        for file in os.listdir(MEDIA_ROOT):
+#            if file.endswith(".zip"):
+#               os.remove(os.path.join(MEDIA_ROOT, file))
 
 
 
-        # Create ZIP archive
+        ##################################################################### Create ZIP archive #############################################################
         zip_folder(folder_path, zip_output_path)
 
         ##################################################### Create download link relative to MEDIA_URL ####################################################
