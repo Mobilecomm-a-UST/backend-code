@@ -788,10 +788,11 @@ def generate_integration_script(request):
                      create_script_paths(base_path_url, node_name)['lte'], f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
                 )
 
-                
+                site_basic = site_basic_df[site_basic_df['eNodeBName'] == node_name].copy()
+                tnPortId = site_basic['tnPortId'].values[0]
                 mme_type = NOKIA_MME_SCRIPT if temp_lte_df['MME'].unique()[0].startswith("Nokia") else CISCO_MME_SCRIPT
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
-                     file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid)+mme_type + "\n")
+                     file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, tnPortId = tnPortId,eNBId = enbid)+mme_type + "\n")
 
             #--------------------------------------------------------------------------------------- 5G Cell Scripts ----------------------------------------------------------------#
             # Not Yet Implemented RJ Circle-specific 5G Script Generation Logic
