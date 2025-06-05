@@ -3366,7 +3366,7 @@ userLabel Traffic
 end
 
 cr Transport=1,Router=LTEUP,TwampResponder=1
-Transport=1,Router=LTEUP,InterfaceIPv4=TN_E_UP,AddressIPv4=TN_E_UP
+Transport=1,Router=LTEUP,InterfaceIPv4={tnPortId}_UP,AddressIPv4={tnPortId}_UP
 4001
 
 crn Transport=1,SctpProfile=1
@@ -3401,7 +3401,7 @@ userLabel SCTP
 end
 
 crn Transport=1,SctpEndpoint=1
-localIpAddress       Transport=1,Router=LTECP,InterfaceIPv4=TN_E_CP,AddressIPv4=TN_E_CP
+localIpAddress       Transport=1,Router=LTECP,InterfaceIPv4={tnPortId}_CP,AddressIPv4={tnPortId}_CP
 portNumber 36422
 sctpProfile          Transport=1,SctpProfile=1
 end
@@ -3413,7 +3413,7 @@ eNodeBPlmnId mcc=404,mnc=70,mncLength=2
 eNBId {eNBId}
 sctpRef              Transport=1,SctpEndpoint=1
 tRelocOverall 20
-upIpAddressRef       Transport=1,Router=LTEUP,InterfaceIPv4=TN_E_UP,AddressIPv4=TN_E_UP
+upIpAddressRef       Transport=1,Router=LTEUP,InterfaceIPv4={tnPortId}_UP,AddressIPv4={tnPortId}_UP
 end
 
 
@@ -3462,10 +3462,12 @@ deb Transport=1,Synchronization=1,RadioEquipmentClock=1,NodeGroupSyncMember=1
 ldeb RadioEquipmentClockReference=1
 
 
+
 """
 
 ###################################### CISCO MME SCRIPT ####################################################################################################
 CISCO_MME_SCRIPT = """
+########################################################### CSICO MME ######################################################################################
 gs+
 
 crn ENodeBFunction=1,TermPointToMme=MME_RAJ_2                                                                                                     
