@@ -16,7 +16,7 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+#BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # BASE_DIR = Path('D:\MobileComm_website\Mcom Backend\mcom_website').resolve()
 
 # Quick-start development settings - unsuitable for production
@@ -30,9 +30,8 @@ DEBUG = True
 # settings.py
 
 
-# ALLOWED_HOSTS = ["192.168.0.29","127.0.0.1","192.168.0.67","192.168.0.21","192.168.0.31"]
-# ALLOWED_HOSTS = ['npn-technologies.com', 'sharmasteel.in']
 ALLOWED_HOSTS = ["*"]
+#ALLOWED_HOSTS = ['122.176.141.197', 'localhost', '127.0.0.1', '0.0.0.0']
 
 
 # Application definition
@@ -107,6 +106,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -119,8 +119,13 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://122.176.141.197:3000",  # If React is hosted here
+    # Add other frontend origins as needed
+]
+CORS_ALLOW_ALL_ORIGINS = True
 # CORS_ORIGIN_ALLOW_ALL = False
 # CORS_ORIGIN_WHITELIST = (
 #   'http://192.168.0.55:3000',
@@ -159,6 +164,7 @@ DATABASES = {
         "USER": "postgres",
         "PASSWORD": "mcomnpn",
         "HOST": "localhost",
+        'PORT' : '5432',  # Default PostgreSQL port
     }
 }
 # DATABASES = {
@@ -211,11 +217,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = "static/"
-# STATIC_URL = '/static/'
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
+    os.path.join(BASE_DIR, 'static'),
 ]
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")

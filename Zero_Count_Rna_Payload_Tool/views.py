@@ -1128,9 +1128,9 @@ def kpi_trend_4g_api(request):
     """
 
     # objs = get_data_from_table(query)
-
+    print("start app:- ", datetime.now())
     objs = get_data_from_table(query)
-
+    print("end app:- ", datetime.now())
     print(objs)
 
     # objs.drop(columns=["id"], inplace=True)
@@ -1290,9 +1290,10 @@ def kpi_trend_4g_api(request):
     result_df = pd.concat(dfs1, axis=1)
 
     result_df.fillna(value=0, inplace=True)
-    print("index as you want.......", result_df.index)
+    #print("index as you want.......", result_df.index)
 
     ######################################## adding new database values ######################################################
+    """
     print(date_list[-1].date())
     trend_obj = Daily_4G_KPI_REPORT.objects.filter(Date=date_list[-1].date())
     if not trend_obj.exists():
@@ -1343,8 +1344,9 @@ def kpi_trend_4g_api(request):
 
     else:
         print("data already exist")
-    #################################################################### end the new Code....... #################################################
 
+    #################################################################### end the new Code....... #################################################
+    """
     download_df = result_df.copy()
     download_link = get_LTE_download_link(download_df)
 
