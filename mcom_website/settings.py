@@ -102,6 +102,7 @@ INSTALLED_APPS = [
     "LKF_StatusApp",
     "gpl_audit_tool",
     "Soft_AT_Checklist_Ericsson",
+    "Soft_AT_Checklist_Nokia",
     "LTE_Integration_Scripting_Automtion",
 ]
 
