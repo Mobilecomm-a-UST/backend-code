@@ -587,11 +587,11 @@ def date_range_wise_integration_data(request):
 
     async def get_data_async():
         activity_type = [
-                '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC',
-                'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION',
-                'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE'
+            '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC',
+            'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION',
+            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE'
         ]
-        activity_columns = [f'"D1_{a.replace(' ', '_').replace('-', '_')}" INTEGER' for a in activity_type]
+        activity_columns = [f'"D1_{a.replace(" ", "_").replace("-", "_")}" INTEGER' for a in activity_type]
         print(activity_columns)
         results, columns = await sync_to_async(fetch_crosstab_data)(activity_type, activity_columns)
         rows_as_dict = [dict(zip(columns, row)) for row in results]
@@ -702,7 +702,7 @@ def monthwise_integration_data(request):
 
     def build_crosstab(month, year, index):
         label = f"M{index}"
-        columns = ",".join([f'"{label}_{a.replace(" ", "_").replace('-', '_')}" INTEGER' for a in activity_list])
+        columns = ",".join([f'"{label}_{a.replace(" ", "_").replace("-", "_")}" INTEGER' for a in activity_list])
         array_activities = ",".join([f"'{a}'" for a in activity_list])
 
         return f"""
