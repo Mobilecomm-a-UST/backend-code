@@ -414,7 +414,7 @@ def datewise_integration_data(request):
         activity_type = [
             '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC',
             'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION',
-            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE'
+            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP'
         ]
     
         activity_columns = [a.replace(' ', '_').replace('-', '_') for a in activity_type]
@@ -589,7 +589,7 @@ def date_range_wise_integration_data(request):
         activity_type = [
             '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC',
             'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION',
-            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE'
+            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP'
         ]
         activity_columns = [f'"D1_{a.replace(" ", "_").replace("-", "_")}" INTEGER' for a in activity_type]
         print(activity_columns)
@@ -694,11 +694,11 @@ def monthwise_integration_data(request):
     for i in range(2, 7):
         month_year_list.append((date_dict[f"Month{i}"], date_dict[f"Year{i}"], i))
 
-    activity_list = [
-        '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT',
-        'IBS', 'IDSC', 'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION',
-        'RELOCATION', 'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE'
-    ]
+        activity_list = [
+            '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC',
+            'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION',
+            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP'
+        ]
 
     def build_crosstab(month, year, index):
         label = f"M{index}"
