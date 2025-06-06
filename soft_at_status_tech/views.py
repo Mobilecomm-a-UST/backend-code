@@ -1441,15 +1441,16 @@ def extract_data_from_log(request):
                         file_path = os.path.join(root, file)
                         arcname = os.path.relpath(file_path, base_media_url)
                         zipf.write(file_path, arcname)
-            
+        
+        download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
         print(f"Output file created: {output_path}")
         print(f"Zip file created: {zip_filename}")
         ###########################################################################################################################
         return Response(
             {
-                "status": "OK",
+                "status": True,
                 "message": "Files processed successfully",
-                "download_url": zip_filename,
+                "download_url": download_link,
             },
             status=HTTP_200_OK,
         )
