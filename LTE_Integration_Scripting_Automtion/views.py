@@ -9,6 +9,11 @@ import shutil
 import socket
 import os
 import json
+from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
+import pandas as pd
+import stat
+from django.conf import settings
+import zipfile
 from LTE_Integration_Scripting_Automtion.circles.KK.KK_INTEGRATION_SCRIPT import (
     kk_GPL_LMS_script,
     kk_GPS_MMS_script,
@@ -75,11 +80,7 @@ from LTE_Integration_Scripting_Automtion.circles.RJ.RJ_COMISSION_SCRIPT import (
     SiteEquipment_R503
 
 )
-from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
-import pandas as pd
-import stat
-from django.conf import settings
-import zipfile
+
 
 ############################################################## END IMPORT STATEMENTS ############################################################################################
 
