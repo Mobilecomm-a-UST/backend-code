@@ -171,6 +171,62 @@ def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
             
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+####################################################################### MAKING THE COLUMNS VALIDATER #####################################################
+
+def column_validater(Integration_rf_data: pd.ExcelFile, template_df: pd.ExcelFile) -> None:
+    """
+    Validates that each sheet in Integration_rf_data contains all columns from the corresponding sheet in template_df.
+    Shows only missing columns in the error message (columns expected but not found).
+    Raises ValueError if any expected column is missing.
+    """
+    integration_sheet_names = Integration_rf_data.sheet_names
+    template_sheet_names = template_df.sheet_names
+
+    ############################################# Check for missing sheets ######################################################
+    missing_sheets = set(integration_sheet_names) - set(template_sheet_names)
+    if missing_sheets:
+        raise ValueError(f"Invalid template sheet name(s): {', '.join(missing_sheets)}")
+
+    def normalize_columns(columns):
+        return [str(col).strip().lower() for col in columns]
+
+    columns_status = {}
+    for sheet in integration_sheet_names:
+        expected_cols = normalize_columns(template_df.parse(sheet).columns)
+        integration_cols = normalize_columns(Integration_rf_data.parse(sheet).columns)
+
+        ##################################################### Identify missing columns ######################################################
+        missing_columns = list(set(expected_cols) - set(integration_cols))
+        found_columns = list(set(integration_cols) - set(expected_cols))
+
+        if missing_columns:
+            columns_status[sheet] = {
+                "missing": missing_columns,
+                "found": found_columns
+            }
+
+    if columns_status:
+        error_messages = []
+        for sheet, status in columns_status.items():
+            error_messages.append({
+                "sheet": sheet,
+                "missing_columns": status["missing"],
+                "found_columns": status["found"],  # shows all expected columns
+            })
+        raise ValueError(error_messages)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @api_view(["GET", "POST"])
 def generate_integration_script(request):
@@ -195,18 +251,28 @@ def generate_integration_script(request):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
         try:
             integration_file = pd.ExcelFile(integration_input_file)
             lte_df = integration_file.parse("LTE-CELL")
             rru_hw_df = integration_file.parse("Radio_HW")
             site_basic_df = integration_file.parse("Site_Basic")
             nr_cell_df = integration_file.parse("NR-CELL")
+
+            template_file = pd.ExcelFile(os.path.join(MEDIA_ROOT, "project_templates", "LTE_Integration_file_tmplate", "LTE_Integration_scriptV1.0_file.xlsx"))
+            column_validater(integration_file, template_file)
+
         except Exception as e:
             return Response(
-                {"status": "ERROR", "message": f"Failed to parse Excel file: {str(e)}"},
+                {"status": "ERROR", "message": f"{str(e)}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+    
+        except ValueError as ve:
+            return Response(
+                {"status": "ERROR", "message": str(ve)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 
         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
         #-        -                    -          - ----------------------- defining the output path -------------------- -           -                 -          
@@ -330,7 +396,7 @@ def generate_integration_script(request):
                             cellLocalId=row["cellLocalId"],
                             nRPCI=row["nRPCI"],
                             nRTAC=row["nRTAC"],
-                            rachRootSequence = row["rachRootSequence"],  ############################################################################ Added rachRootSequence
+                            rachRootSequence = int(row["rachRootSequence"]),  ############################################################################ Added rachRootSequence
                             ssbFrequency = row['ssbFrequency']
 
                         )
@@ -1031,7 +1097,7 @@ def generate_integration_script(request):
         
         ############################################################################################################################################
         return Response(
-            {"status": "OK", "message": "Integration scripts generated successfully.", 'download_link': download_link},
+            {"status": True, "message": "Integration scripts generated successfully.", 'download_link': download_link},
             status=status.HTTP_200_OK,
         )
 
