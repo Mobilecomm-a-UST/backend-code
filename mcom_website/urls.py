@@ -80,6 +80,7 @@ urlpatterns = [
     path("dpr/sdir_status/", include("Daily_Alarm_Status.urls")),
     path("LKF/", include("LKF_StatusApp.urls")),
     path("gpl_audit/", include("gpl_audit_tool.urls")),
+    path('soft_at_status/', include('soft_at_status_tech.urls')),
     path("Soft_AT_Checklist_Ericsson/", include("Soft_AT_Checklist_Ericsson.urls")),
     path("LTE/", include("LTE_Integration_Scripting_Automtion.urls")),
 ]
