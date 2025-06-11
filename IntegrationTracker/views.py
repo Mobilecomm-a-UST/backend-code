@@ -60,13 +60,13 @@ def generate_date_list(start_date):
 def get_excel_temp_link(request):
     #mcom123 temp id.
     # Path to the Excel file
-    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.7.xlsm')
+    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.8.xlsm')
 
     # Check if the file exists
     if os.path.exists(file_path):
         # Construct the URL to access the file
-        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.7.xlsm')              
-        return Response({'file_url': file_url,'template_version':'v1.7'}, status=status.HTTP_200_OK)
+        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.8.xlsm')              
+        return Response({'file_url': file_url,'template_version':'v1.8'}, status=status.HTTP_200_OK)
     else:
         # Return a 404 response if the file does not exist
         return Response({'error': 'Excel file not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -412,11 +412,9 @@ def datewise_integration_data(request):
  
     with connection.cursor() as cursor:
         activity_type = [
-            '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC',
-            'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION',
-            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP'
+            '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC','MACRO', 'ODSC', 'OPERATIONS', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP','OTHERS', 'RECTIFICATION', 'RELOCATION','RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 
         ]
-    
+        
         activity_columns = [a.replace(' ', '_').replace('-', '_') for a in activity_type]
         dates = [date1, date2, date3]
 
@@ -485,6 +483,7 @@ def datewise_integration_data(request):
     # print(jsonResult)
     data={"table_data":jsonResult,"latest_dates":[date1,date2,date3],"download_data":serializer.data}
     return Response(data)
+
 
 
 
@@ -583,13 +582,14 @@ def date_range_wise_integration_data(request):
             cursor.execute(query)
             results = cursor.fetchall()
             columns = [col[0] for col in cursor.description]
+            print(results, columns)
             return results, columns
 
     async def get_data_async():
         activity_type = [
             '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC',
-            'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION',
-            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP'
+            'MACRO', 'ODSC', 'OPERATIONS', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP','OTHERS', 'RECTIFICATION', 'RELOCATION',
+            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 
         ]
         activity_columns = [f'"D1_{a.replace(" ", "_").replace("-", "_")}" INTEGER' for a in activity_type]
         print(activity_columns)
@@ -696,8 +696,8 @@ def monthwise_integration_data(request):
 
         activity_list = [
             '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC',
-            'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION',
-            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP'
+            'MACRO', 'ODSC', 'OPERATIONS', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP','OTHERS', 'RECTIFICATION', 'RELOCATION',
+            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 
         ]
 
     def build_crosstab(month, year, index):
