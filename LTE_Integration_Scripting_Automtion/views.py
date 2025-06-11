@@ -35,7 +35,8 @@ from LTE_Integration_Scripting_Automtion.universal_SCRIPTS.UNIVERSAL_SCRIPTS imp
     RRU_4412_4418_4427_4471_4X4, 
     RRU_6626_6X6, RRU_8863_8X8, 
     RRU_5G_CREATION,
-    RBSSummary_script
+    RBSSummary_script,
+    AIR_5G_GENERATION_SCRIPT
 )
 from LTE_Integration_Scripting_Automtion.circles.TN.TN_INTEGRATION_SCRIPT import (
     TN_02_IPV6creationforanchor, 
@@ -560,6 +561,17 @@ def generate_integration_script(request):
                             RiPort_BB=row["RiPort_BB"],
                             RiPort_Radio=row["RiPort_Radio"],
                             sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
+                        )
+                    elif radio_type.startswith("AIR"):
+                        site_equipment_text += AIR_5G_GENERATION_SCRIPT.format(
+                            Radio_UnitId=row["Radio_UnitId"],
+                            fieldReplaceableUnitId=site_basic_df_N[
+                                "fieldReplaceableUnitId"
+                            ].values[0],
+                            RiPort_BB=row["RiPort_BB"],
+                            RiPort_Radio=row["RiPort_Radio"],
+                            sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
+                            riLinkId = row['riLinkId'],  # [ 'Added riLinkId for AIR 5G generation script' ]
                         )
 
                 with open(rru_hw_path, "a", encoding='utf-8') as file:
