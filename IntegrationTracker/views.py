@@ -60,13 +60,13 @@ def generate_date_list(start_date):
 def get_excel_temp_link(request):
     #mcom123 temp id.
     # Path to the Excel file
-    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.8.xlsm')
+    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.8.1.xlsm')
 
     # Check if the file exists
     if os.path.exists(file_path):
         # Construct the URL to access the file
-        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.8.xlsm')              
-        return Response({'file_url': file_url,'template_version':'v1.8'}, status=status.HTTP_200_OK)
+        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.8.1.xlsm')              
+        return Response({'file_url': file_url,'template_version':'v1.8.1'}, status=status.HTTP_200_OK)
     else:
         # Return a 404 response if the file does not exist
         return Response({'error': 'Excel file not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -112,7 +112,7 @@ def upload_excel(request):
     file = request.data['file']
     value_in_cell = read_excel_cell(file.read(), sheet_name='Sheet2', cell='BE37')
     print("cell_value:",value_in_cell)
-    if value_in_cell == "mcom_v1.7":
+    if value_in_cell == "mcom_v1.8":
             try:
                 df = pd.read_excel(file,sheet_name="Tracker",keep_default_na=False,skiprows=1)
             except Exception as e:
@@ -121,9 +121,9 @@ def upload_excel(request):
             df["Cell ID"] = df["Cell ID"].astype(str)
         
             allowed_values = {
-                'CIRCLE': ['AP', 'BIH', 'CHN', 'ROTN', 'DEL', 'HRY', 'JK', 'JRK', 'KOL', 'MAH', 'MP', 'MUM', 'ORI', 'PUN', 'RAJ', 'UPE', 'UPW', 'WB', 'KK','MAH'],
+                'CIRCLE': ['AP', 'BIH', 'CHN', 'ROTN', 'DEL', 'HRY', 'JK', 'JRK', 'KOL', 'MAH', 'MP', 'MUM', 'ORI', 'PUN', 'RAJ', 'UPE', 'UPW', 'WB', 'KK','MAH', 'HP', 'NESA'],
                  'OEM': ['SAMSUNG', 'NOKIA', 'ERICSSON','HUAWEI','ZTE'],
-                'Activity Name': ['ULS_HPSC', 'RELOCATION', 'MACRO', 'DE-GROW', 'RET', 'IBS', 'ODSC', 'IDSC', 'HT INCREMENT', 'FEMTO', 'OTHERS', 'UPGRADE','RECTIFICATION','5G SECTOR ADDITION','OPERATIONS','5G RELOCATION','TRAFFIC SHIFTING'],
+                'Activity Name': ['ULS_HPSC', 'RELOCATION', 'MACRO', 'DE-GROW', 'RET', 'IBS', 'ODSC', 'IDSC', 'HT INCREMENT', 'FEMTO', 'OTHERS', 'UPGRADE','RECTIFICATION','5G SECTOR ADDITION','OPERATIONS','5G RELOCATION','TRAFFIC SHIFTING', 'RRU UPGRADE', '5G RRU SWAP', '5G BW UPGRADE'],
                 'Activity Mode (SA/NSA)':['SA','NSA'],
                 'Technology (SIWA)': ['2G','FDD','TDD','5G'],
                 'Activity Type (SIWA)': ["FDD_SEC_ADDITION", "FDD_TWIN_BEAM", "FDD_UPGRADE", "L2100_UPGRADE", "L900_UPGRADE", "NEW_TOWER", "NEW_TOWER_ULS", "TDD_SEC_ADDITION", "TDD_TWIN_BEAM", "TDD_UPGRADE", "UPGRADE_SW_ONLY", "UPGRADE_ULS", "5G_SEC_ADDITION", "5G_UPGRADE","CPRI ADDITION","SFP CHANGE", "BW UPGRADATION", "BTS SWAP", "IP MODIFICATION", "HOT SWAP", "NOMENCLATURE CHANGE", "2G DELETION", "CARRIER ADDITION"],
