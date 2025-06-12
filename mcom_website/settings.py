@@ -101,6 +101,7 @@ INSTALLED_APPS = [
     "Daily_Alarm_Status",
     "LKF_StatusApp",
     "gpl_audit_tool",
+    "soft_at_status_tech",
     "Soft_AT_Checklist_Ericsson",
     "LTE_Integration_Scripting_Automtion",
 ]
@@ -159,7 +160,7 @@ WSGI_APPLICATION = "mcom_website.wsgi.application"
 
 
 DATABASES = {
-    'default': {
+'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'mobilecomm',
         'USER':'postgres',
