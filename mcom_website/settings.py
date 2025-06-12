@@ -157,16 +157,15 @@ WSGI_APPLICATION = "mcom_website.wsgi.application"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mobilecomm",
-        "USER": "postgres",
-        "PASSWORD": "mcomnpn",
-        "HOST": "localhost",
-        'PORT' : '5432',  # Default PostgreSQL port
-    }
-}
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mobilecomm',
+        'USER':'postgres',
+        'PASSWORD':'1234',
+        'HOST':'localhost'
+}}
 # DATABASES = {
 #    'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
