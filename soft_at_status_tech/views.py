@@ -991,61 +991,55 @@ def extract_data_from_log(request):
 
 
                 MO_names = []
+
                 if "get 0" in xls.sheet_names:
                     df_0 = xls.parse("get 0", header=None)
+
                     MO_name_0 = "/".join(
                         cell.split("=")[-1]
                         for cell in df_0.iloc[0]
                         if isinstance(cell, str) and "ManagedElement=" in cell
                     )
                     MO_names.append(MO_name_0)
-                    # MO_name_0 = df_0[df_0.iloc[:, 1] == "managedElementId"].iloc[0, 2]
                     print("MO Name 0:", MO_name_0)
-                    # template_df.loc[0, "MO Name"] = MO_name_0
+                    template_df.loc[0, "MO Name"] = MO_name_0
 
-                    
-                    template_df.loc[0, "SW Version"] = df_0[
-                        df_0.iloc[:, 1] == "swVersion"
-                    ].iloc[0, 2]
-
+                    # Fill in software version and physical site ID
+                    template_df.loc[0, "SW Version"] = df_0[df_0.iloc[:, 1] == "swVersion"].iloc[0, 2]
                     physical_site = df_0[df_0.iloc[:, 1] == "userLabel"].iloc[0, 2]
                     template_df.loc[0, "Physical Site Id"] = physical_site
-                    # print("Physical Site Id:", template_df.loc[0, 'Physical Site Id'])
 
-                if "get . gsmsec" in xls.sheet_names:
+                    # Check for GSMSEC data
+                    if "get . gsmsec" in xls.sheet_names:
+                        if template_df.loc[0, "Circle"] == "DL":
+                            df_gsmsec = xls.parse("get . gsmsec")
+                            sector_names = df_gsmsec[df_gsmsec["Attribute"] == "gsmSectorName"]["Value"]
 
-                    if template_df.loc[0, "Circle"] == "DL":
-                        df_gsmsec = xls.parse("get . gsmsec")
-                        sector_names = df_gsmsec[
-                            df_gsmsec["Attribute"] == "gsmSectorName"
-                        ]["Value"]
-                        prefixes = (
-                            sector_names.dropna()
-                            .str.extract(r"([A-Z]+\d+)")[0]
-                            .dropna()
-                            .unique()
-                        )
-                        MO_name_gsmsec = ",".join(prefixes)
-                        MO_names.append(MO_name_gsmsec)
+                            prefixes = (
+                                sector_names.dropna()
+                                .str.extract(r"([A-Z]+\d+)")[0]
+                                .dropna()
+                                .unique()
+                            )
 
-                        final_MO_name = " / ".join(filter(None, MO_names))
+                            MO_name_gsmsec = ",".join(prefixes)
+                            MO_names.append(MO_name_gsmsec)
 
-                        print("Final MO Name:", final_MO_name)
+                            final_MO_name = " / ".join(filter(None, MO_names))
+                            print("Final MO Name:", final_MO_name)
 
-                        template_df.loc[0, "MO Name"] = final_MO_name
+                            template_df.loc[0, "MO Name"] = final_MO_name
                 else:
-                        template_df.loc[0, "MO Name"] = MO_name_0
+                    template_df.loc[0, "MO Name"] = MO_name_0
+
+                
                         
                 if "get . fing" in xls.sheet_names :
                     df_fing = xls.parse("get . fing")
-                    # Extract fingerprint value
                     fing_value_series = df_fing[df_fing["Attribute"] == "fingerprint"]["Value"]
-                    print("Fingerprint Value Series:", fing_value_series)
                     if not fing_value_series.empty:
-                        fingerprint_mo = fing_value_series.iloc[0].strip()  # assuming one match
+                        fingerprint_mo = fing_value_series.iloc[0].strip() 
                         print("Fingerprint MO:", fingerprint_mo)
-
-                        # Match with MO_name_0 (or whatever is being used as the baseline)
                         if fingerprint_mo == MO_name_0:
                             template_df.loc[0, "Project Remarks"] = f" On-Aired-“4G GPL parameter as per the guidelines are ok”"
                         else:
@@ -1153,11 +1147,6 @@ def extract_data_from_log(request):
 
                 elif sheet_name == "invxgr":
                     df = xls.parse(sheet_name)
-                    # cprilength = df["LENGTH"].str.replace("m", "")
-
-                    # template_df.loc[0, "CPRI length as per Actual"] = "/".join(
-                    #     cprilength
-                    # )
                     cprilength = df['LENGTH'].dropna().astype(str).str.replace('m', '')
                     template_df.loc[0, 'CPRI length as per Actual'] = '/'.join(cprilength)
 
@@ -1209,87 +1198,74 @@ def extract_data_from_log(request):
                         ] = "NA"
 
                     print("Parent Cell Name (In Case Of Twin Beam):", template_df.loc[0, 'Parent Cell Name (In Case Of Twin Beam)'])
+
+                    
                 if "st ret" in xls.sheet_names and "get . sectorc" in xls.sheet_names:
+                    # Parse "st ret" sheet
                     df_st = xls.parse("st ret")
                     df_st['MO'] = df_st['MO'].astype(str)
                     df_st['AntennaUnitGroup'] = df_st['MO'].str.extract(r'AntennaUnitGroup=(\d+)')
                     valid_groups = df_st["AntennaUnitGroup"].dropna().unique()
 
+                    # Parse "get . sectorc" sheet
                     df_sec = xls.parse("get . sectorc")
                     df_sec["SectorCarrier"] = df_sec["Value"].str.extract(r"SectorCarrier=(\d+)")
                     df_filtered = df_sec[df_sec["SectorCarrier"].isin(valid_groups)]
 
-                    MO_list = df_filtered["MO"].str.extract(r"=([\w\d_]+)")
-                    print(MO_list,"MO_list")
-                    MO_list = MO_list.dropna().iloc[:, 0].tolist()
-            
-                    if MO_list:
+                    # Extract MO values
+                    MO = df_filtered["MO"].str.extract(r"=([\w\d_]+)")
+                    MO = MO.dropna().iloc[:, 0].tolist()
+                    print("Filtered MOs:", MO)
+
+                    if MO:
+                        # Group MOs by base name (excluding last 3 characters)
                         grouped = {}
-
-                        for mo in MO_list:
-                            parts = mo.split('_')
-                            # base_key excludes the last two parts (letter and suffix)
-                            base_key = '_'.join(parts[:-2])  # e.g. DL_E_F1_OM_X42090
-
-                            # letter is last char of second last part, e.g. 'D' from 'X42090D'
-                            letter = parts[-2][-1]
-
-                            # suffix is last part, e.g. 'D', 'A', 'B', 'C' etc.
-                            suffix = parts[-1]
-
-                            # full_prefix is base_key + '_' + second last part (includes letter)
-                            full_prefix = base_key + '_' + parts[-2]  # e.g. DL_E_F1_OM_X42090D
-
-                            print(full_prefix, "full_prefix")
-                            print(base_key, "base_key")
-                            print(letter, "letter")
-                            print(suffix, "suffix")
-
-                            if base_key in grouped:
-                                grouped[base_key]["suffixes"].append(suffix)  # only append suffix part once
+                        for mo in MO:
+                            base = mo[:-3]
+                            suffix = mo[-3:]
+                            if base not in grouped:
+                                grouped[base] = [suffix]
                             else:
-                                grouped[base_key] = {
-                                    "prefix": full_prefix,
-                                    "suffixes": [suffix]  # only suffix here
-                                }
+                                grouped[base].append(suffix)
 
+                        # Reconstruct MOs with grouped suffixes
+                        result_list = [base + "&".join(suffixes) for base, suffixes in grouped.items()]
+                        result = ",".join(result_list)
+                        template_df.loc[0, "RET Configuration (Cell Name)"] = result
+                    else:
+                        result = "NA"
+                        template_df.loc[0, 'RET Configuration (Cell Name)'] = result
 
-                        result_parts = []
-                        layers = []
+                    print("RET Configuration (Cell Name):", result)
 
-                        RTT_map = {
-                            "F1": "L2100",
-                            "F3": "L1800",
-                            "F8": "L900",
-                            "T1": "L2300",
-                            "T2": "L2300",
-                            "F5": "L850",
-                        }
+                    # Map frequency layer
+                    RTT_map = {
+                        "F1": "L2100",
+                        "F3": "L1800",
+                        "F8": "L900",
+                        "T1": "L2300",
+                        "T2": "L2300",
+                        "F5": "L850",
+                    }
+                    # Extract unique layer types from grouped result
+                    layers_found = set()
+                    for base in grouped.keys():
+                        for key in RTT_map:
+                            if key in base:
+                                layers_found.add(RTT_map[key])
+                                break
 
-                        for base_key, data in grouped.items():
-                            prefix = data["prefix"]         # e.g. DL_E_F1_OM_X42090D
-                            suffixes = data["suffixes"]     # e.g. ['D', 'A', 'B']
+                    if layers_found:
+                        RTT_cell = "_".join(sorted(layers_found))
+                    else:
+                        RTT_cell = "NA"
 
-                            # join suffixes with '&' after one underscore
-                            group_str = f"{prefix}_{'&'.join(suffixes)}"
-                            result_parts.append(group_str)
+                    template_df.loc[0, "RET Configured on (Layer)"] = RTT_cell
+                    print("RET Configured on (Layer):", RTT_cell)
 
-                            for key in RTT_map:
-                                if key in base_key:
-                                    layers.append(RTT_map[key])
-                                    break
-
-                        final_result = '&'.join(result_parts)
-                        layer_result = '_'.join(sorted(set(layers))) if layers else 'NA'
-
-                        print("Final Result:", final_result)
-                        print("Layer Result:", layer_result)
-
-                        template_df.loc[0, "RET Configuration (Cell Name)"] = final_result
-                        template_df.loc[0, "RET Configured on (Layer)"] = layer_result
-
-
-
+                else:
+                    template_df.loc[0, "RET Configured on (Layer)"] = "NA"
+                    template_df.loc[0, "RET Configuration (Cell Name)"] = "NA"
 
                 # if "st ret" in xls.sheet_names and "get . sectorc" in xls.sheet_names:
 

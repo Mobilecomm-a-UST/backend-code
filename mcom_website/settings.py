@@ -101,6 +101,7 @@ INSTALLED_APPS = [
     "Daily_Alarm_Status",
     "LKF_StatusApp",
     "gpl_audit_tool",
+    "soft_at_status_tech",
     "Soft_AT_Checklist_Ericsson",
     "LTE_Integration_Scripting_Automtion",
 ]
@@ -157,16 +158,15 @@ WSGI_APPLICATION = "mcom_website.wsgi.application"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mobilecomm",
-        "USER": "postgres",
-        "PASSWORD": "mcomnpn",
-        "HOST": "localhost",
-        'PORT' : '5432',  # Default PostgreSQL port
-    }
-}
+'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mobilecomm',
+        'USER':'postgres',
+        'PASSWORD':'1234',
+        'HOST':'localhost'
+}}
 # DATABASES = {
 #    'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
