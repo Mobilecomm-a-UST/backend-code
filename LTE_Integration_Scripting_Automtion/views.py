@@ -9,6 +9,11 @@ import shutil
 import socket
 import os
 import json
+from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
+import pandas as pd
+import stat
+from django.conf import settings
+import zipfile
 from LTE_Integration_Scripting_Automtion.circles.KK.KK_INTEGRATION_SCRIPT import (
     kk_GPL_LMS_script,
     kk_GPS_MMS_script,
@@ -30,7 +35,8 @@ from LTE_Integration_Scripting_Automtion.universal_SCRIPTS.UNIVERSAL_SCRIPTS imp
     RRU_4412_4418_4427_4471_4X4, 
     RRU_6626_6X6, RRU_8863_8X8, 
     RRU_5G_CREATION,
-    RBSSummary_script
+    RBSSummary_script,
+    AIR_5G_GENERATION_SCRIPT
 )
 from LTE_Integration_Scripting_Automtion.circles.TN.TN_INTEGRATION_SCRIPT import (
     TN_02_IPV6creationforanchor, 
@@ -75,11 +81,7 @@ from LTE_Integration_Scripting_Automtion.circles.RJ.RJ_COMISSION_SCRIPT import (
     SiteEquipment_R503
 
 )
-from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
-import pandas as pd
-import stat
-from django.conf import settings
-import zipfile
+
 
 ############################################################## END IMPORT STATEMENTS ############################################################################################
 
@@ -559,6 +561,17 @@ def generate_integration_script(request):
                             RiPort_BB=row["RiPort_BB"],
                             RiPort_Radio=row["RiPort_Radio"],
                             sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
+                        )
+                    elif radio_type.startswith("AIR"):
+                        site_equipment_text += AIR_5G_GENERATION_SCRIPT.format(
+                            Radio_UnitId=row["Radio_UnitId"],
+                            fieldReplaceableUnitId=site_basic_df_N[
+                                "fieldReplaceableUnitId"
+                            ].values[0],
+                            RiPort_BB=row["RiPort_BB"],
+                            RiPort_Radio=row["RiPort_Radio"],
+                            sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
+                            riLinkId = row['riLinkId'],  # [ 'Added riLinkId for AIR 5G generation script' ]
                         )
 
                 with open(rru_hw_path, "a", encoding='utf-8') as file:

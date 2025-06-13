@@ -2151,3 +2151,90 @@ RBSSummary_script = """
 </summary:AutoIntegrationRbsSummaryFile>
 """
 
+
+
+AIR_5G_GENERATION_SCRIPT = """
+<?xml version="1.0" encoding="UTF-8"?>                                                                                                                            
+<hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">                                                                                                           
+  <capabilities>                                                                                                                                                  
+    <capability>urn:ietf:params:netconf:base:1.0</capability>                                                                                                     
+  </capabilities>                                                                                                                                                 
+</hello>                                                                                                                                                          
+]]>]]>                                                                                                                                                            
+<rpc message-id="1" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">                                                                                              
+  <edit-config>                                                                                                                                                   
+    <target>                                                                                                                                                      
+      <running />                                                                                                                                                 
+    </target>                                                                                                                                                     
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">                                                                                                   
+      <ManagedElement xmlns="urn:com:ericsson:ecim:ComTop">                                                                                                       
+        <managedElementId>1</managedElementId>                                                                                                                    
+        <Equipment xmlns="urn:com:ericsson:ecim:ReqEquipment">                                                                                                    
+          <equipmentId>1</equipmentId>                                                                                                                            
+          <userLabel>Equip_1</userLabel>                                                                                                                          
+          <FieldReplaceableUnit xmlns="urn:com:ericsson:ecim:ReqFieldReplaceableUnit">                                                                            
+            <fieldReplaceableUnitId>{fieldReplaceableUnitId}</fieldReplaceableUnitId>                                                                                                    
+            <administrativeState>UNLOCKED</administrativeState>                                                                                                   
+            <isSharedWithExternalMe>false</isSharedWithExternalMe>                                                                                                
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">                                                                                                      
+              <riPortId>K</riPortId>                                                                                                                              
+              <administrativeState>UNLOCKED</administrativeState>                                                                                                 
+            </RiPort>                                                                                                                                             
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">                                                                                                      
+              <riPortId>L</riPortId>                                                                                                                              
+              <administrativeState>UNLOCKED</administrativeState>                                                                                                 
+            </RiPort>                                                                                                                                             
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">                                                                                                      
+              <riPortId>M</riPortId>                                                                                                                              
+              <administrativeState>UNLOCKED</administrativeState>                                                                                                 
+            </RiPort>                                                                                                                                             
+          </FieldReplaceableUnit>                                                                                                                                 
+          <FieldReplaceableUnit xmlns="urn:com:ericsson:ecim:ReqFieldReplaceableUnit">                                                                            
+            <fieldReplaceableUnitId>{Radio_UnitId}</fieldReplaceableUnitId>                                                                                            
+            <administrativeState>UNLOCKED</administrativeState>                                                                                                   
+            <isSharedWithExternalMe>false</isSharedWithExternalMe>                                                                                                
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">                                                                                                      
+              <riPortId>DATA_1</riPortId>                                                                                                                         
+              <administrativeState>UNLOCKED</administrativeState>                                                                                                 
+            </RiPort>                                                                                                                                             
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">                                                                                                      
+              <riPortId>DATA_2</riPortId>                                                                                                                         
+              <administrativeState>UNLOCKED</administrativeState>                                                                                                 
+            </RiPort>                                                                                                                                             
+            <Transceiver xmlns="urn:com:ericsson:ecim:ReqTransceiver">                                                                                            
+              <transceiverId>1</transceiverId>                                                                                                                    
+              <mechanicalAntennaTilt>0</mechanicalAntennaTilt>                                                                                                    
+              <maxTotalTilt>900</maxTotalTilt>                                                                                                                    
+              <minTotalTilt>-900</minTotalTilt>                                                                                                                   
+            </Transceiver>                                                                                                                                        
+          </FieldReplaceableUnit>                                                                                                                                                                                                                                                       
+          <RiLink xmlns="urn:com:ericsson:ecim:ReqRiLink">                                                                                                        
+            <riLinkId>{riLinkId}</riLinkId>                                                                                                                          
+            <riPortRef1>ManagedElement=1,Equipment=1,FieldReplaceableUnit={fieldReplaceableUnitId},RiPort={RiPort_BB}</riPortRef1>                                                                 
+            <riPortRef2>ManagedElement=1,Equipment=1,FieldReplaceableUnit={Radio_UnitId},RiPort={RiPort_Radio}</riPortRef2>                                                    
+          </RiLink>                                                                                                                                                                                                                                                                                           
+        </Equipment>                                                                                                                                              
+        <EquipmentSupportFunction xmlns="urn:com:ericsson:ecim:ResEquipmentSupportFunction">                                                                      
+          <equipmentSupportFunctionId>1</equipmentSupportFunctionId>                                                                                              
+          <supportSystemControl>true</supportSystemControl>                                                                                                       
+          <autoCreateUnits>true</autoCreateUnits>                                                                                                                 
+          <autoCreateExternalNodes>true</autoCreateExternalNodes>                                                                                                 
+        </EquipmentSupportFunction>                                                                                                                               
+        <NodeSupport xmlns="urn:com:ericsson:ecim:RmeSupport">                                                                                                    
+          <nodeSupportId>1</nodeSupportId>                                                                                                                        
+          <SectorEquipmentFunction xmlns="urn:com:ericsson:ecim:RmeSectorEquipmentFunction">                                                                      
+            <sectorEquipmentFunctionId>{sectorEquipmentFunctionId}</sectorEquipmentFunctionId>                                                                                          
+            <administrativeState>UNLOCKED</administrativeState>                                                                                                   
+            <rfBranchRef>ManagedElement=1,Equipment=1,FieldReplaceableUnit={Radio_UnitId},Transceiver=1</rfBranchRef>                                                  
+          </SectorEquipmentFunction>                                                                                                                                                                                                                                                  
+        </NodeSupport>                                                                                                                                            
+      </ManagedElement>                                                                                                                                           
+    </config>                                                                                                                                                     
+  </edit-config>                                                                                                                                                  
+</rpc>                                                                                                                                                            
+]]>]]>                                                                                                                                                            
+<rpc message-id="Closing" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">                                                                                        
+  <close-session></close-session>                                                                                                                                 
+</rpc>                                                                                                                                                            
+]]>]]>
+"""
