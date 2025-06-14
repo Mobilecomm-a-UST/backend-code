@@ -591,12 +591,12 @@ def get_pre_post_audit(request):
 
     print("all post merged df:- \n", all_post_merged_df['Summary'])
     
-    for idx, row in all_post_merged_df["Summary"].iterrows():
-        print(type(row["Pre eNBID"]))
-        if type(row["Pre eNBID"]) == float:
-            all_post_merged_df["Summary"].at[idx, "Pre eNBID"] = str(
-                int(row["Pre eNBID"])
-            )
+    #for idx, row in all_post_merged_df["Summary"].iterrows():
+    #    print(type(row["Pre eNBID"]))
+    #    if type(row["Pre eNBID"]) == float:
+    #        all_post_merged_df["Summary"].at[idx, "Pre eNBID"] = str(
+    #            int(row["Pre eNBID"])
+    #        )
 
     
     all_post_merged_df["Summary"] = all_post_merged_df["Summary"].sort_values(
@@ -607,7 +607,8 @@ def get_pre_post_audit(request):
     
     all_post_merged_df["Summary"]["Post eNBID"] = all_post_merged_df["Summary"][
         "Post SiteId"
-    ].apply(lambda x: enodeid_mapping[x] if x != "NA" else "NA")
+    ].apply(lambda x: post_enodeid_mapping[x] if x != "NA" else "NA")
+
     all_post_merged_df["Summary"].insert(
         5, "Post eNBID", all_post_merged_df["Summary"].pop("Post eNBID")
     )
@@ -656,9 +657,11 @@ def get_pre_post_audit(request):
                     #####################################################################################################################################
                     cell_id_df = all_post_merged_df["Summary"].sort_values(by="Pre SiteId")
                     gpl_pre_df = all_pre_merged_df.get(sheet_name)
+                    gpl_post_df: pd.DataFrame = df.copy()
+                    print("gpl pre df:- \n", gpl_pre_df)
                     gpl_pre_df = gpl_pre_df.assign(
                         **{
-                            "Pre-existing Value": gpl_pre_df["Current value"],
+                            "Pre-existing Value": gpl_pre_df["Value"],
                             "Current value": "",
                         }
                     )
@@ -667,12 +670,15 @@ def get_pre_post_audit(request):
 
                     ########################################################merging the datafraems#############################
                     gpl_pre_df = add_cell_ids(gpl_pre_df, "MO", pre_map)
-                    df = add_cell_ids(df, "MO", post_map)
-                    merged_df = pd.merge(left=gpl_pre_df, right=df, how='left', on=['cellId', 'Parameter'], indicator=True)
+                    gpl_post_df = add_cell_ids(gpl_post_df, "MO", post_map)
+                    
+                    merged_df = pd.merge(left=gpl_pre_df, right=gpl_post_df, how='left', on=['cellId', 'Parameter'], indicator=True)
+                    print("merged_df before processing \n", merged_df.columns)
+                    merged_df.to_excel('gpl_merged_df.xlsx', index=False)
                     merged_df["MO_y"] = merged_df["MO_y"].fillna(merged_df["MO_x"])
                     merged_df["Node_ID_y"] = merged_df["Node_ID_y"].fillna("Cell is not Found in Post")
-                    merged_df["Current value"] = merged_df["Value"]
-                    merged_df.drop(columns=["MO_x", "Node_ID_x", "Value"], inplace=True)
+                    merged_df["Current value"] = merged_df['Value_y']
+                    merged_df.drop(columns=["MO_x", "Node_ID_x", "Value_x", "Value_y"], inplace=True)
                     merged_df.rename(columns={"MO_y": "MO", "Node_ID_y": "Node_ID"}, inplace=True)
                     merged_df.drop_duplicates(subset=["MO", "Parameter"], inplace=True)
                     
@@ -715,25 +721,38 @@ def get_pre_post_audit(request):
 
 
                 elif sheet_name == "FeatureState":
-                    feature_pre_df = all_pre_merged_df.get(sheet_name)
+                    feature_pre_df: pd.DataFrame = all_pre_merged_df.get(sheet_name)
+                    
+
+                    feature_pre_df.rename(
+                        columns={
+                            'featureState' : 'Pre Existing FeatureState', 
+                            'licenseState': 'Pre Existing LicenseState'
+                        }, inplace=True
+                    )
+                    print("feature state pre:- \n",feature_pre_df)
                     cell_id_df = all_post_merged_df["Summary"]
 
-                    feature_pre_df["Pre Existing FeatureState"] = feature_pre_df[
-                        "Current FeatureState"
-                    ]
                     feature_pre_df["Current FeatureState"] = ""
-                    feature_pre_df["Pre Existing LicenseState"] = feature_pre_df[
-                        "Current LicenseState"
-                    ]
+
                     feature_pre_df["Pre Existing FeatureState"] = feature_pre_df[
                         "Pre Existing FeatureState"
                     ].astype(str)
                     feature_pre_df["Pre Existing LicenseState"] = feature_pre_df[
                         "Pre Existing LicenseState"
                     ].astype(str)
-                    feature_pre_df["Current LicenseState"] = ""
+                    #---------------------------------------------------------------------------------------------------------------------------------#
+                    feature_pre_df["Pre Existing FeatureState"] = feature_pre_df[
+                        "Pre Existing FeatureState"
+                    ].apply(lambda x: x.split(" ")[0] if " " in x else x)
+                    feature_pre_df["Pre Existing LicenseState"] = feature_pre_df[
+                        "Pre Existing LicenseState"
+                    ].apply(lambda x: x.split(" ")[0] if " " in x else x)
 
-                    feature_post_df = df.copy()
+                    #-----------------------------------------------------------------------------------------------------------------------------------#
+                    feature_pre_df["Current LicenseState"] = ""
+                    feature_pre_df.rename(columns={"MO": "CXC ID"}, inplace=True)
+                    feature_post_df: pd.DataFrame = df.copy()
                     feature_post_df.rename(columns={"MO": "CXC ID"}, inplace=True)
                     feature_post_df["featureState"] = feature_post_df[
                         "featureState"
@@ -760,8 +779,10 @@ def get_pre_post_audit(request):
                             feature_post_df["Node_ID"] == post_node_id
                         ]
 
+
+
                         commind_df = pd.merge(
-                            pre_df, post_df, on=["CXC ID", "description"], how="left"
+                            left=pre_df, right=post_df, on=["CXC ID", "description"], how="left"
                         )
                         # commind_df["featureState"] = commind_df["featureState"].astype(int)
                         # commind_df["licenseState"] = commind_df["licenseState"].astype(int)
@@ -951,9 +972,7 @@ def get_pre_post_audit(request):
 
                 elif sheet_name == "CellRelation":
                     ################################################################ Get eNB IDs from pre and post data ##################################################################
-                    pre_endb_id = (
-                        all_pre_merged_df.get("enbinfo")["eNBId"].unique().tolist()
-                    )
+                    pre_endb_id = (all_pre_merged_df.get("enbinfo")["eNBId"].unique().tolist())
                     post_endb_id = all_post_merged_df["enbinfo"]["eNBId"].unique().tolist()
                     pre_endb_id = [str(val) for val in pre_endb_id]
 
@@ -962,40 +981,24 @@ def get_pre_post_audit(request):
                     post_freq_cell_relation_df = df.copy()
 
                     ############################################################### Convert MO to string and extract eNB ID #############################################################
-                    pre_freq_cell_relation_df["MO"] = pre_freq_cell_relation_df[
-                        "MO"
-                    ].astype(str)
-
-                    post_freq_cell_relation_df["MO"] = post_freq_cell_relation_df[
-                        "MO"
-                    ].astype(str)
+                    pre_freq_cell_relation_df["MO"] = pre_freq_cell_relation_df["MO"].astype(str)
+                    post_freq_cell_relation_df["MO"] = post_freq_cell_relation_df["MO"].astype(str)
 
                     ################################################################ Extract eNB ID from MO ############################################################################
                     def extract_enb_id(mo: str) -> str:
                         return str(mo.split("-")[1]) if "-" in mo else mo
 
-                    pre_freq_cell_relation_df["mo_enodbid"] = pre_freq_cell_relation_df[
-                        "MO"
-                    ].apply(extract_enb_id)
-                    post_freq_cell_relation_df["mo_enodbid"] = (
-                        post_freq_cell_relation_df["MO"].apply(extract_enb_id)
-                    )
+                    pre_freq_cell_relation_df["mo_enodbid"] = pre_freq_cell_relation_df["MO"].apply(extract_enb_id)
+                    post_freq_cell_relation_df["mo_enodbid"] = (post_freq_cell_relation_df["MO"].apply(extract_enb_id))
 
                     ################################################################# Filter data based on eNB IDs #####################################################################
-                    pre_freq_cell_relation_df = pre_freq_cell_relation_df[
-                        pre_freq_cell_relation_df["mo_enodbid"].isin(pre_endb_id)
-                    ]
-                    post_freq_cell_relation_df = post_freq_cell_relation_df[
-                        post_freq_cell_relation_df["mo_enodbid"].isin(
-                            post_endb_id+pre_endb_id + [""]
-                        )
-                    ]
+
+                    #pre_freq_cell_relation_df = pre_freq_cell_relation_df[pre_freq_cell_relation_df["mo_enodbid"].isin(pre_endb_id)]
+                    #post_freq_cell_relation_df = post_freq_cell_relation_df[post_freq_cell_relation_df["mo_enodbid"].isin(post_endb_id)]
 
                     ################################################################# Remove temporary eNB ID column ###################################################################
-                    pre_freq_cell_relation_df.drop(columns=["mo_enodbid"], inplace=True)
-                    post_freq_cell_relation_df.drop(
-                        columns=["mo_enodbid"], inplace=True
-                    )
+                    #pre_freq_cell_relation_df.drop(columns=["mo_enodbid"], inplace=True)
+                    #post_freq_cell_relation_df.drop(columns=["mo_enodbid"], inplace=True)
 
                     ################################################################## Convert numeric columns #########################################################################
                     numeric_columns = [
