@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     "Soft_AT_Checklist_Ericsson",
     "Soft_AT_Checklist_Nokia",
     "LTE_Integration_Scripting_Automtion",
+    "gpl_audit_tool_V1_1"
 ]
 
 MIDDLEWARE = [
