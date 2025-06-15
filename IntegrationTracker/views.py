@@ -60,13 +60,13 @@ def generate_date_list(start_date):
 def get_excel_temp_link(request):
     #mcom123 temp id.
     # Path to the Excel file
-    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.7.xlsm')
+    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.8.1.xlsm')
 
     # Check if the file exists
     if os.path.exists(file_path):
         # Construct the URL to access the file
-        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.7.xlsm')              
-        return Response({'file_url': file_url,'template_version':'v1.7'}, status=status.HTTP_200_OK)
+        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.8.1.xlsm')              
+        return Response({'file_url': file_url,'template_version':'v1.8.1'}, status=status.HTTP_200_OK)
     else:
         # Return a 404 response if the file does not exist
         return Response({'error': 'Excel file not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -112,7 +112,7 @@ def upload_excel(request):
     file = request.data['file']
     value_in_cell = read_excel_cell(file.read(), sheet_name='Sheet2', cell='BE37')
     print("cell_value:",value_in_cell)
-    if value_in_cell == "mcom_v1.7":
+    if value_in_cell == "mcom_v1.8":
             try:
                 df = pd.read_excel(file,sheet_name="Tracker",keep_default_na=False,skiprows=1)
             except Exception as e:
@@ -121,9 +121,9 @@ def upload_excel(request):
             df["Cell ID"] = df["Cell ID"].astype(str)
         
             allowed_values = {
-                'CIRCLE': ['AP', 'BIH', 'CHN', 'ROTN', 'DEL', 'HRY', 'JK', 'JRK', 'KOL', 'MAH', 'MP', 'MUM', 'ORI', 'PUN', 'RAJ', 'UPE', 'UPW', 'WB', 'KK','MAH'],
+                'CIRCLE': ['AP', 'BIH', 'CHN', 'ROTN', 'DEL', 'HRY', 'JK', 'JRK', 'KOL', 'MAH', 'MP', 'MUM', 'ORI', 'PUN', 'RAJ', 'UPE', 'UPW', 'WB', 'KK','MAH', 'HP', 'NESA'],
                  'OEM': ['SAMSUNG', 'NOKIA', 'ERICSSON','HUAWEI','ZTE'],
-                'Activity Name': ['ULS_HPSC', 'RELOCATION', 'MACRO', 'DE-GROW', 'RET', 'IBS', 'ODSC', 'IDSC', 'HT INCREMENT', 'FEMTO', 'OTHERS', 'UPGRADE','RECTIFICATION','5G SECTOR ADDITION','OPERATIONS','5G RELOCATION','TRAFFIC SHIFTING'],
+                'Activity Name': ['ULS_HPSC', 'RELOCATION', 'MACRO', 'DE-GROW', 'RET', 'IBS', 'ODSC', 'IDSC', 'HT INCREMENT', 'FEMTO', 'OTHERS', 'UPGRADE','RECTIFICATION','5G SECTOR ADDITION','OPERATIONS','5G RELOCATION','TRAFFIC SHIFTING', 'RRU UPGRADE', '5G RRU SWAP', '5G BW UPGRADE'],
                 'Activity Mode (SA/NSA)':['SA','NSA'],
                 'Technology (SIWA)': ['2G','FDD','TDD','5G'],
                 'Activity Type (SIWA)': ["FDD_SEC_ADDITION", "FDD_TWIN_BEAM", "FDD_UPGRADE", "L2100_UPGRADE", "L900_UPGRADE", "NEW_TOWER", "NEW_TOWER_ULS", "TDD_SEC_ADDITION", "TDD_TWIN_BEAM", "TDD_UPGRADE", "UPGRADE_SW_ONLY", "UPGRADE_ULS", "5G_SEC_ADDITION", "5G_UPGRADE","CPRI ADDITION","SFP CHANGE", "BW UPGRADATION", "BTS SWAP", "IP MODIFICATION", "HOT SWAP", "NOMENCLATURE CHANGE", "2G DELETION", "CARRIER ADDITION"],
@@ -412,11 +412,28 @@ def datewise_integration_data(request):
  
     with connection.cursor() as cursor:
         activity_type = [
-            '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC',
-            'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION',
-            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP'
+            '5G SECTOR ADDITION', 
+            '5G RELOCATION', 
+            'HT INCREMENT', 
+            'FEMTO', 
+            'DE-GROW', 
+            'IBS', 
+            'IDSC',
+            'MACRO', 
+            'ODSC', 
+            'OPERATIONS', 
+            'RRU UPGRADE', 
+            '5G BW UPGRADE', 
+            'OTHERS', 
+            '5G RRU SWAP',
+            'RELOCATION', 
+            'RECTIFICATION', 
+            'RET', 
+            'TRAFFIC SHIFTING', 
+            'ULS_HPSC', 
+            'UPGRADE'
         ]
-    
+        
         activity_columns = [a.replace(' ', '_').replace('-', '_') for a in activity_type]
         dates = [date1, date2, date3]
 
@@ -428,6 +445,7 @@ def datewise_integration_data(request):
             alias_list.append(alias)
             date_tag = f"D{index+1}"
             columns_def = ",".join([f'"{date_tag}_{col}" INTEGER' for col in activity_columns])
+            print('date wise data count' , columns_def)
             select_cte = f"""
                 SELECT * FROM crosstab($$
                     SELECT 
@@ -491,6 +509,7 @@ def datewise_integration_data(request):
 
 
 
+
 @api_view(["POST"])
 def hyperlink_datewise_integration_data(request):
     print("User: ", request.user.username)
@@ -538,22 +557,52 @@ def date_range_wise_integration_data(request):
     from_date = request.data.get("from_date")
     to_date = request.data.get("to_date")
 
-    print("from_date:", from_date)
-    print("to_date:", to_date)
-
-
     try:
         if from_date and to_date:
             from_date = datetime.strptime(from_date, '%Y-%m-%d').date()
             to_date = datetime.strptime(to_date, '%Y-%m-%d').date()
         else:
             from_date, to_date = get_dates()
-
     except ValueError:
         raise ValidationError("Dates must be in YYYY-MM-DD format.")
 
+    # Ensure unique, cleaned activity types
+    raw_activities = [
+        '5G SECTOR ADDITION', 
+        '5G RELOCATION', 
+        'HT INCREMENT', 
+        'FEMTO', 
+        'DE-GROW', 
+        'IBS', 
+        'IDSC',
+        'MACRO', 
+        'ODSC', 
+        'OPERATIONS', 
+        'RRU UPGRADE', 
+        '5G BW UPGRADE', 
+        'OTHERS', 
+        '5G RRU SWAP',
+        'RELOCATION', 
+        'RECTIFICATION', 
+        'RET', 
+        'TRAFFIC SHIFTING', 
+        'ULS_HPSC', 
+        'UPGRADE'
+    ]
+    activity_type = sorted(set(raw_activities))  # Remove duplicates just in case
+
+    # Create SQL-safe column aliases
+    def sql_safe(name):
+        return f"D1_{name.upper().replace(' ', '').replace('-', '')}"
+
+    activity_columns = [f'"{sql_safe(a)}" INTEGER' for a in activity_type]
+
+    print('activity columnsa data ' , {', '.join(activity_columns)})
+
     def fetch_crosstab_data(activity_type: list, activity_columns: list) -> tuple:
         with connection.cursor() as cursor:
+            # Escape and format activity list for SQL
+            activity_array = ','.join([f"'{a}'" for a in activity_type])
             query = f"""
                 SELECT * FROM crosstab($$
                     SELECT 
@@ -561,23 +610,58 @@ def date_range_wise_integration_data(request):
                         "Activity_Name",
                         COALESCE("cnt", 0)::INTEGER AS cnt
                     FROM 
-                        (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
+                        (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS c
                     CROSS JOIN
-                        (SELECT unnest(ARRAY{activity_type}) AS "Activity_Name") AS "Activity_Name"
-                    LEFT JOIN
-                        (
-                            SELECT "CIRCLE", "Activity_Name", COUNT("id") AS cnt 
-                            FROM (
-                                SELECT "id", "CIRCLE", UPPER("Activity_Name") AS "Activity_Name"
-                                FROM public."IntegrationTracker_integrationdata"
-                                WHERE "Integration_Date" BETWEEN '{from_date}' AND '{to_date}'
-                            ) in_0
-                            GROUP BY "CIRCLE", "Activity_Name"
-                        ) AS r
-                    USING ("CIRCLE", "Activity_Name")
+                        (SELECT unnest(ARRAY[
+                                    '5G BW UPGRADE',
+                                    '5G RELOCATION',
+                                    '5G RRU SWAP',
+                                    '5G SECTOR ADDITION',
+                                    'DE-GROW',
+                                    'FEMTO',
+                                    'HT INCREMENT',
+                                    'IBS',
+                                    'IDSC',
+                                    'MACRO',
+                                    'ODSC',
+                                    'OPERATIONS',
+                                    'OTHERS',
+                                    'RECTIFICATION',
+                                    'RELOCATION',
+                                    'RET',
+                                    'RRU UPGRADE',
+                                    'TRAFFIC SHIFTING',
+                                    'ULS_HPSC',
+                                    'UPGRADE'
+        ]) AS "Activity_Name") AS a
+                    LEFT JOIN (
+                        SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT(id) AS cnt
+                        FROM public."IntegrationTracker_integrationdata"
+                        WHERE "Integration_Date" BETWEEN '{from_date}' AND '{to_date}'
+                        GROUP BY "CIRCLE", "Activity_Name"
+                    ) r USING ("CIRCLE", "Activity_Name")
                     ORDER BY 1, 2
                 $$) AS ct (
-                    cir TEXT,{', '.join(activity_columns)}
+                    "cir" TEXT, "D1_5G_BW_UPGRADE" INTEGER,
+                "D1_5G_RELOCATION" INTEGER,
+                "D1_5G_RRU_SWAP" INTEGER,
+                "D1_5G_SECTOR_ADDITION" INTEGER,
+                "D1_DE_GROW" INTEGER,
+                "D1_FEMTO" INTEGER,
+                "D1_HT_INCREMENT" INTEGER,
+                "D1_IBS" INTEGER,
+                "D1_IDSC" INTEGER,
+                "D1_MACRO" INTEGER,
+                "D1_ODSC" INTEGER,
+                "D1_OPERATIONS" INTEGER,
+                "D1_OTHERS" INTEGER,
+                "D1_RECTIFICATION" INTEGER,
+                "D1_RELOCATION" INTEGER,
+                "D1_RET" INTEGER,
+                "D1_RRU_UPGRADE" INTEGER,
+                "D1_TRAFFIC_SHIFTING" INTEGER,
+                "D1_ULS_HPSC" INTEGER,
+                "D1_UPGRADE" INTEGER
                 )
             """
             cursor.execute(query)
@@ -586,13 +670,6 @@ def date_range_wise_integration_data(request):
             return results, columns
 
     async def get_data_async():
-        activity_type = [
-            '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC',
-            'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION',
-            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP'
-        ]
-        activity_columns = [f'"D1_{a.replace(" ", "_").replace("-", "_")}" INTEGER' for a in activity_type]
-        print(activity_columns)
         results, columns = await sync_to_async(fetch_crosstab_data)(activity_type, activity_columns)
         rows_as_dict = [dict(zip(columns, row)) for row in results]
         jsonResult = json.dumps(rows_as_dict)
@@ -695,15 +772,33 @@ def monthwise_integration_data(request):
         month_year_list.append((date_dict[f"Month{i}"], date_dict[f"Year{i}"], i))
 
         activity_list = [
-            '5G SECTOR ADDITION', '5G RELOCATION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC',
-            'MACRO', 'ODSC', 'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION',
-            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU UPGRADE', '5G BW UPGRADE', '5G RRU SWAP'
+            '5G BW UPGRADE',
+            '5G RELOCATION',
+            '5G RRU SWAP',
+            '5G SECTOR ADDITION',
+            'DE-GROW',
+            'FEMTO',
+            'HT INCREMENT',
+            'IBS',
+            'IDSC',
+            'MACRO',
+            'ODSC',
+            'OPERATIONS',
+            'OTHERS',
+            'RECTIFICATION',
+            'RELOCATION',
+            'RET',
+            'RRU UPGRADE',
+            'TRAFFIC SHIFTING',
+            'ULS_HPSC',
+            'UPGRADE'
         ]
 
     def build_crosstab(month, year, index):
         label = f"M{index}"
         columns = ",".join([f'"{label}_{a.replace(" ", "_").replace("-", "_")}" INTEGER' for a in activity_list])
         array_activities = ",".join([f"'{a}'" for a in activity_list])
+
 
         return f"""
             (
@@ -994,8 +1089,8 @@ def integration_table_update(request, id=None):
     print("username: ", user)
     nokia_spocks=['chandan.kumar@mcpsinc.com','nishant.verma@mcpsinc.in','girraj.singh@mcpsinc.in','mohit.batra@mcpsinc.com','abhishek.gupta']
     zte_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
-    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
-    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com', 'abhishek.gupta']
+    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com','abhishek.gupta']
+    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com', 'abhishek.gupta']
     ericsson_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
   
     if request.method == 'PUT':
@@ -1038,7 +1133,6 @@ def integration_table_update(request, id=None):
     else:
         print("exception..")
         return Response({'status':False,'message': 'You are not authorized to edit this record'}, status=status.HTTP_403_FORBIDDEN)
-
 
 
 @api_view(["POST"])
