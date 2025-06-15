@@ -1087,12 +1087,12 @@ def generate_integration_script(request):
         #####################################################################################################################################################
         # Add RJ specific script generation logic here if needed
         ########################################################## MAKING THE ZIP FILE #############################################################
-        folder_path = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
+        folder_path = os.path.join(MEDIA_ROOT,"LTE_INTEGRATION_CONFIG_FILES")
         
         
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         zip_filename = f"{site_id_name}_LTE_Integration_Scripts_{timestamp}.zip"
-        zip_output_path = os.path.join(MEDIA_ROOT, zip_filename)  
+        zip_output_path = os.path.join(MEDIA_ROOT,zip_filename)  
 
         ################################################ Clean up old zips (optional) ######################################################################
 #        for file in os.listdir(MEDIA_ROOT):

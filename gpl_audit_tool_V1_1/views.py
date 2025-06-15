@@ -1,9 +1,12 @@
-
+from gettext import GNUTranslations
 import os
 import re
 from csv import excel
+import asyncio
+import aiofiles
 import pandas as pd
 from datetime import datetime
+from pandas._libs import missing
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -16,8 +19,8 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 from django.conf import settings
-
-
+from gpl_audit_tool_V1_1.process_scripts import process_correction_script_generation, create_freqency_relation_script
+from gpl_audit_tool_V1_1.GPL_FREQ_REL_SCRIPTS import EUtranFrequency_Definition, GeranFrequency_defination
 
 
 def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
@@ -250,7 +253,7 @@ def get_log_parser(request):
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     ################################################################## Create datetime-based folder ###########################################
-    output_folder = os.path.join(baseURL, 'parsed_dumps',f"parsed_files_{current_time}")
+    output_folder = os.path.join(baseURL, 'parsed_dumps', f"parsed_files_{current_time}")
     os.makedirs(output_folder, exist_ok=True, mode=0o777)
 
     #################################################################### Load command list ######################################################
@@ -297,77 +300,19 @@ def get_log_parser(request):
         all_dfs = defaultdict(list)
         all_dfs["Summary"] = []
 
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = {
-                executor.submit(process_files, file_path, file_path, results): file_path
-                for file_path in saved_files
-            }
-            for future in futures:
-                file, df_dict = future.result()
-                for key, df in df_dict.items():
-                    all_dfs[key].append(df)
+        # Process only the current node file
+        file, df_dict = process_files(file_path, file_path, results)
 
-        ################################################ FDD/TDD processing #####################################################################
-        FDD_PREFIX = "EUtranCellFDD="
-        TDD_PREFIX = "EUtranCellTDD="
-        COLUMN_CONFIG = {
-            "renames": {
-                "left_channelBandwidth": "left_dlChannelBandwidth",
-                "left_earfcn": "left_earfcndl",
-            },
-            "shift_columns": {"start": "left_earfcnul", "end": "left_userLabel"},
-        }
-
-        def process_fdd_cells(df):
-            df["left_earfcnul"] = None
-            df.drop(columns=["right_Node_ID"], errors='ignore', inplace=True)
-            return df
-
-        def process_tdd_cells(df):
-            try:
-                start = df.columns.get_loc(COLUMN_CONFIG["shift_columns"]["start"])
-                end = df.columns.get_loc(COLUMN_CONFIG["shift_columns"]["end"])
-                df.iloc[:, start+1:end+1] = df.iloc[:, start:end].to_numpy()
-                df.iloc[:, start] = ""
-                df["left_userLabel"] = df["left_ulChannelBandwidth"]
-                df["left_ulChannelBandwidth"] = ""
-            except Exception as e:
-                print("TDD processing error:", e)
-            return df
-
-        for i, mo_df in enumerate(all_dfs["cell_data"]):
-            mo_df.rename(columns=COLUMN_CONFIG["renames"], inplace=True)
-            mo_df.drop(columns=["right_Node_ID"], errors='ignore', inplace=True)
-            if "left_MO" not in mo_df.columns:
-                continue
-            is_fdd = mo_df["left_MO"].astype(str).str.startswith(FDD_PREFIX)
-            is_tdd = mo_df["left_MO"].astype(str).str.startswith(TDD_PREFIX)
-
-            if not is_tdd.any():
-                all_dfs["cell_data"][i] = process_fdd_cells(mo_df)
-                continue
-
-            df_fdd = mo_df[is_fdd].copy()
-            df_tdd = mo_df[is_tdd].copy()
-            if not df_tdd.empty:
-                df_tdd = process_tdd_cells(df_tdd)
-            all_dfs["cell_data"][i] = pd.concat([df_fdd, df_tdd], ignore_index=True)
-
-        for i, mo_df in enumerate(all_dfs["cell_data"]):
-            if "left_MO" in mo_df.columns:
-                tdd_df = mo_df[mo_df["left_MO"].astype(str).str.startswith(TDD_PREFIX)]
-                fdd_df = mo_df[mo_df["left_MO"].astype(str).str.startswith(FDD_PREFIX)]
-                all_dfs["cell_data"][i] = pd.concat([tdd_df, fdd_df], ignore_index=True)
-
-        all_merged_df = {
-            key: pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
-            for key, dfs in all_dfs.items()
-        }
+        for key, df in df_dict.items():
+            all_dfs[key].append(df)
 
         excel_path = os.path.join(output_folder, f"{node}_GPL_PARSED_DUMP_{current_time}.xlsx")
+
         with pd.ExcelWriter(excel_path, engine="xlsxwriter") as writer:
             workbook = writer.book
-            for sheet_name, df in all_merged_df.items():
+            for sheet_name, df in all_dfs.items():
+                df = pd.concat(df, ignore_index=True) if df else pd.DataFrame()
+
                 if sheet_name == "cell_data":
                     summary_df = df[["left_Node_ID", "left_MO", "left_cellId"]].copy()
                     summary_df.rename(columns={
@@ -375,7 +320,7 @@ def get_log_parser(request):
                         "left_MO": "Pre CellName",
                         "left_cellId": "cellId",
                     }, inplace=True)
-                    enbinfo_df = all_merged_df.get("enbinfo", pd.DataFrame())
+                    enbinfo_df = all_dfs.get("enbinfo", [pd.DataFrame()])[0]
                     enodeid_map = dict(zip(enbinfo_df["Node_ID"], enbinfo_df["eNBId"])) if not enbinfo_df.empty else {}
                     summary_df["Pre eNBID"] = summary_df["Pre SiteId"].map(enodeid_map)
                     summary_df.insert(2, "Pre eNBID", summary_df.pop("Pre eNBID"))
@@ -384,7 +329,6 @@ def get_log_parser(request):
 
                 elif sheet_name == "gpl-para":
                     df.rename(columns={"Value": "Current value"}, inplace=True)
-
 
                 elif sheet_name == "FeatureState":
                     df["featureState"] = df["featureState"].astype(str).str.split().str[0]
@@ -395,7 +339,6 @@ def get_log_parser(request):
                         "licenseState": "Current LicenseState",
                     }, inplace=True)
 
-
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
                 format_excel_sheet(writer, sheet_name, df)
 
@@ -403,7 +346,6 @@ def get_log_parser(request):
                 summary_df.to_excel(writer, sheet_name="Summary", index=False)
                 format_excel_sheet(writer, "Summary", summary_df)
 
-        # Create full download link
         relative_path = os.path.relpath(excel_path, settings.MEDIA_ROOT)
         download_url = request.build_absolute_uri(os.path.join(settings.MEDIA_URL, relative_path))
         all_download_urls.append(download_url)
@@ -412,7 +354,6 @@ def get_log_parser(request):
         "message": "Data processed successfully.",
         "download_urls": all_download_urls
     }, status=status.HTTP_200_OK)
-
 
 
 @api_view(['POST'])
@@ -483,61 +424,6 @@ def get_pre_post_audit(request):
             for key, df in df_dict.items():
                 post_all_dfs[key].append(df)
 
-    ################################################ FDD/TDD processing #####################################################################
-    FDD_PREFIX = "EUtranCellFDD="
-    TDD_PREFIX = "EUtranCellTDD="
-    COLUMN_CONFIG = {
-        "renames": {
-            "left_channelBandwidth": "left_dlChannelBandwidth",
-            "left_earfcn": "left_earfcndl",
-        },
-        "shift_columns": {"start": "left_earfcnul", "end": "left_userLabel"},
-    }
-    def process_fdd_cells(df):
-        df["left_earfcnul"] = None
-        df.drop(columns=["right_Node_ID"], errors='ignore', inplace=True)
-        return df
-    def process_tdd_cells(df):
-        try:
-            start = df.columns.get_loc(COLUMN_CONFIG["shift_columns"]["start"])
-            end = df.columns.get_loc(COLUMN_CONFIG["shift_columns"]["end"])
-            df.iloc[:, start+1:end+1] = df.iloc[:, start:end].to_numpy()
-            df.iloc[:, start] = ""
-            df["left_userLabel"] = df["left_ulChannelBandwidth"]
-            df["left_ulChannelBandwidth"] = ""
-        except Exception as e:
-            print("TDD processing error:", e)
-        return df
-    for i, mo_df in enumerate(pre_all_dfs["cell_data"]):
-        mo_df.rename(columns=COLUMN_CONFIG["renames"], inplace=True)
-        mo_df.drop(columns=["right_Node_ID"], errors='ignore', inplace=True)
-        if "left_MO" not in mo_df.columns:
-            continue
-        is_fdd = mo_df["left_MO"].astype(str).str.startswith(FDD_PREFIX)
-        is_tdd = mo_df["left_MO"].astype(str).str.startswith(TDD_PREFIX)
-        if not is_tdd.any():
-            pre_all_dfs["cell_data"][i] = process_fdd_cells(mo_df)
-            continue
-        df_fdd = mo_df[is_fdd].copy()
-        df_tdd = mo_df[is_tdd].copy()
-        if not df_tdd.empty:
-            df_tdd = process_tdd_cells(df_tdd)
-        pre_all_dfs["cell_data"][i] = pd.concat([df_fdd, df_tdd], ignore_index=True)
-    for i, mo_df in enumerate(post_all_dfs["cell_data"]):
-        mo_df.rename(columns=COLUMN_CONFIG["renames"], inplace=True)
-        mo_df.drop(columns=["right_Node_ID"], errors='ignore', inplace=True)
-        if "left_MO" not in mo_df.columns:
-            continue
-        is_fdd = mo_df["left_MO"].astype(str).str.startswith(FDD_PREFIX)
-        is_tdd = mo_df["left_MO"].astype(str).str.startswith(TDD_PREFIX)
-        if not is_tdd.any():
-            post_all_dfs["cell_data"][i] = process_fdd_cells(mo_df)
-            continue
-        df_fdd = mo_df[is_fdd].copy()
-        df_tdd = mo_df[is_tdd].copy()
-        if not df_tdd.empty:
-            df_tdd = process_tdd_cells(df_tdd)
-        post_all_dfs["cell_data"][i] = pd.concat([df_fdd, df_tdd], ignore_index=True)
 
     all_pre_merged_df = {
         key: pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
@@ -553,8 +439,8 @@ def get_pre_post_audit(request):
         ["left_Node_ID", "left_MO", "left_cellId"]
     ].rename(
         columns={
-            "left_MO": "Post CellName",
             "left_Node_ID": "Post SiteId",
+            "left_MO": "Post CellName",
             "left_cellId": "cellId",
         }
     )
@@ -562,8 +448,8 @@ def get_pre_post_audit(request):
         ["left_Node_ID", "left_MO", "left_cellId"]
     ].rename(
         columns={
-            "left_MO": "Pre CellName",
             "left_Node_ID": "Pre SiteId",
+            "left_MO": "Pre CellName",
             "left_cellId": "cellId",
         }
     )
@@ -588,16 +474,7 @@ def get_pre_post_audit(request):
     all_post_merged_df["Summary"] = pd.merge(
         pre_cell_id_df, post_cell_id_df, on=["cellId"], how="outer"
     ).fillna("NA")
-
-    print("all post merged df:- \n", all_post_merged_df['Summary'])
     
-    #for idx, row in all_post_merged_df["Summary"].iterrows():
-    #    print(type(row["Pre eNBID"]))
-    #    if type(row["Pre eNBID"]) == float:
-    #        all_post_merged_df["Summary"].at[idx, "Pre eNBID"] = str(
-    #            int(row["Pre eNBID"])
-    #        )
-
     
     all_post_merged_df["Summary"] = all_post_merged_df["Summary"].sort_values(
         by=["Pre SiteId", "Pre CellName", "cellId"], ascending=True
@@ -609,15 +486,32 @@ def get_pre_post_audit(request):
         "Post SiteId"
     ].apply(lambda x: post_enodeid_mapping[x] if x != "NA" else "NA")
 
+    
+    all_post_merged_df["Summary"]["Pre eNBID"] = all_post_merged_df["Summary"][
+        "Pre SiteId"
+    ].apply(lambda x: pre_enodeid_mapping[x] if x != "NA" else "NA")
+
     all_post_merged_df["Summary"].insert(
         5, "Post eNBID", all_post_merged_df["Summary"].pop("Post eNBID")
+    )
+    all_post_merged_df["Summary"].insert(
+        2, "Pre eNBID", all_post_merged_df["Summary"].pop("Pre eNBID")
     )
 
     gpl_pre_post_file_path = os.path.join(
         session_folder, f"GPL_AUDIT_Parameter_AReport_{current_time}.xlsx"
     )
+    os.makedirs(os.path.dirname(gpl_pre_post_file_path), exist_ok=True, mode=0o777)
 
-    with pd.ExcelWriter(gpl_pre_post_file_path, engine="xlsxwriter") as writer:
+    async def async_write_excel(gpl_pre_post_file_path, all_post_merged_df, all_pre_merged_df, format_excel_sheet):
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None,
+            lambda: _write_excel_sync(gpl_pre_post_file_path, all_post_merged_df, all_pre_merged_df, format_excel_sheet)
+        )
+
+    def _write_excel_sync(gpl_pre_post_file_path, all_post_merged_df, all_pre_merged_df, format_excel_sheet):
+        with pd.ExcelWriter(gpl_pre_post_file_path, engine="xlsxwriter") as writer:
             workbook = writer.book
             for sheet_name, df in all_post_merged_df.items():
                 if sheet_name == "Summary":
@@ -631,10 +525,7 @@ def get_pre_post_audit(request):
                     format_excel_sheet(writer, sheet_name, df, startrow=3, startcol=9)
 
                 elif sheet_name == "gpl-para":
-
-
                     def create_cell_mappings(summary_df):
-                        # summary_df = summary_df[summary_df['Post SiteId'] != 'NA']
                         return (
                             {
                                 row["Pre CellName"]: row["cellId"]
@@ -650,15 +541,13 @@ def get_pre_post_audit(request):
                             },
                         )
 
-                    
                     def add_cell_ids(df: pd.DataFrame, col_name, mapping):
                         df.insert(1, "cellId", df["MO"].apply(lambda x: mapping.get(x.split(",")[0], 0)))
                         return df
-                    #####################################################################################################################################
+
                     cell_id_df = all_post_merged_df["Summary"].sort_values(by="Pre SiteId")
                     gpl_pre_df = all_pre_merged_df.get(sheet_name)
                     gpl_post_df: pd.DataFrame = df.copy()
-                    print("gpl pre df:- \n", gpl_pre_df)
                     gpl_pre_df = gpl_pre_df.assign(
                         **{
                             "Pre-existing Value": gpl_pre_df["Value"],
@@ -666,23 +555,18 @@ def get_pre_post_audit(request):
                         }
                     )
                     pre_map, post_map, site_map = create_cell_mappings(cell_id_df)
-                    print(pre_map,post_map,site_map)
 
-                    ########################################################merging the datafraems#############################
                     gpl_pre_df = add_cell_ids(gpl_pre_df, "MO", pre_map)
                     gpl_post_df = add_cell_ids(gpl_post_df, "MO", post_map)
-                    
+
                     merged_df = pd.merge(left=gpl_pre_df, right=gpl_post_df, how='left', on=['cellId', 'Parameter'], indicator=True)
-                    print("merged_df before processing \n", merged_df.columns)
-                    merged_df.to_excel('gpl_merged_df.xlsx', index=False)
                     merged_df["MO_y"] = merged_df["MO_y"].fillna(merged_df["MO_x"])
                     merged_df["Node_ID_y"] = merged_df["Node_ID_y"].fillna("Cell is not Found in Post")
                     merged_df["Current value"] = merged_df['Value_y']
                     merged_df.drop(columns=["MO_x", "Node_ID_x", "Value_x", "Value_y"], inplace=True)
                     merged_df.rename(columns={"MO_y": "MO", "Node_ID_y": "Node_ID"}, inplace=True)
                     merged_df.drop_duplicates(subset=["MO", "Parameter"], inplace=True)
-                    
-                    ################################################ Step 5: Add audit status ######################################
+
                     merged_df["Parameter Setting Status"] = merged_df.apply(
                         lambda row: (
                             "OK"
@@ -707,10 +591,9 @@ def get_pre_post_audit(request):
                             return 'L23'
                         else:
                             return 'Band Error'
-                        
+
                     merged_df['Band'] = merged_df['MO'].apply(lambda x: get_band(x))
-                    
-                    ######################################################### Step 6: Output ########################################
+
                     merged_df = merged_df[
                         ["Node_ID", "MO"]
                         + [col for col in merged_df.columns if col not in ["Node_ID", "MO"]]
@@ -718,19 +601,14 @@ def get_pre_post_audit(request):
                     merged_df.to_excel(writer, sheet_name=sheet_name, index=False)
                     format_excel_sheet(writer, sheet_name, merged_df, startrow=0, startcol=0)
 
-
-
                 elif sheet_name == "FeatureState":
                     feature_pre_df: pd.DataFrame = all_pre_merged_df.get(sheet_name)
-                    
-
                     feature_pre_df.rename(
                         columns={
                             'featureState' : 'Pre Existing FeatureState', 
                             'licenseState': 'Pre Existing LicenseState'
                         }, inplace=True
                     )
-                    print("feature state pre:- \n",feature_pre_df)
                     cell_id_df = all_post_merged_df["Summary"]
 
                     feature_pre_df["Current FeatureState"] = ""
@@ -741,7 +619,6 @@ def get_pre_post_audit(request):
                     feature_pre_df["Pre Existing LicenseState"] = feature_pre_df[
                         "Pre Existing LicenseState"
                     ].astype(str)
-                    #---------------------------------------------------------------------------------------------------------------------------------#
                     feature_pre_df["Pre Existing FeatureState"] = feature_pre_df[
                         "Pre Existing FeatureState"
                     ].apply(lambda x: x.split(" ")[0] if " " in x else x)
@@ -749,27 +626,18 @@ def get_pre_post_audit(request):
                         "Pre Existing LicenseState"
                     ].apply(lambda x: x.split(" ")[0] if " " in x else x)
 
-                    #-----------------------------------------------------------------------------------------------------------------------------------#
                     feature_pre_df["Current LicenseState"] = ""
                     feature_pre_df.rename(columns={"MO": "CXC ID"}, inplace=True)
                     feature_post_df: pd.DataFrame = df.copy()
                     feature_post_df.rename(columns={"MO": "CXC ID"}, inplace=True)
-                    feature_post_df["featureState"] = feature_post_df[
-                        "featureState"
-                    ].apply(lambda x: x.split(" ")[0] if " " in x else x)
-                    feature_post_df["licenseState"] = feature_post_df[
-                        "licenseState"
-                    ].apply(lambda x: x.split(" ")[0] if " " in x else x)
+                    feature_post_df["featureState"] = feature_post_df["featureState"].apply(lambda x: x.split(" ")[0] if " " in x else x)
+                    feature_post_df["licenseState"] = feature_post_df["licenseState"].apply(lambda x: x.split(" ")[0] if " " in x else x)
 
-                    pre_post_site_mapping = {
-                        row["Pre SiteId"]: row["Post SiteId"]
-                        for i, row in cell_id_df.iterrows() if row["Post SiteId"] != 'NA'
-                    }
+                    pre_post_site_mapping = {row["Pre SiteId"]: row["Post SiteId"] for i, row in cell_id_df.iterrows() if row["Post SiteId"] != 'NA'}
 
                     merged_df = pd.DataFrame()
 
                     for node_id in feature_pre_df["Node_ID"].unique():
-
                         post_node_id = pre_post_site_mapping.get(node_id, None)
                         if post_node_id is None:
                             continue
@@ -779,13 +647,9 @@ def get_pre_post_audit(request):
                             feature_post_df["Node_ID"] == post_node_id
                         ]
 
-
-
                         commind_df = pd.merge(
                             left=pre_df, right=post_df, on=["CXC ID", "description"], how="left"
                         )
-                        # commind_df["featureState"] = commind_df["featureState"].astype(int)
-                        # commind_df["licenseState"] = commind_df["licenseState"].astype(int)
 
                         commind_df["Node_ID_y"] = commind_df["Node_ID_y"].fillna(
                             commind_df["Node_ID_x"]
@@ -814,11 +678,6 @@ def get_pre_post_audit(request):
                             [merged_df, commind_df], axis=0, ignore_index=True
                         )
 
-                    # merged_df.sort_values(by=["Node_ID"], inplace=True)
-                    # columns_to_numeric = ["Pre Existing FeatureState", "Current FeatureState", "Current LicenseState", "Pre Existing LicenseState"]
-                    # for col in columns_to_numeric:
-                    #     merged_df["Pre Existing FeatureState"] = pd.to_numeric(merged_df["Current FeatureState"], errors="coerce").astype('int64')
-
                     merged_df["Feature setting Status"] = merged_df.apply(
                         lambda row: (
                             "OK"
@@ -836,14 +695,12 @@ def get_pre_post_audit(request):
                         axis=1,
                     )
 
-                    # print(merged_df)
                     merged_df.to_excel(writer, sheet_name=sheet_name, index=False)
                     format_excel_sheet(
                         writer, sheet_name, merged_df, startrow=0, startcol=0
                     )
 
                 elif sheet_name == "Eutranfrequency":
-
                     cell_id_df = all_post_merged_df["Summary"]
 
                     node_mapping = {
@@ -851,11 +708,8 @@ def get_pre_post_audit(request):
                         for i, row in cell_id_df.iterrows() if row['Post SiteId'] != 'NA'
                     }
 
-                    print(node_mapping)
                     pre_freq_df = all_pre_merged_df.get(sheet_name).copy()
-                    post_freq_df = df[
-                        df["MO"].astype(str).str.startswith("ENodeBFunction=")
-                    ].copy()
+                    post_freq_df = df.copy()
 
                     merged_df = pre_freq_df.merge(
                         post_freq_df, how="left", on=["MO"]
@@ -867,25 +721,25 @@ def get_pre_post_audit(request):
                     merged_df["arfcnValueEUtranDl_y"] = merged_df[
                         "arfcnValueEUtranDl_y"
                     ].astype(str)
+                    columns = ['arfcnValueEUtranDl', 'arfcn', 'arfcnValueGeranDl']
+                    for col in columns:
+                        merged_df["Status"] = merged_df.apply(
+                            lambda row: (
+                                "OK"
+                                if row[f"{col}_x"]
+                                == row[f"{col}_y"]
+                                else (
+                                    "Missing in Post"
+                                    if pd.isna(row[f"{col}_y"]) or row[f'{col}_y'] == 'nan'
+                                    else "NOT OK"
+                                )
+                            ),
+                            axis=1,
+                        )
 
-                    merged_df["Status"] = merged_df.apply(
-                        lambda row: (
-                            "OK"
-                            if row["arfcnValueEUtranDl_x"]
-                            == row["arfcnValueEUtranDl_y"]
-                            else (
-                                "Missing in Post"
-                                if pd.isna(row["arfcnValueEUtranDl_y"]) or row['arfcnValueEUtranDl_y'] == 'nan'
-                                else "NOT OK"
-                            )
-                        ),
-                        axis=1,
-                    )
+                    merged_df.drop(columns=["Node_ID_y", 'arfcnValueEUtranDl_y', 'arfcn_y','arfcnValueGeranDl_y'], inplace=True)
 
-                    merged_df.drop(columns=["Node_ID_y", 'arfcnValueEUtranDl_y'], inplace=True)
-
-                    # Fix the rename issue
-                    merged_df.rename(columns={"Node_ID_x": "Node_ID", "arfcnValueEUtranDl_x":"arfcnValueEUtranDl"}, inplace=True)
+                    merged_df.rename(columns={"Node_ID_x": "Node_ID", "arfcnValueEUtranDl_x":"arfcnValueEUtranDl", "arfcn_x": "arfcn", "arfcnValueGeranDl_x": "arfcnValueGeranDl"}, inplace=True)
 
                     merged_df["Node_ID"] = merged_df["Node_ID"].apply(
                         lambda x: (
@@ -893,8 +747,7 @@ def get_pre_post_audit(request):
                         )
                     )
 
-                    merged_df.sort_values(by=["Node_ID"], inplace=True)
-
+                    merged_df.sort_values(by=["MO"], inplace=True)
 
                     merged_df.to_excel(writer, sheet_name=sheet_name, index=False)
                     format_excel_sheet(
@@ -907,7 +760,6 @@ def get_pre_post_audit(request):
                     post_freq_relation_df = df.copy()
                     pre_cell_mapping = {row["Pre CellName"]: row["cellId"] for i, row in cell_id_df.iterrows()}
                     mo_cell_mapping = {row["Pre CellName"]: row["Post CellName"] for i, row in cell_id_df.iterrows()}
-                    
                     pre_post_site_mapping = {row["Pre SiteId"]: row["Post SiteId"] for i, row in cell_id_df.iterrows() if row["Post SiteId"] != 'NA'}
                     post_cell_mapping = {row["Post CellName"]: row["cellId"] for i, row in cell_id_df.iterrows()}
                     pre_freq_relation_df.insert(1, "cellId", "")
@@ -917,36 +769,32 @@ def get_pre_post_audit(request):
                     post_freq_relation_df["cellId"] = post_freq_relation_df["MO"].apply(lambda x: post_cell_mapping[x.split(",")[0] if "," in x else x])
                     post_freq_relation_df["lbBnrPolicy"] = post_freq_relation_df["lbBnrPolicy"].apply(lambda x: x.split(" ")[0] if " " in x else x)
 
-                    ########################################## selecting columns with the columns which have same types like: int64 ####################
                     int64_columns = pre_freq_relation_df.select_dtypes(include='int64').columns.tolist()
                     for col in int64_columns:
                         post_freq_relation_df[col] = post_freq_relation_df[col].astype('int64')
-                    ####################################################################################################################################
+                    pre_node_name = cell_id_df['Pre CellName'].apply(lambda x: str(x).split(',')[-1].split('=')[-1].split('_')[4][:-1] if isinstance(x, str) and '=' in x else None).unique()[0]
+                    post_node_name = cell_id_df['Post CellName'].apply(lambda x: str(x).split(',')[-1].split('=')[-1].split('_')[4][:-1] if isinstance(x, str) and '=' in x else None).unique()[0]
 
-                    merged_df = pd.merge(left=pre_freq_relation_df, right=post_freq_relation_df, on=['cellId', 'eutranFrequencyRef'], how='left', suffixes=('_x', '_y'))
-                    ##################################################### selecting columns with float64 to int64 ######################################
+                    pre_freq_relation_df['MO'] = pre_freq_relation_df['MO'].apply(lambda x: str(x).replace(pre_node_name, post_node_name))
+
+                    merged_df = pd.merge(left=pre_freq_relation_df, right=post_freq_relation_df, on=['MO'], how='left', suffixes=('_x', '_y'))
                     float64_to_int64 = merged_df.select_dtypes(include='float64').columns.tolist()
                     for column in float64_to_int64:
-                        merged_df[column] = (pd.to_numeric(merged_df[column], errors='coerce').replace([np.inf, -np.inf], pd.NA).astype('Int64'))
-                    ####################################################################################################################################
-                    # merged_df.drop(columns=['eutranFrequencyRef_x'], inplace=True)
-                    # merged_df.rename(columns={'eutranFrequencyRef_y': "eutranFrequencyRef"}, inplace=True) 
-                    merged_df["MO_y"] = merged_df["MO_y"].fillna(merged_df["MO_x"])
-                    
+                        merged_df[column] = (pd.to_numeric(merged_df[column], errors='coerce').replace([float('inf'), float('-inf')], pd.NA).astype('Int64'))
+                    merged_df["eutranFrequencyRef_y"] = merged_df["eutranFrequencyRef_y"].fillna(merged_df["eutranFrequencyRef_x"])
+                    merged_df.drop(columns=['eutranFrequencyRef_x'], inplace=True)
+                    merged_df.rename(columns={'eutranFrequencyRef_y': "eutranFrequencyRef"}, inplace=True) 
                     merged_df["Node_ID_y"] = merged_df["Node_ID_y"].fillna("Cell is not Found in Post")
                     merged_df["Node_ID_x"] = merged_df["Node_ID_y"]
-                    merged_df["MO_x"] = merged_df["MO_y"]
                     merged_df['duplicates_mask'] = merged_df.duplicated(subset=merged_df.columns.tolist())
-                    merged_df.drop_duplicates(subset='MO_x', inplace=True)
-                    merged_df.drop(columns=["MO_y", "Node_ID_y"], inplace=True)
-                    merged_df.rename(columns={"MO_x": "MO", "Node_ID_x": "Node_ID"}, inplace=True)
+                    merged_df.drop(columns=["Node_ID_y"], inplace=True)
+                    merged_df.rename(columns={"Node_ID_x": "Node_ID"}, inplace=True)
 
                     merged_df.insert(3, "Status", "OK")
                     for col in pre_freq_relation_df.columns:
                         if col not in ["MO","Node_ID","eutranFrequencyRef","cellId",]:
                             pre_col = f"{col}_x"
                             post_col = f"{col}_y" 
-                            
                             merged_df[pre_col] = (merged_df[pre_col].astype(str).str.lower())
                             merged_df[post_col] = (merged_df[post_col].astype(str).str.lower()) 
                             mask = merged_df[pre_col].ne(merged_df[post_col]) 
@@ -958,10 +806,11 @@ def get_pre_post_audit(request):
                                     merged_df.at[idx, pre_col] = f"{pre_value}"
                                 else:
                                     merged_df.at[idx, pre_col] = (f"{pre_value}|{post_value}")
-                                    
-                    for idx, row in merged_df.iterrows():
-                        if row['Node_ID'] == 'Cell is not Found in Post':
-                            merged_df.at[idx, 'Status'] = 'Missing'
+
+                    merged_df["Status"] = merged_df.apply(
+                        lambda row: "Missing" if row["Node_ID"] == "Cell is not Found in Post" else row["Status"],
+                        axis=1
+                    )
 
                     merged_df.sort_values(by=["Node_ID"], inplace=True)
 
@@ -971,36 +820,33 @@ def get_pre_post_audit(request):
                     format_excel_sheet(writer, sheet_name, merged_df, startrow=0, startcol=0)
 
                 elif sheet_name == "CellRelation":
-                    ################################################################ Get eNB IDs from pre and post data ##################################################################
                     pre_endb_id = (all_pre_merged_df.get("enbinfo")["eNBId"].unique().tolist())
                     post_endb_id = all_post_merged_df["enbinfo"]["eNBId"].unique().tolist()
                     pre_endb_id = [str(val) for val in pre_endb_id]
+                    pre_summary_df = all_pre_merged_df["Summary"]
+                    post_summary_df = all_post_merged_df["Summary"]
 
-                    ############################################################### Process pre and post cell relation data ##############################################################
                     pre_freq_cell_relation_df = all_pre_merged_df.get(sheet_name)
                     post_freq_cell_relation_df = df.copy()
 
-                    ############################################################### Convert MO to string and extract eNB ID #############################################################
                     pre_freq_cell_relation_df["MO"] = pre_freq_cell_relation_df["MO"].astype(str)
                     post_freq_cell_relation_df["MO"] = post_freq_cell_relation_df["MO"].astype(str)
 
-                    ################################################################ Extract eNB ID from MO ############################################################################
                     def extract_enb_id(mo: str) -> str:
-                        return str(mo.split("-")[1]) if "-" in mo else mo
+                        try:
+                            return mo.split("-")[1]
+                        except (AttributeError, IndexError):
+                            return None
 
-                    pre_freq_cell_relation_df["mo_enodbid"] = pre_freq_cell_relation_df["MO"].apply(extract_enb_id)
-                    post_freq_cell_relation_df["mo_enodbid"] = (post_freq_cell_relation_df["MO"].apply(extract_enb_id))
+                    pre_freq_cell_relation_df["eNBId"] = pre_freq_cell_relation_df["MO"].apply(extract_enb_id)
+                    post_freq_cell_relation_df["eNBId"] = (post_freq_cell_relation_df["MO"].apply(extract_enb_id))
 
-                    ################################################################# Filter data based on eNB IDs #####################################################################
+                    pre_freq_cell_relation_df = pre_freq_cell_relation_df[pre_freq_cell_relation_df["eNBId"].isin(pre_endb_id)]
+                    post_freq_cell_relation_df = post_freq_cell_relation_df[post_freq_cell_relation_df["eNBId"].isin(post_endb_id)]
 
-                    #pre_freq_cell_relation_df = pre_freq_cell_relation_df[pre_freq_cell_relation_df["mo_enodbid"].isin(pre_endb_id)]
-                    #post_freq_cell_relation_df = post_freq_cell_relation_df[post_freq_cell_relation_df["mo_enodbid"].isin(post_endb_id)]
+                    pre_freq_cell_relation_df.drop(columns=["eNBId"], inplace=True)
+                    post_freq_cell_relation_df.drop(columns=["eNBId"], inplace=True)
 
-                    ################################################################# Remove temporary eNB ID column ###################################################################
-                    #pre_freq_cell_relation_df.drop(columns=["mo_enodbid"], inplace=True)
-                    #post_freq_cell_relation_df.drop(columns=["mo_enodbid"], inplace=True)
-
-                    ################################################################## Convert numeric columns #########################################################################
                     numeric_columns = [
                         "coverageIndicator",
                         "loadBalancing",
@@ -1022,64 +868,50 @@ def get_pre_post_audit(request):
                             col
                         ].apply(convert_to_int)
 
-                    ################################################################### Create cell ID mappings ########################################################################
-                    pre_cell_mapping = {
-                        row["Pre CellName"]: row["cellId"]
-                        for _, row in cell_id_df.iterrows()
-                    }
-                    post_cell_mapping = {
-                        row["Post CellName"]: row["cellId"]
-                        for _, row in cell_id_df.iterrows()
-                    }
+                    def extract_node_name(cell_name):
+                        try:
+                            if isinstance(cell_name, str) and cell_name != 'NA':
+                                return cell_name.split('=')[1].split('_')[4][:-1]
+                        except Exception:
+                            pass
+                        return None
 
-                    #################################################################### Add cell IDs to dataframes ####################################################################
-                    def get_cell_id(mo: str, mapping: dict) -> str:
-                        return mapping.get(mo.split(",")[0], "") if "," in mo else mo
+                    def extract_first_valid(values):
+                        for val in values:
+                            if pd.notna(val) and val != 'NA':
+                                return str(val)
+                        return None
 
-                    pre_freq_cell_relation_df.insert(1, "cellId", "")
-                    pre_freq_cell_relation_df["cellId"] = pre_freq_cell_relation_df[
-                        "MO"
-                    ].apply(lambda x: get_cell_id(x, pre_cell_mapping))
+                    pre_cell_names = post_summary_df['Pre CellName'].unique()
+                    pre_node_name = extract_first_valid([extract_node_name(x) for x in pre_cell_names])
 
-                    post_freq_cell_relation_df.insert(1, "cellId", "")
-                    post_freq_cell_relation_df["cellId"] = post_freq_cell_relation_df[
-                        "MO"
-                    ].apply(lambda x: get_cell_id(x, post_cell_mapping))
+                    post_cell_names = post_summary_df['Post CellName'].unique()
+                    post_node_name = extract_first_valid([extract_node_name(x) for x in post_cell_names])
 
-                    ##################################################################### Merge pre and post data ########################################################################
+                    pre_eNBID = extract_first_valid(post_summary_df['Pre eNBID'].unique())
+                    post_eNBID = extract_first_valid(post_summary_df['Post eNBID'].unique())
+
+                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(lambda x: str(x).replace(f'_{pre_node_name}', f'_{post_node_name}').replace(f'-{pre_eNBID}-', f'-{post_eNBID}-'))
                     merged_df = pd.merge(
                         left=pre_freq_cell_relation_df,
                         right=post_freq_cell_relation_df,
-                        on=["cellId"],
-                        how="left",
-                        suffixes=("_x", "_y"),
-                    )
-
-                    # merged_df = merged_df[merged_df['MO_x'] != 'Missing']
-
-                    merged_df.drop_duplicates(subset=["MO_x"], inplace=True)
-                    # merged_df.columns = [f"{val[0]}_{val[1]}" for val in merged_df.columns]
-
-                    merged_df["MO_y"] = merged_df["MO_y"].fillna(merged_df["MO_x"])
-                    merged_df["MO_x"] = merged_df["MO_y"]
+                        how='left',
+                        on=['MO']
+                    ).drop_duplicates(subset=['MO'])
+                    merged_df['neighborCellRef_y'] = merged_df['neighborCellRef_y'].fillna(merged_df['neighborCellRef_x'])
+                    merged_df['neighborCellRef_x'] = merged_df['neighborCellRef_y']
                     merged_df["Node_ID_y"] = merged_df["Node_ID_y"].fillna(
                         "cell not found in post"
                     )
                     merged_df["Node_ID_x"] = merged_df["Node_ID_y"]
-                    merged_df["neighborCellRef_x"] = merged_df["neighborCellRef_y"]
-                    merged_df.drop(columns=["MO_y", "Node_ID_y"], inplace=True)
+
                     merged_df.rename(
                         columns={
-                            "MO_x": "MO",
                             "Node_ID_x": "Node_ID",
                             "neighborCellRef_x": "neighborCellRef",
                         },
                         inplace=True,
                     )
-
-                    merged_df = merged_df[
-                        merged_df["Node_ID"] != "cell not found in post"
-                    ].copy()
 
                     for col in numeric_columns:
                         merged_df[f"{col}_x"] = pd.to_numeric(
@@ -1088,7 +920,6 @@ def get_pre_post_audit(request):
                         merged_df[f"{col}_x"] = (
                             merged_df[f"{col}_x"].fillna(0).astype(int)
                         )
-                        # merged_df[f'pre_{col}'] = merged_df[f'pre_{col}'].astype(int) if merged_df[f'pre_{col}'] else merged_df[f'pre_{col}']
                         merged_df[f"{col}_y"] = pd.to_numeric(
                             merged_df[f"{col}_y"], errors="coerce"
                         )
@@ -1099,7 +930,7 @@ def get_pre_post_audit(request):
                     merged_df.insert(3, "Status", "OK")
 
                     for col in pre_freq_cell_relation_df.columns:
-                        if col not in ["MO", "Node_ID", "neighborCellRef", "cellId"]:
+                        if col not in ["MO", "Node_ID", "neighborCellRef"]:
                             pre_col = f"{col}_x"
                             post_col = f"{col}_y"
 
@@ -1127,6 +958,10 @@ def get_pre_post_audit(request):
                                         f"{pre_value}|{post_value}"
                                     )
 
+                    merged_df["Status"] = merged_df.apply(
+                        lambda row: "Missing" if row["Node_ID"] == "cell not found in post" else row["Status"],
+                        axis=1
+                    )
                     merged_df.sort_values(by=["Node_ID"], inplace=True)
                     merged_df = merged_df[
                         [
@@ -1145,7 +980,6 @@ def get_pre_post_audit(request):
 
                     merged_df.sort_values(by=["MO", "Node_ID"], inplace=True)
 
-                    #################################################################### Write to Excel ####################################################################################
                     merged_df.to_excel(writer, sheet_name=sheet_name, index=False)
                     format_excel_sheet(
                         writer, sheet_name, merged_df, startrow=0, startcol=0
@@ -1164,11 +998,144 @@ def get_pre_post_audit(request):
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
                     format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0)
 
-    # Generate download URL
-    relative_url = gpl_pre_post_file_path.replace(str(settings.MEDIA_ROOT), "").lstrip(
-        "/"
-    )
-    download_url = request.build_absolute_uri(settings.MEDIA_URL + relative_url)
+    # After writing the Excel file
+    asyncio.run(async_write_excel(gpl_pre_post_file_path, all_post_merged_df, all_pre_merged_df, format_excel_sheet))
+
+    # Now it's safe to read the file
+
+    #-------------------------------------------------------------------- GPL Correction File Script Generation ------------------------------------------------------------------#
+
+    async def async_generate_correction_scripts(session_folder, current_time, post_nodes, gpl_pre_post_file_path):
+        gpl_correction_data_file = pd.ExcelFile(gpl_pre_post_file_path)
+        gpl_correction_data_file_df = await asyncio.to_thread(gpl_correction_data_file.parse, "gpl-para")
+        feature_correctin_data_file_df = await asyncio.to_thread(gpl_correction_data_file.parse, "FeatureState")
+        feature_correctin_data_f_df = feature_correctin_data_file_df[feature_correctin_data_file_df['Feature setting Status'] == 'NOT OK'].copy()
+        eutranFreq_correctin_data_file = await asyncio.to_thread(gpl_correction_data_file.parse, "Eutranfrequency")
+        eutranFreq_correctin_data_file_df = eutranFreq_correctin_data_file[eutranFreq_correctin_data_file['Status'] != 'OK'].copy()
+        eutranFreqRelation_correctin_data_file = await asyncio.to_thread(gpl_correction_data_file.parse, "EutranfreqRelation")
+        eutranFreqRelation_correctin_data_f_df = eutranFreqRelation_correctin_data_file[eutranFreqRelation_correctin_data_file['Status'] != 'OK'].copy()
+        mask = (gpl_correction_data_file_df["Parameter Setting Status"] != "OK") & pd.notna(
+                gpl_correction_data_file_df["Current value"]
+        )
+        correctin_data_file_df = gpl_correction_data_file_df[mask].copy()
+        tasks = []
+        for node_name in post_nodes:
+            gpl_correction_file_path = os.path.join(session_folder, f"{node_name}_GPL_Correction_Script_{current_time}.txt")
+            gpl_correctin_df = correctin_data_file_df[correctin_data_file_df['Node_ID'] == node_name].copy()
+            feature_correctin_df = feature_correctin_data_f_df[feature_correctin_data_f_df['Node_ID'] == node_name].copy()
+            eutranFreqRel_correctin_df = eutranFreq_correctin_data_file_df[eutranFreq_correctin_data_file_df['Node_ID'] == node_name].copy()
+            eutranFreqRelation_correctin_df = eutranFreqRelation_correctin_data_f_df[eutranFreqRelation_correctin_data_f_df['Node_ID'].isin([node_name, 'Cell is not Found in Post'])].copy()
+            print("eutrancell_relation:- \n", eutranFreqRelation_correctin_df)
+            gpl_commands = []
+            gpl_commands.append(f"##################### GPL Parameter Correction Commands {node_name}####################")
+            for _, row in gpl_correctin_df.iterrows():
+                if pd.notna(row.get("Pre-existing Value")) and pd.notna(row.get("MO")):
+                    value = str(row["Pre-existing Value"]).split()[0]
+                    gpl_commands.append(f"set {row['MO']}$ {row['Parameter']} {value}")
+
+            gpl_commands.append(f"##################### LTE Feature Correction Commands {node_name}####################")
+            for _, row in feature_correctin_df.iterrows():
+                if pd.notna(row.get("Pre Existing FeatureState")) and pd.notna(row.get("CXC ID")):
+                    value = int(row["Pre Existing FeatureState"])
+                    gpl_commands.append(f"set {row['CXC ID']}$ featureState {value}")
+            # Use asyncio.to_thread to run blocking IO in thread pool
+            tasks.append(asyncio.to_thread(process_correction_script_generation, gpl_commands, output_file_path=os.path.join(session_folder, gpl_correction_file_path)))
+
+            eutranFreqRel_correctin_df_path = os.path.join(session_folder, f"{node_name}_Relation_Correction_Script_{current_time}.txt")
+            eutran_freq_relation_script = ''
+            for _, row in eutranFreqRel_correctin_df.iterrows():
+                mo = str(row.get('MO', ''))
+                if mo.startswith('GeranNetwork=1,GeranFrequency=') or mo.startswith('ENodeBFunction=1,GeranNetwork=1,GeranFrequency='):
+                    arfcn_val = int(row.get('arfcnValueGeranDl', ''))
+                    eutran_freq_relation_script += GeranFrequency_defination.format(arfcnValueGeranDl=arfcn_val) + "\n"
+                elif mo.startswith('ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency='):
+                    arfcn_val = int(row.get('arfcnValueEUtranDl', ''))
+                    eutran_freq_relation_script += EUtranFrequency_Definition.format(arfcnValueEUtranDl=arfcn_val) + "\n"
+            #tasks.append(asyncio.to_thread(create_freqency_relation_script, eutran_freq_relation_script, output_file_path=eutranFreqRel_correctin_df_path))
+            #--------------------------------------------------------------------- frequency relation script generation ------------------------------------------------------------------#
+            not_ok_freq_relation_df = eutranFreqRelation_correctin_df[eutranFreqRelation_correctin_df['Status'] == 'NOT OK'].copy()
+            missing_freq_df = eutranFreqRelation_correctin_df[eutranFreqRelation_correctin_df['Status'] == 'Missing'].copy()
+            print("first time:- \n",missing_freq_df)
+            not_ok_freq_relation_df.drop(
+                columns=["cellId", "Status", "Node_ID"], inplace=True
+            )
+
+            missing_freq_df.drop(columns=["cellId", "Status", "Node_ID"], inplace=True)
+
+            id_vars = ["MO"]
+            value_vars = [
+                col for col in not_ok_freq_relation_df.columns if col not in id_vars
+            ]
+            not_ok_freq_relation_df = not_ok_freq_relation_df.melt(
+                id_vars=id_vars,
+                value_vars=value_vars,
+                var_name="Relation Parameter",
+                value_name="Value",
+            )
+            not_ok_freq_relation_df.sort_values(by="MO", inplace=True)
+            not_ok_freq_relation_df = not_ok_freq_relation_df[
+                (
+                    not_ok_freq_relation_df["Value"]
+                    .astype(str)
+                    .str.contains(r"\|", regex=True, na=False)
+                )
+            ]
+            not_ok_freq_relation_df["Value"] = not_ok_freq_relation_df["Value"].apply(
+                lambda x: str(x).split("|")[0] if "|" in str(x) else x
+            )
+            print(not_ok_freq_relation_df)
+            id_vars = ["MO"]
+            value_vars = [
+                col
+                for col in missing_freq_df.columns
+                if col not in id_vars and col not in ["eutranFrequencyRef", "Node_ID"]
+            ]
+            print(missing_freq_df)
+            missing_freq_df = missing_freq_df.melt(
+                id_vars=id_vars,
+                value_vars=value_vars,
+                var_name="Relation Parameter",
+                value_name="Value",
+            )
+
+            missing_freq_df = missing_freq_df[~pd.isna(missing_freq_df["MO"])]
+
+            missing_freq_df.drop_duplicates(
+                subset=["MO", "Relation Parameter"], inplace=True
+            )
+            setting_eutranRelation = []
+            setting_eutranRelation.append(f"##################### Eutran Frequency Relation Correction Commands {node_name} ####################")
+            for _, row in not_ok_freq_relation_df.iterrows():
+                if pd.notna(row.get("MO")):
+                    mo = str(row["MO"])
+                    relation_parameter = row["Relation Parameter"]
+                    value = str(row["Value"])
+                    setting_eutranRelation.append(f"set {mo}$ {relation_parameter} {value}")
+            setting_eutranRelation.append(f"##################### Creating Eutran Frequency Relation Missing Commands post node: {node_name} ####################")
+            def generate_crn_section(df: pd.DataFrame):
+                mos_content = []
+                if not df.empty:
+                    df = df.dropna(subset=["MO", "Relation Parameter", "Value"])
+                    for mo, group in df.groupby("MO"):
+                        print(mo)
+                        mos_content.append(f"\ncrn {mo}")
+                        for _, row in group.iterrows():
+                            mos_content.append(
+                                f"{row['Relation Parameter']} {row['Value']}"
+                            )
+                        mos_content.append("end")
+                return mos_content
+            mos_content = generate_crn_section(missing_freq_df)
+            setting_eutranRelation.extend(mos_content)
+            tasks.append(asyncio.to_thread(create_freqency_relation_script, eutran_freq_relation_script,setting_eutranRelation, output_file_path=eutranFreqRel_correctin_df_path))    
+        await asyncio.gather(*tasks)
+
+    # Usage in your view (example, must be called from an async context):
+    asyncio.run(async_generate_correction_scripts(session_folder, current_time, post_nodes, gpl_pre_post_file_path))
+    #------------------------------------------------------------------------- Generate download URL -----------------------------------------------------------------------------#
+    relative_url = gpl_pre_post_file_path.replace(str(settings.MEDIA_ROOT), "").lstrip("/\\")
+    relative_url = relative_url.replace("\\", "/")
+    download_url = request.build_absolute_uri(settings.MEDIA_URL.rstrip('/') + '/' + relative_url)
 
     # Return success response
     return Response(
