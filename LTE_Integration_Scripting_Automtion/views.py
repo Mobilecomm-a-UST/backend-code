@@ -9,6 +9,11 @@ import shutil
 import socket
 import os
 import json
+from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
+import pandas as pd
+import stat
+from django.conf import settings
+import zipfile
 from LTE_Integration_Scripting_Automtion.circles.KK.KK_INTEGRATION_SCRIPT import (
     kk_GPL_LMS_script,
     kk_GPS_MMS_script,
@@ -30,7 +35,8 @@ from LTE_Integration_Scripting_Automtion.universal_SCRIPTS.UNIVERSAL_SCRIPTS imp
     RRU_4412_4418_4427_4471_4X4, 
     RRU_6626_6X6, RRU_8863_8X8, 
     RRU_5G_CREATION,
-    RBSSummary_script
+    RBSSummary_script,
+    AIR_5G_GENERATION_SCRIPT
 )
 from LTE_Integration_Scripting_Automtion.circles.TN.TN_INTEGRATION_SCRIPT import (
     TN_02_IPV6creationforanchor, 
@@ -51,7 +57,7 @@ from LTE_Integration_Scripting_Automtion.circles.TN.TN_COMISSIONING_SCRIPT impor
 )
 
 from LTE_Integration_Scripting_Automtion.circles.RJ.RJ_INTEGRATION_SCRIPT import (
-    RJ_Route_4G_GPL_LMS, RJ_TN_RN_GPS_MME
+    RJ_Route_4G_GPL_LMS, RJ_TN_RN_GPS_MME, CISCO_MME_SCRIPT, NOKIA_MME_SCRIPT
 )
 from LTE_Integration_Scripting_Automtion.circles.RJ.RJ_COMISSION_SCRIPT import (
     SiteBasic_ipv4_6303,
@@ -75,11 +81,7 @@ from LTE_Integration_Scripting_Automtion.circles.RJ.RJ_COMISSION_SCRIPT import (
     SiteEquipment_R503
 
 )
-from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
-import pandas as pd
-import stat
-from django.conf import settings
-import zipfile
+
 
 ############################################################## END IMPORT STATEMENTS ############################################################################################
 
@@ -171,6 +173,62 @@ def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
             
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+####################################################################### MAKING THE COLUMNS VALIDATER #####################################################
+
+def column_validater(Integration_rf_data: pd.ExcelFile, template_df: pd.ExcelFile) -> None:
+    """
+    Validates that each sheet in Integration_rf_data contains all columns from the corresponding sheet in template_df.
+    Shows only missing columns in the error message (columns expected but not found).
+    Raises ValueError if any expected column is missing.
+    """
+    integration_sheet_names = Integration_rf_data.sheet_names
+    template_sheet_names = template_df.sheet_names
+
+    ############################################# Check for missing sheets ######################################################
+    missing_sheets = set(integration_sheet_names) - set(template_sheet_names)
+    if missing_sheets:
+        raise ValueError(f"Invalid template sheet name(s): {', '.join(missing_sheets)}")
+
+    def normalize_columns(columns):
+        return [str(col).strip().lower() for col in columns]
+
+    columns_status = {}
+    for sheet in integration_sheet_names:
+        expected_cols = normalize_columns(template_df.parse(sheet).columns)
+        integration_cols = normalize_columns(Integration_rf_data.parse(sheet).columns)
+
+        ##################################################### Identify missing columns ######################################################
+        missing_columns = list(set(expected_cols) - set(integration_cols))
+        found_columns = list(set(integration_cols) - set(expected_cols))
+
+        if missing_columns:
+            columns_status[sheet] = {
+                "missing": missing_columns,
+                "found": found_columns
+            }
+
+    if columns_status:
+        error_messages = []
+        for sheet, status in columns_status.items():
+            error_messages.append({
+                "sheet": sheet,
+                "missing_columns": status["missing"],
+                "found_columns": status["found"],  # shows all expected columns
+            })
+        raise ValueError(error_messages)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @api_view(["GET", "POST"])
 def generate_integration_script(request):
@@ -195,18 +253,28 @@ def generate_integration_script(request):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
         try:
             integration_file = pd.ExcelFile(integration_input_file)
             lte_df = integration_file.parse("LTE-CELL")
             rru_hw_df = integration_file.parse("Radio_HW")
             site_basic_df = integration_file.parse("Site_Basic")
             nr_cell_df = integration_file.parse("NR-CELL")
+
+            template_file = pd.ExcelFile(os.path.join(MEDIA_ROOT, "project_templates", "LTE_Integration_file_tmplate", "LTE_Integration_scriptV1.0_file.xlsx"))
+            column_validater(integration_file, template_file)
+
         except Exception as e:
             return Response(
-                {"status": "ERROR", "message": f"Failed to parse Excel file: {str(e)}"},
+                {"status": "ERROR", "message": f"{str(e)}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+    
+        except ValueError as ve:
+            return Response(
+                {"status": "ERROR", "message": str(ve)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 
         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
         #-        -                    -          - ----------------------- defining the output path -------------------- -           -                 -          
@@ -222,6 +290,8 @@ def generate_integration_script(request):
         ################################################ Define required columns for fdd and tdd also ###############################################################
         lte_df["earfcnul"] = lte_df["earfcnul"].astype("Int64")
         unique_nodes = lte_df["eNodeBName"].dropna().unique()
+
+        site_id_name = lte_df["eUtranCellFDDId"].apply(lambda x: x.split("_")[4][:-1]).unique()[0]
 
         for node_name in unique_nodes:
             current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
@@ -328,7 +398,7 @@ def generate_integration_script(request):
                             cellLocalId=row["cellLocalId"],
                             nRPCI=row["nRPCI"],
                             nRTAC=row["nRTAC"],
-                            rachRootSequence = row["rachRootSequence"],  ############################################################################ Added rachRootSequence
+                            rachRootSequence = int(row["rachRootSequence"]),  ############################################################################ Added rachRootSequence
                             ssbFrequency = row['ssbFrequency']
 
                         )
@@ -492,6 +562,17 @@ def generate_integration_script(request):
                             RiPort_Radio=row["RiPort_Radio"],
                             sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
                         )
+                    elif radio_type.startswith("AIR"):
+                        site_equipment_text += AIR_5G_GENERATION_SCRIPT.format(
+                            Radio_UnitId=row["Radio_UnitId"],
+                            fieldReplaceableUnitId=site_basic_df_N[
+                                "fieldReplaceableUnitId"
+                            ].values[0],
+                            RiPort_BB=row["RiPort_BB"],
+                            RiPort_Radio=row["RiPort_Radio"],
+                            sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
+                            riLinkId = row['riLinkId'],  # [ 'Added riLinkId for AIR 5G generation script' ]
+                        )
 
                 with open(rru_hw_path, "a", encoding='utf-8') as file:
                     file.write(
@@ -570,7 +651,7 @@ def generate_integration_script(request):
                         nRPCI=row["nRPCI"],
                         nRTAC=row["nRTAC"],
                         ssbFrequency=row["ssbFrequency"],
-                        rachRootSequence = row['rachRootSequence']  ############################################################################ Added rachRootSequence']
+                        rachRootSequence = row['rachRootSequence']  ############################################################################ Added rachRootSequence ################################################
                     )
 
                     gnbcucp_fuction_element += TN_GNBCUCPFUNCTION_ELEMENT.format(
@@ -786,9 +867,13 @@ def generate_integration_script(request):
 
                 RJ_TN_RN_GPS_MME_path = os.path.join(
                      create_script_paths(base_path_url, node_name)['lte'], f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
-                 )
+                )
+
+                site_basic = site_basic_df[site_basic_df['eNodeBName'] == node_name].copy()
+                tnPortId = site_basic['tnPortId'].values[0]
+                mme_type = NOKIA_MME_SCRIPT if temp_lte_df['MME'].unique()[0].startswith("Nokia") else CISCO_MME_SCRIPT
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding='utf-8') as file:
-                     file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, eNBId = enbid) + "\n")
+                     file.write(RJ_TN_RN_GPS_MME.format(eNodeBName = enodebname, tnPortId = tnPortId,eNBId = enbid)+mme_type + "\n")
 
             #--------------------------------------------------------------------------------------- 5G Cell Scripts ----------------------------------------------------------------#
             # Not Yet Implemented RJ Circle-specific 5G Script Generation Logic
@@ -851,7 +936,7 @@ def generate_integration_script(request):
                     print(oam_ip)
                     ip_type = ip_type(oam_ip)
 
-                    #if ip_type in ["IPv4", "IPv6"]:git 
+                    ############################################################ if ip_type in ["IPv4", "IPv6"]:git #####################################################################
                     print("inside ip tracker.....")
                     print(ip_type)
                     bbu_script_mapping_ipv4 = {
@@ -999,24 +1084,23 @@ def generate_integration_script(request):
                         )
                     )
 
-            #####################################################################################################################################################
-
-            # Add RJ specific script generation logic here if needed
+        #####################################################################################################################################################
+        # Add RJ specific script generation logic here if needed
         ########################################################## MAKING THE ZIP FILE #############################################################
-        folder_path = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
+        folder_path = os.path.join(MEDIA_ROOT,"LTE_INTEGRATION_CONFIG_FILES")
         
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        zip_filename = f"LTE_INTEGRATION_CONFIG_FILES_{circle}_Integration_Scripts_{timestamp}.zip"
-        zip_output_path = os.path.join(MEDIA_ROOT, zip_filename)  # NOT inside folder_path
+        zip_filename = f"{site_id_name}_LTE_Integration_Scripts_{timestamp}.zip"
+        zip_output_path = os.path.join(MEDIA_ROOT,zip_filename)  
 
         ################################################ Clean up old zips (optional) ######################################################################
-        for file in os.listdir(MEDIA_ROOT):
-            if file.endswith(".zip"):
-                os.remove(os.path.join(MEDIA_ROOT, file))
+#        for file in os.listdir(MEDIA_ROOT):
+#            if file.endswith(".zip"):
+#               os.remove(os.path.join(MEDIA_ROOT, file))
 
 
 
-        # Create ZIP archive
+        ##################################################################### Create ZIP archive #############################################################
         zip_folder(folder_path, zip_output_path)
 
         ##################################################### Create download link relative to MEDIA_URL ####################################################
@@ -1026,6 +1110,9 @@ def generate_integration_script(request):
         
         ############################################################################################################################################
         return Response(
-            {"status": "OK", "message": "Integration scripts generated successfully.", 'download_link': download_link},
+            {"status": True, "message": "Integration scripts generated successfully.", 'download_link': download_link},
             status=status.HTTP_200_OK,
         )
+
+
+

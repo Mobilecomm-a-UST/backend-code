@@ -627,6 +627,8 @@ def get_table_data(request):
                 summary_df.to_excel(writer, sheet_name="Summary", index=False)
                 format_excel_sheet(writer, "Summary", summary_df)
 
+
+
         return Response(
             {
                 "message": f"{services} data is sucesfully feteched...",
