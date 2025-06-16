@@ -422,12 +422,12 @@ def soft_at_checkpoint(request):
                   file_content
             )
             print("FeatureState_CXC4011958_df.columns:- ",FeatureState_CXC4011958_df.columns)
-            # if not FeatureState_CXC4011958_df.empty:
-            #       expected_cols = FeatureState_CXC4011958_df.columns.tolist()
-            #       if len(expected_cols) >= 2:
-            #             FeatureState_CXC4011958_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
+            if not FeatureState_CXC4011958_df.empty:
+                  expected_cols = FeatureState_CXC4011958_df.columns.tolist()
+                  if len(expected_cols) >= 2:
+                        FeatureState_CXC4011958_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
 
-            FeatureState_CXC4011958_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011958_df.columns.tolist()[2:]]
+            # FeatureState_CXC4011958_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011958_df.columns.tolist()[2:]]
             
 
             FeatureState_CXC4011808_df = explode_data_from_log(
@@ -437,12 +437,12 @@ def soft_at_checkpoint(request):
                   r'^Total:\s\d+',
                   file_content
             )
-            # if not FeatureState_CXC4011958_df.empty:
-            #       expected_cols = FeatureState_CXC4011958_df.columns.tolist()
-            #       if len(expected_cols) >= 2:
-            #             FeatureState_CXC4011958_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
+            if not FeatureState_CXC4011808_df.empty:
+                  expected_cols = FeatureState_CXC4011808_df.columns.tolist()
+                  if len(expected_cols) >= 2:
+                        FeatureState_CXC4011808_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
 #
-            FeatureState_CXC4011808_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011808_df.columns.tolist()[2:]]
+            # FeatureState_CXC4011808_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011808_df.columns.tolist()[2:]]
 
 
             FeatureState_CXC4011803_df = explode_data_from_log(
@@ -467,12 +467,12 @@ def soft_at_checkpoint(request):
                   r'^Total:\s',
                   file_content
             )
-            # if not FeatureState_CXC4011958_df.empty:
-            #       expected_cols = FeatureState_CXC4011958_df.columns.tolist()
-            #       if len(expected_cols) >= 2:
-            #             FeatureState_CXC4011958_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
+            if not FeatureState_CXC4011983_df.empty:
+                  expected_cols = FeatureState_CXC4011983_df.columns.tolist()
+                  if len(expected_cols) >= 2:
+                        FeatureState_CXC4011983_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
 
-            FeatureState_CXC4011983_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011983_df.columns.tolist()[2:]]
+            # FeatureState_CXC4011983_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011983_df.columns.tolist()[2:]]
 
 
             FeatureState_CXC4011378_df = explode_data_from_log(
@@ -482,12 +482,12 @@ def soft_at_checkpoint(request):
                   r'^Total:\s\d+',
                   file_content
             )
-            # if not FeatureState_CXC4011958_df.empty:
-            #       expected_cols = FeatureState_CXC4011958_df.columns.tolist()
-            #       if len(expected_cols) >= 2:
-            #             FeatureState_CXC4011958_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
+            if not FeatureState_CXC4011378_df.empty:
+                  expected_cols = FeatureState_CXC4011378_df.columns.tolist()
+                  if len(expected_cols) >= 2:
+                        FeatureState_CXC4011378_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
 
-            FeatureState_CXC4011378_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011378_df.columns.tolist()[2:]]
+            # FeatureState_CXC4011378_df.columns = ['MO', 'Attribute', *FeatureState_CXC4011378_df.columns.tolist()[2:]]
 
 
             stz_df = explode_data_from_log(
@@ -1086,36 +1086,6 @@ def soft_at_checkpoint(request):
                               # template_df.loc[idx + 1, "Site_ID"] = site_id
                               template_df.loc[idx + 1, "Remark "] = 'Missing'
                               template_df.loc[idx + 1, "Checkpoint"] = f"{sheet_name}_arfcnDL"
-
-
-                  # elif sheet_name == "Stz":
-                  #       df = xls.parse(sheet_name).copy() 
-                  #       if required_columns_present(df, ["tac","arfcnDL","Node_ID"]):
-                  #       # TAC Check
-                  #             df['tac'] = df['tac'].astype(str).str.strip()
-                  #             tac_status = "OK" if df['tac'].nunique() == 1 else "NOT OK"
-                  #             template_df.loc[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
-                  #             template_df.loc[idx, 'Remark '] = tac_status
-                  #             template_df.loc[idx, 'Checkpoint'] = f"{sheet_name}_tac"
-                  #             # ARFCNDL Check
-                  #             df['arfcnDL'] = df['arfcnDL'].astype(str).str.strip()
-                  #             df['Tech'] = df['LTECell'].str.extract(r'(F\d+|T\d+)', expand=False)
-                  #             ok_status_dict = df.groupby('Tech').apply(
-                  #             lambda x: "OK" if x['arfcnDL'].nunique() == 1 else "NOT OK"
-                  #             ).to_dict()
-
-                  #             for tech, status in ok_status_dict.items():
-                  #                   print(f"Tech: {tech}, Status: {status}")
-                  #                   arfcn_status = "OK" if all(status == 'OK' for status in ok_status_dict.values()) else "NOT OK"
-                  #                   print(f"ARFCNDL Status: {arfcn_status}")
-                  #                   template_df.loc[idx+1, 'Site_ID'] = df['Node_ID'].unique()[0]
-                  #                   template_df.loc[idx+1, 'Remark '] = arfcn_status
-                  #                   template_df.loc[idx+1 , 'Checkpoint'] = f"{sheet_name}_arfcnDL"
-                  #       else:
-                  #             # Sheet not found
-                  #             # template_df.at[idx, 'Site_ID'] = df['Node_ID'].unique()[0]
-                  #             template_df.at[idx + 1, 'Remark '] = 'Missing'
-                  #             template_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
                   
                   elif sheet_name == "St alarmport":
                         df = xls.parse(sheet_name).copy()
@@ -1151,8 +1121,19 @@ def soft_at_checkpoint(request):
                   format_excel_sheet(writer, "Sheet1", template_df)
 
       ############################################# MAkING THE ZIP FILE #########################################################
+            import glob
+
+            # Remove old zip files
+            for old_zip in glob.glob(os.path.join(base_media_url, "OUTPUT_*.zip")):
+                  try:
+                        os.remove(old_zip)
+                        print(f"Deleted old zip: {old_zip}")
+                  except Exception as e:
+                        print(f"Failed to delete {old_zip}: {e}")
+
+
       timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-      zip_filename = os.path.join(base_media_url, f"OUTPUT_{timestamp}.zip")
+      zip_filename = os.path.join(base_media_url, f"CHECKLIST_OUTPUT_{timestamp}.zip")
       # Create zip file with all Excel files
       with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
             logs_excel_folder = os.path.join(base_media_url, "OUTPUT")
