@@ -5,9 +5,9 @@ from .models import Daily_4G_KPI,AlarmNotification,Tantitive_Counters_24_Hours
 from mailapp.tasks import send_email
 
 ############################################### for alarm dump data missing ############################################################
-alarmdump_to_address ='shalini.mukeshkumar@ust.com;varun.sharma@ust.com;sagar.devswaroop@ust.com;gaurav.kanwalsingh@ust.com'
+alarmdump_to_address =''
 # alarmdump_to_address = 'nishant.verma@ust.com'
-alarmdump_cc_mails='mohit.batra@ust.com;nishant.verma@ust.com;nilesh.jain@ust.com;saurabh.rathore@ust.com'
+alarmdump_cc_mails=""
 # alarmdump_cc_mails='nishant.verma@ust.com'
 alarmdump_subject='RCA Genie | Alarm Dump Data Missing for Daily RCA Generation'
 
@@ -63,9 +63,9 @@ def alarmdump_schedule_reminder_email():
 
 
 ################################# for 4G KPI data missing ############################################################
-kpi_4g_to_address ='dibyak.parida@mcpsinc.com;nilesh.jain@ust.com'
+kpi_4g_to_address =''
 # kpi_4g_to_address = 'nishant.verma@ust.com'
-kpi_4g_cc_mails='mohit.batra@ust.com;nishant.verma@ust.com;saurabh.rathore@ust.com'
+kpi_4g_cc_mails=''
 # kpi_4g_cc_mails='nishant.verma@ust.com'
 
 kpi_4g_subject='RCA Genie | 24hrs 4G KPI Data Missing for Daily RCA Generation'
@@ -125,9 +125,9 @@ def KPI_4G_schedule_reminder_email():
 
 ################################################# for Tantitive Counters data missing ############################################################
 
-TantitiveCounter_to_address ='nilesh.jain@ust.com;dibyak.parida@mcpsinc.com'
+TantitiveCounter_to_address =''
 # TantitiveCounter_to_address = 'nishant.verma@ust.com'  
-TantitiveCounter_cc_mails='mohit.batra@ust.com;nishant.verma@ust.com;saurabh.rathore@ust.com'
+TantitiveCounter_cc_mails=''
 # TantitiveCounter_cc_mails='nishant.verma@ust.com'
 TantitiveCounter_subject='RCA Genie | 24hrs Tantitive Counters Data Missing for Daily RCA Generation'
 
