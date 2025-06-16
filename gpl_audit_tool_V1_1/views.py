@@ -1,4 +1,5 @@
 from gettext import GNUTranslations
+from optparse import Values
 import os
 import re
 from csv import excel
@@ -20,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 from django.conf import settings
 from gpl_audit_tool_V1_1.process_scripts import process_correction_script_generation, create_freqency_relation_script
-from gpl_audit_tool_V1_1.GPL_FREQ_REL_SCRIPTS import EUtranFrequency_Definition, GeranFrequency_defination
+from gpl_audit_tool_V1_1.GPL_FREQ_REL_SCRIPTS import EUtranFrequency_Definition, GeranFrequency_defination, Eutran_Freq_relation_creation_script
 
 
 def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
@@ -235,8 +236,13 @@ def extract_tables(extractor, result):
                     ignore_index=False,
                     keys=["left", "right"],
                 )
+
                 merged_df.columns = merged_df.columns.map(
                     lambda x: f"{x[0]}_{x[1]}" if isinstance(x, tuple) else x
+                )
+                print(merged_df.columns)
+                merged_df.drop(
+                    columns = ['right_Node_ID'], inplace=True
                 )
             dataframes[key] = merged_df
     return dataframes
@@ -823,7 +829,6 @@ def get_pre_post_audit(request):
                     pre_endb_id = (all_pre_merged_df.get("enbinfo")["eNBId"].unique().tolist())
                     post_endb_id = all_post_merged_df["enbinfo"]["eNBId"].unique().tolist()
                     pre_endb_id = [str(val) for val in pre_endb_id]
-                    pre_summary_df = all_pre_merged_df["Summary"]
                     post_summary_df = all_post_merged_df["Summary"]
 
                     pre_freq_cell_relation_df = all_pre_merged_df.get(sheet_name)
@@ -847,6 +852,7 @@ def get_pre_post_audit(request):
                     pre_freq_cell_relation_df.drop(columns=["eNBId"], inplace=True)
                     post_freq_cell_relation_df.drop(columns=["eNBId"], inplace=True)
 
+
                     numeric_columns = [
                         "coverageIndicator",
                         "loadBalancing",
@@ -855,10 +861,13 @@ def get_pre_post_audit(request):
                         "sleepModeCovCellCandidate",
                     ]
 
+
                     def convert_to_int(value):
                         return int(
                             str(value).split(" ")[0] if " " in str(value) else value
                         )
+              
+
 
                     for col in numeric_columns:
                         pre_freq_cell_relation_df[col] = pre_freq_cell_relation_df[
@@ -888,10 +897,22 @@ def get_pre_post_audit(request):
                     post_cell_names = post_summary_df['Post CellName'].unique()
                     post_node_name = extract_first_valid([extract_node_name(x) for x in post_cell_names])
 
-                    pre_eNBID = extract_first_valid(post_summary_df['Pre eNBID'].unique())
-                    post_eNBID = extract_first_valid(post_summary_df['Post eNBID'].unique())
+                    pre_eNBID = post_summary_df['Pre eNBID'].unique().tolist()
+                    post_eNBID = post_summary_df['Post eNBID'].unique().tolist()
 
-                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(lambda x: str(x).replace(f'_{pre_node_name}', f'_{post_node_name}').replace(f'-{pre_eNBID}-', f'-{post_eNBID}-'))
+                    def replace_all_enbid(mo):
+                        mo_str = str(mo)
+                        for pre, post in zip(pre_eNBID, post_eNBID):
+                            mo_str = mo_str.replace(f'-{pre}-', f'-{post}-')
+                        return mo_str
+
+                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(
+                        lambda x: str(x).replace(f'_{pre_node_name}', f'_{post_node_name}')
+                    )
+                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(replace_all_enbid)
+                    
+                    
+                    
                     merged_df = pd.merge(
                         left=pre_freq_cell_relation_df,
                         right=post_freq_cell_relation_df,
@@ -949,10 +970,10 @@ def get_pre_post_audit(request):
                                 post_value = merged_df.at[idx, post_col]
 
                                 if pd.isna(post_value) or post_value in [
-                                    "nan",
+                                    "nan"
                                 ]:
                                     merged_df.at[idx, pre_col] = f"{pre_value}"
-                                    merged_df.at[idx, 'Status'] = "Missing"
+                                   
                                 else:
                                     merged_df.at[idx, pre_col] = (
                                         f"{pre_value}|{post_value}"
@@ -962,6 +983,7 @@ def get_pre_post_audit(request):
                         lambda row: "Missing" if row["Node_ID"] == "cell not found in post" else row["Status"],
                         axis=1
                     )
+                    
                     merged_df.sort_values(by=["Node_ID"], inplace=True)
                     merged_df = merged_df[
                         [
@@ -977,6 +999,8 @@ def get_pre_post_audit(request):
                         },
                         inplace=True,
                     )
+                    for col in numeric_columns:
+                        merged_df[col] = merged_df[col].apply(lambda x: int(str(x).split('|')[0]) if '|' in str(x) and str(x).split('|')[0].isdigit() else int(x) if str(x).isdigit() else x)
 
                     merged_df.sort_values(by=["MO", "Node_ID"], inplace=True)
 
@@ -987,6 +1011,12 @@ def get_pre_post_audit(request):
 
                 else:
                     if sheet_name == "cell_data":
+                        df.rename(
+                            columns={
+                                'right_MO' : 'right_SectorCarrierID',
+                                'right_sectorFunctionRef' : 'right_SectorId'
+                            }, inplace=True
+                        )
                         df.columns = [
                             (
                                 col.replace("left_", "")
@@ -995,6 +1025,30 @@ def get_pre_post_audit(request):
                             )
                             for col in df.columns
                         ]
+
+                        ############################################################################ Select relevant columns ###########################################################
+                        df = df[
+                            [
+                                'Node_ID', 'MO', 'administrativeState', 'cellId', 'cellSubscriptionCapacity','channelBandwidth', 'dlChannelBandwidth', 'earfcn', 'earfcndl', 'earfcnul',
+                             
+                                'freqBand', 'noOfPucchSrUsers', 'operationalState', 'physicalLayerCellId','physicalLayerCellIdGroup', 'physicalLayerSubCellId', 'primaryPlmnReserved',
+                             
+                                'rachRootSequence', 'tac', 'ulChannelBandwidth', 'userLabel', 'SectorId','SectorCarrierID', 'configuredMaxTxPower', 'noOfRxAntennas', 'noOfTxAntennas'
+                            ]
+                        ]
+
+                        ########################################################################## Ensure string type and handle NaN values #################################################
+                        columns_to_convert = ['dlChannelBandwidth', 'channelBandwidth', 'earfcndl', 'earfcn']
+                        for col in columns_to_convert:
+                            df[col] = df[col].fillna('').astype(str)
+
+                        ################################################################################# Perform string concatenation ########################################################
+                        df['dlChannelBandwidth'] = df['dlChannelBandwidth'] + df['channelBandwidth']
+                        df['earfcndl'] = df['earfcndl'] + df['earfcn']
+                        df.replace('nan', '', inplace=True)
+                        df.replace(pd.NA, '', inplace=True)
+
+                        df.drop(columns = ['channelBandwidth', 'earfcn'], inplace=True)
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
                     format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0)
 
@@ -1014,6 +1068,9 @@ def get_pre_post_audit(request):
         eutranFreq_correctin_data_file_df = eutranFreq_correctin_data_file[eutranFreq_correctin_data_file['Status'] != 'OK'].copy()
         eutranFreqRelation_correctin_data_file = await asyncio.to_thread(gpl_correction_data_file.parse, "EutranfreqRelation")
         eutranFreqRelation_correctin_data_f_df = eutranFreqRelation_correctin_data_file[eutranFreqRelation_correctin_data_file['Status'] != 'OK'].copy()
+        eutranFreqRelation_cellRelation_file = await asyncio.to_thread(gpl_correction_data_file.parse, "CellRelation")
+        print('eutranFreqRelation_cellRelation_file:- \n',eutranFreqRelation_cellRelation_file)
+        eutranFreqRelation_cellRelation_file = eutranFreqRelation_cellRelation_file[eutranFreqRelation_cellRelation_file['Status'] != 'OK'].copy()
         mask = (gpl_correction_data_file_df["Parameter Setting Status"] != "OK") & pd.notna(
                 gpl_correction_data_file_df["Current value"]
         )
@@ -1025,7 +1082,9 @@ def get_pre_post_audit(request):
             feature_correctin_df = feature_correctin_data_f_df[feature_correctin_data_f_df['Node_ID'] == node_name].copy()
             eutranFreqRel_correctin_df = eutranFreq_correctin_data_file_df[eutranFreq_correctin_data_file_df['Node_ID'] == node_name].copy()
             eutranFreqRelation_correctin_df = eutranFreqRelation_correctin_data_f_df[eutranFreqRelation_correctin_data_f_df['Node_ID'].isin([node_name, 'Cell is not Found in Post'])].copy()
-            print("eutrancell_relation:- \n", eutranFreqRelation_correctin_df)
+            eutranFreqRelationCellRelation_df = eutranFreqRelation_cellRelation_file[eutranFreqRelation_cellRelation_file['Node_ID'].isin([node_name, 'Cell is not Found in Post'])].copy()
+           
+            print("eutrancell_relation:- \n", eutranFreqRelationCellRelation_df)
             gpl_commands = []
             gpl_commands.append(f"##################### GPL Parameter Correction Commands {node_name}####################")
             for _, row in gpl_correctin_df.iterrows():
@@ -1042,6 +1101,19 @@ def get_pre_post_audit(request):
             tasks.append(asyncio.to_thread(process_correction_script_generation, gpl_commands, output_file_path=os.path.join(session_folder, gpl_correction_file_path)))
 
             eutranFreqRel_correctin_df_path = os.path.join(session_folder, f"{node_name}_Relation_Correction_Script_{current_time}.txt")
+
+            #--------------------------------------------------------------------------------------- cell relation mapping with freq ----------------------------------------------------------------#
+            cell_id_df = gpl_correction_data_file.parse('cell_data')
+            
+            freq_rel_dict = (
+                cell_id_df.groupby('earfcndl')['MO'].apply(list).to_dict()
+            )
+            freq_mo_names = []
+            for key, value in freq_rel_dict.items():
+                freq_mo_names.extend(value)
+
+            print(freq_mo_names)
+            #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
             eutran_freq_relation_script = ''
             for _, row in eutranFreqRel_correctin_df.iterrows():
                 mo = str(row.get('MO', ''))
@@ -1051,16 +1123,23 @@ def get_pre_post_audit(request):
                 elif mo.startswith('ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency='):
                     arfcn_val = int(row.get('arfcnValueEUtranDl', ''))
                     eutran_freq_relation_script += EUtranFrequency_Definition.format(arfcnValueEUtranDl=arfcn_val) + "\n"
+                    #eutran_freq_relation_lines = ''
+                    #for cell_name in freq_mo_names:
+                    #    eutran_freq_relation_lines += Eutran_Freq_relation_creation_script.format(
+                    #        EUtranCellName = cell_name,
+                    #        arfcnValueEUtranDl = arfcn_val,
+                    #
+                    #    )
             #tasks.append(asyncio.to_thread(create_freqency_relation_script, eutran_freq_relation_script, output_file_path=eutranFreqRel_correctin_df_path))
             #--------------------------------------------------------------------- frequency relation script generation ------------------------------------------------------------------#
             not_ok_freq_relation_df = eutranFreqRelation_correctin_df[eutranFreqRelation_correctin_df['Status'] == 'NOT OK'].copy()
             missing_freq_df = eutranFreqRelation_correctin_df[eutranFreqRelation_correctin_df['Status'] == 'Missing'].copy()
             print("first time:- \n",missing_freq_df)
             not_ok_freq_relation_df.drop(
-                columns=["cellId", "Status", "Node_ID"], inplace=True
+                columns=["cellId", "Status", "Node_ID", 'duplicates_mask'], inplace=True
             )
 
-            missing_freq_df.drop(columns=["cellId", "Status", "Node_ID"], inplace=True)
+            missing_freq_df.drop(columns=["cellId", "Status", "Node_ID", 'duplicates_mask'], inplace=True)
 
             id_vars = ["MO"]
             value_vars = [
@@ -1103,6 +1182,7 @@ def get_pre_post_audit(request):
             missing_freq_df.drop_duplicates(
                 subset=["MO", "Relation Parameter"], inplace=True
             )
+
             setting_eutranRelation = []
             setting_eutranRelation.append(f"##################### Eutran Frequency Relation Correction Commands {node_name} ####################")
             for _, row in not_ok_freq_relation_df.iterrows():
@@ -1127,6 +1207,56 @@ def get_pre_post_audit(request):
                 return mos_content
             mos_content = generate_crn_section(missing_freq_df)
             setting_eutranRelation.extend(mos_content)
+            setting_eutranRelation.append(f'######################################################## Cell Relation {node_name} ####################################################')
+            #---------------------------------------------------------------------------------------------- CELL RELATION -------------------------------------------------------------------------------#
+            not_ok_cell_relation = eutranFreqRelationCellRelation_df[eutranFreqRelationCellRelation_df['Status'] == 'NOT OK'].copy()
+            #***********************************************
+            missing_cell_relation_df = eutranFreqRelationCellRelation_df[eutranFreqRelationCellRelation_df['Status'] == 'Missing'].copy()
+            not_ok_cell_relation.drop(
+                columns=["Status", "Node_ID"], inplace=True
+            )
+
+            missing_cell_relation_df.drop(
+                columns=["Status", "Node_ID"], inplace=True
+            )
+            id_vars = ["MO"]
+            value_vars = [col for col in not_ok_cell_relation.columns if col not in id_vars]
+            not_ok_cell_relation = not_ok_cell_relation.melt(
+                id_vars=id_vars,
+                value_vars=value_vars,
+                var_name="Relation Parameter",
+                value_name="Value",
+            )
+            missing_cell_relation_df = missing_cell_relation_df.melt(
+                id_vars=id_vars,
+                value_vars=value_vars,
+                var_name="Relation Parameter",
+                value_name="Value",
+            )
+
+            not_ok_cell_relation["Value"] = not_ok_cell_relation["Value"].apply(
+                lambda x: str(x).split("|")[0] if "|" in str(x) else x
+            )
+
+            not_ok_cell_relation = not_ok_cell_relation[
+                (
+                    not_ok_cell_relation["Value"]
+                    .astype(str)
+                    .str.contains(r"\|", regex=True, na=False)
+                )
+            ]
+
+            not_ok_cell_relation.drop_duplicates(
+                subset=["MO", "Relation Parameter"], inplace=True
+            )
+            #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+            print("mo relation df\n", not_ok_cell_relation)
+            for _, row in not_ok_cell_relation.iterrows():
+                mo_cell = row.get('MO', '')
+                relation_parameter = row.get('Relation Parameter', '')
+                value = int(row.get('Value', 0))
+
+                setting_eutranRelation.append(f"set {mo_cell}$ {relation_parameter} {value}")
             tasks.append(asyncio.to_thread(create_freqency_relation_script, eutran_freq_relation_script,setting_eutranRelation, output_file_path=eutranFreqRel_correctin_df_path))    
         await asyncio.gather(*tasks)
 
@@ -1149,4 +1279,4 @@ def get_pre_post_audit(request):
 
 
 
-    
+

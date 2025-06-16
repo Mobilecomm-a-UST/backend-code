@@ -241,15 +241,17 @@ def generate_integration_script(request):
 
         if circle is None:
             return Response(
-                {"status": "ERROR", "message": "circle not provided or invalid."},
+                {
+                    "status": False, 
+                    "error": "circle not provided or invalid."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         if not integration_input_file:
             return Response(
                 {
-                    "status": "ERROR",
-                    "message": "integration_input_file not provided or invalid.",
+                    "status": False,
+                    "error": "integration_input_file not provided or invalid.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -265,13 +267,17 @@ def generate_integration_script(request):
 
         except Exception as e:
             return Response(
-                {"status": "ERROR", "message": f"{str(e)}"},
+                {
+                    "status": False, 
+                    "error": f"{str(e)}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
     
         except ValueError as ve:
             return Response(
-                {"status": "ERROR", "message": str(ve)},
+                {
+                    "status": False, 
+                    "error": str(ve)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
