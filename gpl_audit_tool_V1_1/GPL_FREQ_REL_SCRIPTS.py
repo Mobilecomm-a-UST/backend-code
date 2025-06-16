@@ -51,3 +51,13 @@ $date = `date +%y%m%d_%H%M`
 cvms Post_Relation_$date
 gs-
 """
+
+
+Eutran_Freq_relation_creation_script = """
+###EUtranFreqRelation Definition#####
+
+crn ENodeBFunction=1,EUtranCellFDD/TDD={EUtranCellName},EUtranFreqRelation={arfcnValueEUtranDl}
+eutranFrequencyRef ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency={arfcnValueEUtranDl}
+cellReselectionPriority {cellReselectionPriority}
+end
+"""
