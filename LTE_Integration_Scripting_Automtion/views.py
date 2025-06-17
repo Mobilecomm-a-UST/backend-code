@@ -241,15 +241,17 @@ def generate_integration_script(request):
 
         if circle is None:
             return Response(
-                {"status": "ERROR", "message": "circle not provided or invalid."},
+                {
+                    "status": False, 
+                    "error": "circle not provided or invalid."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         if not integration_input_file:
             return Response(
                 {
-                    "status": "ERROR",
-                    "message": "integration_input_file not provided or invalid.",
+                    "status": False,
+                    "error": "integration_input_file not provided or invalid.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -265,13 +267,17 @@ def generate_integration_script(request):
 
         except Exception as e:
             return Response(
-                {"status": "ERROR", "message": f"{str(e)}"},
+                {
+                    "status": False, 
+                    "error": f"{str(e)}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
     
         except ValueError as ve:
             return Response(
-                {"status": "ERROR", "message": str(ve)},
+                {
+                    "status": False, 
+                    "error": str(ve)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -1100,12 +1106,12 @@ def generate_integration_script(request):
         #####################################################################################################################################################
         # Add RJ specific script generation logic here if needed
         ########################################################## MAKING THE ZIP FILE #############################################################
-        folder_path = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
+        folder_path = os.path.join(MEDIA_ROOT,"LTE_INTEGRATION_CONFIG_FILES")
         
         
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         zip_filename = f"{site_id_name}_LTE_Integration_Scripts_{timestamp}.zip"
-        zip_output_path = os.path.join(MEDIA_ROOT, zip_filename)  
+        zip_output_path = os.path.join(MEDIA_ROOT,zip_filename)  
 
         ################################################ Clean up old zips (optional) ######################################################################
 #        for file in os.listdir(MEDIA_ROOT):
