@@ -289,6 +289,19 @@ def generate_integration_script(request):
         siteEquipmentFilePath = ""
         ################################################ Define required columns for fdd and tdd also ###############################################################
         lte_df["earfcnul"] = lte_df["earfcnul"].astype("Int64")
+        lte_df['Latitude'] = lte_df['Latitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
+        #lte_df['Latitude'] = lte_df['Latitude'].astype("Int64")
+
+        lte_df['Longitude'] = lte_df['Longitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
+        #lte_df['Longitude'] = lte_df['Longitude'].astype("Int64")
+
+
+        nr_cell_df['Latitude'] = nr_cell_df['Latitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
+        #nr_cell_df['Latitude'] = nr_cell_df['Latitude'].astype("Int64")
+        nr_cell_df['Longitude'] = nr_cell_df['Longitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
+        #nr_cell_df['Longitude'] = nr_cell_df['Longitude'].astype("Int64")
+
+
         unique_nodes = lte_df["eNodeBName"].dropna().unique()
 
         site_id_name = lte_df["eUtranCellFDDId"].apply(lambda x: x.split("_")[4][:-1]).unique()[0]

@@ -1082,6 +1082,7 @@ def delete_integration_record(request, pk):
     else:
         print("exception..")
         return Response({'status':False,'message': 'You are not authorized to delete this record'}, status=status.HTTP_403_FORBIDDEN)
+
         
 @api_view(['PUT'])
 def integration_table_update(request, id=None):
@@ -1089,8 +1090,8 @@ def integration_table_update(request, id=None):
     print("username: ", user)
     nokia_spocks=['chandan.kumar@mcpsinc.com','nishant.verma@mcpsinc.in','girraj.singh@mcpsinc.in','mohit.batra@mcpsinc.com','abhishek.gupta']
     zte_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
-    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com','abhishek.gupta']
-    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com', 'abhishek.gupta']
+    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','Harish.Singh@ust.com','abhishek.gupta']
+    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','Harish.Singh@ust.com', 'abhishek.gupta']
     ericsson_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
   
     if request.method == 'PUT':
