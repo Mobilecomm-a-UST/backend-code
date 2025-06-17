@@ -19,9 +19,10 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
+import zipfile
 from django.conf import settings
 from gpl_audit_tool_V1_1.process_scripts import process_correction_script_generation, create_freqency_relation_script
-from gpl_audit_tool_V1_1.GPL_FREQ_REL_SCRIPTS import EUtranFrequency_Definition, GeranFrequency_defination, Eutran_Freq_relation_creation_script
+from gpl_audit_tool_V1_1.GPL_FREQ_REL_SCRIPTS import EUtranFrequency_Definition, GeranFrequency_defination, Eutran_Freq_relation_creation_script, Eutran_freq_cell_relation_defination
 
 
 def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
@@ -362,6 +363,7 @@ def get_log_parser(request):
     }, status=status.HTTP_200_OK)
 
 
+
 @api_view(['POST'])
 def get_pre_post_audit(request):
     ########################################################## Get pre and post files from frontend ##############################################
@@ -460,7 +462,6 @@ def get_pre_post_audit(request):
         }
     )
 
-    
     ############################################################ mapping eNBId with Site ID ############################################################
     
     pre_enodeid_mapping = {
@@ -531,6 +532,12 @@ def get_pre_post_audit(request):
                     format_excel_sheet(writer, sheet_name, df, startrow=3, startcol=9)
 
                 elif sheet_name == "gpl-para":
+                    def create_new_cell_mapping(cell_data_df: pd.DataFrame):
+                        return (
+                            {
+                                row['MO'] : row['cellId'] for _,row in cell_data_df.iterrows()
+                            }
+                        )
                     def create_cell_mappings(summary_df):
                         return (
                             {
@@ -552,6 +559,9 @@ def get_pre_post_audit(request):
                         return df
 
                     cell_id_df = all_post_merged_df["Summary"].sort_values(by="Pre SiteId")
+                    cell_data_df = all_post_merged_df["cell_data"]
+                    pre_node_name = cell_id_df['Pre CellName'].apply(lambda x: str(x).split(',')[-1].split('=')[-1].split('_')[4][:-1] if isinstance(x, str) and '=' in x else None).unique()[0]
+                    post_node_name = cell_id_df['Post CellName'].apply(lambda x: str(x).split(',')[-1].split('=')[-1].split('_')[4][:-1] if isinstance(x, str) and '=' in x else None).unique()[0]
                     gpl_pre_df = all_pre_merged_df.get(sheet_name)
                     gpl_post_df: pd.DataFrame = df.copy()
                     gpl_pre_df = gpl_pre_df.assign(
@@ -561,16 +571,19 @@ def get_pre_post_audit(request):
                         }
                     )
                     pre_map, post_map, site_map = create_cell_mappings(cell_id_df)
+                    post_map_cellId = create_new_cell_mapping(cell_data_df)
 
-                    gpl_pre_df = add_cell_ids(gpl_pre_df, "MO", pre_map)
+                    gpl_pre_df['MO'] = gpl_pre_df['MO'].apply(lambda x: str(x).replace(f"_{pre_node_name}", f"_{post_node_name}"))
+
+                    gpl_pre_df = add_cell_ids(gpl_pre_df, "MO", post_map_cellId)
                     gpl_post_df = add_cell_ids(gpl_post_df, "MO", post_map)
 
-                    merged_df = pd.merge(left=gpl_pre_df, right=gpl_post_df, how='left', on=['cellId', 'Parameter'], indicator=True)
-                    merged_df["MO_y"] = merged_df["MO_y"].fillna(merged_df["MO_x"])
+                    merged_df = pd.merge(left=gpl_pre_df, right=gpl_post_df, how='left', on=['MO','cellId', 'Parameter'], indicator=True)
+                    #merged_df["MO_y"] = merged_df["MO_y"].fillna(merged_df["MO_x"])
                     merged_df["Node_ID_y"] = merged_df["Node_ID_y"].fillna("Cell is not Found in Post")
                     merged_df["Current value"] = merged_df['Value_y']
-                    merged_df.drop(columns=["MO_x", "Node_ID_x", "Value_x", "Value_y"], inplace=True)
-                    merged_df.rename(columns={"MO_y": "MO", "Node_ID_y": "Node_ID"}, inplace=True)
+                    merged_df.drop(columns=["Node_ID_x", "Value_x", "Value_y"], inplace=True)
+                    merged_df.rename(columns={"Node_ID_y": "Node_ID"}, inplace=True)
                     merged_df.drop_duplicates(subset=["MO", "Parameter"], inplace=True)
 
                     merged_df["Parameter Setting Status"] = merged_df.apply(
@@ -763,9 +776,10 @@ def get_pre_post_audit(request):
                 elif sheet_name == "EutranfreqRelation":
                     pre_freq_relation_df = all_pre_merged_df.get(sheet_name)
                     cell_id_df = all_post_merged_df["Summary"]
+                    cell_data_df = all_post_merged_df["cell_data"]
                     post_freq_relation_df = df.copy()
                     pre_cell_mapping = {row["Pre CellName"]: row["cellId"] for i, row in cell_id_df.iterrows()}
-                    mo_cell_mapping = {row["Pre CellName"]: row["Post CellName"] for i, row in cell_id_df.iterrows()}
+
                     pre_post_site_mapping = {row["Pre SiteId"]: row["Post SiteId"] for i, row in cell_id_df.iterrows() if row["Post SiteId"] != 'NA'}
                     post_cell_mapping = {row["Post CellName"]: row["cellId"] for i, row in cell_id_df.iterrows()}
                     pre_freq_relation_df.insert(1, "cellId", "")
@@ -778,12 +792,20 @@ def get_pre_post_audit(request):
                     int64_columns = pre_freq_relation_df.select_dtypes(include='int64').columns.tolist()
                     for col in int64_columns:
                         post_freq_relation_df[col] = post_freq_relation_df[col].astype('int64')
+
                     pre_node_name = cell_id_df['Pre CellName'].apply(lambda x: str(x).split(',')[-1].split('=')[-1].split('_')[4][:-1] if isinstance(x, str) and '=' in x else None).unique()[0]
                     post_node_name = cell_id_df['Post CellName'].apply(lambda x: str(x).split(',')[-1].split('=')[-1].split('_')[4][:-1] if isinstance(x, str) and '=' in x else None).unique()[0]
 
                     pre_freq_relation_df['MO'] = pre_freq_relation_df['MO'].apply(lambda x: str(x).replace(pre_node_name, post_node_name))
 
-                    merged_df = pd.merge(left=pre_freq_relation_df, right=post_freq_relation_df, on=['MO'], how='left', suffixes=('_x', '_y'))
+                    post_cellId_mapping = {row["MO"]: row["cellId"] for i, row in cell_data_df.iterrows()}
+                    
+                    post_cellId_node_mapping = {row["cellId"]: row["Node_ID"] for i, row in cell_data_df.iterrows()}
+                    print("post mo cell mapping with this:- \n", post_cellId_mapping)
+
+                    pre_freq_relation_df['cellId'] = pre_freq_relation_df['MO'].apply(lambda x: post_cellId_mapping.get(x.split(',')[0], ""))
+
+                    merged_df = pd.merge(left=pre_freq_relation_df, right=post_freq_relation_df, on=['MO', 'cellId'], how='left', suffixes=('_x', '_y'))
                     float64_to_int64 = merged_df.select_dtypes(include='float64').columns.tolist()
                     for column in float64_to_int64:
                         merged_df[column] = (pd.to_numeric(merged_df[column], errors='coerce').replace([float('inf'), float('-inf')], pd.NA).astype('Int64'))
@@ -817,7 +839,7 @@ def get_pre_post_audit(request):
                         lambda row: "Missing" if row["Node_ID"] == "Cell is not Found in Post" else row["Status"],
                         axis=1
                     )
-
+                    merged_df['Node_ID'] = merged_df['cellId'].apply(lambda x: post_cellId_node_mapping.get(x.split(',')[0], ""))
                     merged_df.sort_values(by=["Node_ID"], inplace=True)
 
                     merged_df = merged_df[[col if col.endswith("_x") else col for col in merged_df.columns if not col.endswith("_y")]] 
@@ -830,6 +852,12 @@ def get_pre_post_audit(request):
                     post_endb_id = all_post_merged_df["enbinfo"]["eNBId"].unique().tolist()
                     pre_endb_id = [str(val) for val in pre_endb_id]
                     post_summary_df = all_post_merged_df["Summary"]
+                    cell_data_df = all_post_merged_df["cell_data"]
+
+
+                    
+                    pre_cellId_mapped = {row['cellId']:row['Pre CellName'] for _, row in pre_cell_id_df.iterrows() }
+                    post_cellId_mapped = {row['cellId']:row['Post CellName'] for _, row in post_cell_id_df.iterrows()}
 
                     pre_freq_cell_relation_df = all_pre_merged_df.get(sheet_name)
                     post_freq_cell_relation_df = df.copy()
@@ -853,6 +881,7 @@ def get_pre_post_audit(request):
                     post_freq_cell_relation_df.drop(columns=["eNBId"], inplace=True)
 
 
+
                     numeric_columns = [
                         "coverageIndicator",
                         "loadBalancing",
@@ -867,7 +896,8 @@ def get_pre_post_audit(request):
                             str(value).split(" ")[0] if " " in str(value) else value
                         )
               
-
+                    post_cellId_node_mapping = {row["cellId"]: row["Node_ID"] for i, row in cell_data_df.iterrows()}
+                    post_cellId_cell_mapping = {row["cellId"]: row["MO"] for i, row in cell_data_df.iterrows()}
 
                     for col in numeric_columns:
                         pre_freq_cell_relation_df[col] = pre_freq_cell_relation_df[
@@ -905,27 +935,64 @@ def get_pre_post_audit(request):
                         for pre, post in zip(pre_eNBID, post_eNBID):
                             mo_str = mo_str.replace(f'-{pre}-', f'-{post}-')
                         return mo_str
+                    def replace_eutrancellRelation(mo, cellId_mapped):
+                        try:
+                            parts = mo.strip().split(',')
+                            if len(parts) < 3:
+                                return mo  
 
+                            cell, freq, cell_relation = parts
+                            cell_id = cell_relation.split('-')[-1]
+                            mapped_mo = cellId_mapped.get(cell_id)
+                            if not mapped_mo or '=' not in mapped_mo:
+                                return mo  
+
+                            cell_name = mapped_mo.split('=')[1]
+                            parts[2] = f'EUtranCellRelation={cell_name}'
+                            return ','.join(parts)
+
+                        except Exception:
+                            return mo 
+
+                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(lambda mo: replace_eutrancellRelation(mo, pre_cellId_mapped))
                     pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(
                         lambda x: str(x).replace(f'_{pre_node_name}', f'_{post_node_name}')
                     )
-                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(replace_all_enbid)
+                    #pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(replace_all_enbid)
                     
-                    
+                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(lambda mo: replace_eutrancellRelation(mo, pre_cellId_mapped))
+                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(
+                        lambda x: str(x).replace(f'_{pre_node_name}', f'_{post_node_name}')
+                    )
+
+                    pre_freq_cell_relation_df.insert(1, "cellId", "")
+                    post_freq_cell_relation_df.insert(1, "cellId", "")
+
+                    pre_freq_cell_relation_df["cellId"] = pre_freq_cell_relation_df["MO"].apply(
+                        lambda x: post_cell_mapping.get(x.split(",")[0], "NA") if "," in x else post_cell_mapping.get(x, "NA")
+                    )
+
+                    post_freq_cell_relation_df["cellId"] = post_freq_cell_relation_df["MO"].apply(
+                        lambda x: post_cell_mapping.get(x.split(",")[0], "NA") if "," in x else post_cell_mapping.get(x, "NA")
+                    )
+
+                    post_freq_cell_relation_df['MO'] = post_freq_cell_relation_df['MO'].apply(
+                        lambda mo: replace_eutrancellRelation(mo, post_cellId_mapped)
+                    )
                     
                     merged_df = pd.merge(
                         left=pre_freq_cell_relation_df,
                         right=post_freq_cell_relation_df,
                         how='left',
-                        on=['MO']
+                        on=['MO', 'cellId']
                     ).drop_duplicates(subset=['MO'])
-                    merged_df['neighborCellRef_y'] = merged_df['neighborCellRef_y'].fillna(merged_df['neighborCellRef_x'])
+                    #merged_df['neighborCellRef_y'] = merged_df['neighborCellRef_y'].fillna(merged_df['neighborCellRef_x'])
                     merged_df['neighborCellRef_x'] = merged_df['neighborCellRef_y']
                     merged_df["Node_ID_y"] = merged_df["Node_ID_y"].fillna(
                         "cell not found in post"
                     )
                     merged_df["Node_ID_x"] = merged_df["Node_ID_y"]
-
+                    
                     merged_df.rename(
                         columns={
                             "Node_ID_x": "Node_ID",
@@ -933,7 +1000,18 @@ def get_pre_post_audit(request):
                         },
                         inplace=True,
                     )
+                    
+                    def extract_neighbor_cell_ref(mo):
+                        try:
+                            if isinstance(mo, str):
+                                parts = mo.split(',')
+                                if len(parts) > 2 and '=' in parts[2]:
+                                    return parts[2].split('=')[1]
+                        except Exception:
+                            pass
+                        return None
 
+                    merged_df['neighborCellRef'] = merged_df['MO'].apply(extract_neighbor_cell_ref)
                     for col in numeric_columns:
                         merged_df[f"{col}_x"] = pd.to_numeric(
                             merged_df[f"{col}_x"], errors="coerce"
@@ -951,7 +1029,7 @@ def get_pre_post_audit(request):
                     merged_df.insert(3, "Status", "OK")
 
                     for col in pre_freq_cell_relation_df.columns:
-                        if col not in ["MO", "Node_ID", "neighborCellRef"]:
+                        if col not in ["MO", "Node_ID", "neighborCellRef",  'cellId']:
                             pre_col = f"{col}_x"
                             post_col = f"{col}_y"
 
@@ -983,6 +1061,10 @@ def get_pre_post_audit(request):
                         lambda row: "Missing" if row["Node_ID"] == "cell not found in post" else row["Status"],
                         axis=1
                     )
+
+                    merged_df['Node_ID'] = merged_df['cellId'].apply(lambda x: post_cellId_node_mapping.get(x.split(',')[0], ""))
+
+
                     
                     merged_df.sort_values(by=["Node_ID"], inplace=True)
                     merged_df = merged_df[
@@ -1069,19 +1151,21 @@ def get_pre_post_audit(request):
         eutranFreqRelation_correctin_data_file = await asyncio.to_thread(gpl_correction_data_file.parse, "EutranfreqRelation")
         eutranFreqRelation_correctin_data_f_df = eutranFreqRelation_correctin_data_file[eutranFreqRelation_correctin_data_file['Status'] != 'OK'].copy()
         eutranFreqRelation_cellRelation_file = await asyncio.to_thread(gpl_correction_data_file.parse, "CellRelation")
-        print('eutranFreqRelation_cellRelation_file:- \n',eutranFreqRelation_cellRelation_file)
         eutranFreqRelation_cellRelation_file = eutranFreqRelation_cellRelation_file[eutranFreqRelation_cellRelation_file['Status'] != 'OK'].copy()
         mask = (gpl_correction_data_file_df["Parameter Setting Status"] != "OK") & pd.notna(
                 gpl_correction_data_file_df["Current value"]
         )
         correctin_data_file_df = gpl_correction_data_file_df[mask].copy()
+
+        cell_data_df = await asyncio.to_thread(gpl_correction_data_file.parse, "cell_data")
+        valid_frequencies = cell_data_df['earfcndl'].dropna().unique().tolist()
         tasks = []
         for node_name in post_nodes:
             gpl_correction_file_path = os.path.join(session_folder, f"{node_name}_GPL_Correction_Script_{current_time}.txt")
             gpl_correctin_df = correctin_data_file_df[correctin_data_file_df['Node_ID'] == node_name].copy()
             feature_correctin_df = feature_correctin_data_f_df[feature_correctin_data_f_df['Node_ID'] == node_name].copy()
             eutranFreqRel_correctin_df = eutranFreq_correctin_data_file_df[eutranFreq_correctin_data_file_df['Node_ID'] == node_name].copy()
-            eutranFreqRelation_correctin_df = eutranFreqRelation_correctin_data_f_df[eutranFreqRelation_correctin_data_f_df['Node_ID'].isin([node_name, 'Cell is not Found in Post'])].copy()
+            eutranFreqRelation_correctin_df = eutranFreqRelation_correctin_data_f_df[eutranFreqRelation_correctin_data_f_df['Node_ID'].isin([node_name])].copy()
             eutranFreqRelationCellRelation_df = eutranFreqRelation_cellRelation_file[eutranFreqRelation_cellRelation_file['Node_ID'].isin([node_name, 'Cell is not Found in Post'])].copy()
            
             print("eutrancell_relation:- \n", eutranFreqRelationCellRelation_df)
@@ -1123,13 +1207,6 @@ def get_pre_post_audit(request):
                 elif mo.startswith('ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency='):
                     arfcn_val = int(row.get('arfcnValueEUtranDl', ''))
                     eutran_freq_relation_script += EUtranFrequency_Definition.format(arfcnValueEUtranDl=arfcn_val) + "\n"
-                    #eutran_freq_relation_lines = ''
-                    #for cell_name in freq_mo_names:
-                    #    eutran_freq_relation_lines += Eutran_Freq_relation_creation_script.format(
-                    #        EUtranCellName = cell_name,
-                    #        arfcnValueEUtranDl = arfcn_val,
-                    #
-                    #    )
             #tasks.append(asyncio.to_thread(create_freqency_relation_script, eutran_freq_relation_script, output_file_path=eutranFreqRel_correctin_df_path))
             #--------------------------------------------------------------------- frequency relation script generation ------------------------------------------------------------------#
             not_ok_freq_relation_df = eutranFreqRelation_correctin_df[eutranFreqRelation_correctin_df['Status'] == 'NOT OK'].copy()
@@ -1184,32 +1261,34 @@ def get_pre_post_audit(request):
             )
 
             setting_eutranRelation = []
-            setting_eutranRelation.append(f"##################### Eutran Frequency Relation Correction Commands {node_name} ####################")
+            setting_eutranRelation.append(f"\n\n##################### Eutran Frequency Relation Correction Commands {node_name} ####################\n\n")
             for _, row in not_ok_freq_relation_df.iterrows():
                 if pd.notna(row.get("MO")):
                     mo = str(row["MO"])
                     relation_parameter = row["Relation Parameter"]
                     value = str(row["Value"])
                     setting_eutranRelation.append(f"set {mo}$ {relation_parameter} {value}")
-            setting_eutranRelation.append(f"##################### Creating Eutran Frequency Relation Missing Commands post node: {node_name} ####################")
+            setting_eutranRelation.append(f"\n\n##################### Creating Eutran Frequency Relation Missing Commands post node: {node_name} ####################\n\n")
             def generate_crn_section(df: pd.DataFrame):
                 mos_content = []
                 if not df.empty:
                     df = df.dropna(subset=["MO", "Relation Parameter", "Value"])
                     for mo, group in df.groupby("MO"):
-                        print(mo)
-                        mos_content.append(f"\ncrn {mo}")
-                        for _, row in group.iterrows():
-                            mos_content.append(
-                                f"{row['Relation Parameter']} {row['Value']}"
-                            )
-                        mos_content.append("end")
+                        freq = mo.split(',')[1].split('=')[1]
+                        if freq in valid_frequencies:
+                            mos_content.append(f"\ncrn {mo}")
+                            for _, row in group.iterrows():
+                                mos_content.append(
+                                    f"{row['Relation Parameter']} {row['Value']}"
+                                )
+                            mos_content.append("end")
                 return mos_content
             mos_content = generate_crn_section(missing_freq_df)
             setting_eutranRelation.extend(mos_content)
-            setting_eutranRelation.append(f'######################################################## Cell Relation {node_name} ####################################################')
+            setting_eutranRelation.append(f'\n\n\n\n######################################################## Cell Relation {node_name} ####################################################\n\n\n\n')
             #---------------------------------------------------------------------------------------------- CELL RELATION -------------------------------------------------------------------------------#
             not_ok_cell_relation = eutranFreqRelationCellRelation_df[eutranFreqRelationCellRelation_df['Status'] == 'NOT OK'].copy()
+            not_ok_cell_relation = not_ok_cell_relation[['MO', 'Node_ID', 'Status', 'cellIndividualOffsetEUtran','coverageIndicator', 'loadBalancing', 'qOffsetCellEUtran','reportDlActivity', 'sCellCandidate', 'sCellPriority','sleepModeCovCellCandidate']]
             #***********************************************
             missing_cell_relation_df = eutranFreqRelationCellRelation_df[eutranFreqRelationCellRelation_df['Status'] == 'Missing'].copy()
             not_ok_cell_relation.drop(
@@ -1227,24 +1306,10 @@ def get_pre_post_audit(request):
                 var_name="Relation Parameter",
                 value_name="Value",
             )
-            missing_cell_relation_df = missing_cell_relation_df.melt(
-                id_vars=id_vars,
-                value_vars=value_vars,
-                var_name="Relation Parameter",
-                value_name="Value",
-            )
 
             not_ok_cell_relation["Value"] = not_ok_cell_relation["Value"].apply(
                 lambda x: str(x).split("|")[0] if "|" in str(x) else x
             )
-
-            not_ok_cell_relation = not_ok_cell_relation[
-                (
-                    not_ok_cell_relation["Value"]
-                    .astype(str)
-                    .str.contains(r"\|", regex=True, na=False)
-                )
-            ]
 
             not_ok_cell_relation.drop_duplicates(
                 subset=["MO", "Relation Parameter"], inplace=True
@@ -1255,19 +1320,43 @@ def get_pre_post_audit(request):
                 mo_cell = row.get('MO', '')
                 relation_parameter = row.get('Relation Parameter', '')
                 value = int(row.get('Value', 0))
-
                 setting_eutranRelation.append(f"set {mo_cell}$ {relation_parameter} {value}")
+            #------------------------------------------------------------------------------------- cell relation creation -------------------------------------------------------------------------------#
+            setting_eutranRelation.append(f'\n\n\n\n###############################################CELL RELATION {node_name} #########################################################\n\n\n\n')
+            for _, row in missing_cell_relation_df.iterrows():
+                mo_cell = row.get('MO', '')
+                nighbour_cell = row.get('neighborCellRef', '')
+                setting_eutranRelation.append(Eutran_freq_cell_relation_defination.format(EUtranCellName=mo_cell, neighborCellRef=nighbour_cell))
+
+
+
+
+                
             tasks.append(asyncio.to_thread(create_freqency_relation_script, eutran_freq_relation_script,setting_eutranRelation, output_file_path=eutranFreqRel_correctin_df_path))    
         await asyncio.gather(*tasks)
 
-    # Usage in your view (example, must be called from an async context):
+    #######----------------------------------------########################### Usage in your view (example, must be called from an async context): #########------------------------------------------------------#############################
     asyncio.run(async_generate_correction_scripts(session_folder, current_time, post_nodes, gpl_pre_post_file_path))
     #------------------------------------------------------------------------- Generate download URL -----------------------------------------------------------------------------#
-    relative_url = gpl_pre_post_file_path.replace(str(settings.MEDIA_ROOT), "").lstrip("/\\")
+    
+
+    ####################################################### Create a zip file of the session_folder (which contains the Excel file and scripts)
+    zip_filename = f"GPL_AUDIT_{current_time}.zip"
+    zip_filepath = os.path.join(session_folder, zip_filename)
+    with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(session_folder):
+            for file in files:
+                if file != zip_filename:  
+                    abs_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(abs_path, session_folder)
+                    zipf.write(abs_path, rel_path)
+
+    # Generate download URL for the zip file
+    relative_url = zip_filepath.replace(str(settings.MEDIA_ROOT), "").lstrip("/\\")
     relative_url = relative_url.replace("\\", "/")
     download_url = request.build_absolute_uri(settings.MEDIA_URL.rstrip('/') + '/' + relative_url)
 
-    # Return success response
+
     return Response(
         {
             "message": "Post logs and Pre-audit file uploaded successfully",
@@ -1275,6 +1364,9 @@ def get_pre_post_audit(request):
         },
         status=status.HTTP_200_OK,
     )
+
+
+
 
 
 
