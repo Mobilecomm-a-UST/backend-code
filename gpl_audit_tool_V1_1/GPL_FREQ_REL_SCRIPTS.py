@@ -12,8 +12,6 @@ gs-
 """
 
 GeranFrequency_defination = """
-####GeranFrequency Definition#####
-
 gs+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
 crn ENodeBFunction=1,GeraNetwork=1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
