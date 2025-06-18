@@ -1,10 +1,13 @@
 from gettext import GNUTranslations
+from operator import index
 from optparse import Values
 import os
 import re
 from csv import excel
 import asyncio
+from textwrap import indent
 import aiofiles
+from numpy import int64
 import pandas as pd
 from datetime import datetime
 from pandas._libs import missing
@@ -780,7 +783,7 @@ def get_pre_post_audit(request):
                     post_freq_relation_df = df.copy()
                     pre_cell_mapping = {row["Pre CellName"]: row["cellId"] for i, row in cell_id_df.iterrows()}
 
-                    pre_post_site_mapping = {row["Pre SiteId"]: row["Post SiteId"] for i, row in cell_id_df.iterrows() if row["Post SiteId"] != 'NA'}
+                    pre_post_site_mapping = {row["Pre SiteId"]: row["Post SiteId"] for i, row in cell_id_df.iterrows() if row["Post SiteId"] != 'NA' and row['Pre SiteId'] != 'NA'}
                     post_cell_mapping = {row["Post CellName"]: row["cellId"] for i, row in cell_id_df.iterrows()}
                     pre_freq_relation_df.insert(1, "cellId", "")
                     pre_freq_relation_df["cellId"] = pre_freq_relation_df["MO"].apply(lambda x: pre_cell_mapping[x.split(",")[0] if "," in x else x])
@@ -848,171 +851,114 @@ def get_pre_post_audit(request):
                     format_excel_sheet(writer, sheet_name, merged_df, startrow=0, startcol=0)
 
                 elif sheet_name == "CellRelation":
-                    pre_endb_id = (all_pre_merged_df.get("enbinfo")["eNBId"].unique().tolist())
-                    post_endb_id = all_post_merged_df["enbinfo"]["eNBId"].unique().tolist()
-                    pre_endb_id = [str(val) for val in pre_endb_id]
-                    post_summary_df = all_post_merged_df["Summary"]
-                    cell_data_df = all_post_merged_df["cell_data"]
 
+                    #---------------------------------------------------------------------------------------------------------------------------------------#
+                    pre_cell_relation_df = all_pre_merged_df.get(sheet_name)
+                    post_cell_relaton_df = all_post_merged_df.get(sheet_name)
+                    pre_cell_id_mapping_with_cell = {row['Pre CellName']:row['cellId'] for _, row in pre_cell_id_df.iterrows()}
+                    reversed_pre_cell_id_mapping_with_cell = {v:k for k,v in pre_cell_id_mapping_with_cell.items()}
+                    post_cell_id_mapping_with_cell = {row['Post CellName']:row['cellId'] for _, row in post_cell_id_df.iterrows()}
+                    reversed_post_cell_id_mapping_with_cell = {v:k for k,v in post_cell_id_mapping_with_cell.items()}
+                    cell_id_mapped_with_nodeId = {row['cellId']: row['Post SiteId'] for _, row in post_cell_id_df.iterrows()}
+                    #------------------------------------------------------------ mapping the siteId with the cellId --------------------------------------------------#
+                    post_site_mapped_with_cellId = {row['cellId']: row['Post SiteId'] for _, row in post_cell_id_df.iterrows()}
+                    #-------------------------########################## pre cell relation with cellId #########################################-------------#
+                    pre_cell_relation_df.insert(2, "noughbourCellId", "")
+                    pre_cell_relation_df.insert(3, "cellId", "")
+                    post_cell_relaton_df.insert(2, "noughbourCellId", "")
+                    post_cell_relaton_df.insert(3, "cellId", "")
 
-                    
-                    pre_cellId_mapped = {row['cellId']:row['Pre CellName'] for _, row in pre_cell_id_df.iterrows() }
-                    post_cellId_mapped = {row['cellId']:row['Post CellName'] for _, row in post_cell_id_df.iterrows()}
+                    pre_cell_relation_df['noughbourCellId'] = pre_cell_relation_df['MO'].apply(lambda mo: str(mo).split('-')[-1])
+                    pre_cell_relation_df['cellId'] = pre_cell_relation_df['MO'].apply(lambda mo: pre_cell_id_mapping_with_cell.get(str(mo).split(',')[0]))
 
-                    pre_freq_cell_relation_df = all_pre_merged_df.get(sheet_name)
-                    post_freq_cell_relation_df = df.copy()
-
-                    pre_freq_cell_relation_df["MO"] = pre_freq_cell_relation_df["MO"].astype(str)
-                    post_freq_cell_relation_df["MO"] = post_freq_cell_relation_df["MO"].astype(str)
-
+                    post_cell_relaton_df['noughbourCellId'] = post_cell_relaton_df['MO'].apply(lambda mo: str(mo).split('-')[-1])
+                    post_cell_relaton_df['cellId'] = post_cell_relaton_df['MO'].apply(lambda mo: post_cell_id_mapping_with_cell.get(str(mo).split(',')[0]))
                     def extract_enb_id(mo: str) -> str:
                         try:
                             return mo.split("-")[1]
                         except (AttributeError, IndexError):
                             return None
+                    pre_eNBID = (all_pre_merged_df.get("enbinfo")["eNBId"].unique().tolist())
+                    post_eNBID = all_post_merged_df["enbinfo"]["eNBId"].unique().tolist()
 
-                    pre_freq_cell_relation_df["eNBId"] = pre_freq_cell_relation_df["MO"].apply(extract_enb_id)
-                    post_freq_cell_relation_df["eNBId"] = (post_freq_cell_relation_df["MO"].apply(extract_enb_id))
+                    pre_cell_relation_df["eNBId"] = pre_cell_relation_df["MO"].apply(extract_enb_id)
+                    post_cell_relaton_df["eNBId"] = post_cell_relaton_df["MO"].apply(extract_enb_id)
 
-                    pre_freq_cell_relation_df = pre_freq_cell_relation_df[pre_freq_cell_relation_df["eNBId"].isin(pre_endb_id)]
-                    post_freq_cell_relation_df = post_freq_cell_relation_df[post_freq_cell_relation_df["eNBId"].isin(post_endb_id)]
+                    pre_cell_relation_df = pre_cell_relation_df[pre_cell_relation_df["eNBId"].isin(pre_eNBID)]
+                    post_cell_relaton_df = post_cell_relaton_df[post_cell_relaton_df["eNBId"].isin(post_eNBID)]
 
-                    pre_freq_cell_relation_df.drop(columns=["eNBId"], inplace=True)
-                    post_freq_cell_relation_df.drop(columns=["eNBId"], inplace=True)
+                    pre_cell_relation_df.drop(columns=["eNBId"], inplace=True)
+                    post_cell_relaton_df.drop(columns=["eNBId"], inplace=True)
+                    #--------------------------------------------------------- find pre and post node identification----------------------------------#
+                    pre_node_name = pre_cell_id_df['Pre CellName'].apply(lambda x: str(x).split(',')[-1].split('=')[-1].split('_')[4][:-1] if isinstance(x, str) and '=' in x else None).unique()[0]
+                    post_node_name = post_cell_id_df['Post CellName'].apply(lambda x: str(x).split(',')[-1].split('=')[-1].split('_')[4][:-1] if isinstance(x, str) and '=' in x else None).unique()[0]
 
-
-
-                    numeric_columns = [
-                        "coverageIndicator",
-                        "loadBalancing",
-                        "reportDlActivity",
-                        "sCellCandidate",
-                        "sleepModeCovCellCandidate",
+                    columns_to_convert = [
+                        'cellIndividualOffsetEUtran', 
+                        'coverageIndicator', 
+                        'loadBalancing', 
+                        'qOffsetCellEUtran', 
+                        'reportDlActivity', 
+                        'sCellCandidate',
+                        'sCellPriority',
+                        'sleepModeCovCellCandidate'
                     ]
+                    for columns in columns_to_convert:
+                        pre_cell_relation_df[columns] = pre_cell_relation_df[columns].apply(lambda x: str(x).split(" ")[0] if " " in str(x) else x)
+                        post_cell_relaton_df[columns] = post_cell_relaton_df[columns].apply(lambda x: str(x).split(" ")[0] if " " in str(x) else x)
+                        pre_cell_relation_df[columns] = pre_cell_relation_df[columns].astype(int)
+                        post_cell_relaton_df[columns] = post_cell_relaton_df[columns].astype(int)
+
+                    pre_cell_relation_df['cellId'] = pre_cell_relation_df['cellId'].apply(lambda x: reversed_pre_cell_id_mapping_with_cell.get(x, ""))
+                    pre_cell_relation_df['noughbourCellId'] = pre_cell_relation_df['noughbourCellId'].apply(lambda x: reversed_pre_cell_id_mapping_with_cell.get(x, ""))
+                    pre_cell_relation_df['cellId'] = pre_cell_relation_df['cellId'].apply(lambda x: str(x).replace(pre_node_name, post_node_name))
+                    pre_cell_relation_df['MO'] = pre_cell_relation_df['MO'].apply(lambda x: str(x).replace(pre_node_name, post_node_name))
+                    pre_cell_relation_df['cellId'] = pre_cell_relation_df['cellId'].apply(lambda x: post_cell_id_mapping_with_cell.get(x))
+                    pre_cell_relation_df['noughbourCellId'] = pre_cell_relation_df['noughbourCellId'].apply(lambda x: str(x).replace(pre_node_name, post_node_name))
+                    pre_cell_relation_df['noughbourCellId'] = pre_cell_relation_df['noughbourCellId'].apply(lambda x: post_cell_id_mapping_with_cell.get(x))
+                    pre_cell_relation_df['Node_ID'] = pre_cell_relation_df['cellId'].apply(lambda x: post_site_mapped_with_cellId.get(x, ""))
+
+                    #------------------------------------------------------- changing the MO columns nouhbour cel --------------------------------------------------------#
+                    def replace_mo_nighbourCell(row):
+                        mo_str = row['MO']
+                        noughbour_cell_id = row['noughbourCellId']
+                        cell_id_from_mo = mo_str.split('-')[-1]
+
+                        return mo_str.replace(cell_id_from_mo, noughbour_cell_id) if noughbour_cell_id else mo_str
 
 
-                    def convert_to_int(value):
-                        return int(
-                            str(value).split(" ")[0] if " " in str(value) else value
-                        )
-              
-                    post_cellId_node_mapping = {row["cellId"]: row["Node_ID"] for i, row in cell_data_df.iterrows()}
-                    post_cellId_cell_mapping = {row["cellId"]: row["MO"] for i, row in cell_data_df.iterrows()}
-
-                    for col in numeric_columns:
-                        pre_freq_cell_relation_df[col] = pre_freq_cell_relation_df[
-                            col
-                        ].apply(convert_to_int)
-                        post_freq_cell_relation_df[col] = post_freq_cell_relation_df[
-                            col
-                        ].apply(convert_to_int)
-
-                    def extract_node_name(cell_name):
-                        try:
-                            if isinstance(cell_name, str) and cell_name != 'NA':
-                                return cell_name.split('=')[1].split('_')[4][:-1]
-                        except Exception:
-                            pass
-                        return None
-
-                    def extract_first_valid(values):
-                        for val in values:
-                            if pd.notna(val) and val != 'NA':
-                                return str(val)
-                        return None
-
-                    pre_cell_names = post_summary_df['Pre CellName'].unique()
-                    pre_node_name = extract_first_valid([extract_node_name(x) for x in pre_cell_names])
-
-                    post_cell_names = post_summary_df['Post CellName'].unique()
-                    post_node_name = extract_first_valid([extract_node_name(x) for x in post_cell_names])
-
-                    pre_eNBID = post_summary_df['Pre eNBID'].unique().tolist()
-                    post_eNBID = post_summary_df['Post eNBID'].unique().tolist()
-
+                    pre_cell_relation_df['MO'] = pre_cell_relation_df.apply(lambda row: replace_mo_nighbourCell(row), axis=1)
                     def replace_all_enbid(mo):
                         mo_str = str(mo)
                         for pre, post in zip(pre_eNBID, post_eNBID):
                             mo_str = mo_str.replace(f'-{pre}-', f'-{post}-')
                         return mo_str
-                    def replace_eutrancellRelation(mo, cellId_mapped):
-                        try:
-                            parts = mo.strip().split(',')
-                            if len(parts) < 3:
-                                return mo  
 
-                            cell, freq, cell_relation = parts
-                            cell_id = cell_relation.split('-')[-1]
-                            mapped_mo = cellId_mapped.get(cell_id)
-                            if not mapped_mo or '=' not in mapped_mo:
-                                return mo  
-
-                            cell_name = mapped_mo.split('=')[1]
-                            parts[2] = f'EUtranCellRelation={cell_name}'
-                            return ','.join(parts)
-
-                        except Exception:
-                            return mo 
-
-                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(lambda mo: replace_eutrancellRelation(mo, pre_cellId_mapped))
-                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(
-                        lambda x: str(x).replace(f'_{pre_node_name}', f'_{post_node_name}')
-                    )
-                    #pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(replace_all_enbid)
-                    
-                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(lambda mo: replace_eutrancellRelation(mo, pre_cellId_mapped))
-                    pre_freq_cell_relation_df['MO'] = pre_freq_cell_relation_df['MO'].apply(
-                        lambda x: str(x).replace(f'_{pre_node_name}', f'_{post_node_name}')
-                    )
-
-                    pre_freq_cell_relation_df.insert(1, "cellId", "")
-                    post_freq_cell_relation_df.insert(1, "cellId", "")
-
-                    pre_freq_cell_relation_df["cellId"] = pre_freq_cell_relation_df["MO"].apply(
-                        lambda x: post_cell_mapping.get(x.split(",")[0], "NA") if "," in x else post_cell_mapping.get(x, "NA")
-                    )
-
-                    post_freq_cell_relation_df["cellId"] = post_freq_cell_relation_df["MO"].apply(
-                        lambda x: post_cell_mapping.get(x.split(",")[0], "NA") if "," in x else post_cell_mapping.get(x, "NA")
-                    )
-
-                    post_freq_cell_relation_df['MO'] = post_freq_cell_relation_df['MO'].apply(
-                        lambda mo: replace_eutrancellRelation(mo, post_cellId_mapped)
-                    )
-                    
-                    merged_df = pd.merge(
-                        left=pre_freq_cell_relation_df,
-                        right=post_freq_cell_relation_df,
-                        how='left',
-                        on=['MO', 'cellId']
-                    ).drop_duplicates(subset=['MO'])
-                    #merged_df['neighborCellRef_y'] = merged_df['neighborCellRef_y'].fillna(merged_df['neighborCellRef_x'])
+                    pre_cell_relation_df['MO'] = pre_cell_relation_df['MO'].apply(replace_all_enbid)
+                    #------------------------------------------------------------------------------------------------------------------------------------------------------#
+                    pre_cell_relation_df.to_excel('pre_cell_relation_df.xlsx', index=False)
+                    pre_cell_relation_df.to_excel('post_cell_relation_df.xlsx', index=False)
+                    merged_df = pd.merge(left=pre_cell_relation_df,right=post_cell_relaton_df,how='left',on=['MO', 'cellId']).drop_duplicates(subset=['MO', 'cellId'])
+                    merged_df['neighborCellRef_y'] = merged_df['neighborCellRef_y'].fillna(merged_df['neighborCellRef_x'])
                     merged_df['neighborCellRef_x'] = merged_df['neighborCellRef_y']
+                    merged_df['noughbourCellId_y'] = merged_df['noughbourCellId_y'].fillna(merged_df['noughbourCellId_x'])
+                    merged_df['noughbourCellId_x'] = merged_df['noughbourCellId_y']
+                    
                     merged_df["Node_ID_y"] = merged_df["Node_ID_y"].fillna(
                         "cell not found in post"
                     )
                     merged_df["Node_ID_x"] = merged_df["Node_ID_y"]
-                    
+
                     merged_df.rename(
                         columns={
-                            "Node_ID_x": "Node_ID",
+                            'Node_ID_x' : 'Node_ID',
                             "neighborCellRef_x": "neighborCellRef",
+                            "noughbourCellId_x" :"noughbourCellId",
                         },
                         inplace=True,
                     )
                     
-                    def extract_neighbor_cell_ref(mo):
-                        try:
-                            if isinstance(mo, str):
-                                parts = mo.split(',')
-                                if len(parts) > 2 and '=' in parts[2]:
-                                    return parts[2].split('=')[1]
-                        except Exception:
-                            pass
-                        return None
-
-                    merged_df['neighborCellRef'] = merged_df['MO'].apply(extract_neighbor_cell_ref)
-                    for col in numeric_columns:
+                    for col in columns_to_convert:
                         merged_df[f"{col}_x"] = pd.to_numeric(
                             merged_df[f"{col}_x"], errors="coerce"
                         )
@@ -1028,8 +974,8 @@ def get_pre_post_audit(request):
 
                     merged_df.insert(3, "Status", "OK")
 
-                    for col in pre_freq_cell_relation_df.columns:
-                        if col not in ["MO", "Node_ID", "neighborCellRef",  'cellId']:
+                    for col in pre_cell_relation_df.columns:
+                        if col not in ["MO", "Node_ID", "neighborCellRef", "cellId", "noughbourCellId"]:
                             pre_col = f"{col}_x"
                             post_col = f"{col}_y"
 
@@ -1051,21 +997,19 @@ def get_pre_post_audit(request):
                                     "nan"
                                 ]:
                                     merged_df.at[idx, pre_col] = f"{pre_value}"
+                                    merged_df.loc[mask, "Status"] = "Missing"
                                    
                                 else:
                                     merged_df.at[idx, pre_col] = (
                                         f"{pre_value}|{post_value}"
-                                    )
-
+                                    )         
+                    
                     merged_df["Status"] = merged_df.apply(
                         lambda row: "Missing" if row["Node_ID"] == "cell not found in post" else row["Status"],
                         axis=1
                     )
-
-                    merged_df['Node_ID'] = merged_df['cellId'].apply(lambda x: post_cellId_node_mapping.get(x.split(',')[0], ""))
-
-
                     
+                    merged_df['Node_ID'] = merged_df['cellId'].apply(lambda x: cell_id_mapped_with_nodeId.get(x, ""))
                     merged_df.sort_values(by=["Node_ID"], inplace=True)
                     merged_df = merged_df[
                         [
@@ -1074,18 +1018,19 @@ def get_pre_post_audit(request):
                             if not col.endswith("_y")
                         ]
                     ]
-
+                    #
                     merged_df.rename(
                         columns={
                             col: col.replace("_x", "") for col in merged_df.columns
                         },
                         inplace=True,
                     )
-                    for col in numeric_columns:
+                    merged_df['neighborCellRef'] = merged_df['noughbourCellId'].apply(lambda x: reversed_post_cell_id_mapping_with_cell.get(x, "").split('=')[1])
+                    for col in columns_to_convert:
                         merged_df[col] = merged_df[col].apply(lambda x: int(str(x).split('|')[0]) if '|' in str(x) and str(x).split('|')[0].isdigit() else int(x) if str(x).isdigit() else x)
 
-                    merged_df.sort_values(by=["MO", "Node_ID"], inplace=True)
-
+                    #merged_df.sort_values(by=["MO", "Node_ID"], inplace=True)
+                    #
                     merged_df.to_excel(writer, sheet_name=sheet_name, index=False)
                     format_excel_sheet(
                         writer, sheet_name, merged_df, startrow=0, startcol=0
@@ -1095,49 +1040,51 @@ def get_pre_post_audit(request):
                     if sheet_name == "cell_data":
                         df.rename(
                             columns={
-                                'right_MO' : 'right_SectorCarrierID',
-                                'right_sectorFunctionRef' : 'right_SectorId'
+                                'right_MO': 'right_SectorCarrierID',
+                                'right_sectorFunctionRef': 'right_SectorId'
                             }, inplace=True
                         )
+
                         df.columns = [
-                            (
-                                col.replace("left_", "")
-                                if col.startswith("left_")
-                                else col.replace("right_", "")
-                            )
+                            col.replace("left_", "") if col.startswith("left_") else col.replace("right_", "")
                             for col in df.columns
                         ]
 
-                        ############################################################################ Select relevant columns ###########################################################
-                        df = df[
-                            [
-                                'Node_ID', 'MO', 'administrativeState', 'cellId', 'cellSubscriptionCapacity','channelBandwidth', 'dlChannelBandwidth', 'earfcn', 'earfcndl', 'earfcnul',
-                             
-                                'freqBand', 'noOfPucchSrUsers', 'operationalState', 'physicalLayerCellId','physicalLayerCellIdGroup', 'physicalLayerSubCellId', 'primaryPlmnReserved',
-                             
-                                'rachRootSequence', 'tac', 'ulChannelBandwidth', 'userLabel', 'SectorId','SectorCarrierID', 'configuredMaxTxPower', 'noOfRxAntennas', 'noOfTxAntennas'
-                            ]
+
+                        required_columns = [
+                            'Node_ID', 'MO', 'administrativeState', 'cellId', 'cellSubscriptionCapacity',
+                            'channelBandwidth', 'dlChannelBandwidth', 'earfcn', 'earfcndl', 'earfcnul',
+                            'freqBand', 'noOfPucchSrUsers', 'operationalState', 'physicalLayerCellId',
+                            'physicalLayerCellIdGroup', 'physicalLayerSubCellId', 'primaryPlmnReserved',
+                            'rachRootSequence', 'tac', 'ulChannelBandwidth', 'userLabel', 'SectorId',
+                            'SectorCarrierID', 'configuredMaxTxPower', 'noOfRxAntennas', 'noOfTxAntennas'
                         ]
 
-                        ########################################################################## Ensure string type and handle NaN values #################################################
+                        df = df[[col for col in required_columns if col in df.columns]]
+
                         columns_to_convert = ['dlChannelBandwidth', 'channelBandwidth', 'earfcndl', 'earfcn']
                         for col in columns_to_convert:
-                            df[col] = df[col].fillna('').astype(str)
+                            if col in df.columns:
+                                df[col] = df[col].fillna('').astype(str)
 
-                        ################################################################################# Perform string concatenation ########################################################
-                        df['dlChannelBandwidth'] = df['dlChannelBandwidth'] + df['channelBandwidth']
-                        df['earfcndl'] = df['earfcndl'] + df['earfcn']
-                        df.replace('nan', '', inplace=True)
-                        df.replace(pd.NA, '', inplace=True)
+                        if 'dlChannelBandwidth' in df.columns and 'channelBandwidth' in df.columns:
+                            df['dlChannelBandwidth'] = df['dlChannelBandwidth'] + df['channelBandwidth']
+                            df.drop(columns=['channelBandwidth'], inplace=True)
 
-                        df.drop(columns = ['channelBandwidth', 'earfcn'], inplace=True)
+                        if 'earfcndl' in df.columns and 'earfcn' in df.columns:
+                            df['earfcndl'] = df['earfcndl'] + df['earfcn']
+                            df.drop(columns=['earfcn'], inplace=True)
+
+                        df.replace(['nan', pd.NA], '', inplace=True)
+
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
                     format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0)
 
-    # After writing the Excel file
+
+    ################################################################################## After writing the Excel file ##########################################################################
     asyncio.run(async_write_excel(gpl_pre_post_file_path, all_post_merged_df, all_pre_merged_df, format_excel_sheet))
 
-    # Now it's safe to read the file
+    ################################################################################### Now it's safe to read the file ########################################################################
 
     #-------------------------------------------------------------------- GPL Correction File Script Generation ------------------------------------------------------------------#
 
@@ -1201,7 +1148,7 @@ def get_pre_post_audit(request):
             eutran_freq_relation_script = ''
             for _, row in eutranFreqRel_correctin_df.iterrows():
                 mo = str(row.get('MO', ''))
-                if mo.startswith('GeranNetwork=1,GeranFrequency=') or mo.startswith('ENodeBFunction=1,GeranNetwork=1,GeranFrequency='):
+                if mo.startswith('GeranNetwork=1,GeranFrequency='):
                     arfcn_val = int(row.get('arfcnValueGeranDl', ''))
                     eutran_freq_relation_script += GeranFrequency_defination.format(arfcnValueGeranDl=arfcn_val) + "\n"
                 elif mo.startswith('ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency='):
