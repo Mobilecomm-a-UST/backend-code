@@ -984,7 +984,7 @@ def generate_integration_script(request):
                                 LTE_UP_GW=row["LTE_UP_GW"]
                             )
                             print("formatted_text", formatted_text)
-                            with open(sitebasic_df_path, "a") as file:
+                            with open(sitebasic_df_path, "a", encoding='utf-8') as file:
                                 file.write(formatted_text + "\n")
                                 file.close()
                             
@@ -1074,7 +1074,7 @@ def generate_integration_script(request):
                             )
                             break
 
-                with open(rru_hw_path, "a") as file:
+                with open(rru_hw_path, "a", encoding='utf-8') as file:
                     file.write(
                         site_equipment_script_text + "\n" + site_equipment_text + "\n"
                     )
@@ -1082,7 +1082,7 @@ def generate_integration_script(request):
                 site_equipment_script_path = os.path.join(
                     commissioning_scripts_dir, f"RBSSummary_{node}_{current_time}.xml"
                 )
-                with open(site_equipment_script_path, "a") as file:
+                with open(site_equipment_script_path, "a", encoding='utf-8') as file:
                     file.write(
                         RBSSummary_script.format(
                             siteEquipmentFilePath=siteEquipmentFilePath,
@@ -1094,6 +1094,7 @@ def generate_integration_script(request):
         # Add RJ specific script generation logic here if needed
         ########################################################## MAKING THE ZIP FILE #############################################################
         folder_path = os.path.join(MEDIA_ROOT,"LTE_INTEGRATION_CONFIG_FILES")
+        
         
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         zip_filename = f"{site_id_name}_LTE_Integration_Scripts_{timestamp}.zip"

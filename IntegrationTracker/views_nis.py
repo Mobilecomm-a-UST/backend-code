@@ -789,7 +789,7 @@ def monthwise_integration_data(request):
             ct(cir text, "M6_5G_RELOCATION" INTEGER,"M6_5G_SECTOR_ADDITION" INTEGER, "M6_DE_GROW" INTEGER,"M6_FEMTO" INTEGER,"M6_HT_INCREMENT" INTEGER,"M6_IBS" INTEGER,"M6_IDSC" INTEGER,"M6_MACRO" INTEGER,"M6_ODSC" INTEGER, "M6_OPERATIONS" INTEGER ,"M6_OTHERS" INTEGER, "M6_RECTIFICATION" INTEGER, "M6_RELOCATION" INTEGER,"M6_RET" INTEGER, "M6_TRAFFIC_SHIFTING" INTEGER,"M6_ULS_HPSC" INTEGER,"M6_UPGRADE" INTEGER)) as m6
             using("cir")
                           
-                    """
+        """
             
         cursor.execute(query)
         results = cursor.fetchall()
