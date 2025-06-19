@@ -431,7 +431,8 @@ def datewise_integration_data(request):
             'RET', 
             'TRAFFIC SHIFTING', 
             'ULS_HPSC', 
-            'UPGRADE'
+            'UPGRADE',
+            '5G AIR SWAP'
         ]
         
         activity_columns = [a.replace(' ', '_').replace('-', '_') for a in activity_type]
@@ -587,7 +588,8 @@ def date_range_wise_integration_data(request):
         'RET', 
         'TRAFFIC SHIFTING', 
         'ULS_HPSC', 
-        'UPGRADE'
+        'UPGRADE',
+        '5G AIR SWAP'
     ]
     activity_type = sorted(set(raw_activities))  # Remove duplicates just in case
 
@@ -632,7 +634,8 @@ def date_range_wise_integration_data(request):
                                     'RRU UPGRADE',
                                     'TRAFFIC SHIFTING',
                                     'ULS_HPSC',
-                                    'UPGRADE'
+                                    'UPGRADE',
+                                    '5G AIR SWAP'
         ]) AS "Activity_Name") AS a
                     LEFT JOIN (
                         SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT(id) AS cnt
@@ -661,7 +664,8 @@ def date_range_wise_integration_data(request):
                 "D1_RRU_UPGRADE" INTEGER,
                 "D1_TRAFFIC_SHIFTING" INTEGER,
                 "D1_ULS_HPSC" INTEGER,
-                "D1_UPGRADE" INTEGER
+                "D1_UPGRADE" INTEGER,
+                "D1_5G_AIR_SWAP" INTEGER
                 )
             """
             cursor.execute(query)
@@ -791,7 +795,8 @@ def monthwise_integration_data(request):
             'RRU UPGRADE',
             'TRAFFIC SHIFTING',
             'ULS_HPSC',
-            'UPGRADE'
+            'UPGRADE',
+            '5G AIR SWAP'
         ]
 
     def build_crosstab(month, year, index):
@@ -956,13 +961,33 @@ def hyperlink_monthly_oemwise_integration_data(request):
             SELECT unnest(ARRAY['{circle}']) AS "CIRCLE"
         ) AS CIRCLES
      CROSS JOIN
-       (SELECT unnest(ARRAY['5G SECTOR ADDITION','5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC','OPERATIONS' ,'OTHERS','RECTIFICATION', 'RELOCATION', 'RET','TRAFFIC SHIFTING' ,'ULS_HPSC', 'UPGRADE']) AS "Activity_Name") AS "Activity_Name"
+       (SELECT unnest(ARRAY['5G BW UPGRADE',
+                                    '5G RELOCATION',
+                                    '5G RRU SWAP',
+                                    '5G SECTOR ADDITION',
+                                    'DE-GROW',
+                                    'FEMTO',
+                                    'HT INCREMENT',
+                                    'IBS',
+                                    'IDSC',
+                                    'MACRO',
+                                    'ODSC',
+                                    'OPERATIONS',
+                                    'OTHERS',
+                                    'RECTIFICATION',
+                                    'RELOCATION',
+                                    'RET',
+                                    'RRU UPGRADE',
+                                    'TRAFFIC SHIFTING',
+                                    'ULS_HPSC',
+                                    'UPGRADE',
+                                    '5G AIR SWAP']) AS "Activity_Name") AS "Activity_Name"
      LEFT JOIN
         (select "CIRCLE","Activity_Name", count("id") as cnt from 
  						(select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" WHERE EXTRACT(MONTH FROM "Integration_Date") = {month} and EXTRACT(YEAR FROM "Integration_Date") = {year} and "OEM"='{oem}' and "CIRCLE"='{circle}') in_0
  group by "CIRCLE","Activity_Name") as r
      USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-ct(cir text, "5G SECTOR ADDITION" INTEGER,"5G RELOCATION" INTEGER,"DE_GROW" INTEGER,"FEMTO" INTEGER,"HT_INCREMENT" INTEGER,"IBS" INTEGER,"IDSC" INTEGER,"MACRO" INTEGER,"ODSC" INTEGER, "OPERATIONS" INTEGER,"OTHERS" INTEGER,"RECTIFICATION" INTEGER,"RELOCATION" INTEGER,"RET" INTEGER,"TRAFFIC_SHIFTING" INTEGER,"ULS_HPSC" INTEGER,"UPGRADE" INTEGER)) as m1
+ct(cir text, "5G RELOCATION" INTEGER,"5G RRU SWAP" INTEGER,"5G SECTOR ADDITION" INTEGER,"DE-GROW" INTEGER,"FEMTO" INTEGER,"HT INCREMENT" INTEGER,"IBS" INTEGER,"IDSC" INTEGER,"MACRO" INTEGER, "ODSC" INTEGER,"OPERATIONS" INTEGER,"RECTIFICATION" INTEGER,"OTHERS" INTEGER,"RECTIFICATION" INTEGER,"RELOCATION" INTEGER,"RET" INTEGER,"RRU UPGRADE" INTEGER,"TRAFFIC SHIFTING" INTEGER,"ULS_HPSC" INTEGER,"UPGRADE" INTEGER,"5G AIR SWAP" INTEGER)) as m1
 
         
         
