@@ -82,6 +82,17 @@ from LTE_Integration_Scripting_Automtion.circles.RJ.RJ_COMISSION_SCRIPT import (
 
 )
 
+from LTE_Integration_Scripting_Automtion.circles.AS.AS_INTEGRATION_SCRIPT import (
+    AS_GPL_LMS_DST_SCRIPT,
+    AS_TN_RN_GPS_MME_SCRIPT,
+    AS_5G_Cell_creation_Sctp_Endpoint_Creation,
+    AS_Termpoint_GUtranFreqRelation_script,
+    AS_GNBCUCPFunction,
+    AS_GNBDUFunction,
+    AS_NR_GPL_LMS_script
+
+)
+
 
 ############################################################## END IMPORT STATEMENTS ############################################################################################
 
@@ -296,6 +307,18 @@ def generate_integration_script(request):
         ################################################ Define required columns for fdd and tdd also ###############################################################
         lte_df["earfcnul"] = lte_df["earfcnul"].astype("Int64")
         unique_nodes = lte_df["eNodeBName"].dropna().unique()
+        lte_df["earfcnul"] = lte_df["earfcnul"].astype("Int64")
+        lte_df['Latitude'] = lte_df['Latitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
+
+
+        lte_df['Longitude'] = lte_df['Longitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
+
+
+
+        nr_cell_df['Latitude'] = nr_cell_df['Latitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
+
+        nr_cell_df['Longitude'] = nr_cell_df['Longitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
+
 
         site_id_name = lte_df["eUtranCellFDDId"].apply(lambda x: x.split("_")[4][:-1]).unique()[0]
 
@@ -1090,8 +1113,118 @@ def generate_integration_script(request):
                         )
                     )
 
+        #---------------------------------------------------------------- AS(Asaam) Circle-specific Script Generation ---------------------------------------------------------------------
+        if circle == "AS":
+            current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+            
+            for idx, row in site_basic_df.iterrows():
+                print(site_basic_df)
+                node_name = row.get("eNodeBName", "UnknownNode")
+                
+                node_dir = create_script_paths(base_path_url, node_name)['lte']
+                os.makedirs(node_dir, exist_ok=True)
+
+                if node_name in cell_mapped_node:
+                    cell_ids = cell_mapped_node[node_name]
+
+                    if any(
+                        tech in "".join(cell_ids) for tech in ["_F1_", "_F2_", "_F3_"]
+                    ):
+                        formatted_text = AS_TN_RN_GPS_MME_SCRIPT.format(
+                            LTE_UP_GW=row["LTE_UP_GW"], eNBId=row["eNBId"]
+                        )
+                        script_path = os.path.join(
+                            node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
+                        )
+                        with open(script_path, "a") as file:
+                            file.write(formatted_text + "\n" + kk_GPS_MMS_script)
+
+                    elif any(tech in "".join(cell_ids) for tech in ["_T1_", "_T2_"]):
+                        formatted_text = AS_TN_RN_GPS_MME_SCRIPT.format(
+                            LTE_UP_GW=row["LTE_UP_GW"], eNBId=row["eNBId"]
+                        )
+                        script_path = os.path.join(
+                            node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
+                        )
+                        with open(script_path, "a") as file:
+                            file.write(formatted_text + "\n" + kk_GPS_MMS_script)
+
+            ######################################################################### GPS/MME Script #######################################################################
+            #gps_mme_path = f"01 GPS_MME_script_{node_name}_{current_time}.txt"
+            #for node in unique_nodes:
+            #    script_path = os.path.join(create_script_paths(base_path_url, node)['lte'], gps_mme_path)
+            #    with open(script_path,"a") as file:
+            #        file.write(kk_GPS_MMS_script + "\n")
+            ########################################################################## GPL/LMS Script ###########################################################################
+            gpl_lms_path = f"03 GPL_LMS_script_{node_name}_{current_time}.txt"
+            for node in unique_nodes:
+                script_path = os.path.join(create_script_paths(base_path_url, node)['lte'], gpl_lms_path)
+                with open(script_path,"a") as file:
+                    file.write(AS_GPL_LMS_DST_SCRIPT + "\n")
+
+            ############################################################################### 5G Cell Scripts ##########################################################################
+            #---------------------------------------------------------------------------------------------------
+            if not nr_cell_df.empty:
+                for node in nr_cell_df["gNodeBName"].unique():
+                    nr_cell_df: pd.DataFrame = nr_cell_df[
+                        nr_cell_df["gNodeBName"] == node
+                    ]
+                    nr_cell_df.rename(
+                        columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True
+                    )
+                    nr_cell_df_path = os.path.join(
+                        create_script_paths(base_path_url, node)['nr'], f"1_{node}_5G Cell creation_Sctp Endpoint Creation_{current_time}.txt"
+                    )
+                    gnbid = nr_cell_df["gNBId"].unique()[0]
+                    print(nr_cell_df)
+
+                    gnbdu_fuction_element = ""
+                    gnbcucp_fuction_element = ""
+
+                    for idx, row in nr_cell_df.iterrows():
+                        gnbdu_fuction_element += AS_GNBDUFunction.format(
+                            nRSectorCarrierId=row["nRSectorCarrierId"],
+                            arfcnDL=row["arfcnDL"],
+                            arfcnUL=row["arfcnUL"],
+                            bSChannelBwDL_UL=row["bSChannelBwDL-UL"],
+                            configuredMaxTxPower=row["configuredMaxTxPower"],
+                            Latitude=row["Latitude"],
+                            Longitude=row["Longitude"],
+                            sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
+                            gUtranCell=row["gUtranCell"],
+                            cellLocalId=row["cellLocalId"],
+                            nRPCI=row["nRPCI"],
+                            nRTAC=row["nRTAC"],
+                            rachRootSequence = int(row["rachRootSequence"]),  ############################################################################ Added rachRootSequence
+                        )
+
+                        gnbcucp_fuction_element += AS_GNBCUCPFunction.format(
+                            gUtranCell=row["gUtranCell"],
+                        )
+                    with open(nr_cell_df_path, "a") as file:
+                        file.write(
+                            AS_5G_Cell_creation_Sctp_Endpoint_Creation.format(
+                                AS_GNBDUFunction=gnbdu_fuction_element,
+                                AS_GNBCUCPFunction = gnbcucp_fuction_element
+                           
+                            )
+                        )
+                        file.close()
+                
+
+                    NR_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node)['nr'], f"2_{node}_NR_GPL_LMS_{current_time}.txt")
+                    with open(NR_GPL_LMS_path, "a") as file:
+                        file.write(AS_NR_GPL_LMS_script + "\n")
+
+                    Termpoint_GUtranFreqRelation_path = os.path.join(
+                        create_script_paths(base_path_url, node_name)['nr'], f"3_{node_name}_Termpoint_GUtranFreqRelation_{current_time}.txt"
+                    )
+                    with open(Termpoint_GUtranFreqRelation_path, "a") as file:
+                        file.write(AS_Termpoint_GUtranFreqRelation_script + "\n")
+                # .......................................................................... NRCELL CONFIGRATION FOR CELL CREATION IN 5G ................................................
+
         #####################################################################################################################################################
-        # Add RJ specific script generation logic here if needed
+        # Add CIRCLES specific script generation logic here if needed
         ########################################################## MAKING THE ZIP FILE #############################################################
         folder_path = os.path.join(MEDIA_ROOT,"LTE_INTEGRATION_CONFIG_FILES")
         

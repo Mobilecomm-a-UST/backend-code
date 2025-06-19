@@ -964,8 +964,6 @@ async def get_pre_post_audit(request):
 
                     pre_cell_relation_df['MO'] = pre_cell_relation_df['MO'].apply(replace_all_enbid)
                     #------------------------------------------------------------------------------------------------------------------------------------------------------#
-                    pre_cell_relation_df.to_excel('pre_cell_relation_df.xlsx', index=False)
-                    pre_cell_relation_df.to_excel('post_cell_relation_df.xlsx', index=False)
                     merged_df = pd.merge(left=pre_cell_relation_df,right=post_cell_relaton_df,how='left',on=['MO', 'cellId']).drop_duplicates(subset=['MO', 'cellId'])
                     merged_df['neighborCellRef_y'] = merged_df['neighborCellRef_y'].fillna(merged_df['neighborCellRef_x'])
                     merged_df['neighborCellRef_x'] = merged_df['neighborCellRef_y']
