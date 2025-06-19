@@ -433,25 +433,6 @@ def datewise_integration_data(request):
             'ULS_HPSC', 
             'UPGRADE',
             '5G AIR SWAP'
-            '5G SECTOR ADDITION', 
-            '5G RELOCATION', 
-            'HT INCREMENT', 
-            'FEMTO', 
-            'DE-GROW', 
-            'IBS', 
-            'IDSC',
-            'MACRO', 
-            'ODSC', 
-            'OPERATIONS', 
-            'RRU UPGRADE', 
-            '5G BW UPGRADE', 
-            'OTHERS', 
-            '5G RRU SWAP',
-            'RELOCATION', 
-            'RECTIFICATION', 
-            'RET', 
-            'TRAFFIC SHIFTING', 
-            'ULS_HPSC', 
             'UPGRADE'
         ]
         
@@ -610,6 +591,7 @@ def date_range_wise_integration_data(request):
         'ULS_HPSC', 
         'UPGRADE',
         '5G AIR SWAP'
+        'UPGRADE'
     ]
     activity_type = sorted(set(raw_activities))  # Remove duplicates just in case
 
@@ -689,33 +671,6 @@ def date_range_wise_integration_data(request):
                                     'ULS_HPSC',
                                     'UPGRADE',
                                     '5G AIR SWAP'
-        ]) AS "Activity_Name") AS a
-                    LEFT JOIN (
-                        SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT(id) AS cnt
-                        FROM public."IntegrationTracker_integrationdata"
-                        WHERE "Integration_Date" BETWEEN '{from_date}' AND '{to_date}'
-                        GROUP BY "CIRCLE", "Activity_Name"
-                    ) r USING ("CIRCLE", "Activity_Name")
-                        (SELECT unnest(ARRAY[
-                                    '5G BW UPGRADE',
-                                    '5G RELOCATION',
-                                    '5G RRU SWAP',
-                                    '5G SECTOR ADDITION',
-                                    'DE-GROW',
-                                    'FEMTO',
-                                    'HT INCREMENT',
-                                    'IBS',
-                                    'IDSC',
-                                    'MACRO',
-                                    'ODSC',
-                                    'OPERATIONS',
-                                    'OTHERS',
-                                    'RECTIFICATION',
-                                    'RELOCATION',
-                                    'RET',
-                                    'RRU UPGRADE',
-                                    'TRAFFIC SHIFTING',
-                                    'ULS_HPSC',
                                     'UPGRADE'
         ]) AS "Activity_Name") AS a
                     LEFT JOIN (
@@ -747,25 +702,6 @@ def date_range_wise_integration_data(request):
                 "D1_ULS_HPSC" INTEGER,
                 "D1_UPGRADE" INTEGER,
                 "D1_5G_AIR_SWAP" INTEGER
-                    "cir" TEXT, "D1_5G_BW_UPGRADE" INTEGER,
-                "D1_5G_RELOCATION" INTEGER,
-                "D1_5G_RRU_SWAP" INTEGER,
-                "D1_5G_SECTOR_ADDITION" INTEGER,
-                "D1_DE_GROW" INTEGER,
-                "D1_FEMTO" INTEGER,
-                "D1_HT_INCREMENT" INTEGER,
-                "D1_IBS" INTEGER,
-                "D1_IDSC" INTEGER,
-                "D1_MACRO" INTEGER,
-                "D1_ODSC" INTEGER,
-                "D1_OPERATIONS" INTEGER,
-                "D1_OTHERS" INTEGER,
-                "D1_RECTIFICATION" INTEGER,
-                "D1_RELOCATION" INTEGER,
-                "D1_RET" INTEGER,
-                "D1_RRU_UPGRADE" INTEGER,
-                "D1_TRAFFIC_SHIFTING" INTEGER,
-                "D1_ULS_HPSC" INTEGER,
                 "D1_UPGRADE" INTEGER
                 )
             """
@@ -898,25 +834,6 @@ def monthwise_integration_data(request):
             'ULS_HPSC',
             'UPGRADE',
             '5G AIR SWAP'
-            '5G BW UPGRADE',
-            '5G RELOCATION',
-            '5G RRU SWAP',
-            '5G SECTOR ADDITION',
-            'DE-GROW',
-            'FEMTO',
-            'HT INCREMENT',
-            'IBS',
-            'IDSC',
-            'MACRO',
-            'ODSC',
-            'OPERATIONS',
-            'OTHERS',
-            'RECTIFICATION',
-            'RELOCATION',
-            'RET',
-            'RRU UPGRADE',
-            'TRAFFIC SHIFTING',
-            'ULS_HPSC',
             'UPGRADE'
         ]
 
