@@ -431,8 +431,7 @@ def datewise_integration_data(request):
             'RET', 
             'TRAFFIC SHIFTING', 
             'ULS_HPSC', 
-            'UPGRADE',
-            '5G AIR SWAP'
+            'UPGRADE'
         ]
         
         activity_columns = [a.replace(' ', '_').replace('-', '_') for a in activity_type]
@@ -590,6 +589,41 @@ def date_range_wise_integration_data(request):
         'ULS_HPSC', 
         'UPGRADE',
         '5G AIR SWAP'
+        'UPGRADE'
+    ]
+    activity_type = sorted(set(raw_activities))  # Remove duplicates just in case
+
+    # Create SQL-safe column aliases
+    def sql_safe(name):
+        return f"D1_{name.upper().replace(' ', '').replace('-', '')}"
+
+    activity_columns = [f'"{sql_safe(a)}" INTEGER' for a in activity_type]
+
+    print('activity columnsa data ' , {', '.join(activity_columns)})
+
+    # Ensure unique, cleaned activity types
+    raw_activities = [
+        '5G SECTOR ADDITION', 
+        '5G RELOCATION', 
+        'HT INCREMENT', 
+        'FEMTO', 
+        'DE-GROW', 
+        'IBS', 
+        'IDSC',
+        'MACRO', 
+        'ODSC', 
+        'OPERATIONS', 
+        'RRU UPGRADE', 
+        '5G BW UPGRADE', 
+        'OTHERS', 
+        '5G RRU SWAP',
+        'RELOCATION', 
+        'RECTIFICATION', 
+        'RET', 
+        'TRAFFIC SHIFTING', 
+        'ULS_HPSC', 
+        'UPGRADE',
+        '5G AIR SWAP'
     ]
     activity_type = sorted(set(raw_activities))  # Remove duplicates just in case
 
@@ -634,8 +668,7 @@ def date_range_wise_integration_data(request):
                                     'RRU UPGRADE',
                                     'TRAFFIC SHIFTING',
                                     'ULS_HPSC',
-                                    'UPGRADE',
-                                    '5G AIR SWAP'
+                                    'UPGRADE'
         ]) AS "Activity_Name") AS a
                     LEFT JOIN (
                         SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT(id) AS cnt
@@ -664,8 +697,7 @@ def date_range_wise_integration_data(request):
                 "D1_RRU_UPGRADE" INTEGER,
                 "D1_TRAFFIC_SHIFTING" INTEGER,
                 "D1_ULS_HPSC" INTEGER,
-                "D1_UPGRADE" INTEGER,
-                "D1_5G_AIR_SWAP" INTEGER
+                "D1_UPGRADE" INTEGER
                 )
             """
             cursor.execute(query)
@@ -795,8 +827,7 @@ def monthwise_integration_data(request):
             'RRU UPGRADE',
             'TRAFFIC SHIFTING',
             'ULS_HPSC',
-            'UPGRADE',
-            '5G AIR SWAP'
+            'UPGRADE'
         ]
 
     def build_crosstab(month, year, index):
@@ -1115,8 +1146,8 @@ def integration_table_update(request, id=None):
     print("username: ", user)
     nokia_spocks=['chandan.kumar@mcpsinc.com','nishant.verma@mcpsinc.in','girraj.singh@mcpsinc.in','mohit.batra@mcpsinc.com','abhishek.gupta']
     zte_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
-    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','Harish.Singh@ust.com','abhishek.gupta']
-    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','Harish.Singh@ust.com', 'abhishek.gupta']
+    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com','abhishek.gupta']
+    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com', 'abhishek.gupta']
     ericsson_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
   
     if request.method == 'PUT':

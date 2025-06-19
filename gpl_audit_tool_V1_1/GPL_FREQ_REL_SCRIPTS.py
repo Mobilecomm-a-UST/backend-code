@@ -12,8 +12,6 @@ gs-
 """
 
 GeranFrequency_defination = """
-####GeranFrequency Definition#####
-
 gs+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
 crn ENodeBFunction=1,GeraNetwork=1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
@@ -56,8 +54,17 @@ gs-
 Eutran_Freq_relation_creation_script = """
 ###EUtranFreqRelation Definition#####
 
-crn ENodeBFunction=1,EUtranCellFDD/TDD={EUtranCellName},EUtranFreqRelation={arfcnValueEUtranDl}
+crn ENodeBFunction=1,{EUtranCellName},EUtranFreqRelation={arfcnValueEUtranDl}
 eutranFrequencyRef ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency={arfcnValueEUtranDl}
 cellReselectionPriority {cellReselectionPriority}
+end
+"""
+
+Eutran_freq_cell_relation_defination = """ 
+crn ENodeBFunction=1,{EUtranCellName}                                                                                                                                                                                                                                                                           
+neighborCellRef {neighborCellRef}                                                                                                                                                                          
+zzzTemporary1 -2000000000                                                                                                                                                                              
+zzzTemporary2 -2000000000                                                                                                                                                                              
+zzzTemporary3                                                                                                                                                                                          
 end
 """
