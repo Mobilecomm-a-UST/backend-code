@@ -2058,9 +2058,11 @@ end
 #END ENodeBFunction=1,GeraNetwork=1,GeranFreqGroup=1 --------------------
 
 crn ENodeBFunction=1,EUtraNetwork=1
+
+
 end
 
-set 0 Userlabel {Phy SiteID/Userlabel}
+set 0 Userlabel {Phy_SiteID_Userlabel}
 
 confb-
 gs-
