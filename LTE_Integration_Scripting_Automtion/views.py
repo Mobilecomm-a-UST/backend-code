@@ -1138,7 +1138,7 @@ def generate_integration_script(request):
                         tech in "".join(cell_ids) for tech in ["_F1_", "_F2_", "_F3_"]
                     ):
                         formatted_text = AS_TN_RN_GPS_MME_SCRIPT.format(
-                            LTE_UP_GW=row["LTE_UP_GW"], eNBId=row["eNBId"]
+                            LTE_UP_GW=row["LTE_UP_GW"], eNBId=row["eNBId"], Phy_SiteID_Userlabel = row["Phy SiteID/Userlabel"]
                         )
                         script_path = os.path.join(
                             node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
@@ -1148,7 +1148,7 @@ def generate_integration_script(request):
 
                     elif any(tech in "".join(cell_ids) for tech in ["_T1_", "_T2_"]):
                         formatted_text = AS_TN_RN_GPS_MME_SCRIPT.format(
-                            LTE_UP_GW=row["LTE_UP_GW"], eNBId=row["eNBId"]
+                            LTE_UP_GW=row["LTE_UP_GW"], eNBId=row["eNBId"], Phy_SiteID_Userlabel = row["Phy SiteID/Userlabel"]
                         )
                         script_path = os.path.join(
                             node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
