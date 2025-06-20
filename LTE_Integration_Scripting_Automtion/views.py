@@ -1211,6 +1211,7 @@ def generate_integration_script(request):
                     with open(nr_cell_df_path, "a") as file:
                         file.write(
                             AS_5G_Cell_creation_Sctp_Endpoint_Creation.format(
+                                gUtranCell = row["gUtranCell"],
                                 AS_GNBDUFunction=gnbdu_fuction_element,
                                 AS_GNBCUCPFunction = gnbcucp_fuction_element
                            
