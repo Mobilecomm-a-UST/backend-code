@@ -1890,7 +1890,6 @@ def get_pre_post_audit(request):
                     pre_cell_relation_df['MO'] = pre_cell_relation_df['MO'].apply(lambda x: str(x).replace(pre_node_name, post_node_name))
                     pre_cell_relation_df['cellId'] = pre_cell_relation_df['cellId'].apply(lambda x: post_cell_id_mapping_with_cell.get(x))
                     pre_cell_relation_df['noughbourCellId'] = pre_cell_relation_df['noughbourCellId'].apply(lambda x: str(x).replace(pre_node_name, post_node_name))
-                    print("pre cell relation df with this before:- \n", pre_cell_relation_df['noughbourCellId'].unique().tolist())
                     pre_cell_relation_df['noughbourCellId'] = pre_cell_relation_df['noughbourCellId'].apply(lambda x: post_cell_id_mapping_with_cell.get(x))
                     print(post_cell_id_mapping_with_cell)
 
@@ -1914,8 +1913,6 @@ def get_pre_post_audit(request):
 
                     pre_cell_relation_df['MO'] = pre_cell_relation_df['MO'].apply(replace_all_enbid)
                     #------------------------------------------------------------------------------------------------------------------------------------------------------#
-                    pre_cell_relation_df.to_excel('pre_cell_relation_df.xlsx', index=False)
-                    pre_cell_relation_df.to_excel('post_cell_relation_df.xlsx', index=False)
                     merged_df = pd.merge(left=pre_cell_relation_df,right=post_cell_relaton_df,how='left',on=['MO', 'cellId']).drop_duplicates(subset=['MO', 'cellId'])
                     merged_df['neighborCellRef_y'] = merged_df['neighborCellRef_y'].fillna(merged_df['neighborCellRef_x'])
                     merged_df['neighborCellRef_x'] = merged_df['neighborCellRef_y']
@@ -2076,7 +2073,7 @@ def get_pre_post_audit(request):
         feature_correctin_data_file_df = await asyncio.to_thread(gpl_correction_data_file.parse, "FeatureState")
         feature_correctin_data_f_df = feature_correctin_data_file_df[feature_correctin_data_file_df['Feature setting Status'] == 'NOT OK'].copy()
         eutranFreq_correctin_data_file = await asyncio.to_thread(gpl_correction_data_file.parse, "Eutranfrequency")
-        eutranFreq_correctin_data_file_df = eutranFreq_correctin_data_file[eutranFreq_correctin_data_file['Status'] != 'OK'].copy()
+        eutranFreq_correctin_data_file_df = eutranFreq_correctin_data_file[eutranFreq_correctin_data_file['Status'] == 'Missing in Post'].copy()
         eutranFreqRelation_correctin_data_file = await asyncio.to_thread(gpl_correction_data_file.parse, "EutranfreqRelation")
         eutranFreqRelation_correctin_data_f_df = eutranFreqRelation_correctin_data_file[eutranFreqRelation_correctin_data_file['Status'] != 'OK'].copy()
         eutranFreqRelation_cellRelation_file = await asyncio.to_thread(gpl_correction_data_file.parse, "CellRelation")
@@ -2128,10 +2125,13 @@ def get_pre_post_audit(request):
             print(freq_mo_names)
             #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
             eutran_freq_relation_script = ''
+            print(eutranFreqRel_correctin_df)
+            
             for _, row in eutranFreqRel_correctin_df.iterrows():
                 mo = str(row.get('MO', ''))
-                if mo.startswith('GeranNetwork=1,GeranFrequency='):
+                if mo.startswith('GeraNetwork=1,GeranFrequency='):
                     arfcn_val = int(row.get('arfcnValueGeranDl', ''))
+
                     eutran_freq_relation_script += GeranFrequency_defination.format(arfcnValueGeranDl=arfcn_val) + "\n"
                 elif mo.startswith('ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency='):
                     arfcn_val = int(row.get('arfcnValueEUtranDl', ''))
