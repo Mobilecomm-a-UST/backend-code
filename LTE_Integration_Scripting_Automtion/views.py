@@ -316,20 +316,6 @@ def generate_integration_script(request):
         siteBasicFilePath = ""
         siteEquipmentFilePath = ""
         ################################################ Define required columns for fdd and tdd also ###############################################################
-        lte_df["earfcnul"] = lte_df["earfcnul"].astype("Int64")
-        lte_df['Latitude'] = lte_df['Latitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
-        #lte_df['Latitude'] = lte_df['Latitude'].astype("Int64")
-
-        lte_df['Longitude'] = lte_df['Longitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
-        #lte_df['Longitude'] = lte_df['Longitude'].astype("Int64")
-
-
-        nr_cell_df['Latitude'] = nr_cell_df['Latitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
-        #nr_cell_df['Latitude'] = nr_cell_df['Latitude'].astype("Int64")
-        nr_cell_df['Longitude'] = nr_cell_df['Longitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
-        #nr_cell_df['Longitude'] = nr_cell_df['Longitude'].astype("Int64")
-
-
         unique_nodes = lte_df["eNodeBName"].dropna().unique()
         lte_df["earfcnul"] = lte_df["earfcnul"].astype("Int64")
         lte_df['Latitude'] = lte_df['Latitude'].apply(lambda x: str(x).replace(".", "") if '.' in str(x) else x)
@@ -380,7 +366,7 @@ def generate_integration_script(request):
                     cell_ids = cell_mapped_node[node_name]
 
                     if any(
-                        tech in "".join(cell_ids) for tech in ["_F1_", "_F2_", "_F3_"]
+                        tech in "".join(cell_ids) for tech in ["_F1_", "_F8_", "_F3_"]
                     ):
                         formatted_text = kk_TN_script_text.format(
                             eNodeBName=row["eNodeBName"], eNBId=row["eNBId"]
@@ -480,7 +466,9 @@ def generate_integration_script(request):
                 # .......................................................................... NRCELL CONFIGRATION FOR CELL CREATION IN 5G ................................................
 
             ############################################################### creating the SiteBasic script for 4G and 5G ###############################################################
-            for node in site_basic_df["eNodeBName"].unique():
+            unique_nodes = site_basic_df["eNodeBName"].dropna().unique()
+            print("Unique Nodes in Site Basic DataFrame:", unique_nodes)
+            for node in unique_nodes:
                 commision_scripts_dir = create_script_paths(base_path_url, node)['commissioning']
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 os.makedirs(commision_scripts_dir, exist_ok=True)
@@ -1148,10 +1136,13 @@ def generate_integration_script(request):
                     cell_ids = cell_mapped_node[node_name]
 
                     if any(
-                        tech in "".join(cell_ids) for tech in ["_F1_", "_F2_", "_F3_"]
+                        tech in "".join(cell_ids) for tech in ["_F1_", "_F8_", "_F3_"]
                     ):
                         formatted_text = AS_TN_RN_GPS_MME_SCRIPT.format(
-                            LTE_UP_GW=row["LTE_UP_GW"], eNBId=row["eNBId"], Phy_SiteID_Userlabel = row["Phy SiteID/Userlabel"]
+                            LTE_UP_GW=row["LTE_UP_GW"], 
+                            eNBId=row["eNBId"], 
+                            Phy_SiteID_Userlabel = row["Phy SiteID/Userlabel"], 
+                            tnPortId = row["tnPortId"]
                         )
                         script_path = os.path.join(
                             node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
@@ -1161,7 +1152,10 @@ def generate_integration_script(request):
 
                     elif any(tech in "".join(cell_ids) for tech in ["_T1_", "_T2_"]):
                         formatted_text = AS_TN_RN_GPS_MME_SCRIPT.format(
-                            LTE_UP_GW=row["LTE_UP_GW"], eNBId=row["eNBId"], Phy_SiteID_Userlabel = row["Phy SiteID/Userlabel"]
+                            LTE_UP_GW=row["LTE_UP_GW"], 
+                            eNBId=row["eNBId"], 
+                            Phy_SiteID_Userlabel = row["Phy SiteID/Userlabel"], 
+                            tnPortId = row["tnPortId"]
                         )
                         script_path = os.path.join(
                             node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
@@ -1303,17 +1297,17 @@ def generate_integration_script(request):
                     print("inside ip tracker.....")
                     print(ip_type)
                     bbu_script_mapping_ipv4 = {
-                        "BB6651" : AS_SiteBasic_6651_IPV4,
-                        "BB6631" : AS_SiteBasic_6631_IPV4,
-                        "BB6630" : AS_SiteBasic_6630_IPV4,
-                        "BB5216" : AS_SiteBasic_5216_IPV4,
+                        "6651" : AS_SiteBasic_6651_IPV4,
+                        "6631" : AS_SiteBasic_6631_IPV4,
+                        "6630" : AS_SiteBasic_6630_IPV4,
+                        "5216" : AS_SiteBasic_5216_IPV4,
                     }
 
                     bbu_script_mapping_ipv6 = {
-                        "BB6651" : AS_SiteBasic_6651_IPV6,
-                        "BB6631" : AS_SiteBasic_6631_IPV6,
-                        "BB6630" : AS_SiteBasic_6630_IPV6,
-                        "BB5216" : AS_SiteBasic_5216_IPV6
+                        "6651" : AS_SiteBasic_6651_IPV6,
+                        "6631" : AS_SiteBasic_6631_IPV6,
+                        "6630" : AS_SiteBasic_6630_IPV6,
+                        "5216" : AS_SiteBasic_5216_IPV6
                     }
                     bbu_script_mapping = bbu_script_mapping_ipv4 if ip_type == "IPv4" else bbu_script_mapping_ipv6
 
@@ -1377,14 +1371,14 @@ def generate_integration_script(request):
                 )
 
                 bbu_mapped_script = {
-                    'BB6630': SiteEquipment_6630,
-                    'BB6631': SiteEquipment_6631,
-                    'BB6303': SiteEquipment_6303,
-                    'BB6353': SiteEquipment_6353,
-                    'BB6339': SiteEquipment_6339,
-                    'BB5216': SiteEquipment_5216,
-                    'BB6648': SiteEquipment_6648,
-                    'BBR503': SiteEquipment_R503,
+                    '6630': SiteEquipment_6630,
+                    '6631': SiteEquipment_6631,
+                    '6303': SiteEquipment_6303,
+                    '6353': SiteEquipment_6353,
+                    '6339': SiteEquipment_6339,
+                    '5216': SiteEquipment_5216,
+                    '6648': SiteEquipment_6648,
+                    'R503': SiteEquipment_R503,
                 }
                 site_equipment_script_text = ''
                 for bbu_prefix, template in bbu_mapped_script.items():
