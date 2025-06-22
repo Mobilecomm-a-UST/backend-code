@@ -1314,7 +1314,7 @@ def generate_integration_script(request):
                     
                     for bbu_prefix , template in bbu_script_mapping.items():
                         print(bbu_prefix)
-                        if bbu_type in bbu_prefix:
+                        if bbu_prefix in bbu_type:
                             print("inside bbu type tracker.....")
                             formatted_text = template.format(
                                 eNodeBName=row["eNodeBName"],
