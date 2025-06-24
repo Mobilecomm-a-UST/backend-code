@@ -1176,15 +1176,16 @@ def generate_integration_script(request):
                     commision_scripts_dir, f"01_{node}_SiteBasic_{current_time}.xml"
                 )
                 
-                siteBasicFilePath = os.path.relpath(
-                    sitebasic_df_path,
-                    os.path.join(base_path_url, f"{node}_Integration_Sripts")
-                ).replace("\\", "/")
                 relative_path = os.path.relpath(
                     sitebasic_df_path,
                     os.path.join(base_path_url, f"{node_name}_Integration_Sripts")
                 )
                 siteBasicFilePath = relative_path.replace("\\", "/")
+
+                siteBasicFilePath = os.path.relpath(
+                    sitebasic_df_path,
+                    os.path.join(base_path_url, f"{node}_Integration_Sripts")
+                ).replace("\\", "/")
                 def ip_type(ip_address):
                     try:
                         socket.inet_pton(socket.AF_INET, ip_address)
