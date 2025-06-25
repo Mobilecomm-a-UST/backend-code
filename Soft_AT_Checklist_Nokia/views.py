@@ -158,6 +158,7 @@ def matches_path(expected_path, dist_name):
     return idx == len(expected_parts)
 
 
+# 
 def deduplicate_alarms(alarms):
     seen = set()
     unique_alarms = []
@@ -190,7 +191,7 @@ def upload_and_compare_xml(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+    #####################################
 
 # -------------------- API Views --------------------
 
@@ -240,7 +241,13 @@ FIXED_PARAMETERS = [
     {"parameter": "detectedSpeedAndDuplex", "mo_class": "MRBTS/TNLSVC-1/TNL-1/ETHSVC-1/ETHLK-1"},
     {"parameter": "syncInputType", "mo_class": "MRBTS/MNL/MNLENT/SYNC/CLOCK"},
     {"parameter": "syncInputType", "mo_class": "MRBTS/MNL/MNLENT/SYNC/CLOCK"},
+    {"parameter": "transmissionrate", "mo_class": "MRBTS/EQM_R-1/APEQM_R-1/RMOD_R-1/SFP_R"},
+
+    {"parameter": "totalDelayFromSHM", "mo_class": "MRBTS/MNL/MNLENT/SYNC/CLOCK_R"},
+
+
     {"parameter": "productName", "mo_class": "CABINET_R"}
+
 ]
 
 @api_view(['POST'])
@@ -267,6 +274,7 @@ def upload_and_compare_xml_files(request):
     results = []
     all_alarms = []
     summary_rows = []
+    ipmtu_rows =[]
 
     
 
@@ -295,6 +303,39 @@ def upload_and_compare_xml_files(request):
         mo_elements = root.findall('.//ns:managedObject', ns) if ns else root.findall('.//managedObject')
 
 # ££££££££££££££££££fixed parameter-----------------------------------------------------
+# """""""""""""""""""""""""""""""""""""""ipmtu"""
+    # -------- IPMTU Validation --------
+        REQUIRED_IPIF_DISTNAMES = [
+            "MRBTS/TNLSVC-1/TNL-1/IPNO-1/IPIF-1",
+            "MRBTS/TNLSVC-1/TNL-1/IPNO-1/IPIF-2",
+            "MRBTS/TNLSVC-1/TNL-1/IPNO-1/IPIF-3"
+        ]
+
+        for mo in mo_elements:
+            if mo.attrib.get("class", "") != "IPIF":
+                continue
+            dist_name = mo.attrib.get("distName", "")
+            site_id = extract_site_id(dist_name)
+
+            ipmtu_val = ""
+            for p in mo.findall(f"{{{ns_uri}}}p" if ns_uri else 'p'):
+                if p.attrib.get("name") == "ipMtu":
+                    ipmtu_val = p.text
+                    break
+
+            status_ip = "OK" if any(matches_path(req, dist_name) for req in REQUIRED_IPIF_DISTNAMES) else "Extra"
+            ipmtu_rows.append({
+                "file": xml_file.name,
+                "site_id": site_id,
+                "dist_name": dist_name,
+                "ipMtu": ipmtu_val,
+                "status": status_ip
+            })
+
+
+
+
+# ££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££
 
         for item in FIXED_PARAMETERS:
                 param = item['parameter'].strip().lower()
@@ -312,7 +353,7 @@ def upload_and_compare_xml_files(request):
                             value_found = p.text
                             break
                     if value_found:
-                        break
+                        continue
 
                     
             # 2. Check inside <list><item><p>
@@ -335,6 +376,8 @@ def upload_and_compare_xml_files(request):
                     "parameter": param,
                     "value": value_found or "Missing"
                 })
+        
+       
 
 # ££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££ made by me for alam 
         alarms = []
@@ -405,7 +448,7 @@ def upload_and_compare_xml_files(request):
                     # Update alarm count
                     site_alarm_counts[site_id] += alarms_to_add
 
-# £££££££££££££££££££££££££££££££££££££££££££££££££££££££££
+#£££££££££££££££££££££££££££££££££££££££££££££££££££££££££
 
             for path, param_dict in expected_values.items():
                 if not matches_path(path, dist_name):
@@ -462,6 +505,7 @@ def upload_and_compare_xml_files(request):
     df_results = pd.DataFrame(results)
     df_results.drop_duplicates(subset=['file', 'site_id', 'mo_path', 'parameter'], keep='first', inplace=True)
     df_alarms = pd.DataFrame(all_alarms)
+    df_ipmtu = pd.DataFrame(ipmtu_rows)
 
     report_folder = os.path.join(settings.MEDIA_ROOT, 'reports')
     os.makedirs(report_folder, exist_ok=True)
@@ -484,6 +528,9 @@ def upload_and_compare_xml_files(request):
             df_summary.to_excel(writer, index=False, sheet_name='FixedParameters')
             format_excel_sheet(writer, "FixedParameters", df_summary)
 
+        if not df_ipmtu.empty:
+            df_ipmtu.to_excel(writer, index=False, sheet_name='ipMtu Status')
+            format_excel_sheet(writer, "ipMtu Status", df_ipmtu)
 
     download_link = request.build_absolute_uri(settings.MEDIA_URL + 'reports/' + filename)
 
@@ -686,7 +733,7 @@ def upload_summary_xml_files(request):
                             if dpr_cell:  # only assign if found
                                 data["DPR_Cell_Name"] = dpr_cell
                             break
-# ££££££££££ band
+# ### band
             band_mapping = {
                 "T1": "L2600",
                 "T2": "L2300",
@@ -718,10 +765,27 @@ def upload_summary_xml_files(request):
                 data["Band"] = band_str
             else:
                 data["Band"] = ""
-                    # £££££££££££££
+
+
+           
+
+            # Loop through all LNCEL managedObjects
+            lncel_ids = []  
 
             
-     
+            for lncel in root.findall(".//ns:managedObject[@class='LNCEL']", namespaces=ns):
+                dist_name = lncel.attrib.get("distName", "")
+                if mrbts_id in dist_name:
+                    match = re.search(r"LNCEL-(\d+)", dist_name)
+                    if match:
+                        lncel_ids.append(match.group(1))
+
+            # Store in data dictionary
+            data["LCR_ID"] = "&".join(lncel_ids)
+
+            # Debug print
+            print("Extracted LNCEL_IDs:", data["LCR_ID"])
+                
             # Find sync_status from CLOCK
             clock = find(".//ns:managedObject[@class='CLOCK']")
             if clock is not None and mrbts_id in clock.attrib.get("distName", ""):
@@ -762,8 +826,9 @@ def upload_summary_xml_files(request):
             template_df.loc[0, 'Tech'] = 'NT'
             
             template_df.loc[0, 'MRBTS_ID'] = data.get('MRBTS_ID', '')
-            # template_df.loc[0, 'LNCEL_ID'] = data.get('LCR_ID', '') 
-            template_df.loc[0, 'LNCEL_ID'] = data.get('LCR_ID', 'test')  
+            template_df.loc[0, 'LNCEL_ID'] = data.get('LCR_ID', '')  
+
+
 
 
             template_df.loc[0, 'MRBTS_Name'] = data.get('MRBTS_Name', '')
@@ -780,8 +845,8 @@ def upload_summary_xml_files(request):
             template_df.loc[0, 'Band'] = data.get('Band', '')
 
             
-            template_df.loc[0, 'LNCEL_ID'] = data['cells'][0]['LNCEL_ID'] if data.get("cells") else ''
-            template_df.loc[0, 'Circle'] = circle_name  # <--- Yeh line add karni hai
+            # template_df.loc[0, 'LNCEL_ID'] = data['cells'][0]['LNCEL_ID'] if data.get("cells") else ''
+            template_df.loc[0, 'Circle'] = circle_name  
 
             all_dataframes.append(template_df)
 
