@@ -467,7 +467,6 @@ def generate_integration_script(request):
 
             ############################################################### creating the SiteBasic script for 4G and 5G ###############################################################
             unique_nodes = site_basic_df["eNodeBName"].dropna().unique()
-            print("Unique Nodes in Site Basic DataFrame:", unique_nodes)
             for node in unique_nodes:
                 commision_scripts_dir = create_script_paths(base_path_url, node)['commissioning']
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -566,6 +565,7 @@ def generate_integration_script(request):
 
                     for prefix, template in radio_templates.items():
                         if prefix in radio_type:
+                            print("processsng the rru prefix:- ", prefix)
                             site_equipment_text += template.format(
                                 eNodeBName=row["eNodeBName"],
                                 Radio_UnitId=row["Radio_UnitId"],
@@ -711,9 +711,9 @@ def generate_integration_script(request):
 
 
                     bbu_script_mapping_ipv4_ipv6 = {
-                        "BB6651" : TN_SITEBASIC_SCRIPT_BBU6651,
-                        "BB6630" : TN_SITEBASIC_SCRIPT_BBU6630_BBU6631,
-                        "BB6631" : TN_SITEBASIC_SCRIPT_BBU6630_BBU6631,
+                        "6651" : TN_SITEBASIC_SCRIPT_BBU6651,
+                        "6630" : TN_SITEBASIC_SCRIPT_BBU6630_BBU6631,
+                        "6631" : TN_SITEBASIC_SCRIPT_BBU6630_BBU6631,
 
                     }
                     bbu_script_mapping = bbu_script_mapping_ipv4_ipv6 
@@ -868,6 +868,7 @@ def generate_integration_script(request):
             ########################################## RJ Commissioning Scripts Generation Logic ###############################################################
             #
             for node in site_basic_df["eNodeBName"].unique():
+                print("processing the node:- ", node)
                 commision_scripts_dir = create_script_paths(base_path_url, node)['commissioning']
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 os.makedirs(commision_scripts_dir, exist_ok=True)
@@ -982,14 +983,14 @@ def generate_integration_script(request):
                 )
 
                 bbu_mapped_script = {
-                    'BB6630': SiteEquipment_6630,
-                    'BB6631': SiteEquipment_6631,
-                    'BB6303': SiteEquipment_6303,
-                    'BB6353': SiteEquipment_6353,
-                    'BB6339': SiteEquipment_6339,
-                    'BB5216': SiteEquipment_5216,
-                    'BB6648': SiteEquipment_6648,
-                    'BBR503': SiteEquipment_R503,
+                    '6630': SiteEquipment_6630,
+                    '6631': SiteEquipment_6631,
+                    '6303': SiteEquipment_6303,
+                    '6353': SiteEquipment_6353,
+                    '6339': SiteEquipment_6339,
+                    '5216': SiteEquipment_5216,
+                    '6648': SiteEquipment_6648,
+                    'R503': SiteEquipment_R503,
                 }
                 site_equipment_script_text = ''
                 for bbu_prefix, template in bbu_mapped_script.items():
@@ -1015,9 +1016,10 @@ def generate_integration_script(request):
                 }
 
                 for idx, row in site_specific_rru_df.iterrows():
+                    print("processing the rru:- ", row["Radio_Type"])
                     for rru, rru_template in rru_type.items():
-                        print(rru)
                         if rru in str(row["Radio_Type"]):
+                            print("processing the rru:- ", rru)
                             site_equipment_text += rru_template.format(
                                 eNodeBName=row["eNodeBName"],
                                 Radio_UnitId=row["Radio_UnitId"],
