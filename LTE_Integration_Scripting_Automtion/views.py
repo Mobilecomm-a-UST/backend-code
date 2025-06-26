@@ -565,7 +565,7 @@ def generate_integration_script(request):
                     radio_type = row["Radio_Type"]
 
                     for prefix, template in radio_templates.items():
-                        if radio_type.startswith(prefix):
+                        if prefix in radio_type:
                             site_equipment_text += template.format(
                                 eNodeBName=row["eNodeBName"],
                                 Radio_UnitId=row["Radio_UnitId"],
