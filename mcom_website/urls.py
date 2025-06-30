@@ -83,6 +83,9 @@ urlpatterns = [
     path('soft_at_status/', include('soft_at_status_tech.urls')),
     path("Soft_AT_Checklist_Ericsson/", include("Soft_AT_Checklist_Ericsson.urls")),
     path("LTE/", include("LTE_Integration_Scripting_Automtion.urls")),
+    path("soft_at_5g_summary/", include("soft_at_5g_summary.urls")),
+    path ("soft_at_5g_checklist/", include("soft_at_5g_summary.urls")),
+    path("twamp_ericsson/", include("twamp_ericsson.urls")),
 ]
 
 if settings.DEBUG:

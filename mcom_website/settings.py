@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     "soft_at_status_tech",
     "Soft_AT_Checklist_Ericsson",
     "LTE_Integration_Scripting_Automtion",
+    "soft_at_5g_summary",
 ]
 
 MIDDLEWARE = [

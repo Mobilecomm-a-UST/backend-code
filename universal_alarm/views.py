@@ -788,12 +788,11 @@ def upload_4g_log_file(request):
 # ❗ Flatten before saving to Excel
     df_4g.columns = [' - '.join(filter(None, col)).strip() for col in df_4g.columns.values]
     
-     # Alarm sheet
+# Alarm sheet
     df_alarms = pd.DataFrame(all_alarms)
     site_down_df = pd.DataFrame(site_down).drop_duplicates()
     
-    
-   
+
 
     circles = sorted(set(
     row[('Circle', '')].strip().upper().replace(" ", "_")
@@ -816,8 +815,7 @@ def upload_4g_log_file(request):
         df_4g.to_excel(writer, index=False, sheet_name="4G Cells")
         df_alarms.to_excel(writer, index=False, sheet_name="Alarms")
         site_down_df.to_excel(writer, sheet_name="Site Down", index=False)
-       
-       
+
         format_excel_sheet(writer, 'Alarms', df_alarms ,)
     
     
