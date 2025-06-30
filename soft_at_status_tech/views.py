@@ -952,7 +952,11 @@ def extract_data_from_log(request):
                     combined_layers = "_".join(sorted(set(l_layers_replaced))) if l_layers_replaced else "NA"
                     template_df.loc[0, "Layers(Other Tech Info)"] = combined_layers
                     print("Layers(Other Tech Info):", combined_layers)
+<<<<<<< HEAD
                 MO_name_0 = "NA"
+=======
+
+>>>>>>> 2a83a9acb824b61e6fc38c097b915f3d4f983e3d
                 MO_names = []
 
                 if "get 0" in xls.sheet_names:
@@ -1145,10 +1149,27 @@ def extract_data_from_log(request):
                         ] = "NA"
 
                     print("Parent Cell Name (In Case Of Twin Beam):", template_df.loc[0, 'Parent Cell Name (In Case Of Twin Beam)'])
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 3307b961670114346edbc8be3491fa24ee028c65
+>>>>>>> 2a83a9acb824b61e6fc38c097b915f3d4f983e3d
                 else:
                     template_df.loc[0, "Parent Cell Name (In Case Of Twin Beam)"] = "NA"
                     print("Sheet 'get . sectorc' not found. Twin Beam set to NA.")
                                     
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+=======
+
+                    
+>>>>>>> e9fbb2f0ffd83a86be30e3221846390e911f826f
+>>>>>>> 3307b961670114346edbc8be3491fa24ee028c65
+>>>>>>> 2a83a9acb824b61e6fc38c097b915f3d4f983e3d
                 if "st ret" in xls.sheet_names and "get . sectorc" in xls.sheet_names:
                     # Parse "st ret" sheet
                     df_st = xls.parse("st ret")
@@ -1214,8 +1235,69 @@ def extract_data_from_log(request):
                 else:
                     template_df.loc[0, "RET Configured on (Layer)"] = "NA"
                     template_df.loc[0, "RET Configuration (Cell Name)"] = "NA"
+<<<<<<< HEAD
+=======
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+                # if "st ret" in xls.sheet_names and "get . sectorc" in xls.sheet_names:
 
+                #     df_st = xls.parse("st ret")
+                #     df_st['MO'] = df_st['MO'].astype(str)
+                #     df_st['AntennaUnitGroup'] = df_st['MO'].str.extract(r'AntennaUnitGroup=(\d+)')
+                #     # df_st["AntennaUnitGroup"] = df_st["MO"].str.extract(
+                #     #     r"AntennaUnitGroup=(\d+)"
+                #     # )
+                #     valid_groups = df_st["AntennaUnitGroup"].dropna().unique()
+
+                #     df_sec = xls.parse("get . sectorc")
+                #     df_sec["SectorCarrier"] = df_sec["Value"].str.extract(
+                #         r"SectorCarrier=(\d+)"
+                #     )
+                #     df_filtered = df_sec[df_sec["SectorCarrier"].isin(valid_groups)]
+
+                #     MO = df_filtered["MO"].str.extract(r"=([\w\d_]+)")
+                #     MO = MO.dropna().iloc[:, 0].tolist()
+                #     print("Filtered MOs:", MO)
+
+                #     if MO:
+                #         base = str(MO[0])[:-3]
+                #         print("base:", base)
+                #         suffixes = [str(s)[len(base) :] for s in MO]
+                #         print("suffixes:", suffixes)
+                #         result = base + "&".join(suffixes)
+                #         template_df.loc[0, "RET Configuration (Cell Name)"] = result
+                #     else:
+                #         result = "NA"
+                #         template_df.loc[0, 'RET Configuration (Cell Name)'] = result
+                #     print("RET Configuration (Cell Name):", result)
+                #     RTT_map = {
+                #         "F1": "L2100",
+                #         "F3": "L1800",
+                #         "F8": "L900",
+                #         "T1": "L2300",
+                #         "T2": "L2300",
+                #         "F5": "L850",
+                #     }
+
+                #     RTT_cell = "NA"
+                #     for key in RTT_map.keys():
+                #         if key in result:
+                #             RTT_cell = RTT_map[key]
+                #             break
+
+                #     template_df.loc[0, "RET Configured on (Layer)"] = RTT_cell
+
+                # else:
+                #     template_df.loc[0, "RET Configured on (Layer)"] = "NA"
+                #     template_df.loc[0, "RET Configuration (Cell Name)"] = "NA"
+>>>>>>> e9fbb2f0ffd83a86be30e3221846390e911f826f
+>>>>>>> 2a83a9acb824b61e6fc38c097b915f3d4f983e3d
+
+>>>>>>> 3307b961670114346edbc8be3491fa24ee028c65
+              
                 if sheet_name == "get . maxtx":
                     df_maxtx = xls.parse(sheet_name)
                     df_nooftx = xls.parse("get . nooftx")
