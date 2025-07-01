@@ -1309,6 +1309,9 @@ def generate_integration_script(request):
                             site_equipment_script_text += template.format(
                                 fieldReplaceableUnitId=row["fieldReplaceableUnitId"],
                                 Phy_SiteID_Userlabel=row["Phy_SiteID_Userlabel"],
+                            )
+                        break
+
                 for idx, row in site_specific_rru_df.iterrows():
                     for rru, rru_template in rru_type.items():
                         if rru in str(row["Radio_Type"]):
