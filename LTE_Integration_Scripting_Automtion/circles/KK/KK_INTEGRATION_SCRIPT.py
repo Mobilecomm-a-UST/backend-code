@@ -4561,8 +4561,6 @@ dftSOfdmPuschEnabled false
 dl256QamEnabled true
 dlMaxMuMimoLayers 0
 dlStartCrb 0
-endcDlNrLowQualThresh 3
-endcDlNrQualHyst 5
 endcUlLegSwitchEnabled true
 endcUlNrLowQualThresh -4
 endcUlNrQualHyst 6
