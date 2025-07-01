@@ -467,7 +467,6 @@ def generate_integration_script(request):
 
             ############################################################### creating the SiteBasic script for 4G and 5G ###############################################################
             unique_nodes = site_basic_df["eNodeBName"].dropna().unique()
-            print("Unique Nodes in Site Basic DataFrame:", unique_nodes)
             for node in unique_nodes:
                 commision_scripts_dir = create_script_paths(base_path_url, node)['commissioning']
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -553,12 +552,8 @@ def generate_integration_script(request):
                 )
 
                 site_equipment_script_text = KK_SITE_EQUIPMENT_SCRIPT.format(
-                    fieldReplaceableUnitId=site_basic_df_N[
-                        "fieldReplaceableUnitId"
-                    ].values[0],
-                    Phy_SiteID_Userlabel=site_basic_df_N["Phy_SiteID_Userlabel"].values[
-                        0
-                    ],
+                    fieldReplaceableUnitId=site_basic_df_N["fieldReplaceableUnitId"].values[0],
+                    Phy_SiteID_Userlabel=site_basic_df_N["Phy_SiteID_Userlabel"].values[0],
                 )
 
                 for idx, row in site_specific_rru_df.iterrows():
@@ -569,9 +564,7 @@ def generate_integration_script(request):
                             site_equipment_text += template.format(
                                 eNodeBName=row["eNodeBName"],
                                 Radio_UnitId=row["Radio_UnitId"],
-                                fieldReplaceableUnitId=site_basic_df_N[
-                                    "fieldReplaceableUnitId"
-                                ].values[0],
+                                fieldReplaceableUnitId=site_basic_df_N["fieldReplaceableUnitId"].values[0],
                                 RiPort_BB=row["RiPort_BB"],
                                 RiPort_Radio=row["RiPort_Radio"],
                                 sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
@@ -579,7 +572,7 @@ def generate_integration_script(request):
                             )
                             break
 
-                with open(rru_hw_path, "a", encoding='utf-8') as file:
+                with open(rru_hw_path, "a", encoding="utf-8") as file:
                     file.write(
                         site_equipment_script_text + "\n" + site_equipment_text + "\n"
                     )
@@ -711,9 +704,9 @@ def generate_integration_script(request):
 
 
                     bbu_script_mapping_ipv4_ipv6 = {
-                        "BB6651" : TN_SITEBASIC_SCRIPT_BBU6651,
-                        "BB6630" : TN_SITEBASIC_SCRIPT_BBU6630_BBU6631,
-                        "BB6631" : TN_SITEBASIC_SCRIPT_BBU6630_BBU6631,
+                        "6651" : TN_SITEBASIC_SCRIPT_BBU6651,
+                        "6630" : TN_SITEBASIC_SCRIPT_BBU6630_BBU6631,
+                        "6631" : TN_SITEBASIC_SCRIPT_BBU6630_BBU6631,
 
                     }
                     bbu_script_mapping = bbu_script_mapping_ipv4_ipv6 
@@ -868,6 +861,7 @@ def generate_integration_script(request):
             ########################################## RJ Commissioning Scripts Generation Logic ###############################################################
             #
             for node in site_basic_df["eNodeBName"].unique():
+                print("processing the node:- ", node)
                 commision_scripts_dir = create_script_paths(base_path_url, node)['commissioning']
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 os.makedirs(commision_scripts_dir, exist_ok=True)
@@ -982,14 +976,14 @@ def generate_integration_script(request):
                 )
 
                 bbu_mapped_script = {
-                    'BB6630': SiteEquipment_6630,
-                    'BB6631': SiteEquipment_6631,
-                    'BB6303': SiteEquipment_6303,
-                    'BB6353': SiteEquipment_6353,
-                    'BB6339': SiteEquipment_6339,
-                    'BB5216': SiteEquipment_5216,
-                    'BB6648': SiteEquipment_6648,
-                    'BBR503': SiteEquipment_R503,
+                    '6630': SiteEquipment_6630,
+                    '6631': SiteEquipment_6631,
+                    '6303': SiteEquipment_6303,
+                    '6353': SiteEquipment_6353,
+                    '6339': SiteEquipment_6339,
+                    '5216': SiteEquipment_5216,
+                    '6648': SiteEquipment_6648,
+                    'R503': SiteEquipment_R503,
                 }
                 site_equipment_script_text = ''
                 for bbu_prefix, template in bbu_mapped_script.items():
@@ -1015,9 +1009,10 @@ def generate_integration_script(request):
                 }
 
                 for idx, row in site_specific_rru_df.iterrows():
+                    print("processing the rru:- ", row["Radio_Type"])
                     for rru, rru_template in rru_type.items():
-                        print(rru)
                         if rru in str(row["Radio_Type"]):
+                            print("processing the rru:- ", rru)
                             site_equipment_text += rru_template.format(
                                 eNodeBName=row["eNodeBName"],
                                 Radio_UnitId=row["Radio_UnitId"],
@@ -1285,17 +1280,16 @@ def generate_integration_script(request):
                     'R503': SiteEquipment_R503,
                 }
                 site_equipment_script_text = ''
-                for bbu_prefix, template in bbu_mapped_script.items():
-                    if bbu_prefix in site_basic_df_N["BB_Type"].values[0]:
-                        site_equipment_script_text += template.format(
-                            fieldReplaceableUnitId=site_basic_df_N[
-                                "fieldReplaceableUnitId"
-                            ].values[0],
-                            Phy_SiteID_Userlabel=site_basic_df_N["Phy_SiteID_Userlabel"].values[
-                                0
-                            ],
-                        )
-                        break
+                for _, row in site_basic_df_N.iterrows():
+                    print("processing the bbu:- ", row["BB_Type"])
+
+                    for bbu_prefix, template in bbu_mapped_script.items():
+                        if bbu_prefix in row["BB_Type"]:
+                            site_equipment_script_text += template.format(
+                                fieldReplaceableUnitId=site_basic_df_N["fieldReplaceableUnitId"],
+                                Phy_SiteID_Userlabel=site_basic_df_N["Phy_SiteID_Userlabel"],
+                            )
+                            break
 
                 rru_type = {
                     '2219': RRU_2219_B0_B1_B3_2X2,
@@ -1308,6 +1302,13 @@ def generate_integration_script(request):
                     'AIR': AIR_5G_GENERATION_SCRIPT
                 }
 
+                site_equipment_script_text = ''
+                for _, row in site_basic_df_N.iterrows():
+                    for bbu_prefix, template in bbu_mapped_script.items():
+                        if bbu_prefix in str(row["BB_Type"]):
+                            site_equipment_script_text += template.format(
+                                fieldReplaceableUnitId=row["fieldReplaceableUnitId"],
+                                Phy_SiteID_Userlabel=row["Phy_SiteID_Userlabel"],
                 for idx, row in site_specific_rru_df.iterrows():
                     for rru, rru_template in rru_type.items():
                         if rru in str(row["Radio_Type"]):
@@ -1373,6 +1374,7 @@ def generate_integration_script(request):
             {"status": True, "message": "Integration scripts generated successfully.", 'download_link': download_link},
             status=status.HTTP_200_OK,
         )
+
 
 
 
