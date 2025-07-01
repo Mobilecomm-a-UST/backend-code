@@ -1171,15 +1171,16 @@ def generate_integration_script(request):
                     commision_scripts_dir, f"01_{node}_SiteBasic_{current_time}.xml"
                 )
                 
-                siteBasicFilePath = os.path.relpath(
-                    sitebasic_df_path,
-                    os.path.join(base_path_url, f"{node}_Integration_Sripts")
-                ).replace("\\", "/")
                 relative_path = os.path.relpath(
                     sitebasic_df_path,
                     os.path.join(base_path_url, f"{node_name}_Integration_Sripts")
                 )
                 siteBasicFilePath = relative_path.replace("\\", "/")
+
+                siteBasicFilePath = os.path.relpath(
+                    sitebasic_df_path,
+                    os.path.join(base_path_url, f"{node}_Integration_Sripts")
+                ).replace("\\", "/")
                 def ip_type(ip_address):
                     try:
                         socket.inet_pton(socket.AF_INET, ip_address)
@@ -1298,6 +1299,7 @@ def generate_integration_script(request):
                     '4418': RRU_4412_4418_4427_4471_4X4,
                     '4427': RRU_4412_4418_4427_4471_4X4,
                     '4471': RRU_4412_4418_4427_4471_4X4,
+                    'AIR': AIR_5G_GENERATION_SCRIPT
                 }
 
                 site_equipment_script_text = ''
@@ -1307,6 +1309,22 @@ def generate_integration_script(request):
                             site_equipment_script_text += template.format(
                                 fieldReplaceableUnitId=row["fieldReplaceableUnitId"],
                                 Phy_SiteID_Userlabel=row["Phy_SiteID_Userlabel"],
+                for idx, row in site_specific_rru_df.iterrows():
+                    for rru, rru_template in rru_type.items():
+                        if rru in str(row["Radio_Type"]):
+                            print(rru)
+                            site_equipment_text += rru_template.format(
+                                eNodeBName=row["eNodeBName"],
+                                Radio_UnitId=row["Radio_UnitId"],
+                                fieldReplaceableUnitId=site_basic_df_N[
+                                    "fieldReplaceableUnitId"
+                                ].values[0],
+                                RiPort_BB=row["RiPort_BB"],
+                                RiPort_Radio=row["RiPort_Radio"],
+                                sectorEquipmentFunctionId=row[
+                                    "sectorEquipmentFunctionId"
+                                ],
+                                riLinkId=row.get("riLinkId", ""),
                             )
                             break
 
