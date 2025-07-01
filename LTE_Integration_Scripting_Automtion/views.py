@@ -1279,18 +1279,7 @@ def generate_integration_script(request):
                     '6648': SiteEquipment_6648,
                     'R503': SiteEquipment_R503,
                 }
-                site_equipment_script_text = ''
-                for _, row in site_basic_df_N.iterrows():
-                    print("processing the bbu:- ", row["BB_Type"])
-
-                    for bbu_prefix, template in bbu_mapped_script.items():
-                        if bbu_prefix in row["BB_Type"]:
-                            site_equipment_script_text += template.format(
-                                fieldReplaceableUnitId=site_basic_df_N["fieldReplaceableUnitId"],
-                                Phy_SiteID_Userlabel=site_basic_df_N["Phy_SiteID_Userlabel"],
-                            )
-                            break
-
+                
                 rru_type = {
                     '2219': RRU_2219_B0_B1_B3_2X2,
                     '4412': RRU_4412_4418_4427_4471_4X4,
@@ -1311,7 +1300,7 @@ def generate_integration_script(request):
                                 Phy_SiteID_Userlabel=row["Phy_SiteID_Userlabel"],
                             )
                             break
-                        
+
                 for idx, row in site_specific_rru_df.iterrows():
                     for rru, rru_template in rru_type.items():
                         if rru in str(row["Radio_Type"]):
