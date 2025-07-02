@@ -1466,4 +1466,7 @@ def generate_integration_script(request):
                 "download_link": download_link,
             },
             status=status.HTTP_200_OK,
+
         )
+      
+
