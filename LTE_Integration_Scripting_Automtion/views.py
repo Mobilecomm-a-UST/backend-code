@@ -96,6 +96,7 @@ from LTE_Integration_Scripting_Automtion.circles.AS.AS_INTEGRATION_SCRIPT import
     AS_GNBCUCPFunction,
     AS_GNBDUFunction,
     AS_NR_GPL_LMS_SCRIPT,
+    AS_CGSWITCH_SCRIPT
 )
 
 from LTE_Integration_Scripting_Automtion.circles.AS.AS_COMISSIONING_SCRIPT import (
@@ -1194,6 +1195,11 @@ def generate_integration_script(request):
                     nr_cell_df.rename(
                         columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True
                     )
+                    site_basic_data_df = site_basic_df[site_basic_df["eNodeBName"] == node].copy()
+                    NR_IP = site_basic_data_df['NR_IP'].unique()[0]
+                    NR_ENDC_IP = site_basic_data_df['NR_ENDC_IP'].unique()[0]
+                    NR_GW = site_basic_data_df['NR_GW'].unique()[0]
+                    tnPortId = site_basic_data_df['tnPortId'].unique()[0]
                     nr_cell_df_path = os.path.join(
                         create_script_paths(base_path_url, node)["nr"],
                         f"1_{node}_5G Cell creation_Sctp Endpoint Creation_{current_time}.txt",
@@ -1203,7 +1209,7 @@ def generate_integration_script(request):
 
                     gnbdu_fuction_element = ""
                     gnbcucp_fuction_element = ""
-
+                    gnb_cgswitch_element = ""
                     for idx, row in nr_cell_df.iterrows():
                         gnbdu_fuction_element += AS_GNBDUFunction.format(
                             nRSectorCarrierId=row["nRSectorCarrierId"],
@@ -1220,8 +1226,16 @@ def generate_integration_script(request):
                             nRTAC=row["nRTAC"],
                             rachRootSequence=int(
                                 row["rachRootSequence"]
-                            ),  ############################################################################ Added rachRootSequence
+                            ),
+                            cellLocalId = row['cellLocalId']
+                            ############################################################################ Added rachRootSequence
                         )
+                        
+                        gnb_cgswitch_element += AS_CGSWITCH_SCRIPT.format(
+                            gUtranCell = row['gUtranCell'],
+                            cellLocalId = row['cellLocalId']
+                        )
+                        
 
                         gnbcucp_fuction_element += AS_GNBCUCPFunction.format(
                             gUtranCell=row["gUtranCell"],
@@ -1230,6 +1244,12 @@ def generate_integration_script(request):
                         file.write(
                             AS_5G_Cell_creation_Sctp_Endpoint_Creation.format(
                                 gUtranCell=row["gUtranCell"],
+                                NR_IP = NR_IP,
+                                NR_ENDC_IP = NR_ENDC_IP,
+                                NR_GW = NR_GW,
+                                tnPortId = tnPortId,
+                                gNBId = gnbid,
+                                AS_CGSWITCH_SCRIPT = gnb_cgswitch_element,
                                 AS_GNBDUFunction=gnbdu_fuction_element,
                                 AS_GNBCUCPFunction=gnbcucp_fuction_element,
                             )
