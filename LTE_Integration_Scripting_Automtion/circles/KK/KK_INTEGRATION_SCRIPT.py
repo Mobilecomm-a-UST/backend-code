@@ -4561,8 +4561,6 @@ dftSOfdmPuschEnabled false
 dl256QamEnabled true
 dlMaxMuMimoLayers 0
 dlStartCrb 0
-endcDlNrLowQualThresh 3
-endcDlNrQualHyst 5
 endcUlLegSwitchEnabled true
 endcUlNrLowQualThresh -4
 endcUlNrQualHyst 6
@@ -4579,7 +4577,7 @@ qRxLevMin -128
 rachPreambleFormat 0
 rachPreambleRecTargetPower -110
 rachPreambleTransMax 10
-rachRootSequence 273
+rachRootSequence {rachRootSequence}
 secondaryCellOnly false
 siWindowLength 20
 ssbDuration 1

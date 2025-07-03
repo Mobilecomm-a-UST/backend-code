@@ -60,13 +60,13 @@ def generate_date_list(start_date):
 def get_excel_temp_link(request):
     #mcom123 temp id.
     # Path to the Excel file
-    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.7.xlsm')
+    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.8.1.xlsm')
 
     # Check if the file exists
     if os.path.exists(file_path):
         # Construct the URL to access the file
-        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.7.xlsm')              
-        return Response({'file_url': file_url,'template_version':'v1.7'}, status=status.HTTP_200_OK)
+        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.8.1.xlsm')              
+        return Response({'file_url': file_url,'template_version':'v1.8.1'}, status=status.HTTP_200_OK)
     else:
         # Return a 404 response if the file does not exist
         return Response({'error': 'Excel file not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -112,7 +112,7 @@ def upload_excel(request):
     file = request.data['file']
     value_in_cell = read_excel_cell(file.read(), sheet_name='Sheet2', cell='BE37')
     print("cell_value:",value_in_cell)
-    if value_in_cell == "mcom_v1.7":
+    if value_in_cell == "mcom_v1.8":
             try:
                 df = pd.read_excel(file,sheet_name="Tracker",keep_default_na=False,skiprows=1)
             except Exception as e:
@@ -121,9 +121,10 @@ def upload_excel(request):
             df["Cell ID"] = df["Cell ID"].astype(str)
         
             allowed_values = {
-                'CIRCLE': ['AP', 'BIH', 'CHN', 'ROTN', 'DEL', 'HRY', 'JK', 'JRK', 'KOL', 'MAH', 'MP', 'MUM', 'ORI', 'PUN', 'RAJ', 'UPE', 'UPW', 'WB', 'KK','MAH'],
-                'OEM': ['SAMSUNG', 'NOKIA', 'ERICSSON','HUAWEI','ZTE'],
-                'Activity Name': ['ULS_HPSC', 'RELOCATION', 'MACRO', 'DE-GROW', 'RET', 'IBS', 'ODSC', 'IDSC', 'HT INCREMENT', 'FEMTO', 'OTHERS', 'UPGRADE','RECTIFICATION','5G SECTOR ADDITION','OPERATIONS','5G RELOCATION','TRAFFIC SHIFTING','RRU_UPGRADE'],
+
+                'CIRCLE': ['AP', 'BIH', 'CHN', 'ROTN', 'DEL', 'HRY', 'JK', 'JRK', 'KOL', 'MAH', 'MP', 'MUM', 'ORI', 'PUN', 'RAJ', 'UPE', 'UPW', 'WB', 'KK','MAH', 'HP', 'NESA'],
+                 'OEM': ['SAMSUNG', 'NOKIA', 'ERICSSON','HUAWEI','ZTE'],
+                'Activity Name': ['ULS_HPSC', 'RELOCATION', 'MACRO', 'DE-GROW', 'RET', 'IBS', 'ODSC', 'IDSC', 'HT INCREMENT', 'FEMTO', 'OTHERS', 'UPGRADE','RECTIFICATION','5G SECTOR ADDITION','OPERATIONS','5G RELOCATION','TRAFFIC SHIFTING', 'RRU UPGRADE', '5G RRU SWAP', '5G BW UPGRADE'],
                 'Activity Mode (SA/NSA)':['SA','NSA'],
                 'Technology (SIWA)': ['2G','FDD','TDD','5G'],
                 'Activity Type (SIWA)': ["FDD_SEC_ADDITION", "FDD_TWIN_BEAM", "FDD_UPGRADE", "L2100_UPGRADE", "L900_UPGRADE", "NEW_TOWER", "NEW_TOWER_ULS", "TDD_SEC_ADDITION", "TDD_TWIN_BEAM", "TDD_UPGRADE", "UPGRADE_SW_ONLY", "UPGRADE_ULS", "5G_SEC_ADDITION", "5G_UPGRADE","CPRI ADDITION","SFP CHANGE", "BW UPGRADATION", "BTS SWAP", "IP MODIFICATION", "HOT SWAP", "NOMENCLATURE CHANGE", "2G DELETION", "CARRIER ADDITION"],
@@ -376,112 +377,133 @@ def upload_excel(request):
 #     return Response(circle_counts)
 
 
-
-@api_view(['GET', 'POST'])
+@api_view(['GET','POST'])
 def datewise_integration_data(request):
     print("User: ", request.user.username)
     date_str = request.POST.get('date')
-
+    # print("date_str:",date_str)    
+        # Parse the date string into a datetime object
     if date_str:
-        try:
-            print("User defined date")
-            date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
-        except ValueError:
-            return JsonResponse({'error': 'Invalid date format'}, status=400)
+            try:
+                print("user defined date")
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+                date1=date_obj
+                date2=date_obj- timedelta(days=1)
+                date3=date_obj- timedelta(days=2)
+                print(date1,date2,date3)
+                year = date_obj.year
+            except ValueError:
+                return JsonResponse({'error': 'Invalid date format'}, status=400)
+
     else:
-        print("Default Dates")
-        date_obj = IntegrationData.objects.latest('Integration_Date').Integration_Date
-        print('Latest date:', date_obj)
+                print("Default Dates")
+                latest_date =IntegrationData.objects.latest('Integration_Date').Integration_Date
+                print('latest date:',latest_date)
+                date1=latest_date
+                date2=latest_date- timedelta(days=1)
+                date3=latest_date- timedelta(days=2)
+                print(date1,date2,date3)
 
-    ################################################################ Set the 3 consecutive dates ####################################################################
-    date1 = date_obj
-    date2 = date1 - timedelta(days=1)
-    date3 = date1 - timedelta(days=2)
-    print("Dates used:", date1, date2, date3)
-    year = date1.year
+                latest_year = latest_date.year
+                print("latest_year:", latest_year)
+                year= latest_year
 
-    activity_list = [
-        '5G SECTOR ADDITION', '5G RELOCATION', '5G BW UPGRADE', '5G RRU SWAP',
-        'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC',
-        'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION', 'RET',
-        'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU_UPGRADE'
-    ]
 
-    date_list = [date1, date2, date3]  # can be any number of dates
 
+ 
     with connection.cursor() as cursor:
-        blocks = []
+        activity_type = [
+            '5G SECTOR ADDITION', 
+            '5G RELOCATION', 
+            'HT INCREMENT', 
+            'FEMTO', 
+            'DE-GROW', 
+            'IBS', 
+            'IDSC',
+            'MACRO', 
+            'ODSC', 
+            'OPERATIONS', 
+            'RRU UPGRADE', 
+            '5G BW UPGRADE', 
+            'OTHERS', 
+            '5G RRU SWAP',
+            'RELOCATION', 
+            'RECTIFICATION', 
+            'RET', 
+            'TRAFFIC SHIFTING', 
+            'ULS_HPSC', 
+            'UPGRADE'
+        ]
+        
+        activity_columns = [a.replace(' ', '_').replace('-', '_') for a in activity_type]
+        dates = [date1, date2, date3]
 
-        for index, date in enumerate(date_list, start=1):
-            alias = f"d{index}"
-            date_number = f"D{index}"
+        join_clauses = []
+        alias_list = []
 
-            activity_columns = ",\n".join([
-                f'"{date_number}_{act.replace(" ", "_").replace("-", "_")}" INTEGER'
-                for act in activity_list
-            ])
-
-            block = f"""
+        for index, date in enumerate(dates):
+            alias = f"d{index+1}"
+            alias_list.append(alias)
+            date_tag = f"D{index+1}"
+            columns_def = ",".join([f'"{date_tag}_{col}" INTEGER' for col in activity_columns])
+            print('date wise data count' , columns_def)
+            select_cte = f"""
                 SELECT * FROM crosstab($$
                     SELECT 
-                        "CIRCLE",
+                        UPPER("CIRCLE") AS "CIRCLE",
                         "Activity_Name",
-                        COALESCE("cnt", 0)::INTEGER as cnt
+                        COALESCE(cnt, 0)::INTEGER AS cnt
                     FROM 
-                        (SELECT DISTINCT UPPER("CIRCLE") as "CIRCLE"
-                         FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
+                        (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "C"
                     CROSS JOIN
-                        (SELECT unnest(ARRAY{activity_list!r}) AS "Activity_Name") AS "Activity_Name"
+                        (SELECT unnest(ARRAY{activity_type}) AS "Activity_Name") AS a
                     LEFT JOIN (
-                        SELECT "CIRCLE", "Activity_Name", count("id") as cnt
-                        FROM (
-                            SELECT "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name"
-                            FROM public."IntegrationTracker_integrationdata"
-                            WHERE "Integration_Date" = '{date}'
-                        ) in_0
+                        SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT("id") AS cnt
+                        FROM public."IntegrationTracker_integrationdata"
+                        WHERE "Integration_Date" = '{date}'
                         GROUP BY "CIRCLE", "Activity_Name"
-                    ) as r
-                    USING ("CIRCLE", "Activity_Name")
+                    ) AS r USING ("CIRCLE", "Activity_Name")
                     ORDER BY 1, 2
-                $$) as ct (
-                    cir TEXT,
-                    {activity_columns}
-                )
+                $$) AS ct(cir text, {columns_def})
             """
-            blocks.append(f"({block}) AS {alias}")
+            join_clauses.append(f"({select_cte}) AS {alias}")
 
-        # Now assemble with FULL OUTER JOIN
-        query = blocks[0]
-        for block in blocks[1:]:
-            query = f"({query} FULL OUTER JOIN {block} USING (cir))"
+        # Build the full outer joins dynamically
+        final_query = join_clauses[0]
+        for i in range(1, len(join_clauses)):
+            final_query = f"""
+                {final_query}
+                FULL OUTER JOIN
+                {join_clauses[i]}
+                USING (cir)
+            """
 
-        final_query = f"SELECT * FROM {query};"
-
-        print(final_query)
-
-
-        cursor.execute(final_query)
+        query = f"SELECT * FROM {final_query};"
+        cursor.execute(query)
         results = cursor.fetchall()
-        column_names = [col[0] for col in cursor.description]
+        # print(results)
+        
+    results_as_strings = []
+    for row in results:
+        # Convert each element in the row to a string
+        row_as_string = [str(element) for element in row]
+        # Append the row as a string to the list
+        results_as_strings.append(row_as_string)
+    
 
-    # Convert results to list of dicts
-    rows_as_dict = [
-        dict(zip(column_names, [str(val) if val is not None else '0' for val in row]))
-        for row in results
-    ]
+    rows_as_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in results_as_strings]
 
-    # Serialize data for the latest (date1) only
+
+    jsonResult =  json.dumps(rows_as_dict)
+    # jsonResult = json.loads(jsonResult)
+    ############################ DATE WISE OVER ALL DATA FOR DOWNLOAD ##############################
     objs = IntegrationData.objects.filter(Integration_Date=date1)
+    
+    # Serialize queryset using serializer
     serializer = IntegrationDataSerializer(objs, many=True)
-
-    data = {
-        "table_data": rows_as_dict,
-        "latest_dates": [str(date1), str(date2), str(date3)],
-        "download_data": serializer.data
-    }
-
+    # print(jsonResult)
+    data={"table_data":jsonResult,"latest_dates":[date1,date2,date3],"download_data":serializer.data}
     return Response(data)
-
 
 
 
@@ -536,22 +558,88 @@ def date_range_wise_integration_data(request):
     from_date = request.data.get("from_date")
     to_date = request.data.get("to_date")
 
-    print("from_date:", from_date)
-    print("to_date:", to_date)
-
-
     try:
         if from_date and to_date:
             from_date = datetime.strptime(from_date, '%Y-%m-%d').date()
             to_date = datetime.strptime(to_date, '%Y-%m-%d').date()
         else:
             from_date, to_date = get_dates()
-
     except ValueError:
         raise ValidationError("Dates must be in YYYY-MM-DD format.")
 
-    def fetch_crosstab_data():
+    # Ensure unique, cleaned activity types
+    raw_activities = [
+        '5G SECTOR ADDITION', 
+        '5G RELOCATION', 
+        'HT INCREMENT', 
+        'FEMTO', 
+        'DE-GROW', 
+        'IBS', 
+        'IDSC',
+        'MACRO', 
+        'ODSC', 
+        'OPERATIONS', 
+        'RRU UPGRADE', 
+        '5G BW UPGRADE', 
+        'OTHERS', 
+        '5G RRU SWAP',
+        'RELOCATION', 
+        'RECTIFICATION', 
+        'RET', 
+        'TRAFFIC SHIFTING', 
+        'ULS_HPSC', 
+        'UPGRADE',
+        '5G AIR SWAP'
+        'UPGRADE'
+    ]
+    activity_type = sorted(set(raw_activities))  # Remove duplicates just in case
+
+    # Create SQL-safe column aliases
+    def sql_safe(name):
+        return f"D1_{name.upper().replace(' ', '').replace('-', '')}"
+
+    activity_columns = [f'"{sql_safe(a)}" INTEGER' for a in activity_type]
+
+    print('activity columnsa data ' , {', '.join(activity_columns)})
+
+    # Ensure unique, cleaned activity types
+    raw_activities = [
+        '5G SECTOR ADDITION', 
+        '5G RELOCATION', 
+        'HT INCREMENT', 
+        'FEMTO', 
+        'DE-GROW', 
+        'IBS', 
+        'IDSC',
+        'MACRO', 
+        'ODSC', 
+        'OPERATIONS', 
+        'RRU UPGRADE', 
+        '5G BW UPGRADE', 
+        'OTHERS', 
+        '5G RRU SWAP',
+        'RELOCATION', 
+        'RECTIFICATION', 
+        'RET', 
+        'TRAFFIC SHIFTING', 
+        'ULS_HPSC', 
+        'UPGRADE',
+        '5G AIR SWAP'
+    ]
+    activity_type = sorted(set(raw_activities))  # Remove duplicates just in case
+
+    # Create SQL-safe column aliases
+    def sql_safe(name):
+        return f"D1_{name.upper().replace(' ', '').replace('-', '')}"
+
+    activity_columns = [f'"{sql_safe(a)}" INTEGER' for a in activity_type]
+
+    print('activity columnsa data ' , {', '.join(activity_columns)})
+
+    def fetch_crosstab_data(activity_type: list, activity_columns: list) -> tuple:
         with connection.cursor() as cursor:
+            # Escape and format activity list for SQL
+            activity_array = ','.join([f"'{a}'" for a in activity_type])
             query = f"""
                 SELECT * FROM crosstab($$
                     SELECT 
@@ -559,46 +647,59 @@ def date_range_wise_integration_data(request):
                         "Activity_Name",
                         COALESCE("cnt", 0)::INTEGER AS cnt
                     FROM 
-                        (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
+                        (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS c
                     CROSS JOIN
                         (SELECT unnest(ARRAY[
-                            '5G RELOCATION', '5G SECTOR ADDITION', 'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS',
-                            'IDSC', 'MACRO', 'ODSC', 'OPERATIONS','OTHERS','RECTIFICATION', 'RELOCATION',
-                            'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE'
-                        ]) AS "Activity_Name") AS "Activity_Name"
-                    LEFT JOIN
-                        (
-                            SELECT "CIRCLE", "Activity_Name", COUNT("id") AS cnt 
-                            FROM (
-                                SELECT "id", UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name"
-                                FROM public."IntegrationTracker_integrationdata"
-                                WHERE "Integration_Date" BETWEEN '{from_date}' AND '{to_date}'
-                            ) in_0
-                            GROUP BY "CIRCLE", "Activity_Name"
-                        ) AS r
-                    USING ("CIRCLE", "Activity_Name")
+                                    '5G BW UPGRADE',
+                                    '5G RELOCATION',
+                                    '5G RRU SWAP',
+                                    '5G SECTOR ADDITION',
+                                    'DE-GROW',
+                                    'FEMTO',
+                                    'HT INCREMENT',
+                                    'IBS',
+                                    'IDSC',
+                                    'MACRO',
+                                    'ODSC',
+                                    'OPERATIONS',
+                                    'OTHERS',
+                                    'RECTIFICATION',
+                                    'RELOCATION',
+                                    'RET',
+                                    'RRU UPGRADE',
+                                    'TRAFFIC SHIFTING',
+                                    'ULS_HPSC',
+                                    'UPGRADE'
+        ]) AS "Activity_Name") AS a
+                    LEFT JOIN (
+                        SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT(id) AS cnt
+                        FROM public."IntegrationTracker_integrationdata"
+                        WHERE "Integration_Date" BETWEEN '{from_date}' AND '{to_date}'
+                        GROUP BY "CIRCLE", "Activity_Name"
+                    ) r USING ("CIRCLE", "Activity_Name")
                     ORDER BY 1, 2
                 $$) AS ct (
-                    cir TEXT,
-                    "D1_5G_RELOCATION" INTEGER, 
-                    "D1_5G_SECTOR_ADDITION" INTEGER, 
-                    "D1_DE_GROW" INTEGER,
-                    "D1_FEMTO" INTEGER, 
-                    "D1_HT_INCREMENT" INTEGER, 
-                    "D1_IBS" INTEGER, 
-                    "D1_IDSC" INTEGER,
-                    "D1_MACRO" INTEGER, 
-                    "D1_ODSC" INTEGER, 
-                    "D1_OPERATIONS" INTEGER, 
-                    "D1_OTHERS" INTEGER,
-                    "D1_RECTIFICATION" INTEGER, 
-                    "D1_RELOCATION" INTEGER, 
-                    "D1_RET" INTEGER,
-                    "D1_TRAFFIC_SHIFTING" INTEGER, 
-                    "D1_ULS_HPSC" INTEGER, 
-                    "D1_UPGRADE" INTEGER
+                    "cir" TEXT, "D1_5G_BW_UPGRADE" INTEGER,
+                "D1_5G_RELOCATION" INTEGER,
+                "D1_5G_RRU_SWAP" INTEGER,
+                "D1_5G_SECTOR_ADDITION" INTEGER,
+                "D1_DE_GROW" INTEGER,
+                "D1_FEMTO" INTEGER,
+                "D1_HT_INCREMENT" INTEGER,
+                "D1_IBS" INTEGER,
+                "D1_IDSC" INTEGER,
+                "D1_MACRO" INTEGER,
+                "D1_ODSC" INTEGER,
+                "D1_OPERATIONS" INTEGER,
+                "D1_OTHERS" INTEGER,
+                "D1_RECTIFICATION" INTEGER,
+                "D1_RELOCATION" INTEGER,
+                "D1_RET" INTEGER,
+                "D1_RRU_UPGRADE" INTEGER,
+                "D1_TRAFFIC_SHIFTING" INTEGER,
+                "D1_ULS_HPSC" INTEGER,
+                "D1_UPGRADE" INTEGER
                 )
-
             """
             cursor.execute(query)
             results = cursor.fetchall()
@@ -606,7 +707,7 @@ def date_range_wise_integration_data(request):
             return results, columns
 
     async def get_data_async():
-        results, columns = await sync_to_async(fetch_crosstab_data)()
+        results, columns = await sync_to_async(fetch_crosstab_data)(activity_type, activity_columns)
         rows_as_dict = [dict(zip(columns, row)) for row in results]
         jsonResult = json.dumps(rows_as_dict)
 
@@ -684,188 +785,115 @@ def calculate_previous_months(given_month,given_year):
 
     return {"Month2":month2,"Month3":month3,"Year2":year2,"Year3":year3,"Month4":month4,"Year4":year4,"Month5":month5,"Year5":year5,"Month6":month6,"Year6":year6}
 
-@api_view(['GET','POST'])
+@api_view(['GET', 'POST'])
 def monthwise_integration_data(request):
     print("User: ", request.user.username)
-    month=request.POST.get("month")
-    year=request.POST.get("year")
+    month = request.POST.get("month")
+    year = request.POST.get("year")
+
     if month and year:
-        print("user defined......")
-        month1=int(month)
-        year1=int(year)
-        dic=calculate_previous_months(int(month),int(year))
-        month2=dic["Month2"]
-        year2=dic["Year2"]
-        month3=dic["Month3"]
-        year3=dic["Year3"]
-
-        month4=dic["Month4"]
-        year4=dic["Year4"]
-
-        month5=dic["Month5"]
-        year5=dic["Year5"]
-
-        month6=dic["Month6"]
-        year6=dic["Year6"]
+        print("User-defined month/year")
+        base_month = int(month)
+        base_year = int(year)
     else:
-        print("default months......")
-        latest_month = IntegrationData.objects.latest('Integration_Date').Integration_Date.month
-        latest_year = IntegrationData.objects.latest('Integration_Date').Integration_Date.year
-         
-        month1=latest_month
-        year1=latest_year
-        dic=calculate_previous_months(latest_month,latest_year)
-        month2=dic["Month2"]
-        year2=dic["Year2"]
-        month3=dic["Month3"]
-        year3=dic["Year3"]
+        print("Using default latest month/year")
+        latest_date = IntegrationData.objects.latest('Integration_Date').Integration_Date
+        base_month = latest_date.month
+        base_year = latest_date.year
 
-        month4=dic["Month4"]
-        year4=dic["Year4"]
+    date_dict = calculate_previous_months(base_month, base_year)
 
-        month5=dic["Month5"]
-        year5=dic["Year5"]
+    ################################################################################ Prepare list of (month, year, index) tuples ########################################################################
+    month_year_list = [(base_month, base_year, 1)]
+    for i in range(2, 7):
+        month_year_list.append((date_dict[f"Month{i}"], date_dict[f"Year{i}"], i))
 
-        month6=dic["Month6"]
-        year6=dic["Year6"]
+        activity_list = [
+            '5G BW UPGRADE',
+            '5G RELOCATION',
+            '5G RRU SWAP',
+            '5G SECTOR ADDITION',
+            'DE-GROW',
+            'FEMTO',
+            'HT INCREMENT',
+            'IBS',
+            'IDSC',
+            'MACRO',
+            'ODSC',
+            'OPERATIONS',
+            'OTHERS',
+            'RECTIFICATION',
+            'RELOCATION',
+            'RET',
+            'RRU UPGRADE',
+            'TRAFFIC SHIFTING',
+            'ULS_HPSC',
+            'UPGRADE'
+        ]
+
+    def build_crosstab(month, year, index):
+        label = f"M{index}"
+        columns = ",".join([f'"{label}_{a.replace(" ", "_").replace("-", "_")}" INTEGER' for a in activity_list])
+        array_activities = ",".join([f"'{a}'" for a in activity_list])
 
 
+        return f"""
+            (
+                SELECT * FROM crosstab($$
+                    SELECT 
+                        UPPER("CIRCLE") AS "CIRCLE",
+                        "Activity_Name",
+                        COALESCE(cnt, 0)::INTEGER AS cnt
+                    FROM 
+                        (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "C"
+                    CROSS JOIN
+                        (SELECT unnest(ARRAY[{array_activities}]) AS "Activity_Name") AS a
+                    LEFT JOIN (
+                        SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT("id") AS cnt
+                        FROM public."IntegrationTracker_integrationdata"
+                        WHERE EXTRACT(MONTH FROM "Integration_Date") = {month}
+                          AND EXTRACT(YEAR FROM "Integration_Date") = {year}
+                        GROUP BY "CIRCLE", "Activity_Name"
+                    ) AS r USING ("CIRCLE", "Activity_Name")
+                    ORDER BY 1, 2
+                $$) AS ct(cir TEXT, {columns})
+            ) AS d{index}
+        """
 
+    ######################################################################### ✅ Build the complete SQL query with full joins ##########################################################################
+    join_parts = []
+    for i, (month, year, index) in enumerate(month_year_list):
+        part = build_crosstab(month, year, index)
+        if i == 0:
+            join_parts.append(part)
+        else:
+            join_parts.append(f"FULL OUTER JOIN {part} USING (cir)")
+
+    final_query = " ".join(join_parts)
+    full_sql = f"SELECT * FROM {final_query};"
+
+    ########################################################################################### ✅ Execute the query ##################################################################################
     with connection.cursor() as cursor:
-
-        query = f""" 
-
-                 select  * from (select * from crosstab($$ SELECT 
-                    "CIRCLE",
-                    "Activity_Name",
-                    COALESCE("cnt", 0)::INTEGER as cnt -- Replace 0 with appropriate default value
-                FROM 
-                    (SELECT DISTINCT UPPER("CIRCLE") as "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
-                CROSS JOIN
-                    (SELECT unnest(ARRAY['5G SECTOR ADDITION','5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC', 'OPERATIONS' ,'OTHERS', 'RECTIFICATION', 'RELOCATION', 'RET', 'TRAFFIC SHIFTING' , 'ULS_HPSC', 'UPGRADE']) AS "Activity_Name") AS "Activity_Name"
-                LEFT JOIN
-                    (select "CIRCLE","Activity_Name", count("id") as cnt from 
-                                    (select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" WHERE EXTRACT(MONTH FROM "Integration_Date") = {month1} and EXTRACT(YEAR FROM "Integration_Date") = {year1}) in_0
-            group by "CIRCLE","Activity_Name") as r
-                USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-            ct(cir text,  "M1_5G_RELOCATION" INTEGER,"M1_5G_SECTOR_ADDITION" INTEGER,"M1_DE_GROW" INTEGER,"M1_FEMTO" INTEGER,"M1_HT_INCREMENT" INTEGER,"M1_IBS" INTEGER,"M1_IDSC" INTEGER,"M1_MACRO" INTEGER,"M1_ODSC" INTEGER,"M1_OPERATIONS" INTEGER,"M1_OTHERS" INTEGER, "M1_RECTIFICATION" INTEGER, "M1_RELOCATION" INTEGER,"M1_RET" INTEGER, "M1_TRAFFIC_SHIFTING" INTEGER, "M1_ULS_HPSC" INTEGER,"M1_UPGRADE" INTEGER)) as m1
-
-            FULL OUTER JOIN 
-
-            (select * from crosstab($$ SELECT 
-                    "CIRCLE",
-                    "Activity_Name",
-                    COALESCE("cnt", 0)::INTEGER as cnt -- Replace 0 with appropriate default value
-                FROM 
-                    (SELECT DISTINCT UPPER("CIRCLE") as "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
-                CROSS JOIN
-                    (SELECT unnest(ARRAY['5G SECTOR ADDITION', '5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC', 'OPERATIONS' ,'OTHERS', 'RECTIFICATION', 'RELOCATION', 'RET', 'TRAFFIC SHIFTING' , 'ULS_HPSC', 'UPGRADE']) AS "Activity_Name") AS "Activity_Name"
-                LEFT JOIN
-                    (select "CIRCLE","Activity_Name", count("id") as cnt from 
-                                    (select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" WHERE EXTRACT(MONTH FROM "Integration_Date") = {month2}  and EXTRACT(YEAR FROM "Integration_Date") = {year2}) in_0
-            group by "CIRCLE","Activity_Name") as r
-                USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-            ct(cir text,  "M2_5G_RELOCATION" INTEGER, "M2_5G_SECTOR_ADDITION" INTEGER,"M2_DE_GROW" INTEGER,"M2_FEMTO" INTEGER,"M2_HT_INCREMENT" INTEGER,"M2_IBS" INTEGER,"M2_IDSC" INTEGER,"M2_MACRO" INTEGER,"M2_ODSC" INTEGER, "M2_OPERATIONS" INTEGER ,"M2_OTHERS" INTEGER,"M2_RECTIFICATION" INTEGER,"M2_RELOCATION" INTEGER,"M2_RET" INTEGER, "M2_TRAFFIC_SHIFTING" INTEGER,"M2_ULS_HPSC" INTEGER,"M2_UPGRADE" INTEGER)) as m2
-            using("cir")
-
-            FULL OUTER JOIN 
-
-            (select * from crosstab($$ SELECT 
-                    "CIRCLE",
-                    "Activity_Name",
-                    COALESCE("cnt", 0)::INTEGER as cnt -- Replace 0 with appropriate default value
-                FROM 
-                    (SELECT DISTINCT UPPER("CIRCLE") as "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
-                CROSS JOIN
-                    (SELECT unnest(ARRAY['5G SECTOR ADDITION','5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC', 'OPERATIONS' ,'OTHERS', 'RECTIFICATION','RELOCATION', 'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE']) AS "Activity_Name") AS "Activity_Name"
-                LEFT JOIN
-                    (select "CIRCLE","Activity_Name", count("id") as cnt from 
-                                    (select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" WHERE EXTRACT(MONTH FROM "Integration_Date") = {month3}  and EXTRACT(YEAR FROM "Integration_Date") = {year3}) in_0
-            group by "CIRCLE","Activity_Name") as r
-                USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-            ct(cir text,  "M3_5G_RELOCATION" INTEGER, "M3_5G_SECTOR_ADDITION" INTEGER,"M3_DE_GROW" INTEGER,"M3_FEMTO" INTEGER,"M3_HT_INCREMENT" INTEGER,"M3_IBS" INTEGER,"M3_IDSC" INTEGER,"M3_MACRO" INTEGER,"M3_ODSC" INTEGER,"M3_OPERATIONS" INTEGER ,"M3_OTHERS" INTEGER, "M3_RECTIFICATION" INTEGER, "M3_RELOCATION" INTEGER,"M3_RET" INTEGER, "M3_TRAFFIC_SHIFTING" INTEGER,"M3_ULS_HPSC" INTEGER,"M3_UPGRADE" INTEGER)) as m3
-            using("cir")
-
-            FULL OUTER JOIN 
-
-            (select * from crosstab($$ SELECT 
-                    "CIRCLE",
-                    "Activity_Name",
-                    COALESCE("cnt", 0)::INTEGER as cnt -- Replace 0 with appropriate default value
-                FROM 
-                    (SELECT DISTINCT UPPER("CIRCLE") as "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
-                CROSS JOIN
-                    (SELECT unnest(ARRAY['5G SECTOR ADDITION', '5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC','OPERATIONS', 'OTHERS', 'RECTIFICATION','RELOCATION', 'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE']) AS "Activity_Name") AS "Activity_Name"
-                LEFT JOIN
-                    (select "CIRCLE","Activity_Name", count("id") as cnt from 
-                                    (select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" WHERE EXTRACT(MONTH FROM "Integration_Date") = {month4}  and EXTRACT(YEAR FROM "Integration_Date") = {year4}) in_0
-            group by "CIRCLE","Activity_Name") as r
-                USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-            ct(cir text,"M4_5G_RELOCATION" INTEGER, "M4_5G_SECTOR_ADDITION" INTEGER, "M4_DE_GROW" INTEGER,"M4_FEMTO" INTEGER,"M4_HT_INCREMENT" INTEGER,"M4_IBS" INTEGER,"M4_IDSC" INTEGER,"M4_MACRO" INTEGER,"M4_ODSC" INTEGER, "M4_OPERATIONS" INTEGER ,"M4_OTHERS" INTEGER, "M4_RECTIFICATION" INTEGER, "M4_RELOCATION" INTEGER,"M4_RET" INTEGER, "M4_TRAFFIC_SHIFTING" INTEGER, "M4_ULS_HPSC" INTEGER,"M4_UPGRADE" INTEGER)) as m4
-            using("cir")
-
-            FULL OUTER JOIN 
-
-            (select * from crosstab($$ SELECT 
-                    "CIRCLE",
-                    "Activity_Name",
-                    COALESCE("cnt", 0)::INTEGER as cnt -- Replace 0 with appropriate default value
-                FROM 
-                    (SELECT DISTINCT UPPER("CIRCLE") as "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
-                CROSS JOIN
-                    (SELECT unnest(ARRAY['5G SECTOR ADDITION', '5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC', 'OPERATIONS' , 'OTHERS', 'RECTIFICATION','RELOCATION', 'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE']) AS "Activity_Name") AS "Activity_Name"
-                LEFT JOIN
-                    (select "CIRCLE","Activity_Name", count("id") as cnt from 
-                                    (select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" WHERE EXTRACT(MONTH FROM "Integration_Date") = {month5}  and EXTRACT(YEAR FROM "Integration_Date") = {year5}) in_0
-            group by "CIRCLE","Activity_Name") as r
-                USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-            ct(cir text, "M5_5G_RELOCATION" INTEGER,"M5_5G_SECTOR_ADDITION" INTEGER, "M5_DE_GROW" INTEGER,"M5_FEMTO" INTEGER,"M5_HT_INCREMENT" INTEGER,"M5_IBS" INTEGER,"M5_IDSC" INTEGER,"M5_MACRO" INTEGER,"M5_ODSC" INTEGER, "M5_OPERATIONS" INTEGER ,"M5_OTHERS" INTEGER, "M5_RECTIFICATION" INTEGER, "M5_RELOCATION" INTEGER,"M5_RET" INTEGER, "M5_TRAFFIC_SHIFTING" INTEGER,"M5_ULS_HPSC" INTEGER,"M5_UPGRADE" INTEGER)) as m5
-            using("cir")
-
-            
-            FULL OUTER JOIN 
-
-            (select * from crosstab($$ SELECT 
-                    "CIRCLE",
-                    "Activity_Name",
-                    COALESCE("cnt", 0)::INTEGER as cnt -- Replace 0 with appropriate default value
-                FROM 
-                    (SELECT DISTINCT UPPER("CIRCLE") as "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "CIRCLE"
-                CROSS JOIN
-                    (SELECT unnest(ARRAY['5G SECTOR ADDITION', '5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC', 'OPERATIONS' , 'OTHERS', 'RECTIFICATION','RELOCATION', 'RET', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE']) AS "Activity_Name") AS "Activity_Name"
-                LEFT JOIN
-                    (select "CIRCLE","Activity_Name", count("id") as cnt from 
-                                    (select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" WHERE EXTRACT(MONTH FROM "Integration_Date") = {month6}  and EXTRACT(YEAR FROM "Integration_Date") = {year6}) in_0
-            group by "CIRCLE","Activity_Name") as r
-                USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-            ct(cir text, "M6_5G_RELOCATION" INTEGER,"M6_5G_SECTOR_ADDITION" INTEGER, "M6_DE_GROW" INTEGER,"M6_FEMTO" INTEGER,"M6_HT_INCREMENT" INTEGER,"M6_IBS" INTEGER,"M6_IDSC" INTEGER,"M6_MACRO" INTEGER,"M6_ODSC" INTEGER, "M6_OPERATIONS" INTEGER ,"M6_OTHERS" INTEGER, "M6_RECTIFICATION" INTEGER, "M6_RELOCATION" INTEGER,"M6_RET" INTEGER, "M6_TRAFFIC_SHIFTING" INTEGER,"M6_ULS_HPSC" INTEGER,"M6_UPGRADE" INTEGER)) as m6
-            using("cir")
-                          
-                    """
-            
-        cursor.execute(query)
+        cursor.execute(full_sql)
         results = cursor.fetchall()
-        # print(results)        
-    results_as_strings = []
-    for row in results:
-        # Convert each element in the row to a string
-        row_as_string = [str(element) for element in row]
-        # Append the row as a string to the list
-        results_as_strings.append(row_as_string)
-    
-    rows_as_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in results_as_strings]
+        columns = [col[0] for col in cursor.description]
 
-    jsonResult =  json.dumps(rows_as_dict)
+    results_as_dicts = [dict(zip(columns, row)) for row in results]
+    jsonResult = json.dumps(results_as_dicts)
 
-    ############################ MONTH WISE OVERALL DATA FOR DOWNLOAD ###############################
-    objs = IntegrationData.objects.filter(Integration_Date__year=year1,Integration_Date__month=month1)
-    
-    # Serialize queryset using serializer
+    ############################################################################################# Get first (latest) month/year for filtering data ######################################################
+    latest_month, latest_year, _ = month_year_list[0]
+    ################################################################################################ Fetch data for download #############################################################################
+    objs = IntegrationData.objects.filter(
+        Integration_Date__year=latest_year,
+        Integration_Date__month=latest_month
+    )
     serializer = IntegrationDataSerializer(objs, many=True)
-
-    # print(jsonResult)
-    data={"table_data":jsonResult,"latest_months":[month1,month2,month3,month4,month5,month6],"latest_year":[year1,year2,year3,year4,year5,year6],"download_data":serializer.data}
+    print(month_year_list)
+    ############################################################################################################ Return all collected data #################################################################
+    data={"table_data":jsonResult,"latest_months":[month for month,_,_ in month_year_list],"latest_year":[year for _,year,_ in month_year_list],"download_data":serializer.data}
     return Response(data)
+
 
 @api_view(["POST"])
 def hyperlink_monthwise_integration_data(request):
@@ -965,13 +993,33 @@ def hyperlink_monthly_oemwise_integration_data(request):
             SELECT unnest(ARRAY['{circle}']) AS "CIRCLE"
         ) AS CIRCLES
      CROSS JOIN
-       (SELECT unnest(ARRAY['5G SECTOR ADDITION','5G RELOCATION','DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC','OPERATIONS' ,'OTHERS','RECTIFICATION', 'RELOCATION', 'RET','TRAFFIC SHIFTING' ,'ULS_HPSC', 'UPGRADE','RRU_UPGRADE']) AS "Activity_Name") AS "Activity_Name"
+       (SELECT unnest(ARRAY['5G BW UPGRADE',
+                                    '5G RELOCATION',
+                                    '5G RRU SWAP',
+                                    '5G SECTOR ADDITION',
+                                    'DE-GROW',
+                                    'FEMTO',
+                                    'HT INCREMENT',
+                                    'IBS',
+                                    'IDSC',
+                                    'MACRO',
+                                    'ODSC',
+                                    'OPERATIONS',
+                                    'OTHERS',
+                                    'RECTIFICATION',
+                                    'RELOCATION',
+                                    'RET',
+                                    'RRU UPGRADE',
+                                    'TRAFFIC SHIFTING',
+                                    'ULS_HPSC',
+                                    'UPGRADE',
+                                    '5G AIR SWAP']) AS "Activity_Name") AS "Activity_Name"
      LEFT JOIN
         (select "CIRCLE","Activity_Name", count("id") as cnt from 
  						(select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" WHERE EXTRACT(MONTH FROM "Integration_Date") = {month} and EXTRACT(YEAR FROM "Integration_Date") = {year} and "OEM"='{oem}' and "CIRCLE"='{circle}') in_0
  group by "CIRCLE","Activity_Name") as r
      USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-ct(cir text, "5G SECTOR ADDITION" INTEGER,"5G RELOCATION" INTEGER,"DE_GROW" INTEGER,"FEMTO" INTEGER,"HT_INCREMENT" INTEGER,"IBS" INTEGER,"IDSC" INTEGER,"MACRO" INTEGER,"ODSC" INTEGER, "OPERATIONS" INTEGER,"OTHERS" INTEGER,"RECTIFICATION" INTEGER,"RELOCATION" INTEGER,"RET" INTEGER,"TRAFFIC_SHIFTING" INTEGER,"ULS_HPSC" INTEGER,"UPGRADE" INTEGER,"RRU_UPGRADE" INTEGER)) as m1
+ct(cir text, "5G RELOCATION" INTEGER,"5G RRU SWAP" INTEGER,"5G SECTOR ADDITION" INTEGER,"DE-GROW" INTEGER,"FEMTO" INTEGER,"HT INCREMENT" INTEGER,"IBS" INTEGER,"IDSC" INTEGER,"MACRO" INTEGER, "ODSC" INTEGER,"OPERATIONS" INTEGER,"RECTIFICATION" INTEGER,"OTHERS" INTEGER,"RECTIFICATION" INTEGER,"RELOCATION" INTEGER,"RET" INTEGER,"RRU UPGRADE" INTEGER,"TRAFFIC SHIFTING" INTEGER,"ULS_HPSC" INTEGER,"UPGRADE" INTEGER,"5G AIR SWAP" INTEGER)) as m1
 
         
         
@@ -1091,15 +1139,16 @@ def delete_integration_record(request, pk):
     else:
         print("exception..")
         return Response({'status':False,'message': 'You are not authorized to delete this record'}, status=status.HTTP_403_FORBIDDEN)
+
         
 @api_view(['PUT'])
 def integration_table_update(request, id=None):
     user = request.user.username
     print("username: ", user)
-    nokia_spocks=['chandan.kumar@mcpsinc.com','girraj.singh@mcpsinc.in','mohit.batra@mcpsinc.com','abhishek.gupta']
+    nokia_spocks=['chandan.kumar@mcpsinc.com','nishant.verma@mcpsinc.in','girraj.singh@mcpsinc.in','mohit.batra@mcpsinc.com','abhishek.gupta']
     zte_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
-    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
-    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com', 'abhishek.gupta']
+    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com','abhishek.gupta']
+    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com', 'abhishek.gupta']
     ericsson_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
   
     if request.method == 'PUT':
@@ -1142,7 +1191,6 @@ def integration_table_update(request, id=None):
     else:
         print("exception..")
         return Response({'status':False,'message': 'You are not authorized to edit this record'}, status=status.HTTP_403_FORBIDDEN)
-
 
 
 @api_view(["POST"])

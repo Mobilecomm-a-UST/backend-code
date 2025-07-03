@@ -30,8 +30,8 @@ DEBUG = True
 # settings.py
 
 
-ALLOWED_HOSTS = ["*"]
-#ALLOWED_HOSTS = ['122.176.141.197', 'localhost', '127.0.0.1', '0.0.0.0']
+#ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ['192.186.1.7', 'localhost', '127.0.0.1', '122.176.141.197']
 
 
 # Application definition
@@ -103,8 +103,10 @@ INSTALLED_APPS = [
     "gpl_audit_tool",
     "soft_at_status_tech",
     "Soft_AT_Checklist_Ericsson",
+    "Soft_AT_Checklist_Nokia",
     "LTE_Integration_Scripting_Automtion",
     "soft_at_5g_summary",
+    "gpl_audit_tool_V1_1"
 ]
 
 MIDDLEWARE = [

@@ -56,6 +56,7 @@ def rca_table_list(request):
         return Response(serializer.data)
 
     elif request.method == "POST":
+        
         serializer = RCATableSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()

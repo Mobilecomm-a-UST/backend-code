@@ -12,6 +12,9 @@ urlpatterns = [
     
     path('upload_Summary_excel/', upload_Summary_excel),
     path('add_excel',get_summary_data),
+    #################3surrmay#################
+    path('upload_Summary_excel/', upload_Summary_excel),
+    path('get_summary/',get_summary_data),
     path('upload_summary_xml_files/', upload_summary_xml_files),
 
     # upload_Summary_xml_data

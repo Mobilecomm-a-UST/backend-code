@@ -6,6 +6,9 @@ __pycache__/
 
 */__pycache__/
 
+# Ignore all Excel and CSV files
+*.xlsx
+*.csv
 
 
 #................................. Ignore Django migrations folders (for all apps) ........................
