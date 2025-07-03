@@ -413,14 +413,10 @@ def LKF_Upload(request):
            
                 if sheet_name == "st trx":
                     df = xls.parse(sheet_name)
-                    trx = len(df)
-                    trx = None if trx == 1 else trx
+                    trx = len(df)-1
+                    trx = None if trx == 0 else trx
                     template_df.loc[0, "TRX"] = trx
-
-              
-                 
-                    
-                
+      
         # find the 5g count and power      
                 if sheet_name == "get . maxtx":
                     df = xls.parse(sheet_name)
