@@ -952,11 +952,9 @@ def extract_data_from_log(request):
                     combined_layers = "_".join(sorted(set(l_layers_replaced))) if l_layers_replaced else "NA"
                     template_df.loc[0, "Layers(Other Tech Info)"] = combined_layers
                     print("Layers(Other Tech Info):", combined_layers)
-<<<<<<< HEAD
-                MO_name_0 = "NA"
-=======
 
->>>>>>> 2a83a9acb824b61e6fc38c097b915f3d4f983e3d
+                MO_name_0 = "NA"
+
                 MO_names = []
 
                 if "get 0" in xls.sheet_names:
@@ -1149,27 +1147,12 @@ def extract_data_from_log(request):
                         ] = "NA"
 
                     print("Parent Cell Name (In Case Of Twin Beam):", template_df.loc[0, 'Parent Cell Name (In Case Of Twin Beam)'])
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 3307b961670114346edbc8be3491fa24ee028c65
->>>>>>> 2a83a9acb824b61e6fc38c097b915f3d4f983e3d
+
                 else:
                     template_df.loc[0, "Parent Cell Name (In Case Of Twin Beam)"] = "NA"
                     print("Sheet 'get . sectorc' not found. Twin Beam set to NA.")
                                     
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-=======
 
-                    
->>>>>>> e9fbb2f0ffd83a86be30e3221846390e911f826f
->>>>>>> 3307b961670114346edbc8be3491fa24ee028c65
->>>>>>> 2a83a9acb824b61e6fc38c097b915f3d4f983e3d
                 if "st ret" in xls.sheet_names and "get . sectorc" in xls.sheet_names:
                     # Parse "st ret" sheet
                     df_st = xls.parse("st ret")
@@ -1235,13 +1218,7 @@ def extract_data_from_log(request):
                 else:
                     template_df.loc[0, "RET Configured on (Layer)"] = "NA"
                     template_df.loc[0, "RET Configuration (Cell Name)"] = "NA"
-<<<<<<< HEAD
-=======
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
                 # if "st ret" in xls.sheet_names and "get . sectorc" in xls.sheet_names:
 
                 #     df_st = xls.parse("st ret")
@@ -1293,11 +1270,7 @@ def extract_data_from_log(request):
                 # else:
                 #     template_df.loc[0, "RET Configured on (Layer)"] = "NA"
                 #     template_df.loc[0, "RET Configuration (Cell Name)"] = "NA"
->>>>>>> e9fbb2f0ffd83a86be30e3221846390e911f826f
->>>>>>> 2a83a9acb824b61e6fc38c097b915f3d4f983e3d
 
->>>>>>> 3307b961670114346edbc8be3491fa24ee028c65
-              
                 if sheet_name == "get . maxtx":
                     df_maxtx = xls.parse(sheet_name)
                     df_nooftx = xls.parse("get . nooftx")
