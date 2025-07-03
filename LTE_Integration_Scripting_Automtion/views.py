@@ -1226,8 +1226,7 @@ def generate_integration_script(request):
                             nRTAC=row["nRTAC"],
                             rachRootSequence=int(
                                 row["rachRootSequence"]
-                            ),
-                            cellLocalId = row['cellLocalId']
+                            )
                             ############################################################################ Added rachRootSequence
                         )
                         

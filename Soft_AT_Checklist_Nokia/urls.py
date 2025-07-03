@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from .views import *
+from Soft_AT_Checklist_Nokia.views import *
 
 
 urlpatterns = [

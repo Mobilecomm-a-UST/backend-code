@@ -622,6 +622,7 @@ def upload_and_compare_xml_files(request):
                     results.append({
                         "file": xml_file.name,
                         "site_id": extract_site_id(dist_name),
+                    })
                     list_tag = f"{{{ns_uri}}}list" if ns_uri else 'list'
                     item_tag = f"{{{ns_uri}}}item" if ns_uri else 'item'
 
@@ -664,12 +665,8 @@ def upload_and_compare_xml_files(request):
    
     # Save result
     report_folder = os.path.join(MEDIA_ROOT, 'reports')
-                        # "expected_value": display_expected_value,
-                        "status": "OK" if match_value(actual_value, expected_value) else "NOT OK"
-                        # "status": param_status
-                    })
 
-        all_alarms.extend(alarms)
+    all_alarms.extend(alarms)
 
     all_alarms = deduplicate_alarms(all_alarms)
 
@@ -722,13 +719,6 @@ def upload_and_compare_xml_files(request):
     }, status=status.HTTP_200_OK)
 
 
-
-#####################################################abhinav##############################
-        # "success": True,  # <-- Changed from 'status' to 'success'
-        "status": True,
-        "comparison_results": results,
-        "alarms": all_alarms,  
-    },  status=status.HTTP_200_OK)
 
 #####################################################abhinav summary ##############################
 @api_view(['POST'])
