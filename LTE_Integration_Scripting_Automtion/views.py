@@ -220,7 +220,6 @@ def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
         with open(output_file_path, "w") as file:
             file.write("\n".join(script_lines) + "\n")
 
-
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ####################################################################### MAKING THE COLUMNS VALIDATER #####################################################
@@ -238,9 +237,10 @@ def column_validater(
     template_sheet_names = template_df.sheet_names
 
     ############################################# Check for missing sheets ######################################################
-    missing_sheets = set(integration_sheet_names) - set(template_sheet_names)
-    if missing_sheets:
-        raise ValueError(f"Invalid template sheet name(s): {', '.join(missing_sheets)}")
+    # missing_sheets = set(integration_sheet_names) - set(template_sheet_names)
+    # if missing_sheets:
+    #     raise ValueError(f"Invalid template sheet name(s): {', '.join(missing_sheets)}")
+    ##############################################################################################################################
 
     def normalize_columns(columns):
         return [str(col).strip().lower() for col in columns]
@@ -274,7 +274,6 @@ def column_validater(
 def generate_integration_script(request):
     if request.method == "POST":
         integration_input_file = request.FILES.get("integration_input_file")
-        circle_name = None  ########################## circle name for different frequency and configreation as per circle:- ['KK','TN', 'AP', 'DEL',...]
         circle = request.POST.get(
             "Circle"
         )  ########################## circle for different frequency and configreation as per circle:- ['AP','KK', 'DEL',...]
@@ -633,7 +632,6 @@ def generate_integration_script(request):
 
         ###############################################################################################################################################################################################################
         elif circle == "TN":
-            circle_name = circle
             # ..................................................... TN 4G Script ....................................................#
             for node_name in lte_df["eNodeBName"].unique():
                 for _, row in lte_df.iterrows():
@@ -879,7 +877,6 @@ def generate_integration_script(request):
 
         # --------------------------------------------------------------- RJ Circle-specific Script Generation ---------------------------------------------------------------------
         elif circle == "RJ":
-            circle_name = circle
             unique_nodes = lte_df["eNodeBName"].dropna().unique()
 
             for node_name in unique_nodes:
@@ -1134,7 +1131,6 @@ def generate_integration_script(request):
         # ---------------------------------------------------------------- AS(Asaam) Circle-specific Script Generation ---------------------------------------------------------------------
         elif circle == "AS":
             current_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-
             for idx, row in site_basic_df.iterrows():
                 print(site_basic_df)
                 node_name = row.get("eNodeBName", "UnknownNode")
