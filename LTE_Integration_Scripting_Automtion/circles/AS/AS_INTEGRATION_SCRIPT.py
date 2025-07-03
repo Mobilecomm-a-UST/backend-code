@@ -2126,7 +2126,50 @@ end
 
 ################################################################################### 5G SCRIPS FOR INTEGRATION SCRIPTS ###################################################################################
 AS_5G_Cell_creation_Sctp_Endpoint_Creation = """
-###################################### TN SCRIPT ######################################
+######################################################## IPV6 Interface for NR ####################################################################
+
+cr Transport=1,Router=LTEUP,InterfaceIPv6=NR
+VlanPort=TN_E_UP
+false
+
+crn Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR
+address {NR_IP}
+configurationMode 0
+duidType 0
+primaryAddress true
+userLabel
+end
+
+
+crn Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2
+address {NR_ENDC_IP}
+configurationMode 0
+duidType 0
+primaryAddress false
+userLabel
+end
+
+gs+
+
+crn Transport=1,Router=LTEUP,RouteTableIPv6Static=2                                                                                                              
+end
+
+crn Transport=1,Router=LTEUP,RouteTableIPv6Static=2,Dst=default                                                                                                   
+dst ::/0                                                                                                                                                          
+end
+
+
+
+crn Transport=1,Router=LTEUP,RouteTableIPv6Static=2,Dst=default,NextHop=1
+address {NR_GW}
+adminDistance 1
+bfdMonitoring true
+discard false
+reference
+end
+
+
+##################################################################################### TN SCRIPT #########################################################################
 
 crn Transport=1,QosProfiles=1,DscpPcpMap=1
 defaultPcp 0
@@ -2143,13 +2186,13 @@ end
 
 
 crn Transport=1,Router=LTEUP,TwampResponder=2
-ipAddress Router=LTEUP,InterfaceIPv4=TN_E_UP,AddressIPv4=TN_E_UP
+ipAddress Router=LTEUP,InterfaceIPv4={tnPortId}_UP,AddressIPv4={tnPortId}_UP
 udpPort 4001
 userLabel
 end
 
 crn Transport=1,Router=LTEUP,TwampResponder=3
-ipAddress Router=LTEUP,InterfaceIPv4=TN_E_UP,AddressIPv4=TN_E_UP
+ipAddress Router=LTEUP,InterfaceIPv4={tnPortId}_UP,AddressIPv4={tnPortId}_UP
 udpPort 4002
 userLabel
 end
@@ -2192,7 +2235,7 @@ userLabel SCTP
 end
 
 crn Transport=1,SctpEndpoint=1
-localIpAddress Transport=1,Router=LTECP,InterfaceIPv4=TN_E_CP,AddressIPv4=TN_E_CP
+localIpAddress Transport=1,Router=LTECP,InterfaceIPv4={tnPortId}_CP,AddressIPv4={tnPortId}_CP
 portNumber 36422
 sctpProfile Transport=1,SctpProfile=1
 end
@@ -2202,6 +2245,8 @@ localIpAddress Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2
 portNumber 36422
 sctpProfile Transport=1,SctpProfile=1
 end
+
+##########
 
 crn Transport=1,SctpProfile=Node_Internal_F1
 alphaIndex 3
@@ -2239,17 +2284,81 @@ thrTransmitBufferCongCeased 85
 transmitBufferSize 64
 end
 
+cr Transport=1,Router=Node_Internal_F1
+
+crn Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_CUCP
+aclEgress
+aclIngress
+arpTimeout 300
+bfdProfile
+bfdStaticRoutes 0
+egressQosMarking
+encapsulation
+ingressQosMarking
+ipOptionsDisabled false
+loopback true
+mtu 1500
+pcpArp 6
+routesHoldDownTimer
+routingPolicyIngress
+trackedInterface
+userLabel
+end
+
+crn Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_CUCP,AddressIPv4=1
+address 10.0.0.1/32
+configurationMode 0
+dhcpClientIdentifier
+dhcpClientIdentifierType 0
+primaryAddress true
+userLabel
+end
+gs-
+
 crn Transport=1,SctpEndpoint=F1_NRCUCP
 localIpAddress Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_CUCP,AddressIPv4=1
 portNumber 38472
 sctpProfile Transport=1,SctpProfile=Node_Internal_F1
 end
 
+############
+
+crn Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_DU
+aclEgress
+aclIngress
+arpTimeout 300
+bfdProfile
+bfdStaticRoutes 0
+egressQosMarking
+encapsulation
+ingressQosMarking
+ipOptionsDisabled false
+loopback true
+mtu 1500
+pcpArp 6
+routesHoldDownTimer
+routingPolicyIngress
+trackedInterface
+userLabel
+end
+
+crn Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_DU,AddressIPv4=1
+address 10.0.0.2/32
+configurationMode 0
+dhcpClientIdentifier
+dhcpClientIdentifierType 0
+primaryAddress true
+userLabel
+end
+gs-
+
 crn Transport=1,SctpEndpoint=F1_NRDU
 localIpAddress Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_DU,AddressIPv4=1
 portNumber 38472
 sctpProfile Transport=1,SctpProfile=Node_Internal_F1
 end
+
+###########
 
 crn Transport=1,SctpEndpoint=NG
 localIpAddress Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR
@@ -2262,7 +2371,6 @@ localIpAddress Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR
 portNumber 36422
 sctpProfile Transport=1,SctpProfile=1
 end
-
 
 crn Transport=1,SctpEndpoint=F1
 dtls
@@ -2292,7 +2400,7 @@ endcDataUsageReportEnabled true
 endcDlNrRetProhibTimer 400
 endcUlNrRetProhibTimer 1000
 estimatedUeL2Buffer
-gNBId 28030291
+gNBId {gNBId}
 gNBIdLength 26
 pLMNIdList mcc=405,mnc=56
 sNSSAIList
@@ -2353,7 +2461,7 @@ dynTACConfigEnabled false
 esiSuetEnabled false
 gNBDUId 1
 gNBDUName
-gNBId 28030291
+gNBId {gNBId}
 gNBIdLength 26
 mixedSrsModeEnabled false
 multiTddPatternSmEnabled false
@@ -2410,40 +2518,10 @@ dayOfWeek 0
 mMimoSleepProfileRef MassiveMimoSleep=1,MMimoSleepProfile=1                                                                                                                                                        
 startTime 20:30                                                                                                                                                                                                    
 stopTime 23:30                                                                                                                                                                                                     
-end                 
+end    
 
-############Cell Specific Started -- CgSwitch={gUtranCell}################
 
-crn GNBDUFunction=1,UeCC=1,CgSwitch={gUtranCell}
-ueConfGroupType 1
-userLabel
-end
-
-crn GNBDUFunction=1,UeCC=1,CgSwitchCfg={gUtranCell}
-dlCgSwitchMode 1
-dlScgCritQualHyst 100
-dlScgCritQualThresh
-dlScgLowQualHyst 50
-dlScgLowQualThresh 50
-dlScgNoDataAcsiPeriodicity 300
-ulCgSwitchMode 1
-ulScgCritQualHyst 100
-ulScgCritQualThresh
-ulScgLowQualHyst 60
-ulScgLowQualThresh 170
-userLabel
-end
-
-crn GNBDUFunction=1,UeCC=1,CgSwitch={gUtranCell},CgSwitchUeCfg=Base
-cgSwitchCfgRef GNBDUFunction=1,UeCC=1,CgSwitchCfg={gUtranCell}
-prefUeGroupList
-ueConfGroupList
-ueGroupList
-userLabel
-end
-
-############Cell Specific Ended -- CgSwitch={gUtranCell}################
-
+{AS_CGSWITCH_SCRIPT}
 
 ############################GNBCUCPFunction=1####################################################
 
@@ -2458,7 +2536,7 @@ extEnbRemoveTime 1440
 extendedBandN77Supported false
 extendedBandN77TwoSupported false
 gNBCUName
-gNBId 28030291
+gNBId {gNBId}
 gNBIdLength 26
 maxCommonProcTime 30
 maxNgRetryTime 30
@@ -2687,12 +2765,7 @@ ueServiceGroupPriority 1000
 userLabel                                                                                                                                                                                                          
 end                                                                                                                                                                                                                
 
-###############################Cell Specific Started -- NRCellCU={gUtranCell}############################
 {AS_GNBCUCPFunction}
-##################################Cell Specific Ended-- NRCellCU={gUtranCell}############################
-
-
-
 
 crn GNBCUCPFunction=1,EUtraNetwork=1
 userLabel
@@ -2730,9 +2803,7 @@ arfcnValueEUtranDl 39348
 userLabel
 end
 
-###############################Cell Specific Started -- NRCellDU={gUtranCell}############################
 {AS_GNBDUFunction}
-###############################Cell Specific Ended -- NRCellDU={gUtranCell}############################
 
 """
 
@@ -3612,14 +3683,18 @@ deb NRcell
 cvms Post_LMS_NR_$date                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
           
 """
+
+
 AS_GNBCUCPFunction=""" 
+########################################################################### Cell Specific Started -- NRCellCU={gUtranCell}##################################################
+
 crn GNBCUCPFunction=1,NRCellCU={gUtranCell}
 admissionLimitRef GNBCUCPFunction=1,AdmissionControl=1,AdmissionLimit=Default
 admissionPriorityRef GNBCUCPFunction=1,AdmissionControl=1,AdmissionPriority=Default
 advUePosMode 0
 caCellMeasProfileRef CarrierAggregation=1,CaCellMeasProfile=Default
 caCellProfileRef CarrierAggregation=1,CaCellProfile=Default
-cellLocalId 311
+cellLocalId {cellLocalId}
 checkUeGrpAtCellOffload false
 hiPrioDetEnabled false
 interfaceSupervision 0
@@ -3705,9 +3780,17 @@ trStSaNrFreqRelProfileRef TrafficSteering=1,TrStSaNrFreqRelProfile=Default
 ucmNrFreqRelProfileRef UeCovMeas=1,UcmNrFreqRelProfile=Default
 ueMCNrFreqRelProfileRef UeMC=1,UeMCNrFreqRelProfile=Default
 end
+
+
+##################################Cell Specific Ended-- NRCellCU={gUtranCell}############################
+
+
 """
 
 AS_GNBDUFunction = """
+###############################Cell Specific Started -- NRCellDU={gUtranCell}############################
+
+
 crn GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId}
 administrativeState 1
 arfcnDL {arfcnDL}
@@ -3793,4 +3876,43 @@ ulMaxMuMimoLayers 0
 ulStartCrb 0
 userLabel {gUtranCell}
 end
+
+############################################################################ Cell Specific Ended -- NRCellDU={gUtranCell}##########################################
+
+"""
+
+
+AS_CGSWITCH_SCRIPT = """
+############Cell Specific Started -- CgSwitch={gUtranCell}################
+
+crn GNBDUFunction=1,UeCC=1,CgSwitch={gUtranCell}
+ueConfGroupType 1
+userLabel
+end
+
+crn GNBDUFunction=1,UeCC=1,CgSwitchCfg={gUtranCell}
+dlCgSwitchMode 1
+dlScgCritQualHyst 100
+dlScgCritQualThresh
+dlScgLowQualHyst 50
+dlScgLowQualThresh 50
+dlScgNoDataAcsiPeriodicity 300
+ulCgSwitchMode 1
+ulScgCritQualHyst 100
+ulScgCritQualThresh
+ulScgLowQualHyst 60
+ulScgLowQualThresh 170
+userLabel
+end
+
+crn GNBDUFunction=1,UeCC=1,CgSwitch={gUtranCell},CgSwitchUeCfg=Base
+cgSwitchCfgRef GNBDUFunction=1,UeCC=1,CgSwitchCfg={gUtranCell}
+prefUeGroupList
+ueConfGroupList
+ueGroupList
+userLabel
+end
+
+############Cell Specific Ended -- CgSwitch={gUtranCell}################
+
 """
