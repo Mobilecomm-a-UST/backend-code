@@ -1,7 +1,8 @@
 
+import os
+from .models import MOData  # Adjust the path if the model is in a different app
 import pandas as pd
 from .models import ExpectedParameter, SummaryData
-
 import xml.etree.ElementTree as ET
 from django.conf import settings
 from rest_framework.decorators import api_view, parser_classes
@@ -10,6 +11,15 @@ from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 from rest_framework.response import Response
 from rest_framework import status
 # from rest_framework import status
+from .models import ExpectedParameter ,SummaryData
+from  mcom_website.settings import MEDIA_ROOT
+from .serializers import ExpectedParameterSerializer,SummaryDataSerializer
+import json
+
+
+
+#---------------------------project Type #--------------------
+
 from .models import ExpectedParameter ,SummaryData,AlarmMapping
 from  mcom_website.settings import MEDIA_ROOT
 from .serializers import ExpectedParameterSerializer,SummaryDataSerializer
@@ -17,13 +27,11 @@ import json
 import os
 import pandas as pd
 import xml.etree.ElementTree as ET
-
 from django.conf import settings
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
-
 from .models import ExpectedParameter
 from .serializers import ExpectedParameterSerializer
 from mcom_website.settings import MEDIA_ROOT
@@ -32,6 +40,9 @@ from mcom_website.settings import MEDIA_ROOT
 # -------------------- Utility Functions --------------------
 
 def extract_site_id(dist_name):
+
+    """Extract site id from distName attribute."""
+
     try:
         parts = dist_name.split('/')
         for part in parts:
@@ -43,6 +54,9 @@ def extract_site_id(dist_name):
 
 
 def normalize_path(path):
+
+    """Normalize MO path to lowercase and remove 'managedobject=' prefix if present."""
+
     if isinstance(path, str):
         path = path.strip().lower()
         if path.startswith("managedObject ="):
@@ -52,9 +66,133 @@ def normalize_path(path):
 
 
 def get_default_namespace(element):
+
+    """Extract the default namespace URI from the root element tag."""
     if element.tag.startswith("{"):
         return element.tag[1:].split("}")[0]
     return ''
+
+
+def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
+        """Apply formatting to an Excel sheet with adjustable start positions."""
+        workbook = writer.book
+        worksheet = writer.sheets[sheet_name]
+
+        header_format = workbook.add_format(
+                {
+                    "bold": True,
+                    "bg_color": "#000957",
+                    "border": 2,
+                    "font_color": "#ffffff",
+                    "align": "center",
+                    "valign": "vcenter",
+                }
+                )
+        center_format = workbook.add_format(
+                {
+                    "align": "center",
+                    "valign": "center",
+                    "border": 1,
+                    "border_color": "#000000",
+                    "bold": True,
+                }
+                )
+        ok_format = workbook.add_format(
+                {
+                    "bg_color": "#90EE90",
+                    "font_color": "#000000",
+                    "align": "center",
+                    "valign": "center",
+                }
+                )
+        not_ok_format = workbook.add_format(
+                {
+                    "bg_color": "#FF0000",
+                    "font_color": "#FFFFFF",
+                    "align": "center",
+                    "valign": "center",
+                }
+                )
+
+        worksheet.set_row(startrow, 23)
+
+        for col_num, col_name in enumerate(df.columns):
+                worksheet.write(startrow, startcol + col_num, str(col_name), header_format)
+
+                column_series = df[col_name]
+                if isinstance(column_series, pd.DataFrame):
+                    column_series = column_series.iloc[:, 0]
+
+                max_length = max(
+                column_series.fillna("").astype(str).str.len().max(skipna=True) or 0,
+                len(str(col_name)),
+                )
+                max_length = min(max_length, 255)
+                worksheet.set_column(startcol + col_num, startcol + col_num, max_length + 5)
+
+        for row_num in range(len(df)):
+                worksheet.set_row(startrow + row_num + 1, 15)
+
+                for col_num in range(len(df.columns)):
+                    cell_value = str(df.iloc[row_num, col_num])
+                    format_style = center_format
+                    if cell_value == "OK":
+                            format_style = ok_format
+                    elif cell_value == "NOT OK" or cell_value == "NOK":
+                            format_style = not_ok_format
+                    elif cell_value == "Missing" or cell_value == "Missing in Post":
+                            format_style = workbook.add_format(
+                                {
+                                "bg_color": "#FF6347",
+                                "font_color": "#FFFFFF",
+                                "align": "center",
+                                "valign": "center",
+                                "bold": True,
+                                "border": 1,
+                                }
+                            )
+                    elif cell_value == "NA":
+                            format_style = workbook.add_format(
+                                {
+                                        "bg_color": "#FCF259",
+                                        "font_color": "#222831",
+                                        "align": "center",
+                                        "valign": "center",
+                                        "bold": True,
+                                        "border": 1,
+                                }
+                    )
+                    elif "|" in cell_value:
+                            format_style = workbook.add_format(
+                                {
+                                        "font_color": "#FF0000",
+                                        "align": "center",
+                                        "valign": "center",
+                                        "bold": True,
+                                        "border": 1,
+                                        "border_color": "#000000",
+                                }
+                    )
+
+                    worksheet.write(
+                            startrow + row_num + 1, startcol + col_num, cell_value, format_style
+                    )
+
+                    # workbook.__save()
+
+# --- ADDED: match_value() for flexible comparison ---
+def match_value(actual, expected):
+    actual = actual.strip().lower()
+    expected = expected.strip().lower()
+    if ';' in expected:
+        options = [opt.split('(')[0].strip().lower() for opt in expected.split(';')]
+        return any(actual == opt for opt in options)
+    if "should be" in expected or "if" in expected:
+        return expected.split()[0] in actual
+    return actual == expected
+
+
+# --- ADDED: matches_path() for hierarchical class path matching ---
 
 
 def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
@@ -158,7 +296,7 @@ def matches_path(expected_path, dist_name):
     return idx == len(expected_parts)
 
 
-# 
+# ------------------- Main API VieW ####################################################
 def deduplicate_alarms(alarms):
     seen = set()
     unique_alarms = []
@@ -168,6 +306,7 @@ def deduplicate_alarms(alarms):
             seen.add(key)
             unique_alarms.append(alarm)
     return unique_alarms
+
 
 @api_view(['GET', 'PUT', 'POST'])
 def upload_and_compare_xml(request):
@@ -191,6 +330,9 @@ def upload_and_compare_xml(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Upload Excel one-time and save expected values to DB
+
     #####################################
 
 # -------------------- API Views --------------------
@@ -209,7 +351,11 @@ def upload_excel(request):
         df = pd.read_excel(excel_file)
         df = df.dropna(subset=['MO Class', 'Parameter', 'Value'])
 
+
+        ExpectedParameter.objects.all().delete()  # Optional: clean slate
+
         ExpectedParameter.objects.all().delete()
+  
         errors = []
 
         for _, row in df.iterrows():
@@ -231,7 +377,10 @@ def upload_excel(request):
 
     except Exception as e:
         return Response({"error": f"Failed to process Excel file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
+# Upload XMLs and compare with database values
+
 FIXED_PARAMETERS = [
     {"parameter": "actLBpowersaving", "mo_class": "MRBTS/LNBTS"},
     {"parameter": "gnssAntennaLatitude", "mo_class": "MRBTS/EQM_R-1/APEQM_R-1/CABINET_R-1/SMOD_R-1/GNSSE_R"},
@@ -242,13 +391,11 @@ FIXED_PARAMETERS = [
     {"parameter": "syncInputType", "mo_class": "MRBTS/MNL/MNLENT/SYNC/CLOCK"},
     {"parameter": "syncInputType", "mo_class": "MRBTS/MNL/MNLENT/SYNC/CLOCK"},
     {"parameter": "transmissionrate", "mo_class": "MRBTS/EQM_R-1/APEQM_R-1/RMOD_R-1/SFP_R"},
-
     {"parameter": "totalDelayFromSHM", "mo_class": "MRBTS/MNL/MNLENT/SYNC/CLOCK_R"},
-
-
     {"parameter": "productName", "mo_class": "CABINET_R"}
 
 ]
+
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
@@ -257,12 +404,18 @@ def upload_and_compare_xml_files(request):
     circle_name = request.data.get('circle_name', 'default_circle').strip()
     project_type = request.data.get('project_type', 'project_type').strip()
 
+
     if not xml_files:
         return Response({"error": "At least one XML file is required"}, status=status.HTTP_400_BAD_REQUEST)
 
     expected_params = ExpectedParameter.objects.all()
     serializer = ExpectedParameterSerializer(expected_params, many=True)
     expected_params_json = serializer.data
+ 
+    expected_values = {}
+    print("expected_params", expected_params_json)
+    for param in expected_params_json:
+        norm_path = normalize_path(param['path'])  # Access via dictionary keys
 
     expected_values = {}
     for param in expected_params_json:
@@ -271,12 +424,15 @@ def upload_and_compare_xml_files(request):
             expected_values[norm_path] = {}
         expected_values[norm_path][param['parameter_name'].lower()] = param['expected_value']
 
+   
+
+    # process_xml_files(xml_files, project_type, expected_values)
     results = []
     all_alarms = []
     summary_rows = []
     ipmtu_rows =[]
 
-    
+
 
     for xml_file in xml_files:
         xml_file.seek(0)
@@ -302,6 +458,8 @@ def upload_and_compare_xml_files(request):
 
         mo_elements = root.findall('.//ns:managedObject', ns) if ns else root.findall('.//managedObject')
 
+        for mo in mo_elements:
+            dist_name = mo.attrib.get('distName', '')
 # ££££££££££££££££££fixed parameter-----------------------------------------------------
 # """""""""""""""""""""""""""""""""""""""ipmtu"""
     # -------- IPMTU Validation --------
@@ -448,8 +606,6 @@ def upload_and_compare_xml_files(request):
                     # Update alarm count
                     site_alarm_counts[site_id] += alarms_to_add
 
-#£££££££££££££££££££££££££££££££££££££££££££££££££££££££££
-
             for path, param_dict in expected_values.items():
                 if not matches_path(path, dist_name):
                     continue
@@ -457,6 +613,15 @@ def upload_and_compare_xml_files(request):
                 for param_name, expected_value in param_dict.items():
                     actual_value = ''
                     p_tag = f"{{{ns_uri}}}p" if ns_uri else 'p'
+                    for p in mo.findall(p_tag):
+                        if p.attrib.get('name', '').strip().lower() == param_name.strip().lower():
+                            actual_value = (p.text or '').strip()
+                            break
+
+             
+                    results.append({
+                        "file": xml_file.name,
+                        "site_id": extract_site_id(dist_name),
                     list_tag = f"{{{ns_uri}}}list" if ns_uri else 'list'
                     item_tag = f"{{{ns_uri}}}item" if ns_uri else 'item'
 
@@ -493,6 +658,12 @@ def upload_and_compare_xml_files(request):
                         "parameter": param_name,
                         "actual_value": actual_value,
                         "expected_value": expected_value,
+                        "status": "OK" if match_value(actual_value, expected_value) else "NOT OK"
+                    })
+
+   
+    # Save result
+    report_folder = os.path.join(MEDIA_ROOT, 'reports')
                         # "expected_value": display_expected_value,
                         "status": "OK" if match_value(actual_value, expected_value) else "NOT OK"
                         # "status": param_status
@@ -513,6 +684,15 @@ def upload_and_compare_xml_files(request):
     filename = f"report_{circle_name}.xlsx"
     filepath = os.path.join(report_folder, filename)
 
+    df_results = pd.DataFrame(results)
+    df_results.drop_duplicates(
+        subset=['file', 'site_id', 'mo_path', 'parameter', 'actual_value', 'expected_value'],
+        keep='first', inplace=True
+    )
+
+    with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
+        df_results.to_excel(writer, index=False, sheet_name='Sheet1')
+        format_excel_sheet(writer,"Sheet1" ,df_results )
     df_summary = pd.DataFrame(summary_rows)
 
     with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
@@ -532,11 +712,18 @@ def upload_and_compare_xml_files(request):
             df_ipmtu.to_excel(writer, index=False, sheet_name='ipMtu Status')
             format_excel_sheet(writer, "ipMtu Status", df_ipmtu)
 
+
     download_link = request.build_absolute_uri(settings.MEDIA_URL + 'reports/' + filename)
 
     return Response({
         "message": f"Report generated successfully for circle: {circle_name}",
         "download_link": download_link,
+        "status": True
+    }, status=status.HTTP_200_OK)
+
+
+
+#####################################################abhinav##############################
         # "success": True,  # <-- Changed from 'status' to 'success'
         "status": True,
         "comparison_results": results,
@@ -611,6 +798,10 @@ def get_summary_data(request):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
+    
+####################################### work for summary report##########################################################################
+
 ################ work for summary report##############
 
 
@@ -619,7 +810,9 @@ def get_summary_data(request):
 def upload_summary_xml_files(request):
     xml_files = request.FILES.getlist('xml_files')
     circle_name = request.data.get('circle_name', 'default_circle').strip()
+
     project_type = request.data.get('project_type', 'project_type').strip()
+
 
 
     if not xml_files:
@@ -649,7 +842,10 @@ def upload_summary_xml_files(request):
 
         def find(path):
             return root.find(path, namespaces=ns)
+        ################################mmmmmmmmmmm
+
         
+
         all_sites = []
 
         for mrbts in findall(".//ns:managedObject[@class='MRBTS']"):
@@ -663,6 +859,8 @@ def upload_summary_xml_files(request):
             dist_name = mrbts.attrib.get("distName", "")
             mrbts_id = dist_name.split("MRBTS-")[-1] if "MRBTS-" in dist_name else ""
 
+            data["MRBTS_ID"] = mrbts_id
+            data["MRBTS_Name"] = p_dict.get("btsName", "")
             
             mrbts_name = p_dict.get("btsName", "")
             Site_ID = mrbts_name.split('_')[-1] if mrbts_name else ""
@@ -722,6 +920,20 @@ def upload_summary_xml_files(request):
                     if p.attrib.get("name") == "lac":
                         data["LAC"] = p.text.strip() if p.text else ""
                         break
+            sync_status = "Not Available"
+
+            for clock in root.findall(".//ns:managedObject[@class='CLOCK']", namespaces=ns):
+                if mrbts_id in clock.attrib.get("distName", ""):
+                    for sync_list in clock.findall("ns:list[@name='syncInputList']", namespaces=ns):
+                        for item in sync_list.findall("ns:item", namespaces=ns):
+                            for p in item.findall("ns:p", namespaces=ns):
+                                if p.attrib.get("name") == "syncInputType":
+                                    print("Sync Input Type:", p.text)
+                                    if p.text and "GNSS" in p.text:
+                                        sync_status = "GPS"
+                                        break
+            all_sites.append(data)
+
             
             # DPCR Cell
             for dpr in findall(".//ns:managedObject[@class='LNCEL']"):
@@ -805,6 +1017,7 @@ def upload_summary_xml_files(request):
 
        
     
+
         return all_sites
 
     # Process each file
@@ -814,6 +1027,9 @@ def upload_summary_xml_files(request):
         for data in sites_data:
             template_df = pd.read_excel(template_path, engine='openpyxl', sheet_name='Sheet1')
             template_df.loc[0, 'OEM'] = 'Nokia'
+
+            template_df.loc[0, 'MRBTS_ID'] = data.get('MRBTS_ID', '')
+            template_df.loc[0, 'MRBTS_Name'] = data.get('MRBTS_Name', '')
             template_df.loc[0, 'AT_Type'] = 'Soft_AT'
 
             template_df.loc[0, 'TSP'] = 'Mobilecomm'
@@ -841,6 +1057,7 @@ def upload_summary_xml_files(request):
             template_df.loc[0, 'LAC'] = data.get('LAC', '')
             template_df.loc[0, 'RET Count'] = data.get('RET Count', '')
             template_df.loc[0, 'Sync Status'] = data.get('Sync Status', '')
+            template_df.loc[0, 'LNCEL_ID'] = data['cells'][0]['LNCEL_ID'] if data.get("cells") else ''
             template_df.loc[0, 'DPR_Cell_Name'] = data.get('DPR_Cell_Name', '')
             template_df.loc[0, 'Band'] = data.get('Band', '')
 
