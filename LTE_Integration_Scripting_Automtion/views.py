@@ -1226,19 +1226,18 @@ def generate_integration_script(request):
                             nRTAC=row["nRTAC"],
                             rachRootSequence=int(
                                 row["rachRootSequence"]
-                            ),
-                            cellLocalId = row['cellLocalId']
+                            )
                             ############################################################################ Added rachRootSequence
                         )
                         
                         gnb_cgswitch_element += AS_CGSWITCH_SCRIPT.format(
                             gUtranCell = row['gUtranCell'],
-                            cellLocalId = row['cellLocalId']
                         )
                         
 
                         gnbcucp_fuction_element += AS_GNBCUCPFunction.format(
                             gUtranCell=row["gUtranCell"],
+                            cellLocalId = row['cellLocalId']
                         )
                     with open(nr_cell_df_path, "a") as file:
                         file.write(

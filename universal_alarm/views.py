@@ -140,16 +140,6 @@ def delete_existing_files(upload_files):
             os.remove(file_path)
 
 
-import os
-import re
-import pandas as pd
-from django.conf import settings
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from django.views.decorators.csrf import csrf_exempt
-
 @api_view(['POST'])
 def upload_5g_log_file(request):
     if request.method != 'POST':
@@ -161,7 +151,6 @@ def upload_5g_log_file(request):
 
     log_folder = os.path.join(settings.MEDIA_ROOT, "Universal_alarm", "log_files_5g")
     os.makedirs(log_folder, exist_ok=True)
-
     delete_existing_files(log_folder)
 
     for file in log_files:
@@ -169,123 +158,41 @@ def upload_5g_log_file(request):
         with open(file_path, "wb+") as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
+
     def extract_sync_status(content):
-    
         sync_ok = False
         sync_lines = []
-
         for line in content.splitlines():
             if "TimeSyncIO=1" in line and "1 (ENABLED)" in line:
                 sync_ok = True
                 sync_lines.append(line.strip())
-
-        print(" Sync lines found:", sync_lines)
-
         return "OK" if sync_ok else "NOT OK"
+
     def extract_site_id_from_cell_name(cell_name):
-    #     try:
-    #         parts = cell_name.split("_")
-    #         return parts[-2] if len(parts) >= 2 else "Unknown"
-    #     except Exception as e:
-    #         return "Unknown"
         match = re.search(r'_([A-Za-z0-9]{5,12})[A-Z]_', cell_name)
         return match.group(1) if match else ""
-    # def extract_alarms_from_alt(content, site_id="Unknown"):
-    #     alarms = []
 
-    #     # Extract IP (IPv4 or IPv6) after timestamp
-    #     ip_match = re.search(
-    #         r'\d{6}-\d{2}:\d{2}:\d{2}[+|-]\d{4}\s+([a-fA-F0-9:.]+)', content)
-    #     ip = ip_match.group(1) if ip_match else "No IP found"
-
-    #     # Alarm entries: timestamp + M/m + specific problem + MO
-    #     alarm_pattern = re.compile(
-    #         r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+[Mm]\s+(.*?)\s{2,}(.*?)$',
-    #         re.MULTILINE
-    #     )
-
-    #     for match in alarm_pattern.finditer(content):
-    #         timestamp = match.group(1)
-    #         specific_problem = match.group(2).strip()
-    #         mo = match.group(3).strip()
-
-    #         alarms.append({
-    #             "IP": ip,
-    #             "Site ID": site_id,
-    #             "Node ID": node_id,
-    #             "Date & Time": timestamp,
-    #             "Specific Problem": specific_problem,
-    #             "MO": mo,
-               
-                
-    #         })
-
-    #     print(f"✅ Extracted {len(alarms)} alarms for IP: {ip}")
-    #     return alarms
-    ########################################
-    def extract_alarms_from_alt(content, site_id="Unknown"):
-        alarms = []
-
-        # Extract Node ID
-        node_id_match = re.search(r'(\S+)>[\s]*alt', content)
-        node_id = node_id_match.group(1).strip() if node_id_match else "Unknown"
-
-        # Extract IP (IPv4 or IPv6) from line after 'alt'
-        ip_match = re.search(
-        r'\d{6}-\d{2}:\d{2}:\d{2}[+|-]\d{4}\s+([a-fA-F0-9:.]+)',
-        content)
-        ip = ip_match.group(1) if ip_match else "No IP found"
-
-        
-        alarm_pattern = re.compile(r'''
-            ^\s*
-            (?P<dt>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})   
-            \s+(?P<sev>[Mm])                               
-            \s+(?P<prob>.+?)                                
-            \s+(?P<mo>[^()]+?)                              
-            (?:\s*\(\s*(?P<add>.*?)\))?                    
-            \s*$
-        ''', re.MULTILINE | re.VERBOSE)
-
-        for m in alarm_pattern.finditer(content):
-            alarms.append({
-                "IP":               ip,
-                "Site ID":          site_id,
-                "Node ID":          node_id,
-                "Date & Time":      m.group("dt"),
-                "Severity":         m.group("sev"),
-                "Specific Problem": m.group("prob").strip(),
-                "MO":               m.group("mo").strip(),
-                "Additional":       (m.group("add") or "").strip()
-            })
-
-        print(f"✅ Extracted {len(alarms)} alarms for IP: {ip}")
-        return alarms
-    ####################################
     def extract_circle_from_cell_name(cell_name):
         match = re.match(r'([A-Z]+)_', cell_name)
         return match.group(1) if match else "Unknown"
 
     def parse_cell_block(content):
         pattern = re.compile(
-        r'\d+\s+\d+ \((?P<adm_state>UNLOCKED|LOCKED)\)\s+'
-        r'\d+ \((?P<op_state>ENABLED|DISABLED)\)\s+'
-        r'(ENodeBFunction|GNBDUFunction)=\d+,(?P<cell_type>EUtranCellFDD|EUtranCellTDD|NRCellDU)=(?P<cell_name>[\w\-]+)'       )
+            r'\d+\s+\d+ \((?P<adm_state>UNLOCKED|LOCKED)\)\s+'
+            r'\d+ \((?P<op_state>ENABLED|DISABLED)\)\s+'
+            r'(ENodeBFunction|GNBDUFunction)=\d+,(?P<cell_type>EUtranCellFDD|EUtranCellTDD|NRCellDU)=(?P<cell_name>[\w\-]+)'
+        )
         cells = []
         for match in pattern.finditer(content):
             adm_state = match.group("adm_state")
             op_state = match.group("op_state")
             cell_name = match.group("cell_name")
             cell_type_str = match.group("cell_type")
-            
-            
-            
+
             site_id = extract_site_id_from_cell_name(cell_name)
             circle = extract_circle_from_cell_name(cell_name)
             cell_type = "5G" if "NRCellDU" in cell_type_str else "4G"
-            
-            print(f"📡 Cell Name: {cell_name} ➤ 🏷️ Site ID: {site_id} ➤ 📶 Type: {cell_type}")
-            
+
             cells.append({
                 'Adm State': adm_state,
                 'Op. State': op_state,
@@ -295,7 +202,37 @@ def upload_5g_log_file(request):
                 'Cell Type': cell_type
             })
         return cells
-    
+
+    def extract_alarms_from_alt(content, site_id="Unknown"):
+        alarms = []
+        node_id_match = re.search(r'(\S+)>[\s]*alt', content)
+        node_id = node_id_match.group(1).strip() if node_id_match else "Unknown"
+
+        ip_match = re.search(r'\d{6}-\d{2}:\d{2}:\d{2}[+|-]\d{4}\s+([a-fA-F0-9:.]+)', content)
+        ip = ip_match.group(1) if ip_match else "No IP found"
+
+        alarm_pattern = re.compile(r'''
+            ^\s*
+            (?P<dt>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})
+            \s+(?P<sev>[Mm])
+            \s+(?P<prob>.+?)
+            \s+(?P<mo>[^()]+?)
+            (?:\s*\(\s*(?P<add>.*?)\))?
+            \s*$
+        ''', re.MULTILINE | re.VERBOSE)
+
+        for m in alarm_pattern.finditer(content):
+            alarms.append({
+                "IP": ip,
+                "Site ID": site_id,
+                "Node ID": node_id,
+                "Date & Time": m.group("dt"),
+                "Severity": m.group("sev"),
+                "Specific Problem": m.group("prob").strip(),
+                "MO": m.group("mo").strip(),
+                "Additional": (m.group("add") or "").strip()
+            })
+        return alarms
 
     all_rows = []
     all_alarms = []
@@ -307,183 +244,90 @@ def upload_5g_log_file(request):
 
         ip_match = re.search(r'([\w:.]+)(?=>\s*lt all)', content_5g)
         ip_5g = ip_match.group(1) if ip_match else "No IP found"
-        
+
         node_match = re.search(r'([\w:-]+)(?=>\s*alt)', content_5g)
         node_id = node_match.group(1) if node_match else "No ID found"
-        
-        sync_status = extract_sync_status(content_5g) 
-        
+
+        sync_status = extract_sync_status(content_5g)
         cells_5g = parse_cell_block(content_5g)
 
         for cell in cells_5g:
             row = {
                 ("Circle", ""): cell['Circle'],
                 ("2G Site ID", ""): cell['Site ID'],
-                ("5G Site ID", ""): cell['Site ID'] , # Assuming naming rule
+                ("5G Site ID", ""): cell['Site ID'],
                 ("5G Node IP", ""): ip_5g,
                 ("5G Node ID", ""): node_id,
                 ("5G Cell Status", "Adm State"): cell['Adm State'],
                 ("5G Cell Status", "Op. State"): cell['Op. State'],
-                # ("5G Cell Status", "Adm State"): ["Adm State"] ,
-                # ("5G Cell Status", "Op. State"): ["Op. State"] ,
                 ("Cells", ""): cell['Cell Name'],
-                ("SYNC", "Status"): sync_status,  
-                ("Cell Type", ""): cell["Cell Type"] ,
-                
+                ("SYNC", "Status"): sync_status,
+                ("Cell Type", ""): cell["Cell Type"]
             }
             all_rows.append(row)
-        for cell in cells_5g:
             site_id = cell['Site ID']
             alarms = extract_alarms_from_alt(content_5g, site_id)
             all_alarms.extend(alarms)
-            
+
     columns = [
-        ("Circle", ""),
-        ("2G Site ID", ""),
-        ("5G Site ID", ""),
-        ("5G Node IP", ""),
-        ("5G Node ID", ""),
-        ("5G Cell Status", "Adm State"),
-        ("5G Cell Status", "Op. State"),
-        ("Cells", ""),
-        ("SYNC", "Status"),
-        ("Cell Type", ""),
-       
+        ("Circle", ""), ("2G Site ID", ""), ("5G Site ID", ""), ("5G Node IP", ""),
+        ("5G Node ID", ""), ("5G Cell Status", "Adm State"), ("5G Cell Status", "Op. State"),
+        ("Cells", ""), ("SYNC", "Status"), ("Cell Type", "")
     ]
     multi_index = pd.MultiIndex.from_tuples(columns)
     df_5g = pd.DataFrame(all_rows, columns=multi_index)
-
-# ❗ Flatten before saving to Excel
     df_5g.columns = [' - '.join(filter(None, col)).strip() for col in df_5g.columns.values]
-    
-     # Alarm sheet
+
     df_alarms = pd.DataFrame(all_alarms)
-    
-    
-    
-    # output_path = os.path.join(settings.MEDIA_ROOT, "Universal_alarm", "5G_Report.xlsx")
-    
-    ##############################
-    # circles = list(set(row[('Circle', '')] for row in all_rows if row.get(('Circle', ''))))
-    # circle_name = circles[0] if len(circles) == 1 else "MULTI"
 
-    # # Clean circle name to be filesystem-safe (no slashes/spaces etc.)
-    # circle_name = circle_name.replace(" ", "_").upper()
-    
-    
-    
-    
-    
-    
-    
-    
+    if not df_alarms.empty:
+        grouped_rows = []
+        grouped = df_alarms.groupby(["IP", "Site ID", "Node ID"])
+
+        for (ip, site_id, node_id), group in grouped:
+            combined = {
+                "IP": ip,
+                "Site ID": site_id,
+                "Node ID": node_id,
+                "Date & Time": '/ '.join(group["Date & Time"].dropna().unique()),
+                "Severity": '/ '.join(group["Severity"].dropna().unique()),
+                "Specific Problem": '/ '.join(group["Specific Problem"].dropna().unique()),
+                "MO": '/ '.join(group["MO"].dropna().unique()),
+                "Additional": '/ '.join(group["Additional"].dropna().unique()),
+            }
+            grouped_rows.append(combined)
+
+        df_alarms = pd.DataFrame(grouped_rows)
+    else:
+        df_alarms = pd.DataFrame(columns=[
+            "IP", "Site ID", "Node ID", "Date & Time", "Severity",
+            "Specific Problem", "MO", "Additional"
+        ])
+
+
     circles = sorted(set(
-    row[('Circle', '')].strip().upper().replace(" ", "_")
-    for row in all_rows if row.get(('Circle', ''))
-))
-
-# Join all circle names (like TNCH or TN_ORI_CH)
+        row[('Circle', '')].strip().upper().replace(" ", "_")
+        for row in all_rows if row.get(('Circle', ''))
+    ))
     circle_name = "".join(circles) if len(circles) > 1 else circles[0]
-
     output_filename = f"5G_Alarm_Logs_{circle_name}.xlsx"
     output_path = os.path.join(settings.MEDIA_ROOT, "Universal_alarm", output_filename)
-    ################################
-    
-    
-    
-    
-        
-    
-    # with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+
     with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
         df_5g.to_excel(writer, index=False, sheet_name="5G Cells")
         df_alarms.to_excel(writer, index=False, sheet_name="Alarms")
-        # format_excel_sheet(writer,'Alarms', df_alarms)
-        
-        # format_excel_sheet(writer, '5G Cells', df_5g)
+        format_excel_sheet(writer, '5G Cells', df_5g)
         format_excel_sheet(writer, 'Alarms', df_alarms)
-    
-    # relative_path = os.path.join("media", "Universal_alarm", "5G_Report.xlsx")
-    # download_link = request.build_absolute_uri("/" + relative_path.replace("\\", "/"))
+
     relative_path = os.path.join("media", "Universal_alarm", output_filename)
     download_link = request.build_absolute_uri("/" + relative_path.replace("\\", "/"))
-    
-    wb = load_workbook(output_path)
-    ws = wb.active
-    
-   
 
-    for sheet_name in wb.sheetnames:
-        ws = wb["5G Cells"]
-
-        header_fill = PatternFill(start_color="259aa8", end_color="4682B4", fill_type="solid")
-        header_font = Font(color="FFFFFF", bold=True)
-        header_align = Alignment(horizontal="center", vertical="center")
-
-        thin_border = Border(
-            left=Side(style='thin'), right=Side(style='thin'),
-            top=Side(style='thin'), bottom=Side(style='thin')
-        )
-        
-        prev_value = None
-        start_col = 1
-        for col in range(1, ws.max_column + 1):
-            top_cell = ws.cell(row=1, column=col)
-            sub_cell = ws.cell(row=2, column=col)
-
-            top_val = top_cell.value
-            sub_val = sub_cell.value
-
-            # Detect merged header range
-            if top_val != prev_value:
-                if col > start_col:
-                    if prev_value not in (None, ""):
-                        ws.merge_cells(
-                            start_row=1, start_column=start_col,
-                            end_row=1, end_column=col - 1
-                        )
-                start_col = col
-                prev_value = top_val
-
-        # Final merge for last group
-        if prev_value not in (None, "") and start_col <= ws.max_column:
-            ws.merge_cells(
-                start_row=1, start_column=start_col,
-                end_row=1, end_column=ws.max_column
-            )
-
-        # Styling headers
-        for row in [1, 1]:
-            for col in range(1, ws.max_column + 1):
-                cell = ws.cell(row=row, column=col)
-                cell.fill = header_fill
-                cell.font = header_font
-                cell.alignment = header_align
-                cell.border = thin_border
-
-        # Style entire data range
-        for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
-            for cell in row:
-                cell.border = thin_border
-
-        wb.save(output_path)
-
-        # Header row formatting
-        # for cell in ws[1]:
-        #     cell.fill = header_fill
-        #     cell.font = header_font
-        #     cell.alignment = header_align
-        #     cell.border = thin_border
-
-        # # All data border
-        # for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
-        #     for cell in row:
-        #         cell.border = thin_border
     print("✅ Excel saved:", output_path)
-    return Response({"message": f"Report generated successfully for circle: {circle_name}",
-                     "download_link": download_link,
-                "status": True})
-   
+    return Response({
+        "message": f"Report generated successfully for circle: {circle_name}",
+        "download_link": download_link,
+        "status": True
+    })
 
 ############################################################################################################################
 
@@ -529,8 +373,7 @@ def upload_4g_log_file(request):
         with open(file_path, "wb+") as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
-             
-   
+
     
 
     def get_band(cell_name):
@@ -788,12 +631,26 @@ def upload_4g_log_file(request):
 # ❗ Flatten before saving to Excel
     df_4g.columns = [' - '.join(filter(None, col)).strip() for col in df_4g.columns.values]
     
-     # Alarm sheet
-    df_alarms = pd.DataFrame(all_alarms)
+# Alarm sheet
+    if all_alarms:
+        alarm_df = pd.DataFrame(all_alarms)
+
+        # Group by IP + Site ID + Node ID and merge columns
+        agg_alarms = alarm_df.groupby(["IP", "Site ID", "Node ID"]).agg({
+            "Date & Time": lambda x: "/ ".join(sorted(set(x))),
+            "Severity": lambda x: "/ ".join(sorted(set(x))),
+            "Specific Problem": lambda x: "/".join(sorted(set(x))),
+            "MO": lambda x: "/".join(sorted(set(x))),
+            "Additional": lambda x: "/".join(sorted(set(filter(None, x))))
+        }).reset_index()
+
+        df_alarms = agg_alarms
+    else:
+        df_alarms = pd.DataFrame()
+
     site_down_df = pd.DataFrame(site_down).drop_duplicates()
-    
-    
-   
+        
+
 
     circles = sorted(set(
     row[('Circle', '')].strip().upper().replace(" ", "_")
@@ -816,8 +673,7 @@ def upload_4g_log_file(request):
         df_4g.to_excel(writer, index=False, sheet_name="4G Cells")
         df_alarms.to_excel(writer, index=False, sheet_name="Alarms")
         site_down_df.to_excel(writer, sheet_name="Site Down", index=False)
-       
-       
+
         format_excel_sheet(writer, 'Alarms', df_alarms ,)
     
     
@@ -829,7 +685,6 @@ def upload_4g_log_file(request):
     wb = load_workbook(output_path)
     ws = wb.active
     
-   
 
     for sheet_name in wb.sheetnames:
         ws = wb["4G Cells"]
