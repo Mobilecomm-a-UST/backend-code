@@ -3465,6 +3465,2008 @@ ldeb RadioEquipmentClockReference=1
 
 """
 
+
+RJ_Route_5G_GPL_LMS = """
+
+lt all     	                                                                                                                                                       
+rbs                                                                                                                                                        
+rbs                                                                                                                                                               
+confbd+                                                                                                                                                           
+                                                                                                                                                                  
+$date = `date +%y%m%d_%H%M`                                                                                                                                       
+cvms Pre_5G_GPL_$date                                                                                                                                         
+                                
+
+                                                                        
+confbd+
+gs+
+
+set GNBDUFunction=1                                         endpointResourceRef GNBDUFunction=1,EndpointResource=1
+set GNBCUUPFunction=1                                         endpointResourceRef GNBCUUPFunction=1,EndpointResource=1
+set GNBCUCPFunction=1                                         endpointResourceRef GNBCUCPFunction=1,EndpointResource=1
+
+set GNBCUCPFunction=1,EndpointResource=1,LocalSctpEndpoint=3 sctpEndpointRef   SctpEndpoint=F1_NRCUCP
+set GNBDUFunction=1,EndpointResource=1,LocalSctpEndpoint=1  sctpEndpointRef   SctpEndpoint=F1_NRDU
+set GNBCUCPFunction=1,EndpointResource=1,LocalSctpEndpoint=1 sctpEndpointRef   SctpEndpoint=NG
+set GNBCUCPFunction=1,EndpointResource=1,LocalSctpEndpoint=2 sctpEndpointRef   SctpEndpoint=X2
+
+
+
+crn GNBCUUPFunction=1,EndpointResource=1,LocalIpEndpoint=1
+addressRef                           Transport=1,Router=LTE_NR,InterfaceIPv6=NR,AddressIPv6=NR_S1U_OAM
+interfaceList                        4 5 7 6
+mode                                 0
+end
+
+
+crn GNBCUCPFunction=1,IntraFreqMC=1
+end
+
+
+
+
+
+crn GNBDUFunction=1,MassiveMimoSleep=1
+end
+
+crn GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepTimeGroup=1
+end
+
+crn GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepProfile=1
+sleepMode                            0
+switchDownMonitorDurTimer            60
+switchDownMonitorDurTimerEco         300
+switchDownPrbThreshDl                10
+switchDownPrbThreshDlEco             15
+switchDownPrbThreshUlEco             10
+switchDownRrcConnThresh              10
+switchDownRrcConnThreshEco           30
+switchUpMonitorDurTimer              30
+switchUpMonitorDurTimerEco           120
+switchUpPrbThreshDl                  20
+switchUpPrbThreshDlEco               30
+switchUpPrbThreshUlEco               15
+switchUpRrcConnThresh                20
+switchUpRrcConnThreshEco             50
+end
+
+crn GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepTimeGroup=1,MMimoSleepTimeWindow=1
+dayOfWeek                            0
+mMimoSleepProfileRef                 MassiveMimoSleep=1,MMimoSleepProfile=1
+startTime                            20:30
+stopTime                             23:30
+end
+
+
+set GNBDUFunction=1,NRSectorCarrier=.* mMimoSleepTimeGroupRef               MassiveMimoSleep=1,MMimoSleepTimeGroup=1
+
+
+
+crn GNBCUCPFunction=1,AnrFunction=1
+removeEnbTime                        7
+removeFreqRelTime                    15
+removeGnbTime                        7
+removeNrelTime                       7
+end
+
+crn GNBCUCPFunction=1,AnrFunction=1,AnrFunctionNR=1
+anrAutoCreateXnForEndc               true
+anrCgiMeasInterFreqMode              1
+anrCgiMeasIntraFreqEnabled           true
+anrEndcX2Enabled                     true
+end
+
+
+crn GNBCUCPFunction=1,Mcpc=1,McpcPSCellProfile=Default
+ueConfGroupType                      0
+userLabel
+end
+
+crn GNBCUCPFunction=1,IntraFreqMC=1,IntraFreqMCCellProfile=Default
+ueConfGroupType                      0
+userLabel
+end
+
+
+crn GNBCUCPFunction=1,UeMC=1,UeMCNrFreqRelProfile=Midband
+ueConfGroupType                      0
+userLabel
+end
+
+
+crn ENodeBFunction=1,EndcProfile=1
+meNbS1TermReqArpLev                  0
+splitNotAllowedUeArpLev              0
+userLabel
+end
+
+crn ENodeBFunction=1,EndcProfile=2
+meNbS1TermReqArpLev                  15
+splitNotAllowedUeArpLev              0
+userLabel
+end
+
+set QciTable=default,QciProfilePredefined=qci5              endcProfileRef    EndcProfile=2
+set QciTable=default,QciProfilePredefined=qci6$             endcProfileRef    EndcProfile=1
+set QciTable=default,QciProfilePredefined=qci7$             endcProfileRef    EndcProfile=1
+set QciTable=default,QciProfilePredefined=qci8              endcProfileRef    EndcProfile=1
+set QciTable=default,QciProfilePredefined=qci9              endcProfileRef    EndcProfile=1
+
+
+
+
+crn ENodeBFunction=1,PmFlexCounterFilter=ENDC
+arpFilterEnabled                     false
+arpFilterMax                         0
+arpFilterMin                         0
+ceLevelFilterEnabled                 false
+ceLevelFilterMax                     0
+ceLevelFilterMin                     0
+endcFilterEnabled                    true
+lcgFilterEnabled                     false
+pciFilterEnabled                     false
+plmnFilterEnabled                    false
+pviFilterEnabled                     false
+qciFilterEnabled                     false
+reportAppCounterOnly                 true
+spidFilterEnabled                    false
+spidFilterMax                        1
+spidFilterMin                        1
+subscriberGroupFilterEnabled         false
+subscriberGroupFilterMax             0
+subscriberGroupFilterMin             0
+ueCatFilterEnabled                   false
+ueCatFilterMax                       0
+ueCatFilterMin                       0
+uePowerClassFilterEnabled            false
+uePowerClassFilterMax                1
+uePowerClassFilterMin                1
+end
+
+crn ENodeBFunction=1,UePolicyOptimization=1
+coverageAwareImc                     true
+endcAwareImc                         2
+t320                                 180
+ueCapPrioList                        0
+zzzTemporary1                        1
+zzzTemporary2                        -2000000000
+zzzTemporary3                        -2000000000
+end
+
+
+crn GNBCUUPFunction=1,GtpuSupervision=1
+end
+
+
+crn GNBCUUPFunction=1,GtpuSupervision=1,GtpuSupervisionProfile=S1
+endpointResourceRef                  
+gtpuEchoDscp                         32
+gtpuEchoEnabled                      true
+interfaceList                        5
+userLabel
+end
+
+
+crn GNBCUUPFunction=1,GtpuSupervision=1,GtpuSupervisionProfile=X2
+endpointResourceRef                  
+gtpuEchoDscp                         32
+gtpuEchoEnabled                      true
+interfaceList                        7
+userLabel
+end
+
+
+set QosProfiles=1,DscpPcpMap=1  pcp0
+set QosProfiles=1,DscpPcpMap=1  pcp1
+set QosProfiles=1,DscpPcpMap=1  pcp2
+set QosProfiles=1,DscpPcpMap=1  pcp3
+set QosProfiles=1,DscpPcpMap=1  pcp4
+set QosProfiles=1,DscpPcpMap=1  pcp5
+set QosProfiles=1,DscpPcpMap=1  pcp6
+set QosProfiles=1,DscpPcpMap=1  pcp7
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp0 0,1,2,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,36,37,38,39,41,43,45,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp2 22 24 26
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp3 6 8 10 30 32
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp4 12 14 40
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp5 4 28
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp6 16 18 34 42 44
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp7 20 46
+
+set QosProfiles=1,DscpPcpMap=1    pcp7   20 46                                                                       
+set QosProfiles=1,DscpPcpMap=1    pcp6   16 18 34 42 44                                                              
+set QosProfiles=1,DscpPcpMap=1    pcp5   4 28                                                                        
+set QosProfiles=1,DscpPcpMap=1    pcp4   12 14 40                                                                    
+set QosProfiles=1,DscpPcpMap=1    pcp3   6 8 10 30 32                                                                
+set QosProfiles=1,DscpPcpMap=1    pcp2   22 24 26                                                                    
+set QosProfiles=1,DscpPcpMap=1    pcp0   0 1 2 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31 33 35 36 37 38 39 41 43 45 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63
+
+
+
+
+set ENodeBFunction=1                                        zzzTemporary81    1                                                                                  
+set UePolicyOptimization=1                                  zzzTemporary1     1                                                                                  
+set EndcProfile=1                                           splitNotAllowedUeArpLev 0                                                                            
+set EndcProfile=2                                           meNbS1TermReqArpLev 15                                                                               
+set EUtranCellFDD=.*                      measGapPattEndc   1                                                                                  
+set EUtranCellFDD=.*,UeMeasControl=1      maxMeasB1Endc     3                                                                                  
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1          gNodebIdLength    26                                                                                 
+set ENodeBFunction=1                                        endcS1OverlapMode true      
+set EUtranCellFDD=.*,UeMeasControl=1      endcMeasTime      2000                                                                               
+set EUtranCellFDD=.*,UeMeasControl=1      endcMeasRestartTime 10000                                                                            
+set ENodeBFunction=1                                        endcDataUsageReportEnabled true                                                                      
+set EUtranCellFDD=.*,UeMeasControl=1      endcB1MeasWindow  40                                                                                 
+set QciTable=default,QciProfilePredefined=qci1              dscp              34                                                                                 
+set QciTable=default,QciProfilePredefined=qci2              dscp              34                                                                                 
+set QciTable=default,QciProfilePredefined=qci3              dscp              26                                                                                 
+set QciTable=default,QciProfilePredefined=qci4              dscp              26                                                                                 
+set QciTable=default,QciProfilePredefined=qci5              dscp              46                                                                                 
+set QciTable=default,QciProfilePredefined=qci6$             dscp              32    
+set QciTable=default,QciProfilePredefined=qci7$             dscp              40   
+set QciTable=default,QciProfilePredefined=qci8              dscp              30                                                                                 
+set QciTable=default,QciProfilePredefined=qci9              dscp              26                                                                                 
+set CarrierAggregationFunction=1                            dcSCellDeactDelayTimer 200                                                                           
+set CarrierAggregationFunction=1                            dcSCellActDeactDataThresHyst 30                                                                      
+set CarrierAggregationFunction=1                            dcSCellActDeactDataThres 30                                                                          
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1          anrStateNR        1                           
+set EUtranCellFDD=.*,GUtranFreqRelation=627936 anrMeasOn         true                                                                          
+set ENodeBFunction=1                                        x2retryTimerMaxAuto 1440                                                                             
+set CarrierAggregationFunction=1                            endcCaPolicy      1                                                  
+
+
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 ulMaxRetxThreshold 32                                                                              
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 ulMaxRetxThreshold 32                                                                              
+set NRCellDU=.*                   ul256QamEnabled   true   
+set GNBDUFunction=1,UeCC=1,RadioLinkControl=1,DrbRlc=Default,DrbRlcUeCfg=Base tStatusProhibitUl 10                                                               
+set NRCellDU=.*                   trsPowerBoosting  0                                                                                  
+set NRCellDU=.*                   trsPeriodicity    20                                                                                 
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 tPollRetransmitUl 80                                                                               
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 tPollRetransmitUl 80                                                                               
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 tPollRetransmitDl 80                                                                               
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 tPollRetransmitDl 80                                                                               
+set GNBCUCPFunction=1,UeCC=1,InactivityProfile=Default,InactivityProfileUeCfg=Base tInactivityTimerEndcSn 5                                                      
+set NRCellDU=.*                   tddUlDlPattern    1                                               
+set NRCellDU=.*                   tddSpecialSlotPattern 3                                     
+set GNBCUCPFunction=1                                       tDcOverall        11                                                                                 
+set GNBDUFunction=1,Rrc=1                                   t319              400  
+set GNBDUFunction=1,Rrc=1                                   t311              3000                                                                               
+set GNBDUFunction=1,Rrc=1                                   t310              2000                                                                               
+set GNBDUFunction=1,Rrc=1                                   t304              2000                                                                               
+set GNBDUFunction=1,Rrc=1                                   t301              600                                                                                
+set GNBDUFunction=1,Rrc=1                                   t300              1500                                                                               
+set NRCellDU=.*                   subCarrierSpacing 30                                                                                 
+set NRCellDU=.*                   ssbSubCarrierSpacing 30                                                                              
+set NRCellDU=.*                   ssbPowerBoost     6                                                                                  
+set NRCellDU=.*                   ssbPeriodicity    20                                                                                 
+set NRCellDU=.*                   ssbOffset         0        
+set NRCellDU=.*                   ssbDuration       1                                                                                  
+set NRCellDU=.*                   srsPeriodicity    40                                                                                 
+set NRCellDU=.*                   srsHoppingBandwidth 0                                                                         
+set NRCellDU=.*                   secondaryCellOnly false                                                                              
+set GNBCUCPFunction=1,AnrFunction=1                         removeNrelTime    7                                                                                                                           
+set GNBCUCPFunction=1,AnrFunction=1                         removeGnbTime     7                                                                                  
+set GNBCUCPFunction=1,AnrFunction=1                         removeEnbTime     7                                                                                  
+set NRCellDU=.*                   rachPreambleTransMax 10                                                                              
+set NRCellDU=.*                   rachPreambleRecTargetPower -110                                                                      
+set NRCellDU=.*                   rachPreambleFormat 0                                        
+set NRCellDU=.*                   pZeroUePuschOffset256Qam 4                                                                           
+set NRCellDU=.*                   pZeroNomSrs       -110                                                                               
+set NRCellDU=.*                   pZeroNomPuschGrant 1000                                                                              
+set NRCellDU=.*                   pZeroNomPucch     -114                                                                               
+set NRCellDU=.*                   puschStartPrbStrategy 3                                         
+set NRCellDU=.*                   puschAllowedInDmrsSym true                                                                           
+set GNBDUFunction=1,UeCC=1,Prescheduling=1,PreschedulingUeCfg=Base preschedulingUeMode 1                                                    
+set GNBDUFunction=1,UeCC=1,Prescheduling=1,PreschedulingUeCfg=Base preschedulingDuration 100                                                                     
+set NRCellDU=.*                   pMax              26                                                                                 
+set NRCellDU=.*                   pdschStartPrbStrategy 3                                         
+set NRCellDU=.*                   pdcchSymbConfig   0                                                                     
+set NRCellDU=.*                   nrSrsDlPacketAgeThr 0                                                                                
+set GNBDUFunction=1,Rrc=1                                   n311              1                                                                                  
+set GNBDUFunction=1,Rrc=1                                   n310              20                                                                                 
+set NRCellDU=.*                   maxUeSpeed        2                                                   
+set NRCellDU=.*                   maxNoOfAdvancedDlMuMimoLayers 8                                                                      
+set QciProfileEndcConfigExt=1                               initialUplinkConf 1   
+
+
+
+
+                                                        
+set GtpuSupervision=1,GtpuSupervisionProfile=S1             gtpuEchoEnabled   true                                                                               
+set GtpuSupervision=1,GtpuSupervisionProfile=X2             gtpuEchoEnabled   true                                                                               
+set GtpuSupervision=1,GtpuSupervisionProfile=S1             gtpuEchoDscp      32                                                                                 
+set GtpuSupervision=1,GtpuSupervisionProfile=X2             gtpuEchoDscp      32                                                                                 
+set GNBCUUPFunction=1,UeCC=1,AqmCfg=           estimatedE2ERTT   50                                                                                                                                                           
+set ENodeBFunction=1                                        endcDataUsageReportEnabled true                                                                      
+set IntraFreqMC=1,IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base endcActionEvalFail 1                                             
+set GNBDUFunction=1,UeCC=1,DrxProfile=Default,DrxProfileUeCfg=Base drxRetransmissionTimerUl 8  
+set GNBDUFunction=1,UeCC=1,DrxProfile=Default,DrxProfileUeCfg=Base drxRetransmissionTimerDl 8                                                                    
+set NRCellDU=.*                   drxProfileEnabled true                                                                               
+set GNBDUFunction=1,UeCC=1,DrxProfile=Default,DrxProfileUeCfg=Base drxOnDurationTimer 39
+set GNBDUFunction=1,UeCC=1,DrxProfile=Default,DrxProfileUeCfg=Base drxLongCycle      10                                               
+set GNBDUFunction=1,UeCC=1,DrxProfile=Default,DrxProfileUeCfg=Base drxInactivityTimer 15
+set GNBDUFunction=1,UeCC=1,DrxProfile=Default,DrxProfileUeCfg=Base drxEnabled        true                                                                        
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 dlMaxRetxThreshold 32                                                                              
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 dlMaxRetxThreshold 32                                                                              
+set NRCellDU=.*                   dlDmrsMuxSinrThresh -10                                                                              
+set NRCellDU=.*                   dl256QamEnabled   true                                                                               
+set NRCellDU=.*                   dftSOfdmPuschEnabled true                                                                            
+set NRCellDU=.*                   dftSOfdmMsg3Enabled true                                                                             
+set GNBCUUPFunction=1                                       dcDlPdcpInitialScgRate 100               
+set NRCellDU=.*                   csiRsShiftingSecondary 1                                         
+set NRCellDU=.*                   csiRsShiftingPrimary 1                                 
+set NRCellDU=.*                   csiRsPeriodicity  40                                                                                 
+set NRCellDU=.*                   csiRsConfig8P     csiRsControl8Ports=1,i11Restriction=FFFF,i12Restriction=                                                                         
+set NRCellDU=.*                   csiRsConfig32P    csiRsControl32Ports=1,i11Restriction=FFFFFFFF,i12Restriction=FF                                                                        
+set NRCellDU=.*                   csiRsActivePortConfig 2 4                   
+set NRSectorCarrier=.*                                 configuredMaxTxPower 200000                                                                          
+                                                                              
+set NRSectorCarrier=.*,CommonBeamforming=1              cbfMacroTaperType 0
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1          anrStateNR        1                           
+set GNBCUCPFunction=1,AnrFunction=1,AnrFunctionNR=1         anrEndcX2Enabled  true                                                                               
+set GNBCUCPFunction=1,AnrFunction=1,AnrFunctionNR=1         anrCgiMeasIntraFreqEnabled true                                                                      
+set GNBCUCPFunction=1,AnrFunction=1,AnrFunctionNR=1         anrAutoCreateXnForEndc true                                                                          
+set NRCellDU=.*                   advancedDlSuMimoEnabled true                                                                         
+set NRCellDU=.*                   additionalPucchForCaEnabled false                                                                    
+set NRCellDU=.*                   ulMaxMuMimoLayers 4                                                                                  
+set GNBDUFunction=1,UeCC=1,Prescheduling=1,PreschedulingUeCfg=Base preschedulingDataSize 86                                                                      
+set NRCellDU=.*                   pdschAllowedInDmrsSym true                                                                           
+set NRSectorCarrier=.*                                  nRMicroSleepTxEnabled true                                                                           
+set NRCellDU=.*                   maxUsersRachSchedPusch 100                                                                           
+set NRCellDU=.*                   dlMaxMuMimoLayers 8                                                                                  
+set NRCellDU=.*                   csiRsConfig4P     csiRsControl4Ports=OFF,i11Restriction=,i12Restriction=        
+set NRSectorCarrier=.*,CommonBeamforming=1              coverageShape     1
+set NRCellDU=.*                   nrSrsDlBufferVolThr 100                                                                              
+set NRCellDU=.*                   pdcchLaSinrOffset -20      
+
+                                                                          
+set ENodeBFunction=1                                        s1GtpuEchoEnable  1
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1          anrStateNR        1
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1          gNodebIdLength    26
+Set ENodeBFunction=1                                        endcX2IpAddrViaS1Active true
+set ENodeBFunction=1                                        endcAllowed       true
+set ENodeBFunction=1                                        endcAwareMfbiIntraCellHo false
+set ENodeBFunction=1                                        endcDataUsageReportEnabled true
+set ENodeBFunction=1                                        endcIntraBandBlocked true
+set ENodeBFunction=1                                        endcPowerOffsetLte 3
+set ENodeBFunction=1                                        endcS1OverlapMode true
+set ENodeBFunction=1                                        endcSplitAllowedMoVoice false
+set ENodeBFunction=1                                        endcSplitAllowedNonDynPwrShUe false
+
+set ENodeBFunction=1                                        endcOverheatingAssistance true
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1          endcRachFailThrPerUe 5
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1          scgSessTimeForEndcRachFail 2500
+set PmFlexCounterFilter=ENDC                                endcFilterMin     2
+
+
+
+set ENodeBFunction=1,EndcProfile=1 meNbS1TermReqArpLev 0                                                                                                          
+set ENodeBFunction=1,EndcProfile=1 splitNotAllowedUeArpLev 0 
+lset ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci[6789]$ endcProfileRef ENodeBFunction=1,EndcProfile=1
+
+
+cr ENodeBFunction=1,UePolicyOptimization=1 
+                                                                                                                       
+set ENodeBFunction=1,UePolicyOptimization=1 ueCapPrioList 0                                                                                                       
+set ENodeBFunction=1,UePolicyOptimization=1 coverageAwareImc true 
+set UePolicyOptimization=1                                  endcAwareImc      2
+set EUtranCellFDD=.*                    endcB1MeasGapEnabled true
+set EUtranCellFDD=.*                      endcB1MeasGapConfig 0
+set EUtranCellFDD=.*                      endcSetupUlBsVolThr 5000
+set EUtranCellFDD=.*                      loopingEndcBackoffDuration 200
+set EUtranCellFDD=.*                      loopingEndcProtectionEnabled true
+set EUtranCellFDD=.*                      loopingEndcShortScgSessTime 3000
+
+set EutrancellFDD additionalUpperLayerIndList          1 1 1 1 1                                                    
+set EutrancellFDD endcSetupDlPktVolThr                 5                                                                                                                            
+set EutrancellFDD primaryUpperLayerInd                 1
+
+set EutrancellTDD additionalUpperLayerIndList          1 1 1 1 1                                                    
+set EutrancellTDD endcSetupDlPktVolThr                 5                                                                                                                            
+set EutrancellTDD primaryUpperLayerInd                 1
+
+
+
+set CXC4040004 FeatureState  1
+set CXC4040005 FeatureState  1
+set CXC4040006 FeatureState  1
+set CXC4040008 FeatureState  1
+set CXC4040009 FeatureState  1
+set CXC4040010 FeatureState  1
+set CXC4040014 FeatureState  1
+set CXC4012492 FeatureState  1
+set CXC4012271 FeatureState  1
+set CXC4011067 FeatureState  1
+set CXC4010963 FeatureState  1
+set CXC4012505 FeatureState  1
+set CXC4012356 FeatureState  1
+set CXC4012200 FeatureState  1
+set CXC4012199 FeatureState  1
+set CXC4012349 FeatureState  1
+set CXC4012018 FeatureState  1
+set CXC4011814 FeatureState  1
+set CXC4010320 FeatureState  1
+set CXC4012590 FeatureState  1
+set CXC4012510 FeatureState  1
+set CXC4011967 FeatureState  1
+set CXC4010620 FeatureState  1
+set CXC4011422 FeatureState  1
+set CXC4012256 FeatureState  1
+set CXC4011373 FeatureState  1
+set CXC4012123 FeatureState  1
+set CXC4012218 FeatureState  1
+set CXC4011370 FeatureState  1
+set CXC4012371 FeatureState  1
+set CXC4011476 FeatureState  1
+set CXC4011666 FeatureState  1
+set CXC4011922 FeatureState  1
+set CXC4012374 FeatureState  1
+set CXC4011958 FeatureState  1
+set CXC4011378 FeatureState  1
+set CXC4012097 FeatureState  1
+set CXC4011698 FeatureState  1
+set CXC4012589 FeatureState  1
+set CXC4011910 FeatureState  1
+set CXC4010949 FeatureState  1
+set CXC4010956 FeatureState  1
+set CXC4012129 FeatureState  1
+set CXC4011064 FeatureState  1
+set CXC4012238 FeatureState  1
+set CXC4012373 FeatureState  1
+set CXC4012089 FeatureState  1
+set CXC4011062 FeatureState  1
+set CXC4011951 FeatureState  1
+set CXC4011969 FeatureState  1
+set CXC4012558 FeatureState  1
+set CXC4011255 FeatureState  1
+set CXC4012326 FeatureState  1
+set CXC4012406 FeatureState  1
+set CXC4010912 FeatureState  1
+set CXC4010609 FeatureState  1
+set CXC4011060 FeatureState  1
+set CXC4011061 FeatureState  1
+set CXC4011937 FeatureState  1
+set CXC4011559 FeatureState  1
+set CXC4011940 FeatureState  1
+set CXC4011034 FeatureState  1
+set CXC4012504 FeatureState  1
+set CXC4012381 FeatureState  1
+set CXC4011069 FeatureState  1
+set CXC4010964 FeatureState  1
+set CXC4011245 FeatureState  1
+set CXC4011482 FeatureState  1
+set CXC4012316 FeatureState  1
+set CXC4011930 FeatureState  1
+set CXC4012111 FeatureState  1
+set CXC4010618 FeatureState  1
+set CXC4011256 FeatureState  1
+set CXC4011157 FeatureState  1
+set CXC4011941 FeatureState  1
+set CXC4012385 FeatureState  1
+set CXC4011983 FeatureState  1
+set CXC4010770 FeatureState  1
+set CXC4011319 FeatureState  1
+set CXC4010974 FeatureState  1
+set CXC4011804 FeatureState  1
+set CXC4011557 FeatureState  1
+set CXC4011443 FeatureState  1
+set CXC4010613 FeatureState  1
+set CXC4010319 FeatureState  1
+set CXC4012273 FeatureState  1
+set CXC4012375 FeatureState  1
+set CXC4011807 FeatureState  1
+set CXC4011481 FeatureState  1
+set CXC4011372 FeatureState  1
+set CXC4012578 FeatureState  1
+set CXC4011808 FeatureState  1
+set CXC4012502 FeatureState  1
+set CXC4012272 FeatureState  1
+set CXC4010967 FeatureState  1
+set CXC4012015 FeatureState  1
+set CXC4011018 FeatureState  1
+set CXC4011811 FeatureState  1
+set CXC4011345 FeatureState  1
+set CXC4011982 FeatureState  1
+set CXC4010723 FeatureState  1
+set CXC4011485 FeatureState  1
+set CXC4011815 FeatureState  1
+set CXC4011366 FeatureState  1
+set CXC4012324 FeatureState  1
+set CXC4012534 FeatureState  1
+set CXC4012549 FeatureState  1
+set CXC4012547 FeatureState  1
+set CXC4012503 FeatureState  1
+set CXC4011068 FeatureState  1
+set CXC4011163 FeatureState  1
+set CXC4012485 FeatureState  1
+set CXC4012563 FeatureState  1
+set CXC4011716 FeatureState  1
+set CXC4010962 FeatureState  1
+set CXC4011699 FeatureState  1
+set CXC4011813 FeatureState  1
+set CXC4011183 FeatureState  1
+set CXC4011515 FeatureState  1
+set CXC4011033 FeatureState  1
+set CXC4010717 FeatureState  1
+set CXC4012424 FeatureState  1
+set CXC4012347 FeatureState  1
+set CXC4011715 FeatureState  1
+set CXC4011942 FeatureState  1
+set CXC4011938 FeatureState  1
+set CXC4011711 FeatureState  1
+set CXC4010980 FeatureState  1
+set CXC4011252 FeatureState  1
+set CXC4010959 FeatureState  1
+set CXC4011427 FeatureState  1
+set CXC4011667 FeatureState  1
+set CXC4011056 FeatureState  1
+set CXC4011710 FeatureState  1
+set CXC4011057 FeatureState  1
+set CXC4010856 FeatureState  1
+set CXC4010973 FeatureState  1
+set CXC4011939 FeatureState  1
+set CXC4012261 FeatureState  1
+set CXC4012019 FeatureState  1
+set CXC4010961 FeatureState  1
+set CXC4010990 FeatureState  1
+set CXC4011251 FeatureState  1
+set CXC4011075 FeatureState  1
+set CXC4011327 FeatureState  1
+set CXC4012070 FeatureState  1
+set CXC4011918 FeatureState  1
+set CXC4011477 FeatureState  1
+set CXC4011059 FeatureState  1
+set CXC4011479 FeatureState  1
+set CXC4012260 FeatureState  1
+set CXC4011155 FeatureState  1
+set CXC4011063 FeatureState  1
+set CXC4012500 FeatureState  1
+set CXC4012325 FeatureState  1
+set CXC4011356 FeatureState  1
+set CXC4011917 FeatureState  1
+set CXC4011974 FeatureState  1
+set CXC4011317 FeatureState  1
+set CXC4011050 FeatureState  1
+set CXC4011618 FeatureState  1
+set CXC4012022 FeatureState  1
+set CXC4011253 FeatureState  1
+set CXC4011975 FeatureState  1
+set CXC4011991 FeatureState  1
+set CXC4011933 FeatureState  1
+set CXC4012562 FeatureState  1
+set CXC4010841 FeatureState  1
+set CXC4011911 FeatureState  1
+set CXC4011946 FeatureState  1
+set CXC4011444 FeatureState  1
+set CXC4012587 FeatureState  1
+set CXC4012036 FeatureState  1
+set CXC4011074 FeatureState  1
+set CXC4011820 FeatureState  1
+set CXC4012003 FeatureState  1
+set CXC4011072 FeatureState  1
+set CXC4012330 FeatureState  1
+set CXC4012493 FeatureState  1
+set CXC4011258 FeatureState  1
+set CXC4011823 FeatureState  1
+set CXC4012259 FeatureState  1
+set CXC4011914 FeatureState  1
+set CXC4012333 FeatureState  1
+set CXC4011011 FeatureState  1
+set CXC4010616 FeatureState  1
+set CXC4011707 FeatureState  1
+set CXC4011809 FeatureState  1
+
+
+crn ENodeBFunction=1,QciTable=default,QciProfileOperatorDefined=qci30
+absPrioOverride                      0
+aqmMode                              1
+bitRateRecommendationEnabled         false
+caOffloadingEnabled                  false
+counterActiveMode                    false
+dataFwdPerQciEnabled                 true
+dlMaxHARQTxQci                       5
+dlMaxWaitingTime                     0
+dlMinBitRate                         2000
+dlResourceAllocationStrategy         1
+drxPriority                          0
+drxProfileRef                        ENodeBFunction=1,DrxProfile=0
+dscp                                 26
+dscpArpMap                           dscpArp1=-1,dscpArp10=-1,dscpArp11=-1,dscpArp12=-1,dscpArp13=-1,dscpArp14=-1,dscpArp15=-1,dscpArp2=-1,dscpArp3=-1,dscpArp4=-1,dscpArp5=-1,dscpArp6=-1,dscpArp7=-1,dscpArp8=-1,dscpArp9=-1
+endcProfileRef                       EndcProfile=1
+harqPriority                         0
+inactivityTimerOffset                0
+laaSupported                         true
+lessMaxDelayThreshold                0
+logicalChannelGroupRef               QciTable=default,LogicalChannelGroup=3
+measReportConfigParams               a1ThresholdRsrpPrimOffset=0,a1ThresholdRsrpSecOffset=0,a1ThresholdRsrqPrimOffset=0,a1ThresholdRsrqSecOffset=0,a2ThresholdRsrpPrimOffset=0,a2ThresholdRsrpSecOffset=0,a2ThresholdRsrqPrimOffset=0,a2ThresholdRsrqSecOffset=0,a3InterOffsetAdjustmentRsrp=0,a3InterOffsetAdjustmentRsrq=0,a3IntraOffsetAdjustmentRsrp=0,a3IntraOffsetAdjustmentRsrq=0,a5Threshold1RsrpOffset=0,a5Threshold1RsrqOffset=0,a5Threshold2RsrpOffset=0,a5Threshold2RsrqOffset=0,b2Threshold1RsrpCdma2000Offset=0,b2Threshold1RsrpGeranOffset=0,b2Threshold1RsrpUtraOffset=0,b2Threshold1RsrqCdma2000Offset=0,b2Threshold1RsrqGeranOffset=0,b2Threshold1RsrqUtraOffset=0,b2Threshold2Cdma2000Offset=0,b2Threshold2EcNoUtraOffset=0,b2Threshold2GeranOffset=0,b2Threshold2RscpUtraOffset=0,offsetPerQciPrio=0,timeToTriggerInterA3=-1,timeToTriggerInterA3Rsrq=-1,timeToTriggerIntraA3=-1
+paPartitionOverride                  false
+pdb                                  300
+pdbOffset                            0
+pdcpSNLength                         12
+priority                             6
+priorityFraction                     0
+qci                                  30
+qciACTuning                          1000
+qciSubscriptionQuanta                200
+relativePriority                     2
+resourceAllocationStrategy           1
+resourceType                         0
+rlcMode                              0
+rlcSNLength                          10
+rlfPriority                          0
+rlfProfileRef                        RlfProfile=0
+rohcEnabled                          false
+rohcForUlDataEnabled                 false
+schedulingAlgorithm                  4
+serviceType                          0
+srsAllocationStrategy                0
+tReorderingDl                        35
+tReorderingUl                        60
+timerPriority                        0
+ulMaxHARQTxQci                       5
+ulMaxWaitingTime                     0
+ulMinBitRate                         300
+zzzTemporary3                        -2000000000
+zzzTemporary4                        -2000000000
+zzzTemporary5                        -2000000000
+userLabel
+end
+
+
+
+
+crn ENodeBFunction=1,QciTable=default,QciProfileOperatorDefined=qci31
+absPrioOverride                      0
+aqmMode                              1
+bitRateRecommendationEnabled         false
+caOffloadingEnabled                  false
+counterActiveMode                    false
+dataFwdPerQciEnabled                 true
+dlMaxHARQTxQci                       5
+dlMaxWaitingTime                     0
+dlMinBitRate                         0
+dlResourceAllocationStrategy         1
+drxPriority                          0
+drxProfileRef                        ENodeBFunction=1,DrxProfile=0
+dscp                                 26
+dscpArpMap                           dscpArp1=-1,dscpArp10=-1,dscpArp11=-1,dscpArp12=-1,dscpArp13=-1,dscpArp14=-1,dscpArp15=-1,dscpArp2=-1,dscpArp3=-1,dscpArp4=-1,dscpArp5=-1,dscpArp6=-1,dscpArp7=-1,dscpArp8=-1,dscpArp9=-1
+endcProfileRef                       EndcProfile=1
+harqPriority                         0
+inactivityTimerOffset                0
+laaSupported                         true
+lessMaxDelayThreshold                0
+logicalChannelGroupRef               QciTable=default,LogicalChannelGroup=3
+measReportConfigParams               a1ThresholdRsrpPrimOffset=0,a1ThresholdRsrpSecOffset=0,a1ThresholdRsrqPrimOffset=0,a1ThresholdRsrqSecOffset=0,a2ThresholdRsrpPrimOffset=0,a2ThresholdRsrpSecOffset=0,a2ThresholdRsrqPrimOffset=0,a2ThresholdRsrqSecOffset=0,a3InterOffsetAdjustmentRsrp=0,a3InterOffsetAdjustmentRsrq=0,a3IntraOffsetAdjustmentRsrp=0,a3IntraOffsetAdjustmentRsrq=0,a5Threshold1RsrpOffset=0,a5Threshold1RsrqOffset=0,a5Threshold2RsrpOffset=0,a5Threshold2RsrqOffset=0,b2Threshold1RsrpCdma2000Offset=0,b2Threshold1RsrpGeranOffset=0,b2Threshold1RsrpUtraOffset=0,b2Threshold1RsrqCdma2000Offset=0,b2Threshold1RsrqGeranOffset=0,b2Threshold1RsrqUtraOffset=0,b2Threshold2Cdma2000Offset=0,b2Threshold2EcNoUtraOffset=0,b2Threshold2GeranOffset=0,b2Threshold2RscpUtraOffset=0,offsetPerQciPrio=0,timeToTriggerInterA3=-1,timeToTriggerInterA3Rsrq=-1,timeToTriggerIntraA3=-1
+paPartitionOverride                  false
+pdb                                  300
+pdbOffset                            0
+pdcpSNLength                         12
+priority                             9
+priorityFraction                     0
+qci                                  31
+qciACTuning                          1000
+qciSubscriptionQuanta                200
+relativePriority                     1
+resourceAllocationStrategy           1
+resourceType                         0
+rlcMode                              0
+rlcSNLength                          10
+rlfPriority                          0
+rlfProfileRef                        RlfProfile=0
+rohcEnabled                          false
+rohcForUlDataEnabled                 false
+schedulingAlgorithm                  4
+serviceType                          0
+srsAllocationStrategy                0
+tReorderingDl                        35
+tReorderingUl                        35
+timerPriority                        0
+ulMaxHARQTxQci                       5
+ulMaxWaitingTime                     0
+ulMinBitRate                         0
+userLabel
+zzzTemporary3                        -2000000000
+zzzTemporary4                        -2000000000
+zzzTemporary5                        -2000000000
+end
+
+
+
+
+
+
+crn ENodeBFunction=1,SubscriberGroupProfile=ENDC
+bearerTriggerList                    
+caRateAdjustCoeff                    -1
+cellTriggerList                      
+customTriggerList                    0
+customTriggerType                    2
+dlAiLaDeltaSinrMax                   30
+dlDynBlerTargetAlg                   0
+dlDynBlerTargetMax                   -1
+dlDynBlerTargetMin                   1
+dlHarqBlerTarget                     10
+drxMode                              0
+endcUserProfileRef
+fastACqiReportEnabled                false
+featuresToDisableMeas                
+groupExtendInactAfterVolteRel        0
+higherPriorityEnabled                false
+iuaMode                              0
+iuaProfileRef
+lastSchedLinkAdaptMode               0
+pZeroNominalPucchOffset              0
+pZeroNominalPuschOffset              0
+pdcchFlexibleBlerMode                0
+preschedProfileRef
+preschedulingMode                    0
+profilePriority                      5
+qciOffsetForQCI6                     0
+qciOffsetForQCI7                     0
+qciOffsetForQCI8                     0
+qciOffsetForQCI9                     0
+sCellScheduleSinrThresOffset         0
+selectionProbability                 100
+spidTriggerList                      
+subGroupConfiguration1               
+subGroupConfiguration2               
+subGroupConfiguration3               
+subGroupConfiguration4               
+subGroupConfiguration5               
+subGroupConfiguration6               
+subGroupConfiguration7               
+ulCandidateToRegion                  false
+ulHarqBlerTarget                     10
+ulMcsLowerLimit                      -1
+ulMcsUpperLimit                      -1
+ulOuterloopStepSizeFactor            10
+ulPlThresToRegion                    500
+ulSinrThresToRegion                  400
+userLabel
+volteCodecRateForUlSinrEst           -1
+end
+
+confbd-
+gs-
+cvms Post_5G_GPL_$date
+
+
+lt all     	                                                                                                                                                       
+rbs                                                                                                                                                        
+rbs                                                                                                                                                               
+confbd+                                                                                                                                                           
+                                                                                                                                                                  
+$date = `date +%y%m%d_%H%M`                                                                                                                                       
+cvms Pre_LMS_Settings_5G_$date                                                                                                                                         
+                                  
+
+
+confbd+
+gs+
+set NRCellDU=.*                   cellRange         10000 
+set NRCellDU=.*                   ssbGscn           7790                                                                               
+set NRCellDU=.*                   ssbFrequency      627936     
+
+set EUtranCellFDD=.* endcAllowedPlmnList  mcc=404,mnc=70,mncLength=2
+set EUtranCellTDD=.* endcAllowedPlmnList  mcc=404,mnc=70,mncLength=2
+
+
+Set McpcPSCellProfile=Default,McpcPSCellProfileUeCfg=Base rsrpCritical hysteresis=10,threshold=-118,timeToTrigger=160
+Set EUtranCellFDD=.*,GUtranFreqRelation=627936 b1ThrRsrqFreqOffset 0
+Set EUtranCellFDD=.*,GUtranFreqRelation=627936 b1ThrRsrpFreqOffset 0
+Set EUtranCellFDD=.*,GUtranFreqRelation=627936 endcB1MeasPriority 7
+
+
+confbd+
+gs+
+set EUtranCellFDD=.*,EUtranFreqRelation=3651 endcHoFreqPriority 6
+set EUtranCellFDD=.*,EUtranFreqRelation=415 endcHoFreqPriority -1
+set EUtranCellFDD=.*,EUtranFreqRelation=39150 endcHoFreqPriority -1
+set EUtranCellFDD=.*,EUtranFreqRelation=39348 endcHoFreqPriority -1
+set EUtranCellFDD=.*,EUtranFreqRelation=1301 endcHoFreqPriority 7
+
+set EUtranCellFDD=.*,EUtranFreqRelation=3651 endcAwareIdleModePriority 5
+set EUtranCellFDD=.*,EUtranFreqRelation=415 endcAwareIdleModePriority 6
+set EUtranCellFDD=.*,EUtranFreqRelation=39150 endcAwareIdleModePriority 3
+set EUtranCellFDD=.*,EUtranFreqRelation=39348 endcAwareIdleModePriority 3
+set EUtranCellFDD=.*,EUtranFreqRelation=1301 endcAwareIdleModePriority 7
+
+set EUtranCellFDD=.*,GUtranFreqRelation=627936 cellReselectionPriority 2
+set EUtranCellFDD=.*,GUtranFreqRelation=627936 qRxLevMin         -124
+
+#####TDD###
+set EUtranCellTDD=.*,EUtranFreqRelation=3651 endcHoFreqPriority 6
+set EUtranCellTDD=.*,EUtranFreqRelation=415 endcHoFreqPriority -1
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 endcHoFreqPriority -1
+set EUtranCellTDD=.*,EUtranFreqRelation=39348 endcHoFreqPriority -1
+set EUtranCellTDD=.*,EUtranFreqRelation=1301 endcHoFreqPriority 7
+
+set EUtranCellTDD=.*,EUtranFreqRelation=3651 endcAwareIdleModePriority 5
+set EUtranCellTDD=.*,EUtranFreqRelation=415 endcAwareIdleModePriority 6
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 endcAwareIdleModePriority 3
+set EUtranCellTDD=.*,EUtranFreqRelation=39348 endcAwareIdleModePriority 3
+set EUtranCellTDD=.*,EUtranFreqRelation=1301 endcAwareIdleModePriority 7
+
+set EUtranCellTDD=.*,GUtranFreqRelation=627936 cellReselectionPriority 2
+set EUtranCellTDD=.*,GUtranFreqRelation=627936 qRxLevMin         -124
+
+
+
+crn GNBCUCPFunction=1,EUtraNetwork=1
+end
+
+
+
+
+crn GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=415
+arfcnValueEUtranDl                   415
+userLabel
+end
+
+
+crn GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=39150
+arfcnValueEUtranDl                   39150
+userLabel
+end
+
+crn GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=39348
+arfcnValueEUtranDl                   39348
+userLabel
+end
+
+crn GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=3651
+arfcnValueEUtranDl                   3651
+userLabel
+end
+
+
+
+
+
+Set GNBCUCPFunction=1,QciProfileEndcConfigExt=1  ulDataSplitThresholdMcg              -1
+Set GNBCUCPFunction=1,QciProfileEndcConfigExt=1 ulDataSplitThreshold                 102400
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigB1GUtra= triggerQuantityB1    0
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1  triggerQuantityA5     0
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1 timeToTriggerB1   320
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1 timeToTriggerA5    100
+Set McpcPSCellProfile=Default,McpcPSCellProfileUeCfg=Base  rsrpSearchZone hysteresis=10,threshold=-112,timeToTrigger=160,timeToTriggerA1=-1
+Set McpcPSCellProfile=Default,McpcPSCellProfileUeCfg=Base  rsrpCandidateA5  hysteresis=10,threshold1=-118,threshold2=-112,timeToTrigger=640
+Set McpcPSCellProfile=Default,McpcPSCellProfileUeCfg=Base  rsrpCandidateA5  hysteresis=10,threshold1=-118,threshold2=-112,timeToTrigger=256
+set McpcPSCellNrFreqRelProfileUeCfg=Base  rsrpCandidateA5Offset threshold1Offset=0,threshold2Offset=0
+Set McpcPSCellProfile=Default,McpcPSCellProfileUeCfg=Base  rsrpCandidateA5  hysteresis=10,threshold1=-118,threshold2=-112,timeToTrigger=640
+set McpcPSCellNrFreqRelProfileUeCfg=Base  rsrpCandidateA5Offset threshold1Offset=0,threshold2Offset=0
+Set McpcPSCellProfile=Default,McpcPSCellProfileUeCfg=Base  rsrpCandidateA5  hysteresis=10,threshold1=-118,threshold2=-112,timeToTrigger=640
+set McpcPSCellProfileUeCfg=Base  rsrpSearchZone threshold=-112
+set IntraFreqMCCellProfileUeCfg=Base rsrpSCellCoverage threshold=-117
+Set UePolicyOptimization=1        t320    180
+Set UeCA=1,CaSCellHandling=Default,CaSCellHandlingUeCfg=Base sCellActDeactDataThresHyst 90
+Set UeCA=1,CaSCellHandling=Default,CaSCellHandlingUeCfg=Base sCellActDeactDataThres -1
+Set McpcPSCellProfile=Default,McpcPSCellProfileUeCfg=Base rsrpCriticalEnabled true
+Set IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base  rsrpBetterSpCell hysteresis=10,offset=30,timeToTrigger=640
+Set IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base  rsrpBetterSpCell hysteresis=10,offset=30,timeToTrigger=640
+Set IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base  rsrpBetterSpCell hysteresis=10,offset=30,timeToTrigger=640
+Set EUtranCellFDD=.*,EUtranFreqRelation=.* qOffsetFreq       0
+Set EUtranCellFDD=.*,EUtranFreqRelation=.* qOffsetFreq       0
+SET ENodeBFunction=1,SubscriberGroupProfile=ENDC qciOffsetForQCI9                     0
+SET ENodeBFunction=1,SubscriberGroupProfile=ENDC qciOffsetForQCI6                     0
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA1A2Endc=1 a2OuterSearchThrRsrqOffsetEndc       0
+set ReportConfigA1A2Endc=1 qciA1A2ThrOffsetsEndc a1a2ThrRsrqQciOffsetEndc=0
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA1A2Endc=1 a2OuterSearchThrRsrpOffsetEndc       0
+set ReportConfigA1A2Endc=1 qciA1A2ThrOffsetsEndc a1a2ThrRsrpQciOffsetEndc=0
+set ReportConfigSearch=1 qciA1A2ThrOffsets a1a2ThrRsrpQciOffset=0,a1a2ThrRsrqQciOffset=0
+Set EUtranCellFDD=.*                      primaryUpperLayerInd 1
+Set GNBCUCPFunction=1,IntraFreqMC=1,IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base rsrpBetterSpCell hysteresis=10,offset=30,timeToTrigger=640
+Set NRCellCU=.*                   mcpcPSCellProfileRef Mcpc=1,McpcPSCellProfile=Default
+Set NRCellCU=.*                   mcpcPSCellEnabled true
+set EUtranCell.*DD=.*                      lbActionForEndcUe 0
+Set EUtranCellFDD=.*,EUtranFreqRelation=.*,EUtranCellRelation=.*  isHoAllowed       true
+Set QciProfileEndcConfigExt=1                               initialUplinkConf 1
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1 hysteresisA5      20
+Set GNBCUCPFunction=1,IntraFreqMC=1,IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base rsrpBetterSpCell hysteresis=10,offset=30,timeToTrigger=640
+Set GNBCUCPFunction=1,IntraFreqMC=1,IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base rsrpBetterSpCell hysteresis=10,offset=30,timeToTrigger=640
+Set GNBCUCPFunction=1,IntraFreqMC=1,IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base rsrpBetterSpCell hysteresis=10,offset=30,timeToTrigger=640
+Set GNBCUCPFunction=1,IntraFreqMC=1,IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base rsrpBetterSpCell hysteresis=10,offset=30,timeToTrigger=640
+Set GNBCUUPFunction=1                                       endcUlNrRetProhibTimer 1000
+Set NRCellDU=.*                   endcUlNrQualHyst  6
+Set NRCellDU=.*                   endcUlNrLowQualThresh 10
+Set NRCellDU=.*                   endcUlLegSwitchEnabled true
+Set ENodeBFunction=1                                        endcSplitAllowedMoVoice false
+Set EUtranCellFDD=.*                      endcSetupDlPktAgeThr 0
+Set GNBCUUPFunction=1                                       endcDlNrRetProhibTimer 400 
+Set UePolicyOptimization=1         endcAwareImc      2
+Set ENodeBFunction=1                                        endcAllowed       true 
+Set GNBCUUPFunction=1                                       dcDlAggExpiryTimer 100
+Set GNBCUUPFunction=1                                       dcDlAggActTime    1
+SET ENodeBFunction=1,SubscriberGroupProfile=ENDC customTriggerType                    2
+SET ENodeBFunction=1,SubscriberGroupProfile=ENDC customTriggerList                    0
+Set IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base betterSpCellTriggerQuantity 0
+
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigB1GUtra=1 b1ThresholdRsrq   -435
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigB1GUtra=1 b1ThresholdRsrp   -115 
+Set EUtranCellFDD=.*                      additionalUpperLayerIndList  1 1 1 1 1
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1 a5Threshold2Rsrq  -195
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1 a5Threshold2Rsrp  -112
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1 a5Threshold1Rsrq  -195 
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1 a5Threshold1Rsrp  -44
+
+
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1  reportQuantityA5   0
+Set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigB1GUtra=1  hysteresisB1     0
+Set GNBCUCPFunction=1,IntraFreqMC=1,IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base rsrpBetterSpCell hysteresis=20,offset=30,timeToTrigger=640
+Set EUtranCellFDD=.*                      endcSetupDlPktVolThr 5
+
+
+
+
+
+
+confbd-
+gs-
+
+
+cvms Post_LMS_Settings_5G_$date  
+"""
+
+
+
+
+
+RJ_Termpoint_GUtranFreqRelation = """
+
+
+lt all
+
+get GNBCUUPFunction=1  gNBId$ > $gnbid                                                                                       
+
+get Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR ^address$ > $reqip                                                                                             
+
+
+crn ENodeBFunction=1,GUtraNetwork=1                                                                                                                               
+userLabel                                                                                                                                                         
+end                                                                                                                                                               
+
+
+crn ENodeBFunction=1,GUtraNetwork=1,GUtranSyncSignalFrequency=627936-30                                                                                                                                                                
+arfcn 627936                                                                                                                                                                                                                           
+band 78                                                                                                                                                                                                                                
+smtcDuration 1                                                                                                                                                                                                                         
+smtcOffset 0                                                                                                                                                                                                                           
+smtcPeriodicity 20                                                                                                                                                                                                                     
+smtcScs 30                                                                                                                                                                                                                             
+userLabel                                                                                                                                                                                                                              
+end                                                                                                                                                                                                                                    
+
+
+crn ENodeBFunction=1,GUtraNetwork=1,ExternalGNodeBFunction=40470-$gnbid                                                                                           
+dirDataPathAvail true                                                                                                                                             
+eNBVlanPortRef                                                                                                                                                    
+gNodeBId $gnbid                                                                                                                                                   
+gNodeBIdLength 26                                                                                                                                                 
+gNodeBPlmnId mcc=404,mnc=70,mncLength=2                                                                                                                          
+userLabel                                                                                                                                                         
+end                                                                                                                                                               
+
+crn ENodeBFunction=1,GUtraNetwork=1,ExternalGNodeBFunction=40470-$gnbid,TermPointToGNB=40470-$gnbid                                                               
+additionalCnRef                                                                                                                                                   
+administrativeState 0                                                                                                                                             
+domainName                                                                                                                                                        
+ipAddress 0.0.0.0                                                                                                                                                 
+ipAddress2                                                                                                                                                        
+ipsecEpAddress ::                                                                                                                                                 
+ipv6Address   $reqip                                                                                                                                            
+ipv6Address2                                                                                                                                                      
+upIpAddress ::                                                                                                                                                    
+end                                                                                                                                                               
+
+deb TermPointToGNB                                                                                                                                                
+
+
+lt all
+
+
+get GNBDUFunction=1,NRCellDU= celllocalid > $CLID
+
+mr CWA_CRP_2
+ma CWA_CRP_2 EUtranCell.DD=.*,EUtranFreqRelation= cellReselectionPriority 2
+lpr CWA_CRP_2
+
+set CWA_CRP_2 cellReselectionPriority 4
+
+
+ma L21_12_21 ^EUtranCell.DD                                                                                                                                       
+
+for $mo in L21_12_21                                                                                                                                              
+$mordn = rdn($mo)                                                                                                                                                 
+pr ENodeBFunction=1,$mordn,GUtranFreqRelation=627936                                                                                                              
+if $nr_of_mos = 0                                                                                                                                                 
+cr ENodeBFunction=1,$mordn,GUtranFreqRelation=627936                                                                                                              
+GUtraNetwork=1,GUtranSyncSignalFrequency=627936-30                                                                                                       
+fi                                                                                                                                                                
+done                                                                                                                                                              
+
+
+func Relation_121L21                                                                                                                                              
+for $j = 1 to 5                                                                                                                                                   
+pr GUtraNetwork=1,ExternalGNodeBFunction=40470-$gnbid,ExternalGUtranCell=40470-000000$gnbid-31$j                                                                  
+if $nr_of_mos = 1                                                                                                                                                 
+crn ENodeBFunction=1,$mordn,GUtranFreqRelation=627936,GUtranCellRelation=40470-000000$gnbid-31$j                                                                  
+essEnabled false                                                                                                                                                  
+isRemoveAllowed false                                                                                                                                             
+neighborCellRef GUtraNetwork=1,ExternalGNodeBFunction=40470-$gnbid,ExternalGUtranCell=40470-000000$gnbid-31$j                                                     
+userLabel                                                                                                                                                         
+end                                                                                                                                                               
+fi                                                                                                                                                                
+done                                                                                                                                                              
+endfunc                                                                                                                                                           
+
+
+
+func Relation_121L2_18L                                                                                                                                           
+for $mo in L21_12_21                                                                                                                                              
+$mordn = rdn($mo)                                                                                                                                                 
+Relation_121L21                                                                                                                                                   
+done                                                                                                                                                              
+endfunc                                                                                                                                                           
+
+Relation_121L2_18L        
+
+
+set EUtranCell.DD=.*,GUtranFreqRelation=627936 cellReselectionPriority 5
+set CWA_CRP_2 cellReselectionPriority 2
+
+
+"""
+
+
+
+
+RJ_5G_Cell_creation_Sctp_Endpoint_Creation = """
+confb+
+gs+
+
+$script_nodename = {gNodeBName}
+if $nodename != $script_nodename
+   l echo "This node is called $nodename but the command file should be loaded in {gNodeBName}"
+   return
+fi
+
+if $moshell_version ~ ^([7-9]|10)
+   l echo "The moshell version is too old. 11.0a or higher is required for scripts containing the crn command."
+   return
+fi
+
+###################################### TN SCRIPT ######################################
+
+crn Transport=1,QosProfiles=1,DscpPcpMap=1
+defaultPcp 0
+pcp0 0 1 2 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31 33 35 36 37 38 39 41 43 45 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63
+pcp1
+pcp2 22 24 26
+pcp3 6 8 10 30 32
+pcp4 12 14 40
+pcp5 4 28
+pcp6 16 18 34 42 44
+pcp7 20 46
+userLabel Traffic
+end
+
+
+
+
+get Router=LTEUP,InterfaceIPv4=TN_.*_UP                      encapsulation > $encapsulation
+
+crn Transport=1,Router=LTEUP,InterfaceIPv6=NR                                                                                                                                                                      
+aclEgress                                                                                                                                                                                                          
+aclIngress                                                                                                                                                                                                         
+bfdProfile                                                                                                                                                                                                         
+bfdStaticRoutes 0                                                                                                                                                                                                  
+dscpNdp 48                                                                                                                                                                                                         
+egressQosMarking QosProfiles=1,DscpPcpMap=1                                                                                                                                                                        
+encapsulation $encapsulation                                                                                                                                                                                          
+ingressQosMarking                                                                                                                                                                                                  
+loopback false                                                                                                                                                                                                     
+mtu 1500                                                                                                                                                                                                           
+neighborDiscoveryTimeout 30000                                                                                                                                                                                     
+neighborSolicitationInterval 1000                                                                                                                                                                                  
+routesHoldDownTimer                                                                                                                                                                                                
+trackedInterface                                                                                                                                                                                                   
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR
+address {NR_IP}                                                                                                                                                                      
+configurationMode 0                                                                                                                                                                                                
+duidType 0                                                                                                                                                                                                         
+primaryAddress true                                                                                                                                                                                                
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                       
+                                                                                                                                                                                                                   
+crn Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2                                                                                                                                                       
+address {NR_ENDC_IP}                                                                                                                                                                          
+configurationMode 0                                                                                                                                                                                                
+duidType 0                                                                                                                                                                                                         
+primaryAddress false                                                                                                                                                                                               
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+  
+
+crn Transport=1,Router=LTEUP,RouteTableIPv6Static=1                                                                                                                                                                
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn Transport=1,Router=LTEUP,RouteTableIPv6Static=1,Dst=default                                                                                                                                                    
+dst ::/0                                                                                                                                                                                                           
+end
+
+        
+crn Transport=1,Router=LTEUP,RouteTableIPv6Static=1,Dst=default,NextHop=1                                                                                                                                          
+address {NR_GW}                                                                                                                                                                        
+adminDistance 1                                                                                                                                                                                                    
+bfdMonitoring true                                                                                                                                                                                                 
+discard false
+reference                                                                                                                                                                                                          
+end
+
+
+
+
+crn Transport=1,Router=Node_Internal_F1                                                                                                                                                                            
+hopLimit 64                                                                                                                                                                                                        
+pathMtuExpiresIPv6 86400                                                                                                                                                                                           
+routingPolicyLocal                                                                                                                                                                                                 
+routingPolicyLocalIPv6                                                                                                                                                                                             
+ttl 64                                                                                                                                                                                                             
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_CUCP                                                                                                                                                      
+aclEgress                                                                                                                                                                                                          
+aclIngress                                                                                                                                                                                                         
+arpTimeout 300                                                                                                                                                                                                     
+bfdProfile                                                                                                                                                                                                         
+bfdStaticRoutes 0                                                                                                                                                                                                  
+egressQosMarking                                                                                                                                                                                                   
+encapsulation                                                                                                                                                                                                      
+ingressQosMarking                                                                                                                                                                                                  
+loopback true                                                                                                                                                                                                      
+mtu 1500                                                                                                                                                                                                           
+pcpArp 6                                                                                                                                                                                                           
+routesHoldDownTimer                                                                                                                                                                                                
+routingPolicyIngress                                                                                                                                                                                               
+trackedInterface                                                                                                                                                                                                   
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_CUCP,AddressIPv4=1                                                                                                                                        
+address 10.0.0.1/32                                                                                                                                                                                                
+configurationMode 0                                                                                                                                                                                                
+dhcpClientIdentifier                                                                                                                                                                                               
+dhcpClientIdentifierType 0                                                                                                                                                                                         
+primaryAddress true                                                                                                                                                                                                
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_DU                                                                                                                                                        
+aclEgress                                                                                                                                                                                                          
+aclIngress                                                                                                                                                                                                         
+arpTimeout 300                                                                                                                                                                                                     
+bfdProfile                                                                                                                                                                                                         
+bfdStaticRoutes 0                                                                                                                                                                                                  
+egressQosMarking                                                                                                                                                                                                   
+encapsulation                                                                                                                                                                                                      
+ingressQosMarking                                                                                                                                                                                                  
+loopback true                                                                                                                                                                                                      
+mtu 1500                                                                                                                                                                                                           
+pcpArp 6                                                                                                                                                                                                           
+routesHoldDownTimer                                                                                                                                                                                                
+routingPolicyIngress                                                                                                                                                                                               
+trackedInterface                                                                                                                                                                                                   
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_DU,AddressIPv4=1                                                                                                                                          
+address 10.0.0.2/32                                                                                                                                                                                                
+configurationMode 0                                                                                                                                                                                                
+dhcpClientIdentifier                                                                                                                                                                                               
+dhcpClientIdentifierType 0                                                                                                                                                                                         
+primaryAddress true                                                                                                                                                                                                
+userLabel                                                                                                                                                                                                          
+end            
+
+
+
+
+crn Transport=1,Router=LTEUP,TwampResponder=1
+ipAddress Transport=1,Router=LTEUP,InterfaceIPv4=TN_E_UP,AddressIPv4=TN_E_UP
+udpPort 4001
+userLabel
+end
+
+crn Transport=1,Router=LTEUP,TwampResponder=NR
+ipAddress Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR
+udpPort 4001
+userLabel
+end
+
+crn Transport=1,SctpProfile=1
+alphaIndex 3
+assocMaxRtx 8
+betaIndex 2
+bundlingActivated true
+bundlingTimer 0
+cookieLife 60
+dscp 46
+hbMaxBurst 1
+heartbeatInterval 5000
+incCookieLife 30
+initARWnd 16384
+initialHeartbeatInterval 500
+initRto 2000
+maxActivateThr 65535
+maxBurst 4
+maxInitRt 5
+maxInStreams 2
+maxOutStreams 2
+maxRto 4000
+maxSctpPduSize 1480
+maxShutdownRt 5
+minActivateThr 1
+minRto 1000
+pathMaxRtx 4
+primaryPathMaxRtx 0
+sackTimer 100
+transmitBufferSize 64
+userLabel SCTP
+end
+
+crn Transport=1,SctpEndpoint=1
+localIpAddress Transport=1,Router=LTECP,InterfaceIPv4=TN_E_CP,AddressIPv4=TN_E_CP
+portNumber 36422
+sctpProfile Transport=1,SctpProfile=1
+end
+
+
+
+crn Transport=1,SctpProfile=Node_Internal_F1
+alphaIndex 3
+assocMaxRtx 8
+betaIndex 2
+bundlingActivated true
+bundlingAdaptiveActivated true
+bundlingTimer 0
+cookieLife 60
+dscp 46
+hbMaxBurst 1
+heartbeatActivated true
+heartbeatInterval 2000
+incCookieLife 30
+initARWnd 16384
+initialHeartbeatInterval 500
+initRto 2000
+maxActivateThr 65535
+maxBurst 4
+maxInitRt 5
+maxInStreams 2
+maxOutStreams 2
+maxRto 4000
+maxSctpPduSize 1480
+maxShutdownRt 5
+minActivateThr 1
+minRto 1000
+noSwitchback true
+pathMaxRtx 4
+primaryPathAvoidance true
+primaryPathMaxRtx 0
+sackTimer 100
+thrTransmitBuffer 48
+thrTransmitBufferCongCeased 85
+transmitBufferSize 64
+end
+
+crn Transport=1,SctpEndpoint=F1_NRCUCP
+localIpAddress Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_CUCP,AddressIPv4=1
+portNumber 38472
+sctpProfile Transport=1,SctpProfile=Node_Internal_F1
+end
+
+crn Transport=1,SctpEndpoint=F1_NRDU
+localIpAddress Transport=1,Router=Node_Internal_F1,InterfaceIPv4=NR_DU,AddressIPv4=1
+portNumber 38472
+sctpProfile Transport=1,SctpProfile=Node_Internal_F1
+end
+
+crn Transport=1,SctpEndpoint=NG
+localIpAddress Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR
+portNumber 38412
+sctpProfile Transport=1,SctpProfile=1
+end
+
+crn Transport=1,SctpEndpoint=X2
+localIpAddress Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR
+portNumber 36422
+sctpProfile Transport=1,SctpProfile=1
+end
+
+
+crn Transport=1,SctpEndpoint=X2_ENDC
+localIpAddress Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2
+portNumber 36422
+sctpProfile Transport=1,SctpProfile=1
+end
+
+crn Transport=1,SctpEndpoint=F1
+dtls
+dtlsNodeCredential
+dtlsSctpSecurityMode 0
+dtlsTrustCategory
+localIpAddress Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR
+portNumber 38472
+sctpProfile SctpProfile=1
+userLabel
+end
+
+
+######################################################### 5G SCRIPT #########################################################
+
+
+$Correct_swVersion = 24.Q2
+get 0 swVersion > $swVersion
+
+if $swVersion != $Correct_swVersion 
+   l echo "Old software version ($swVersion) found. Please update the software before 5G integration."
+   return
+fi
+
+
+###################################### GNBCUUPFunction=1 SCRIPT ######################################
+
+crn GNBCUUPFunction=1
+altDepHServAdapUPProfEnabled false
+dataFwdRateTo5Gs 5000
+dataFwdRateToEps 200
+dcDlAggActTime 1
+dcDlAggExpiryTimer 100
+dcDlPdcpInitialMcgRate 20
+dcDlPdcpInitialScgRate 100
+dlPdcpSpsTargetTimeLTE 25
+dlPdcpSpsTargetTimeNR 25
+endcDataUsageReportEnabled true
+endcDlNrRetProhibTimer 400
+endcUlNrRetProhibTimer 1000
+estimatedUeL2Buffer
+gNBId {gNBId}
+gNBIdLength 26
+pLMNIdList mcc=404,mnc=70
+sNSSAIList
+userLabel
+end
+crn GNBCUUPFunction=1,EndpointResource=1
+end
+
+crn GNBCUUPFunction=1,EndpointResource=1,LocalIpEndpoint=1
+addressRef Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR
+interfaceList 4 5 7 6
+end
+
+
+ld GNBCUUPFunction=1
+lset GNBCUUPFunction=1$ endpointResourceRef GNBCUUPFunction=1,EndpointResource=1
+
+
+
+crn GNBCUUPFunction=1,CardinalityLimits=1
+maxNgUPath 600
+maxS1UPath 600
+end
+
+crn GNBCUUPFunction=1,GtpuSupervision=1
+gtpuErrorIndDscp 40
+end
+
+crn GNBCUUPFunction=1,GtpuSupervision=1,GtpuSupervisionProfile=S1
+endpointResourceRef
+gtpuEchoDscp 32
+gtpuEchoEnabled true
+interfaceList 5
+userLabel
+end
+
+crn GNBCUUPFunction=1,GtpuSupervision=1,GtpuSupervisionProfile=X2
+endpointResourceRef
+gtpuEchoDscp 32
+gtpuEchoEnabled true
+interfaceList 7
+userLabel
+end
+
+
+
+###################################### GNBDUFunction=1 SCRIPT ######################################
+
+crn GNBDUFunction=1
+altDepHMultCGPeriodEnabled false
+altDepHServAdapUPProfEnabled false
+autoLockDelay 0
+caVlanPortRef
+capacityAllocationPolicy 0
+configuredGrantConfMode 0
+dlBbCapacityTarget
+dynTACConfigEnabled false
+esiSuetEnabled false
+gNBDUId 1
+gNBDUName
+gNBId {gNBId}
+gNBIdLength 26
+mixedSrsModeEnabled false
+multiTddPatternSmEnabled false
+pimCancAutoConfigEnabled false
+pwsEtwsPrimaryInd 8
+servAdapUPProfDepHEnabled true
+userLabel
+end
+
+crn GNBDUFunction=1,EndpointResource=1
+end
+
+crn GNBDUFunction=1,EndpointResource=1,LocalSctpEndpoint=1
+interfaceUsed 3
+sctpEndpointRef Transport=1,SctpEndpoint=F1_NRDU
+end
+
+crn GNBDUFunction=1,TermPointToGNBCUCP=1
+administrativeState 1
+ipv4Address 10.0.0.1
+ipv6Address ::
+end
+
+ld GNBDUFunction=1
+lset GNBDUFunction=1$ endpointResourceRef GNBDUFunction=1,EndpointResource=1
+
+
+crn GNBDUFunction=1,MassiveMimoSleep=1                                                                                                                                                                             
+end 
+
+crn GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepProfile=1                                                                                                                                                         
+sleepMode 0                                                                                                                                                                                                        
+switchDownMonitorDurTimer 60                                                                                                                                                                                       
+switchDownMonitorDurTimerEco 300                                                                                                                                                                                   
+switchDownPrbThreshDl 10                                                                                                                                                                                           
+switchDownPrbThreshDlEco 15                                                                                                                                                                                        
+switchDownPrbThreshUlEco 10                                                                                                                                                                                        
+switchDownRrcConnThresh 10                                                                                                                                                                                         
+switchDownRrcConnThreshEco 30                                                                                                                                                                                      
+switchUpMonitorDurTimer 30                                                                                                                                                                                         
+switchUpMonitorDurTimerEco 120                                                                                                                                                                                     
+switchUpPrbThreshDl 20                                                                                                                                                                                             
+switchUpPrbThreshDlEco 30                                                                                                                                                                                          
+switchUpPrbThreshUlEco 15                                                                                                                                                                                          
+switchUpRrcConnThresh 20                                                                                                                                                                                           
+switchUpRrcConnThreshEco 50                                                                                                                                                                                        
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepTimeGroup=1                                                                                                                                                       
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepTimeGroup=1,MMimoSleepTimeWindow=1                                                                                                                                
+dayOfWeek 0                                                                                                                                                                                                        
+mMimoSleepProfileRef MassiveMimoSleep=1,MMimoSleepProfile=1                                                                                                                                                        
+startTime 20:30                                                                                                                                                                                                    
+stopTime 23:30                                                                                                                                                                                                     
+end
+
+{RJ_5g_CgSwitch_text}
+
+###################################### GNBCUCPFunction=1 SCRIPT ######################################
+
+crn GNBCUCPFunction=1
+advUePosPeriodicityMode 0
+caDepHEnabled true
+cellRelationMOThresh 1500
+dnsLookup5GsTaiPeriodicTimer 0
+dnsLookupOn5GsTai false
+extEnbRemoveTime 1440
+extendedBandN77Supported false
+extendedBandN77TwoSupported false
+gNBCUName
+gNBId {gNBId}
+gNBIdLength 26
+maxCommonProcTime 30
+maxNgRetryTime 30
+nasInactivityTime 5
+networkIdInUeCapEnq false
+ngcDedProcTime 5
+nrNeedForGapsSupported true
+pLMNId mcc=404,mnc=70
+pimAutoDetectionEnabled false
+prefInterGnbHo 0
+ranNodeName
+resourceStatusReportDefault -2
+resourceStatusReportF1Enabled true
+rfspSpidPairList
+ribTmAutoMax 0
+rrcReestSupportType 0
+tDcOverall 7
+tXnDcOverall 5
+tXnDcPrep 5
+userLabel
+xnIpAddrViaNgActive true
+end
+
+crn GNBCUCPFunction=1,EndpointResource=1
+end
+
+ld GNBCUCPFunction=1
+lset GNBCUCPFunction=1$ endpointResourceRef GNBCUCPFunction=1,EndpointResource=1
+
+crn GNBCUCPFunction=1,EndpointResource=1,LocalSctpEndpoint=1
+interfaceUsed 4
+sctpEndpointRef SctpEndpoint=NG
+end
+
+crn GNBCUCPFunction=1,EndpointResource=1,LocalSctpEndpoint=2
+interfaceUsed 7
+sctpEndpointRef SctpEndpoint=X2
+end
+
+crn GNBCUCPFunction=1,EndpointResource=1,LocalSctpEndpoint=3
+interfaceUsed 3
+sctpEndpointRef SctpEndpoint=F1_NRCUCP
+end
+
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,AnrFunction=1                                                                                                                                                                                
+demoteCellRelMobAttThresh                                                                                                                                                                                          
+promoteCellRelMobAttThresh                                                                                                                                                                                         
+removeEUtranFreqRelTime 10000                                                                                                                                                                                      
+removeEnbTime 7                                                                                                                                                                                                    
+removeFreqRelTime 15                                                                                                                                                                                               
+removeGnbTime 7                                                                                                                                                                                                    
+removeNrelTime 7                                                                                                                                                                                                   
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,AnrFunction=1,AnrFunctionNR=1                                                                                                                                                                
+anrAutoCreateXnForEndc false                                                                                                                                                                                       
+anrCgiMeasInterFreqMode 0                                                                                                                                                                                          
+anrCgiMeasIntraFreqEnabled true                                                                                                                                                                                    
+anrEndcX2Enabled true                                                                                                                                                                                              
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,AnrFunction=1,AnrFunctionNR=1,AnrFunctionNRUeCfg=Base                                                                                                                                        
+anrRsrpThreshold -156                                                                                                                                                                                              
+anrRsrqThreshold -435                                                                                                                                                                                              
+anrSinrThreshold -230                                                                                                                                                                                              
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+
+crn GNBCUCPFunction=1,CarrierAggregation=1                                                                                                                                                                         
+end                                                                                                                                                                                                                
+                                       
+crn GNBCUCPFunction=1,CarrierAggregation=1,CaCellMeasProfile=1                                                                                                                                                     
+ueConfGroupType 0                                                                                                                                                                                                  
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,CarrierAggregation=1,CaCellMeasProfile=1,CaCellMeasProfileUeCfg=Base                                                                                                                         
+betterSCellReportConfigMode 0                                                                                                                                                                                      
+prefUeGroupList                                                                                                                                                                                                    
+rsrpBetterSCell hysteresis=10,offset=30,timeToTrigger=160                                                                                                                                                          
+rsrpSCellCoverage hysteresis=10,threshold=-117,timeToTrigger=160,timeToTriggerA1=-1                                                                                                                                
+rsrqSCellCoverage hysteresis=10,threshold=-435,timeToTrigger=160,timeToTriggerA1=-1                                                                                                                                
+sCellCoverageTriggerQuantity 0                                                                                                                                                                                     
+ueConfGroupList                                                                                                                                                                                                    
+ueGroupList                                                                                                                                                                                                        
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                            
+
+crn GNBCUCPFunction=1,IntraFreqMC=1                                                                                                                                                                                
+sCellDepHEnabled true                                                                                                                                                                                              
+end                                                                                                                                                                                                                
+                                                   
+crn GNBCUCPFunction=1,IntraFreqMC=1,IntraFreqMCCellProfile=1                                                                                                                                                       
+ueConfGroupType 0                                                                                                                                                                                                  
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,IntraFreqMC=1,IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base                                                                                                                      
+betterSpCellTriggerQuantity 0                                                                                                                                                                                      
+endcActionEvalFail 1                                                                                                                                                                                               
+prefUeGroupList                                                                                                                                                                                                    
+rsrpBetterSpCell hysteresis=10,offset=30,timeToTrigger=640                                                                                                                                                         
+rsrqBetterSpCell hysteresis=10,offset=30,timeToTrigger=640                                                                                                                                                         
+sinrBetterSpCell hysteresis=10,offset=30,timeToTrigger=640                                                                                                                                                         
+ueConfGroupList                                                                                                                                                                                                    
+ueGroupList                                                                                                                                                                                                        
+useT312BetterPCellCandidateA3 false                                                                                                                                                                                
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                
+
+
+crn GNBCUCPFunction=1,NRNetwork=1
+end
+
+crn GNBCUCPFunction=1,NRNetwork=1,NRFrequency=627936-30
+arfcnValueNRDl 627936
+bandListManual
+smtcDuration 1
+smtcOffset 0
+smtcPeriodicity 20
+smtcScs 30
+ssRssiMeasIdle
+ssbToMeasureIdle
+end
+
+crn GNBCUCPFunction=1,NRNetwork=1,NRFrequency=627936-30,NRFrequencyUeCfg=Base
+prefUeGroupList
+ssRssiMeasConnected
+ssbToMeasureConnected
+ueConfGroupList
+ueGroupList
+userLabel
+end
+
+
+ld GNBCUCPFunction=1,TermPointToGNBDU=1 #SystemCreated                                                                                                                                                             
+ 
+crn GNBCUCPFunction=1,UeGroupSelection=1                                                                                                                                                                           
+validityTimeEmergencyCause 6                                                                                                                                                                                       
+validityTimeHighPrioAccCause 6                                                                                                                                                                                     
+validityTimeMcsPrioAccCause 6                                                                                                                                                                                      
+validityTimeMoDataCause 6                                                                                                                                                                                          
+validityTimeMoSignallingCause 6                                                                                                                                                                                    
+validityTimeMoSmsCause 6                                                                                                                                                                                           
+validityTimeMoVideoCallCause 6                                                                                                                                                                                     
+validityTimeMoVoiceCallCause 6                                                                                                                                                                                     
+validityTimeMpsPrioAccCause 6                                                                                                                                                                                      
+validityTimeMtAccessCause 6                                                                                                                                                                                        
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,UeGroupSelection=1,ImeiSvGroups=1                                                                                                                                                            
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,UeGroupSelection=1,PrefUeGroupSelectionProfile=QCI6                                                                                                                                          
+chipsetRef                                                                                                                                                                                                         
+imeiSvRef                                                                                                                                                                                                          
+prefUeGroupId 6                                                                                                                                                                                                    
+prefUeGroupPriority 65534                                                                                                                                                                                          
+selectionCriteria qci==6                                                                                                                                                                                           
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,UeGroupSelection=1,PrefUeGroupSelectionProfile=QCI7                                                                                                                                          
+chipsetRef                                                                                                                                                                                                         
+imeiSvRef                                                                                                                                                                                                          
+prefUeGroupId 7                                                                                                                                                                                                    
+prefUeGroupPriority 1000                                                                                                                                                                                           
+selectionCriteria qci==7                                                                                                                                                                                           
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,UeGroupSelection=1,UeGroupSelectionProfile=QCI6                                                                                                                                              
+chipsetRef                                                                                                                                                                                                         
+imeiSvRef                                                                                                                                                                                                          
+selectionCriteria qci==6                                                                                                                                                                                           
+selectionProbability 100                                                                                                                                                                                           
+ueGroupId 6                                                                                                                                                                                                        
+ueGroupPriority 65534                                                                                                                                                                                              
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,UeGroupSelection=1,UeGroupSelectionProfile=QCI7                                                                                                                                              
+chipsetRef                                                                                                                                                                                                         
+imeiSvRef                                                                                                                                                                                                          
+selectionCriteria qci==7                                                                                                                                                                                           
+selectionProbability 100                                                                                                                                                                                           
+ueGroupId 7                                                                                                                                                                                                        
+ueGroupPriority 1000                                                                                                                                                                                               
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,UeGroupSelection=1,UeMobilityGroupDefinition=QCI6                                                                                                                                            
+chipsetRef                                                                                                                                                                                                         
+imeiSvRef                                                                                                                                                                                                          
+selectionCriteria qci==6                                                                                                                                                                                           
+ueMobilityGroupId 6                                                                                                                                                                                                
+ueMobilityGroupPriority 65534                                                                                                                                                                                      
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,UeGroupSelection=1,UeMobilityGroupDefinition=QCI7                                                                                                                                            
+chipsetRef                                                                                                                                                                                                         
+imeiSvRef                                                                                                                                                                                                          
+selectionCriteria qci==7                                                                                                                                                                                           
+ueMobilityGroupId 7                                                                                                                                                                                                
+ueMobilityGroupPriority 1000                                                                                                                                                                                       
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,UeGroupSelection=1,UeServiceGroupDefinition=QCI6                                                                                                                                             
+chipsetRef                                                                                                                                                                                                         
+imeiSvRef                                                                                                                                                                                                          
+selectionCriteria qci==6                                                                                                                                                                                           
+ueServiceGroupId 6                                                                                                                                                                                                 
+ueServiceGroupPriority 65534                                                                                                                                                                                       
+userLabel                                                                                                                                                                                                          
+end                                                                                                                                                                                                                
+                                                                                                                                                                                                                   
+crn GNBCUCPFunction=1,UeGroupSelection=1,UeServiceGroupDefinition=QCI7                                                                                                                                             
+chipsetRef                                                                                                                                                                                                         
+imeiSvRef                                                                                                                                                                                                          
+selectionCriteria qci==7                                                                                                                                                                                           
+ueServiceGroupId 7                                                                                                                                                                                                 
+ueServiceGroupPriority 1000                                                                                                                                                                                        
+userLabel                                                                                                                                                                                                          
+end
+
+{RJ_GNBCUCPFunction_text}
+
+{RJ_GNBDUFunction_text}
+"""
+
+RJ_GNBDUFunction_text = """
+###################################### Cell Specific Started - NRCellDU={gUtranCell} ###################################### 
+
+crn GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId}
+administrativeState 1
+arfcnDL {arfcnDL}
+arfcnUL {arfcnUL}
+bSChannelBwDL {bSChannelBwDL_UL}
+bSChannelBwUL {bSChannelBwDL_UL}
+configuredMaxTxPower {configuredMaxTxPower}
+latitude {Latitude}
+longitude {Longitude}
+sectorEquipmentFunctionRef NodeSupport=1,SectorEquipmentFunction={sectorEquipmentFunctionId}
+txDirection 0
+txPowerChangeRate 1
+txPowerPersistentLock false
+txPowerRatio 100
+end
+
+crn GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId},CommonBeamforming=1
+cbfMacroTaperType 0
+coverageShape 1
+digitalTilt 30
+end
+
+crn GNBDUFunction=1,NRCellDU={gUtranCell}
+csiRsConfig16P csiRsControl16Ports=0
+csiRsConfig2P aRestriction=3F,csiRsControl2Ports=1
+csiRsConfig32P csiRsControl32Ports=0
+csiRsConfig4P csiRsControl4Ports=1,i11Restriction=FF
+csiRsConfig8P csiRsControl8Ports=1,i11Restriction=FFFF
+pLMNIdList mcc=404,mnc=70
+sibType2 siBroadcastStatus=0,siPeriodicity=64
+sibType4 siBroadcastStatus=0,siPeriodicity=64
+sibType5 siBroadcastStatus=0,siPeriodicity=64
+sibType6 siBroadcastStatus=0,siPeriodicity=16
+sibType7 siBroadcastStatus=0,siPeriodicity=64
+sibType8 siBroadcastStatus=0,siPeriodicity=64
+administrativeState 0
+ailgDlPrbLoadLevel 0
+ailgModType 0
+ailgPdcchLoadLevel 0
+bandListManual 78
+cellBarred 1
+cellLocalId {cellLocalId}
+cellRange 12000
+cellReservedForOperator 1
+csiReportFormat 0
+csiRsPeriodicity 40
+dftSOfdmMsg3Enabled false
+dftSOfdmPuschEnabled false
+dl256QamEnabled true
+dlMaxMuMimoLayers 0
+dlStartCrb 0
+endcUlLegSwitchEnabled true
+endcUlNrLowQualThresh -4
+endcUlNrQualHyst 6
+maxUeSpeed 2
+nRPCI {nRPCI}
+nRSectorCarrierRef GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId}
+nRTAC {nRTAC}
+pdschStartPrbStrategy 3
+pMax 23
+puschStartPrbStrategy 3
+pZeroNomPucch -110
+pZeroNomPuschGrant -102
+qRxLevMin -128
+rachPreambleFormat 0
+rachPreambleRecTargetPower -110
+rachPreambleTransMax 10
+rachRootSequence {rachRootSequence}
+secondaryCellOnly false
+siWindowLength 20
+ssbDuration 1
+ssbFrequency 627936
+ssbOffset 0
+ssbPeriodicity 20
+ssbSubCarrierSpacing 30
+subCarrierSpacing 30
+tddSpecialSlotPattern 3
+tddUlDlPattern 1
+trsPeriodicity 40
+trsPowerBoosting 0
+ul256QamEnabled true
+ulMaxMuMimoLayers 0
+ulStartCrb 0
+userLabel {gUtranCell}
+end
+"""
+
+
+RJ_GNBCUCPFunction_text = """
+###################################### Cell Specific Started - NRCellCU={gUtranCell} ###################################### 
+
+crn GNBCUCPFunction=1,NRCellCU={gUtranCell}
+admissionLimitRef GNBCUCPFunction=1,AdmissionControl=1,AdmissionLimit=Default
+admissionPriorityRef GNBCUCPFunction=1,AdmissionControl=1,AdmissionPriority=Default
+advUePosMode 0
+caCellMeasProfileRef CarrierAggregation=1,CaCellMeasProfile=Default
+caCellProfileRef CarrierAggregation=1,CaCellProfile=Default
+cellLocalId {cellLocalId}
+checkUeGrpAtCellOffload false
+hiPrioDetEnabled false
+interfaceSupervision 0
+intraFreqMCCellProfileRef IntraFreqMC=1,IntraFreqMCCellProfile=Default
+mcfbCellProfileRef Mcfb=1,McfbCellProfile=Default
+mcpcNrdcPSCellEnabled false
+mcpcNrdcPSCellProfileRef
+mcpcPCellEnabled false
+mcpcPCellProfileRef Mcpc=1,McpcPCellProfile=Default
+mcpcPSCellEnabled false
+mcpcPSCellProfileRef Mcpc=1,McpcPSCellProfile=Default
+mdtCellProfileRef Mdt=1,MdtCellProfile=Default
+mdtEnabled false
+nCellChangeHigh
+nCellChangeMedium
+nRFrequencyRef NRNetwork=1,NRFrequency=627936-30
+noOfPeriodicUeMeasPerRop 900
+nrdcMnCellProfileRef NrdcControl=1,NrdcMnCellProfile=Default
+offloadCellProfileRef TrafficOffload=1,OffloadCellProfile=Default
+periodicCellProfileRef
+pmUeIntraFreqCellProfileRef
+pmUeIntraFreqEnabled false
+primaryPLMNId mcc=404,mnc=70
+pwsEmergencyAreaIdList
+qHyst 4
+qHystSfHigh
+qHystSfMedium
+resourceStatusMaxConnUe -2
+sNonIntraSearchP 0
+sNonIntraSearchQ
+tEvaluation
+tHystNormal
+threshServingLowP 0
+threshServingLowQ
+trStPSCellProfileRef TrafficSteering=1,TrStPSCellProfile=Default
+trStSaCellProfileRef TrafficSteering=1,TrStSaCellProfile=Default
+transmitSib2 false
+transmitSib4 false
+transmitSib5 false
+transmitSib9 false
+uacProfileRef GNBCUCPFunction=1,AdmissionControl=1,Uac=1,UacProfile=Default
+ucmCellProfileRef UeCovMeas=1,UcmCellProfile=Default
+ueMCCellProfileRef UeMC=1,UeMCCellProfile=Default
+userLabel {gUtranCell}
+end
+
+crn GNBCUCPFunction=1,NRCellCU={gUtranCell},DESManagementFunction=1
+desSwitch false
+esNotAllowedTimePeriod
+intraRatEsActivationOriginalCellLoadParameters threshold=10,timeDuration=900
+periodicEsDuration 120
+requiredWakeUpTime 180
+end
+
+crn GNBCUCPFunction=1,NRCellCU={gUtranCell},NRFreqRelation=627936
+anrMeasOn true
+caFreqRelMeasProfileRef CarrierAggregation=1,CaFreqRelMeasProfile=Default
+cellReselectionPriority 7
+cellReselectionSubPriority
+mcpcPCellNrFreqRelProfileRef Mcpc=1,McpcPCellNrFreqRelProfile=Default
+mcpcPSCellNrFreqRelProfileRef Mcpc=1,McpcPSCellNrFreqRelProfile=Default
+mdtMeasOn true
+nRFrequencyRef NRNetwork=1,NRFrequency=627936-30
+nrdcA4ThrRsrpFreqOffset 0
+offloadNrFreqRelProfileRef TrafficOffload=1,OffloadNrFreqRelProfile=Default
+pMax 23
+plmnIdList
+plmnRestriction false
+qOffsetFreq 0
+qQualMin
+qRxLevMin -140
+redCapEnabled false
+sIntraSearchP 62
+sIntraSearchQ
+tReselectionNR 2
+tReselectionNrSfHigh
+tReselectionNrSfMedium
+threshXHighP 4
+threshXHighQ
+threshXLowP 0
+threshXLowQ
+trStSaNrFreqRelProfileRef TrafficSteering=1,TrStSaNrFreqRelProfile=Default
+ucmNrFreqRelProfileRef UeCovMeas=1,UcmNrFreqRelProfile=Default
+ueMCNrFreqRelProfileRef UeMC=1,UeMCNrFreqRelProfile=Default
+end
+
+
+crn GNBCUCPFunction=1,EUtraNetwork=1
+userLabel
+end
+crn GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=1576
+arfcnValueEUtranDl 1576
+userLabel
+end
+crn GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=365
+arfcnValueEUtranDl 365
+userLabel
+end
+crn GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=39150
+arfcnValueEUtranDl 39150
+userLabel
+end
+crn GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=39151
+arfcnValueEUtranDl 39151
+userLabel
+end
+crn GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=39348
+arfcnValueEUtranDl 39348
+userLabel
+end
+crn GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=39349
+arfcnValueEUtranDl 39349
+userLabel
+end
+crn GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=515
+arfcnValueEUtranDl 515
+userLabel
+end
+
+###################################### Cell Specific Ended - NRCellCU={gUtranCell} ###################################### 
+
+
+"""
+
+RJ_5g_CgSwitch_text = """
+###################################### Cell Specific Started - 5G CgSwitch={gUtranCell} ###################################### 
+
+crn GNBDUFunction=1,UeCC=1,CgSwitch={gUtranCell}
+ueConfGroupType 1
+userLabel
+end
+
+crn GNBDUFunction=1,UeCC=1,CgSwitchCfg={gUtranCell}
+dlCgSwitchMode 1
+dlScgCritQualHyst 100
+dlScgCritQualThresh
+dlScgLowQualHyst 50
+dlScgLowQualThresh 50
+dlScgNoDataAcsiPeriodicity 300
+ulCgSwitchMode 1
+ulScgCritQualHyst 100
+ulScgCritQualThresh
+ulScgLowQualHyst 60
+ulScgLowQualThresh 170
+userLabel
+end
+
+crn GNBDUFunction=1,UeCC=1,CgSwitch={gUtranCell},CgSwitchUeCfg=Base
+cgSwitchCfgRef GNBDUFunction=1,UeCC=1,CgSwitchCfg={gUtranCell}
+prefUeGroupList
+ueConfGroupList
+ueGroupList
+userLabel
+end
+
+######################################Cell Specific Ended - 5G CgSwitch={gUtranCell} ###################################### 
+
+"""
+
+
+
+
+
+
 ###################################### CISCO MME SCRIPT ####################################################################################################
 CISCO_MME_SCRIPT = """
 ########################################################### CSICO MME ######################################################################################
