@@ -72,6 +72,12 @@ from LTE_Integration_Scripting_Automtion.circles.RJ.RJ_INTEGRATION_SCRIPT import
     RJ_TN_RN_GPS_MME,
     CISCO_MME_SCRIPT,
     NOKIA_MME_SCRIPT,
+    RJ_5G_Cell_creation_Sctp_Endpoint_Creation,
+    RJ_5g_CgSwitch_text,
+    RJ_GNBCUCPFunction_text,
+    RJ_GNBDUFunction_text,
+    RJ_Route_5G_GPL_LMS,
+    RJ_Termpoint_GUtranFreqRelation
 )
 from LTE_Integration_Scripting_Automtion.circles.RJ.RJ_COMISSION_SCRIPT import (
     SiteBasic_ipv4_6303,
@@ -934,7 +940,87 @@ def generate_integration_script(request):
                     )
 
             # --------------------------------------------------------------------------------------- 5G Cell Scripts ----------------------------------------------------------------#
-            # Not Yet Implemented RJ Circle-specific 5G Script Generation Logic
+            # Implemented RJ Circle-specific 5G Script Generation Logic
+            if not nr_cell_df.empty:
+                for node in nr_cell_df["gNodeBName"].unique():
+                    nr_cell_df: pd.DataFrame = nr_cell_df[
+                        nr_cell_df["gNodeBName"] == node
+                    ]
+                    nr_cell_df.rename(
+                        columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True
+                    )
+                    site_basic_data_df = site_basic_df[site_basic_df["eNodeBName"] == node].copy()
+                    NR_IP = site_basic_data_df['NR_IP'].unique()[0]
+                    NR_ENDC_IP = site_basic_data_df['NR_ENDC_IP'].unique()[0]
+                    NR_GW = site_basic_data_df['NR_GW'].unique()[0]
+                    tnPortId = site_basic_data_df['tnPortId'].unique()[0]
+                    nr_cell_df_path = os.path.join(
+                        create_script_paths(base_path_url, node)["nr"],
+                        f"1_{node}_5G Cell creation_Sctp Endpoint Creation_{current_time}.txt",
+                    )
+                    gnbid = nr_cell_df["gNBId"].unique()[0]
+                    print(nr_cell_df)
+
+                    gnbdu_fuction_element = ""
+                    gnbcucp_fuction_element = ""
+                    gnb_cgswitch_element = ""
+                    for idx, row in nr_cell_df.iterrows():
+                        gnbdu_fuction_element += RJ_GNBDUFunction_text.format(
+                            nRSectorCarrierId=row["nRSectorCarrierId"],
+                            arfcnDL=row["arfcnDL"],
+                            arfcnUL=row["arfcnUL"],
+                            bSChannelBwDL_UL=row["bSChannelBwDL-UL"],
+                            configuredMaxTxPower=row["configuredMaxTxPower"],
+                            Latitude=row["Latitude"],
+                            Longitude=row["Longitude"],
+                            sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
+                            gUtranCell=row["gUtranCell"],
+                            cellLocalId=row["cellLocalId"],
+                            nRPCI=row["nRPCI"],
+                            nRTAC=row["nRTAC"],
+                            rachRootSequence=int(
+                                row["rachRootSequence"]
+                            )
+                            ############################################################################ Added rachRootSequence
+                        )
+                        
+                        gnb_cgswitch_element += RJ_5g_CgSwitch_text.format(
+                            gUtranCell = row['gUtranCell'],
+                        )
+                        
+
+                        gnbcucp_fuction_element += RJ_GNBCUCPFunction_text.format(
+                            gUtranCell=row["gUtranCell"],
+                            cellLocalId = row['cellLocalId']
+                        )
+                    with open(nr_cell_df_path, "a") as file:
+                        file.write(
+                            RJ_5G_Cell_creation_Sctp_Endpoint_Creation.format(
+                                gUtranCell=row["gUtranCell"],
+                                NR_IP = NR_IP,
+                                NR_ENDC_IP = NR_ENDC_IP,
+                                NR_GW = NR_GW,
+                                gNodeBName = node,
+                                gNBId = gnbid,
+                                RJ_5g_CgSwitch_text = gnb_cgswitch_element,
+                                RJ_GNBDUFunction_text=gnbdu_fuction_element,
+                                RJ_GNBCUCPFunction_text=gnbcucp_fuction_element,
+                            )
+                        )
+
+                    NR_GPL_LMS_path = os.path.join(
+                        create_script_paths(base_path_url, node)["nr"],
+                        f"2_{node}_NR_GPL_LMS_{current_time}.txt",
+                    )
+                    with open(NR_GPL_LMS_path, "a") as file:
+                        file.write(RJ_Route_5G_GPL_LMS + "\n")
+
+                    Termpoint_GUtranFreqRelation_path = os.path.join(
+                        create_script_paths(base_path_url, node_name)["nr"],
+                        f"3_{node_name}_Termpoint_GUtranFreqRelation_{current_time}.txt",
+                    )
+                    with open(Termpoint_GUtranFreqRelation_path, "a") as file:
+                        file.write(RJ_Termpoint_GUtranFreqRelation + "\n")
             # ________________________________________________________________________________________________________________________________________________________________________#
 
             ########################################## RJ Commissioning Scripts Generation Logic ###############################################################
@@ -1070,6 +1156,7 @@ def generate_integration_script(request):
                     "5216": SiteEquipment_5216,
                     "6648": SiteEquipment_6648,
                     "R503": SiteEquipment_R503,
+                    
                 }
                 site_equipment_script_text = ""
                 for bbu_prefix, template in bbu_mapped_script.items():
@@ -1092,6 +1179,7 @@ def generate_integration_script(request):
                     "4418": RRU_4412_4418_4427_4471_4X4,
                     "4427": RRU_4412_4418_4427_4471_4X4,
                     "4471": RRU_4412_4418_4427_4471_4X4,
+                    "AIR" : AIR_5G_GENERATION_SCRIPT,
                 }
 
                 for idx, row in site_specific_rru_df.iterrows():
@@ -1110,6 +1198,7 @@ def generate_integration_script(request):
                                 sectorEquipmentFunctionId=row[
                                     "sectorEquipmentFunctionId"
                                 ],
+                                riLinkId=row.get("riLinkId", ""),  # optional
                             )
                             break
 
