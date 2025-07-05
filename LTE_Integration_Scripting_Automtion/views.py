@@ -1156,6 +1156,7 @@ def generate_integration_script(request):
                     "5216": SiteEquipment_5216,
                     "6648": SiteEquipment_6648,
                     "R503": SiteEquipment_R503,
+                    
                 }
                 site_equipment_script_text = ""
                 for bbu_prefix, template in bbu_mapped_script.items():
@@ -1178,6 +1179,7 @@ def generate_integration_script(request):
                     "4418": RRU_4412_4418_4427_4471_4X4,
                     "4427": RRU_4412_4418_4427_4471_4X4,
                     "4471": RRU_4412_4418_4427_4471_4X4,
+                    "AIR" : AIR_5G_GENERATION_SCRIPT,
                 }
 
                 for idx, row in site_specific_rru_df.iterrows():
@@ -1196,6 +1198,7 @@ def generate_integration_script(request):
                                 sectorEquipmentFunctionId=row[
                                     "sectorEquipmentFunctionId"
                                 ],
+                                riLinkId=row.get("riLinkId", ""),  # optional
                             )
                             break
 
