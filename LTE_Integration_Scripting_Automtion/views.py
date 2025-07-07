@@ -862,7 +862,7 @@ def generate_integration_script(request):
                 
                 tnPortId = site_basic["tnPortId"].values[0]
                 
-                mme_type = (NOKIA_MME_SCRIPT if temp_lte_df["MME"].unique()[0].startswith("Nokia") else CISCO_MME_SCRIPT)
+                mme_type = (NOKIA_MME_SCRIPT if (str(temp_lte_df["MME"].unique()[0]).upper()).startswith("Nokia") else CISCO_MME_SCRIPT)
                 
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding="utf-8") as file:
                     file.write(RJ_TN_RN_GPS_MME.format(eNodeBName=enodebname, tnPortId=tnPortId, eNBId=enbid) + mme_type + "\n")
@@ -983,10 +983,7 @@ def generate_integration_script(request):
 
                 for idx, row in sitebasic_df.iterrows():
                     bbu_type = row.get("BB_Type", "UnknownType")
-                    oam_ip, subnet = (
-                        row.get("OAM_IP", "UnknownOAMID").split("/")[0],
-                        row.get("OAM_IP", "UnknownOAMID").split("/")[1],
-                    )
+                    oam_ip, subnet = (row.get("OAM_IP", "UnknownOAMID").split("/")[0],row.get("OAM_IP", "UnknownOAMID").split("/")[1])
 
                     ip_type = ip_type(oam_ip)
 
@@ -1007,11 +1004,7 @@ def generate_integration_script(request):
                         "BB6339": SiteBasic_ipv6_6339,
                         "BB6303": SiteBasic_ipv6_6303,
                     }
-                    bbu_script_mapping = (
-                        bbu_script_mapping_ipv4
-                        if ip_type == "IPv4"
-                        else bbu_script_mapping_ipv6
-                    )
+                    bbu_script_mapping = (bbu_script_mapping_ipv4 if ip_type == "IPv4" else bbu_script_mapping_ipv6)
 
                     for bbu_prefix, template in bbu_script_mapping.items():
                         if bbu_type in bbu_prefix:
@@ -1036,6 +1029,7 @@ def generate_integration_script(request):
                 commissioning_scripts_dir = create_script_paths(base_path_url, node)["commissioning"]
                 
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                
                 os.makedirs(commissioning_scripts_dir, exist_ok=True)
 
                 site_specific_rru_df = rru_hw_df[rru_hw_df["eNodeBName"] == node].copy()
@@ -1045,6 +1039,7 @@ def generate_integration_script(request):
                 site_equipment_text = ""
                 
                 relative_path = os.path.relpath(rru_hw_path, os.path.join(base_path_url, f"{node_name}_Integration_Sripts"))
+                
                 siteEquipmentFilePath = relative_path.replace("\\", "/")
 
                 siteEquipmentFilePath = os.path.relpath(rru_hw_path,os.path.join(base_path_url, f"{node}_Integration_Sripts")).replace("\\", "/")

@@ -64,7 +64,7 @@ qciTableRef ENodeBFunction=1,QciTable=default
 qQualMin -34
 qQualMinOffset 0
 qRxLevMin -124
-rachRootSequence 102
+rachRootSequence {rachRootSequence}
 sectorCarrierRef ENodeBFunction=1,SectorCarrier={sectorCarrierId}
 subframeAssignment 2
 tac {tac}
