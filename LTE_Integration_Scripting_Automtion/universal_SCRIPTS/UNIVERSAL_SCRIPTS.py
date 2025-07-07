@@ -2729,6 +2729,87 @@ SiteEquipment_6631 = """
 
 
 """
+SiteEquipment_6651 = """
+<?xml version="1.0" encoding="UTF-8"?>
+<hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <capabilities>
+    <capability>urn:ietf:params:netconf:base:1.0</capability>
+  </capabilities>
+</hello>
+]]>]]>
+<rpc message-id="1" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <edit-config>
+    <target>
+      <running />
+    </target>
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+      <ManagedElement xmlns="urn:com:ericsson:ecim:ComTop">
+        <managedElementId>1</managedElementId>
+        <userLabel>{Phy_SiteID_Userlabel}</userLabel>
+        <Equipment xmlns="urn:com:ericsson:ecim:ReqEquipment">
+          <equipmentId>1</equipmentId>
+          <FieldReplaceableUnit xmlns="urn:com:ericsson:ecim:ReqFieldReplaceableUnit">
+            <fieldReplaceableUnitId>{fieldReplaceableUnitId}</fieldReplaceableUnitId>
+            <administrativeState>UNLOCKED</administrativeState>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>A</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>B</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>C</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>D</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>E</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>F</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>G</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>H</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>J</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>K</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>L</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>M</riPortId>
+            </RiPort>
+            <SyncPort xmlns="urn:com:ericsson:ecim:ReqSyncPort">
+              <syncPortId>1</syncPortId>
+            </SyncPort>
+          </FieldReplaceableUnit>
+        </Equipment>
+        <NodeSupport xmlns="urn:com:ericsson:ecim:RmeSupport">
+          <nodeSupportId>1</nodeSupportId>
+          <MpClusterHandling xmlns="urn:com:ericsson:ecim:RmeMpClusterHandling">
+            <mpClusterHandlingId>1</mpClusterHandlingId>
+            <primaryCoreRef>ManagedElement=1,Equipment=1,FieldReplaceableUnit={fieldReplaceableUnitId}</primaryCoreRef>
+          </MpClusterHandling>
+        </NodeSupport>
+      </ManagedElement>
+    </config>
+  </edit-config>
+</rpc>
+]]>]]>
+<rpc message-id="Closing" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <close-session></close-session>
+</rpc>
+]]>]]>
+"""
+
 SiteEquipment_6648 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
