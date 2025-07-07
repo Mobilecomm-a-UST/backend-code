@@ -837,9 +837,13 @@ def generate_integration_script(request):
 
         # --------------------------------------------------------------- RJ Circle-specific Script Generation ---------------------------------------------------------------------
         elif circle == "RJ":
+            
             unique_nodes = lte_df["eNodeBName"].dropna().unique()
+            
             for node_name in unique_nodes:
+                
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                
                 directories = create_script_paths(base_path_url, node_name)
                 
                 generate_lte_cell_def_scripts(lte_df=lte_df,directories=directories,node_name=node_name,current_time=current_time)
@@ -862,7 +866,7 @@ def generate_integration_script(request):
                 
                 tnPortId = site_basic["tnPortId"].values[0]
                 
-                mme_type = (NOKIA_MME_SCRIPT if (str(temp_lte_df["MME"].unique()[0]).upper()).startswith("Nokia") else CISCO_MME_SCRIPT)
+                mme_type = (NOKIA_MME_SCRIPT if (str(temp_lte_df["MME"].unique()[0]).upper()).startswith("NOKIA") else CISCO_MME_SCRIPT)
                 
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding="utf-8") as file:
                     file.write(RJ_TN_RN_GPS_MME.format(eNodeBName=enodebname, tnPortId=tnPortId, eNBId=enbid) + mme_type + "\n")
