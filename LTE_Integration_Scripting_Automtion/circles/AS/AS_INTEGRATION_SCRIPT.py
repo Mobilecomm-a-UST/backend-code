@@ -1797,6 +1797,8 @@ set SctpProfile=1 heartbeatActivated true
 set SctpProfile=1 heartbeatInterval 5000
 set SctpProfile=1 initialHeartbeatInterval 500
 
+Set 0 Userlabel {Phy_SiteID_Userlabel}
+
 $date = `date +%y%m%d_%H%M`                                                                                                                                       
 cvms Post_GPL_$date                                                                                                                                      
 confbd-                                                                                                                                                           

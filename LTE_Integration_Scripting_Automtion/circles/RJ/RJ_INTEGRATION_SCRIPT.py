@@ -3323,6 +3323,8 @@ set SectorCarrier=11  configuredMaxTxPower 80000
 set SectorCarrier=12  configuredMaxTxPower 80000
 set SectorCarrier=13  configuredMaxTxPower 80000
 
+set 0 Userlabel {Phy_SiteID_Userlabel}
+
 set . vswrSupervisionSensitivity 100
 set . vswrSupervisionActive true
 

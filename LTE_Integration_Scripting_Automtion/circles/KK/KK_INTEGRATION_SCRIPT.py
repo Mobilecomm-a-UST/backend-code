@@ -167,15 +167,18 @@ confb-
 
 ###########################################################################################################################################################################
 kk_GPL_LMS_script = """ 
+
 lt all
 rbs
 rbs
 confbd+
 gs+
 
+
 $date = `date +%y%m%d_%H%M`
 cvms Pre_GPL_LTE_L18L21_$date
 
+set 0 Userlabel {Phy_SiteID_Userlabel}
 
 ########Frequency Creation##########
 
@@ -395,9 +398,9 @@ cr Transport=1,Synchronization=1,TimeSyncIO=1,GnssInfo=1
 
 get ENodeBFunction=1,EUtranCellFDD=KK_ eUtranCellFDDId > $temp
 l echo $temp > $temp.txt
-$nodename = `$gawk  '{ print substr ($NR,12,6) }' $temp.txt
+$nodename = `$gawk  '{{ print substr ($NR,12,6) }}' $temp.txt
 l rm $temp.txt
-                   
+
 ### Fixed Parameter
 
 ## Admission control
@@ -1344,7 +1347,6 @@ set VlanPort=TN_C_CP                                        egressQosMarking  Qo
 set VlanPort=TN_C_OAM                                       egressQosMarking  QosProfiles=1,DscpPcpMap=1
 set VlanPort=TN_C_UP                                        egressQosMarking  QosProfiles=1,DscpPcpMap=1
 set VlanPort=TN_.*                                          egressQosMarking  QosProfiles=1,DscpPcpMap=1
-
 #### SCTP ####
 
 lt all
@@ -2465,6 +2467,7 @@ set EUtranCellFDD=KK_E_F1_.*,EUtranFreqRelation=39300  eutranFreqToQciProfileRel
 
 set QciTable=default,QciProfilePredefined=qci6$ relativePriority 2
 set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5EndcHo= hysteresisA5 20
+
 
 wait 2
 deb EUtranCell.DD=KK

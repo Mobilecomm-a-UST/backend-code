@@ -722,7 +722,7 @@ SiteBasic_ipv6_6630 = """
             <encapsulation>ManagedElement=1,Transport=1,EthernetPort={tnPortId}</encapsulation>
             <isTagged>true</isTagged>
             <userLabel>Control Plane</userLabel>
-            <vlanId>{LTE_S1_GW}</vlanId>
+            <vlanId>{LTE_S1_vlan}</vlanId>
           </VlanPort>
           <Router xmlns="urn:com:ericsson:ecim:RtnL3Router">
             <routerId>LTECP</routerId>
@@ -770,7 +770,7 @@ SiteBasic_ipv6_6630 = """
             <encapsulation>ManagedElement=1,Transport=1,EthernetPort={tnPortId}</encapsulation>
             <isTagged>true</isTagged>
             <userLabel>User Plane</userLabel>
-            <vlanId>{LTE_UP_GW}</vlanId>
+            <vlanId>{LTE_UP_vlan}</vlanId>
           </VlanPort>
           <Router xmlns="urn:com:ericsson:ecim:RtnL3Router">
             <routerId>LTEUP</routerId>
@@ -874,8 +874,6 @@ SiteBasic_ipv6_6630 = """
   <close-session></close-session>
 </rpc>
 ]]>]]>
-
-
 """
 
 SiteBasic_ipv6_6339 = """
@@ -6311,6 +6309,3 @@ SiteBasic_ipv4_6303 = """
 ]]>]]>
 
 """
-
-
-

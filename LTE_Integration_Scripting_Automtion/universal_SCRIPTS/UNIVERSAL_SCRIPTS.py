@@ -3101,3 +3101,70 @@ SiteEquipment_R503 = """
 ]]>]]>
 
 """
+
+
+ABIS_Site_Basic_script = """
+<?xml version="1.0" encoding="UTF-8"?>                                                                                                                       
+<hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">                                                                                                      
+  <capabilities>                                                                                                                                             
+    <capability>urn:ietf:params:netconf:base:1.0</capability>                                                                                                
+  </capabilities>                                                                                                                                            
+</hello>                                                                                                                                                     
+]]>]]>                                                                                                                                                       
+<rpc message-id="1" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">                                                                                         
+  <edit-config>                                                                                                                                              
+    <target>                                                                                                                                                 
+      <running />                                                                                                                                            
+    </target>                                                                                                                                                
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">                                                                                              
+      <ManagedElement xmlns="urn:com:ericsson:ecim:ComTop">                                                                                                  
+        <managedElementId>1</managedElementId>                                                                                                               
+        <Transport>                                                                                                                                          
+          <transportId>1</transportId>                                                                                                                       
+          <Router xmlns="urn:com:ericsson:ecim:RtnL3Router">                                                                                                 
+            <routerId>ABIS</routerId>                                                                                                                        
+            <ttl>64</ttl>                                                                                                                                    
+          </Router>                                                                                                                                          
+          <VlanPort xmlns="urn:com:ericsson:ecim:RtnL2VlanPort">                                                                                             
+            <vlanPortId>{tnPortId}_ABIS</vlanPortId>                                                                                                               
+            <encapsulation>ManagedElement=1,Transport=1,EthernetPort={tnPortId}</encapsulation>                                                                    
+            <isTagged>true</isTagged>                                                                                                                        
+            <userLabel>ABIS</userLabel>                                                                                                                      
+            <vlanId>{ABIS_vlan}</vlanId>                                                                                                                            
+          </VlanPort>                                                                                                                                        
+          <Router xmlns="urn:com:ericsson:ecim:RtnL3Router">                                                                                                 
+            <routerId>ABIS</routerId>                                                                                                                        
+            <InterfaceIPv4 xmlns="urn:com:ericsson:ecim:RtnL3InterfaceIPv4">                                                                                 
+              <interfaceIPv4Id>{tnPortId}_ABIS</interfaceIPv4Id>                                                                                                   
+              <encapsulation>ManagedElement=1,Transport=1,VlanPort={tnPortId}_ABIS</encapsulation>                                                                 
+              <mtu>1500</mtu>                                                                                                                                
+              <userLabel>ABIS</userLabel>                                                                                                                    
+              <AddressIPv4>                                                                                                                                  
+                <addressIPv4Id>{tnPortId}_ABIS</addressIPv4Id>                                                                                                     
+                <address>{ABIS_IP}</address>                                                                                                         
+              </AddressIPv4>                                                                                                                                 
+            </InterfaceIPv4>                                                                                                                                 
+            <RouteTableIPv4Static xmlns="urn:com:ericsson:ecim:RtnRoutesStaticRouteIPv4">                                                                    
+              <routeTableIPv4StaticId>4</routeTableIPv4StaticId>                                                                                             
+              <Dst>                                                                                                                                          
+                <dstId>BSC</dstId>                                                                                                                           
+                <dst>0.0.0.0/0</dst>                                                                                                                         
+                <NextHop>                                                                                                                                    
+                  <nextHopId>13</nextHopId>                                                                                                                  
+                  <address>{ABIS_GW}</address>                                                                                                          
+                  <adminDistance>1</adminDistance>                                                                                                           
+                </NextHop>                                                                                                                                   
+              </Dst>                                                                                                                                         
+            </RouteTableIPv4Static>                                                                                                                          
+          </Router>                                                                                                                                          
+        </Transport>                                                                                                                                         
+      </ManagedElement>                                                                                                                                      
+    </config>                                                                                                                                                
+  </edit-config>                                                                                                                                             
+</rpc>                                                                                                                                                       
+]]>]]>                                                                                                                                                       
+<rpc message-id="Closing" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">                                                                                   
+  <close-session></close-session>                                                                                                                            
+</rpc>                                                                                                                                                       
+]]>]]>  
+"""
