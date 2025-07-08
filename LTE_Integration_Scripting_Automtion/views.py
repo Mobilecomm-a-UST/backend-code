@@ -37,7 +37,6 @@ from LTE_Integration_Scripting_Automtion.universal_SCRIPTS.UNIVERSAL_SCRIPTS imp
     RRU_4412_4418_4427_4471_4X4,
     RRU_6626_6X6,
     RRU_8863_8X8,
-    RRU_5G_CREATION,
     RBSSummary_script,
     AIR_5G_GENERATION_SCRIPT,
     SiteEquipment_5216,
@@ -49,10 +48,9 @@ from LTE_Integration_Scripting_Automtion.universal_SCRIPTS.UNIVERSAL_SCRIPTS imp
     SiteEquipment_6651,
     SiteEquipment_6648,
     SiteEquipment_R503,
+    ABIS_Site_Basic_script,
 )
 from LTE_Integration_Scripting_Automtion.circles.TN.TN_INTEGRATION_SCRIPT import (
-    TN_02_IPV6creationforanchor,
-    TN_03_ENDCanchornode_ROTN,
     TN_Termpoint_GUtranFreqRelation,
     TN_05_5G_LMS_GPL_ROTN,
     TN_s1_FOR_TN_IDL_B_PORT,
@@ -207,7 +205,7 @@ def generate_lte_cell_def_scripts(lte_df, directories, node_name, current_time):
 
     node_rows = lte_df[lte_df["eNodeBName"] == node_name]
     output_file_path = os.path.join(
-        directories["lte"], f"02_Cell_Def_script_{node_name}_{current_time}.txt"
+        directories["lte"], f"02_{node_name}_Cell_Def_script_{current_time}.txt"
     )
 
     script_lines = []
@@ -424,29 +422,27 @@ def generate_integration_script(request):
             #    with open(script_path,"a") as file:
             #        file.write(kk_GPS_MMS_script + "\n")
             ########################################################################## GPL/LMS Script ###########################################################################
-            gpl_lms_path = f"03 GPL_LMS_script_{node_name}_{current_time}.txt"
+            gpl_lms_path = f"03_{node_name}_GPL_LMS_script_{current_time}.txt"
+            Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
             for node in unique_nodes:
                 script_path = os.path.join(
                     create_script_paths(base_path_url, node)["lte"], gpl_lms_path
                 )
                 with open(script_path, "a") as file:
-                    file.write(kk_GPL_LMS_script + "\n")
+                    file.write(kk_GPL_LMS_script.format(Phy_SiteID_Userlabel = Phy_SiteID_Userlabel) + "\n")
 
             ############################################################################### 5G Cell Scripts ##########################################################################
             # ---------------------------------------------------------------------------------------------------
             if not nr_cell_df.empty:
                 for node in nr_cell_df["gNodeBName"].unique():
-                    nr_cell_df: pd.DataFrame = nr_cell_df[
-                        nr_cell_df["gNodeBName"] == node
-                    ]
-                    nr_cell_df.rename(
-                        columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True
-                    )
-                    nr_cell_df_path = os.path.join(
-                        create_script_paths(base_path_url, node)["nr"],
-                        f"1_{node}_5G Cell creation_Sctp Endpoint Creation_{current_time}.txt",
-                    )
+                    nr_cell_df: pd.DataFrame = nr_cell_df[nr_cell_df["gNodeBName"] == node].copy()
+                    
+                    nr_cell_df.rename(columns={"bSChannelBwDL/UL": "bSChannelBwDL-UL"}, inplace=True)
+                    
+                    nr_cell_df_path = os.path.join(create_script_paths(base_path_url, node)["nr"], f"1_{node}_5G Cell creation_Sctp Endpoint Creation_{current_time}.txt")
+                    
                     gnbid = nr_cell_df["gNBId"].unique()[0]
+                    
                     print(nr_cell_df)
 
                     gnbdu_fuction_element = ""
@@ -472,10 +468,8 @@ def generate_integration_script(request):
                             ssbFrequency=row["ssbFrequency"],
                         )
 
-                        gnbcucp_fuction_element += KK_GNBCUCPFUNCTION_ELEMENT.format(
-                            gUtranCell=row["gUtranCell"],
-                            cellLocalId=row["cellLocalId"],
-                        )
+                        gnbcucp_fuction_element += KK_GNBCUCPFUNCTION_ELEMENT.format(gUtranCell=row["gUtranCell"],cellLocalId=row["cellLocalId"])
+                        
                     with open(nr_cell_df_path, "a") as file:
                         file.write(
                             NR_CELL_CREATION_AND_SCTP_5G_ENDPOINT_CREATION.format(
@@ -484,19 +478,14 @@ def generate_integration_script(request):
                                 GNBCUCPFUNCTION_SCRIPT_ELEMENT=gnbcucp_fuction_element,
                             )
                         )
-                        file.close()
 
-                    NR_GPL_LMS_path = os.path.join(
-                        create_script_paths(base_path_url, node)["nr"],
-                        f"2_{node}_NR_GPL_LMS_{current_time}.txt",
-                    )
+                    NR_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node)["nr"], f"2_{node}_NR_GPL_LMS_{current_time}.txt")
+                    
                     with open(NR_GPL_LMS_path, "a") as file:
                         file.write(NR_GPL_LMS + "\n")
 
-                    Termpoint_GUtranFreqRelation_path = os.path.join(
-                        create_script_paths(base_path_url, node_name)["nr"],
-                        f"3_{node_name}_Termpoint_GUtranFreqRelation_{current_time}.txt",
-                    )
+                    Termpoint_GUtranFreqRelation_path = os.path.join(create_script_paths(base_path_url, node_name)["nr"],f"3_{node_name}_Termpoint_GUtranFreqRelation_{current_time}.txt")
+                    
                     with open(Termpoint_GUtranFreqRelation_path, "a") as file:
                         file.write(TREMPOINT_GUTRANCELL_FREQ_RELATION + "\n")
                 # .......................................................................... NRCELL CONFIGRATION FOR CELL CREATION IN 5G ................................................
@@ -504,27 +493,21 @@ def generate_integration_script(request):
             ############################################################### creating the SiteBasic script for 4G and 5G ###############################################################
             unique_nodes = site_basic_df["eNodeBName"].dropna().unique()
             for node in unique_nodes:
-                commision_scripts_dir = create_script_paths(base_path_url, node)[
-                    "commissioning"
-                ]
+                commision_scripts_dir = create_script_paths(base_path_url, node)["commissioning"]
+                
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                
                 os.makedirs(commision_scripts_dir, exist_ok=True)
-                sitebasic_df: pd.DataFrame = site_basic_df[
-                    site_basic_df["eNodeBName"] == node
-                ].copy()
-                sitebasic_df_path = os.path.join(
-                    commision_scripts_dir, f"01_{node}_SiteBasic_{current_time}.xml"
-                )
-                relative_path = os.path.relpath(
-                    sitebasic_df_path,
-                    os.path.join(base_path_url, f"{node_name}_Integration_Sripts"),
-                )
+                
+                sitebasic_df: pd.DataFrame = site_basic_df[site_basic_df["eNodeBName"] == node].copy()
+                
+                sitebasic_df_path = os.path.join(commision_scripts_dir, f"01_{node}_SiteBasic_{current_time}.xml")
+                
+                relative_path = os.path.relpath(sitebasic_df_path,os.path.join(base_path_url, f"{node_name}_Integration_Sripts"))
+                
                 siteBasicFilePath = relative_path.replace("\\", "/")
 
-                siteBasicFilePath = os.path.relpath(
-                    sitebasic_df_path,
-                    os.path.join(base_path_url, f"{node}_Integration_Sripts"),
-                ).replace("\\", "/")
+                siteBasicFilePath = os.path.relpath(sitebasic_df_path, os.path.join(base_path_url, f"{node}_Integration_Sripts")).replace("\\", "/")
 
                 for idx, row in sitebasic_df.iterrows():
                     with open(sitebasic_df_path, "a", encoding="utf-8") as file:
@@ -554,32 +537,29 @@ def generate_integration_script(request):
             }
 
             for node in rru_hw_df["eNodeBName"].unique():
-                commissioning_scripts_dir = create_script_paths(base_path_url, node)[
-                    "commissioning"
-                ]
+                
+                commissioning_scripts_dir = create_script_paths(base_path_url, node)["commissioning"]
+                
                 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                
                 os.makedirs(commissioning_scripts_dir, exist_ok=True)
 
-                site_specific_rru_df = rru_hw_df[rru_hw_df["eNodeBName"] == node]
-                rru_hw_path = os.path.join(
-                    commissioning_scripts_dir,
-                    f"02_{node}_SiteEquipment_{current_time}.xml",
-                )
+                site_specific_rru_df = rru_hw_df[rru_hw_df["eNodeBName"] == node].copy()
+                
+                rru_hw_path = os.path.join(commissioning_scripts_dir, f"02_{node}_SiteEquipment_{current_time}.xml")
 
                 site_equipment_text = ""
-                relative_path = os.path.relpath(
-                    rru_hw_path,
-                    os.path.join(base_path_url, f"{node_name}_Integration_Sripts"),
-                )
+                
+                relative_path = os.path.relpath(rru_hw_path, os.path.join(base_path_url, f"{node_name}_Integration_Sripts"))
+                
                 siteEquipmentFilePath = relative_path.replace("\\", "/")
 
-                siteEquipmentFilePath = os.path.relpath(
-                    rru_hw_path,
-                    os.path.join(base_path_url, f"{node}_Integration_Sripts"),
-                ).replace("\\", "/")
+                siteEquipmentFilePath = os.path.relpath(rru_hw_path, os.path.join(base_path_url, f"{node}_Integration_Sripts")).replace("\\", "/")
 
                 print("site_equipment_path", siteEquipmentFilePath)
-                site_basic_df_N = site_basic_df[site_basic_df["eNodeBName"] == node]
+                
+                site_basic_df_N = site_basic_df[site_basic_df["eNodeBName"] == node].copy()
+                
                 if site_basic_df_N.empty:
                     print(f"Warning: No basic site data found for {node}")
                     continue
@@ -590,12 +570,8 @@ def generate_integration_script(request):
                 )
 
                 site_equipment_script_text = KK_SITE_EQUIPMENT_SCRIPT.format(
-                    fieldReplaceableUnitId=site_basic_df_N[
-                        "fieldReplaceableUnitId"
-                    ].values[0],
-                    Phy_SiteID_Userlabel=site_basic_df_N["Phy_SiteID_Userlabel"].values[
-                        0
-                    ],
+                    fieldReplaceableUnitId=site_basic_df_N["fieldReplaceableUnitId"].values[0],
+                    Phy_SiteID_Userlabel=site_basic_df_N["Phy_SiteID_Userlabel"].values[0],
                 )
 
                 for idx, row in site_specific_rru_df.iterrows():
@@ -606,14 +582,10 @@ def generate_integration_script(request):
                             site_equipment_text += template.format(
                                 eNodeBName=row.get("eNodeBName", ""),
                                 Radio_UnitId=row.get("Radio_UnitId", ""),
-                                fieldReplaceableUnitId=site_basic_df_N[
-                                    "fieldReplaceableUnitId"
-                                ].values[0],
+                                fieldReplaceableUnitId=site_basic_df_N["fieldReplaceableUnitId"].values[0],
                                 RiPort_BB=row.get("RiPort_BB", ""),
                                 RiPort_Radio=row.get("RiPort_Radio", ""),
-                                sectorEquipmentFunctionId=row.get(
-                                    "sectorEquipmentFunctionId", ""
-                                ),
+                                sectorEquipmentFunctionId=row.get("sectorEquipmentFunctionId", ""),
                                 riLinkId=row.get("riLinkId", ""),  # optional
                             )
 
@@ -850,9 +822,9 @@ def generate_integration_script(request):
                 
                 # ---------------------------------------------------------- RJ Circle-specific Script Generation ---------------------------------------------------------------------
                 RJ_Route_4G_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node_name)["lte"],f"03_{node_name}_Route_GPL_LMS_{current_time}.txt")
-                
+                Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
                 with open(RJ_Route_4G_GPL_LMS_path, "a", encoding="utf-8") as file:
-                    file.write(RJ_Route_4G_GPL_LMS + "\n")
+                    file.write(RJ_Route_4G_GPL_LMS.format(Phy_SiteID_Userlabel = Phy_SiteID_Userlabel) + "\n")
 
                 temp_lte_df = lte_df[lte_df["eNodeBName"] == node_name].copy()
 
@@ -985,10 +957,12 @@ def generate_integration_script(request):
                         except socket.error:
                             return "Unknown"
 
+                # sitebasic_df.replace('NA', '',inplace=True)
                 for idx, row in sitebasic_df.iterrows():
                     bbu_type = row.get("BB_Type", "UnknownType")
                     oam_ip, subnet = (row.get("OAM_IP", "UnknownOAMID").split("/")[0],row.get("OAM_IP", "UnknownOAMID").split("/")[1])
-
+                    abis_ip = row.get("ABIS_IP", "NA")
+                    print(abis_ip)
                     ip_type = ip_type(oam_ip)
 
                     ############################################################ if ip_type in ["IPv4", "IPv6"]:git #####################################################################
@@ -1026,6 +1000,16 @@ def generate_integration_script(request):
                                 LTE_UP_IP=row["LTE_UP_IP"],
                                 LTE_UP_GW=row["LTE_UP_GW"],
                             )
+                            if not (pd.isna(abis_ip) or abis_ip == 'nan'):
+                                print(f"abis generated for {node}")
+                                abis_site_basic_text = ABIS_Site_Basic_script.format(
+                                    tnPortId=row["tnPortId"],
+                                    ABIS_vlan = row['ABIS_vlan'],
+                                    ABIS_IP = row['ABIS_IP'],
+                                    ABIS_GW = row['ABIS_GW']
+                                )
+                                formatted_text += '\n' + abis_site_basic_text
+                                
                             with open(sitebasic_df_path, "a", encoding="utf-8") as file:
                                 file.write(formatted_text + "\n")
 
@@ -1172,12 +1156,12 @@ def generate_integration_script(request):
             #        file.write(kk_GPS_MMS_script + "\n")
             ########################################################################## GPL/LMS Script ###########################################################################
             gpl_lms_path = f"03 GPL_LMS_script_{node_name}_{current_time}.txt"
+            #### physical siteID is unique for all node in any circle ######################################################
+            Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
             for node in unique_nodes:
-                script_path = os.path.join(
-                    create_script_paths(base_path_url, node)["lte"], gpl_lms_path
-                )
+                script_path = os.path.join(create_script_paths(base_path_url, node)["lte"], gpl_lms_path)
                 with open(script_path, "a") as file:
-                    file.write(AS_GPL_LMS_DST_SCRIPT + "\n")
+                    file.write(AS_GPL_LMS_DST_SCRIPT.format(Phy_SiteID_Userlabel = Phy_SiteID_Userlabel) + "\n")
 
             ############################################################################### 5G Cell Scripts ##########################################################################
             # ---------------------------------------------------------------------------------------------------
@@ -1297,6 +1281,8 @@ def generate_integration_script(request):
                     
                     oam_ip, subnet = row.get("OAM_IP", "UnknownOAMID").split("/")[0],row.get("OAM_IP", "UnknownOAMID").split("/")[1]
                     
+                    abis_ip = row.get('ABIS_IP', 'NA')
+                    
                     ip_type = ip_type(oam_ip)
 
                     ############################################################ if ip_type in ["IPv4", "IPv6"]:git #####################################################################
@@ -1331,6 +1317,15 @@ def generate_integration_script(request):
                                 LTE_UP_IP=row["LTE_UP_IP"],
                                 LTE_UP_GW=row["LTE_UP_GW"],
                             )
+                            if abis_ip != 'NA':
+                                abis_site_basic_text = ABIS_Site_Basic_script.format(
+                                    tnPortId=row["tnPortId"],
+                                    ABIS_vlan = row['ABIS_vlan'],
+                                    ABIS_IP = row['ABIS_IP'],
+                                    ABIS_GW = row['ABIS_GW']
+                                )
+                                formatted_text += '\n' + abis_site_basic_text
+                            
                             with open(sitebasic_df_path, "a", encoding="utf-8") as file:
                                 file.write(formatted_text + "\n")
 
@@ -1400,7 +1395,7 @@ def generate_integration_script(request):
                             site_equipment_text += rru_template.format(
                                 eNodeBName=row["eNodeBName"],
                                 Radio_UnitId=row["Radio_UnitId"],
-                                fieldReplaceableUnitId=site_basic_df_N["fieldReplaceableUnitId"].values[0],
+                                fieldReplaceableUnitId=sitebasic_df["fieldReplaceableUnitId"].values[0],
                                 RiPort_BB=row["RiPort_BB"],
                                 RiPort_Radio=row["RiPort_Radio"],
                                 sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
