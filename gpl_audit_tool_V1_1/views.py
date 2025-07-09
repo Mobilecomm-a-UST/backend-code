@@ -1403,11 +1403,12 @@ def get_pre_post_audit(request):
        key: pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
        for key, dfs in pre_all_dfs.items()
    }
+   print("feature state for pre_df:- ", all_pre_merged_df["FeatureState"].head(10))
    all_post_merged_df = {
        key: pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
        for key, dfs in post_all_dfs.items()
    }
-
+   print("feature state for pre_df:- ", all_post_merged_df["FeatureState"].head(10))
    ################################################################ Prepare post cell data ###########################################################
    post_cell_id_df = all_post_merged_df["cell_data"][
        ["left_Node_ID", "left_MO", "left_cellId"]
@@ -1621,7 +1622,6 @@ def get_pre_post_audit(request):
                     pre_post_site_mapping = {row["Pre SiteId"]: row["Post SiteId"] for i, row in cell_id_df.iterrows() if row["Post SiteId"] != 'NA'}
 
                     merged_df = pd.DataFrame()
-
                     for node_id in feature_pre_df["Node_ID"].unique():
                         post_node_id = pre_post_site_mapping.get(node_id, None)
                         if post_node_id is None:
@@ -1663,22 +1663,19 @@ def get_pre_post_audit(request):
                             [merged_df, commind_df], axis=0, ignore_index=True
                         )
 
-                    merged_df["Feature setting Status"] = merged_df.apply(
-                        lambda row: (
-                            "OK"
-                            if (
-                                row["Current FeatureState"]
-                                == row["Pre Existing FeatureState"]
-                            )
-                            and (
-                                row["Current LicenseState"]
-                                == row["Pre Existing LicenseState"]
-                            )
-                            else (
-                                "Missing" if pd.isna(row['Current FeatureState']) or row['Current FeatureState'] == 'nan' or row['Pre Existing LicenseState'] == 'nan' or pd.isna(row['Pre Existing LicenseState']) else "NOT OK")
-                        ),
-                        axis=1,
-                    )
+                    def check_feature_status(row):
+                        curr_feat = row["Current FeatureState"]
+                        pre_feat = row["Pre Existing FeatureState"]
+                        curr_lic = row["Current LicenseState"]
+                        pre_lic = row["Pre Existing LicenseState"]
+
+                        if pd.isna(curr_feat) or curr_feat == 'nan' or pd.isna(pre_lic) or pre_lic == 'nan':
+                            return "Missing"
+                        elif curr_feat == pre_feat and curr_lic == pre_lic:
+                            return "OK"
+                        else:
+                            return "NOT OK"
+                    merged_df["Feature setting Status"] = merged_df.apply(check_feature_status, axis=1)
 
                     merged_df.to_excel(writer, sheet_name=sheet_name, index=False)
                     format_excel_sheet(
@@ -2288,6 +2285,7 @@ def get_pre_post_audit(request):
 
    return Response(
        {
+           "status": True,
            "message": "Post logs and Pre-audit file uploaded successfully",
            "download_url": download_url,
        },

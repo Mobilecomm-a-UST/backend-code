@@ -100,7 +100,7 @@ INSTALLED_APPS = [
     "universal_alarm",
     "Daily_Alarm_Status",
     "LKF_StatusApp",
-    "gpl_audit_tool",
+    #"gpl_audit_tool",
     "soft_at_status_tech",
     "Soft_AT_Checklist_Ericsson",
     "Soft_AT_Checklist_Nokia",

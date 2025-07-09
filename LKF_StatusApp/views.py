@@ -14,6 +14,49 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill, Alignment, Font
 from collections import Counter
 from datetime import datetime
+from openpyxl.utils import get_column_letter
+
+def format_and_autofit_excel(file_path):
+    wb = load_workbook(file_path)
+    ws = wb.active
+
+    # Header formatting
+    header_fill = PatternFill(start_color="215967", end_color="215967", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True)
+    center_alignment = Alignment(horizontal="center", vertical="center")
+
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = center_alignment
+
+    # Data cell formatting
+    yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    bold_font = Font(bold=True)
+
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+        for cell in row:
+            cell.alignment = center_alignment
+            cell.font = bold_font
+            if str(cell.value).strip().upper() == "NA":
+                cell.fill = yellow_fill
+
+    # Autofit columns
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column  # 1-based
+        column_letter = get_column_letter(column)
+
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+
+        ws.column_dimensions[column_letter].width = max_length + 2
+
+    wb.save(file_path)
 
 
 #split line--------
@@ -351,6 +394,7 @@ def LKF_Upload(request):
             os.makedirs(template_file_path, exist_ok=True)
 
         excel_files_paths = [os.path.join(log_excel_folder, file) for file in os.listdir(log_excel_folder)]
+        #find the final output file....
         output_path_final = os.path.join(base_media_url, "LKF_Final_Output")
         os.makedirs(output_path_final, exist_ok=True)
         timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M")
@@ -416,7 +460,11 @@ def LKF_Upload(request):
                     trx = len(df)-1
                     trx = None if trx == 0 else trx
                     template_df.loc[0, "TRX"] = trx
-      
+
+              
+                 
+                    
+                
         # find the 5g count and power      
                 if sheet_name == "get . maxtx":
                     df = xls.parse(sheet_name)
@@ -507,40 +555,19 @@ def LKF_Upload(request):
             base_name = os.path.splitext(os.path.basename(excel_file))[0]
             output_filename = f"{base_name}_output.xlsx"
             individual_output_path = os.path.join(output_path_tem, output_filename)
+
             template_df.to_excel(individual_output_path, index=False)
             all_dfs.append(template_df)
 
+        # Merge all processed DataFrames into one
         merged_df = pd.concat(all_dfs, ignore_index=True)
         merged_df.to_excel(final_output, index=False)
-
-        wb = load_workbook(final_output)
-        ws = wb.active
-
-        # Header formatting
-        header_fill = PatternFill(start_color="215967", end_color="215967", fill_type="solid")
-        header_font = Font(color="FFFFFF", bold=True)
-        center_alignment = Alignment(horizontal="center", vertical="center")
-
-        for cell in ws[1]:
-            cell.fill = header_fill
-            cell.font = header_font
-            cell.alignment = center_alignment
-
-        # Data formatting (bold and center alignment)
-        for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
-            for cell in row:
-                cell.alignment = center_alignment
-                cell.font = Font(bold=True)  # Bolding all data cells
-                yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
-                
-                if str(cell.value).strip().upper() == "NA":
-                  cell.fill = yellow_fill
-
-        wb.save(final_output)
-
-
+        
+        format_and_autofit_excel(final_output)
+        
         relative_path = os.path.join(f"LKF_StatusApp/LKF_Final_Output/LKF_Status_output_{timestamp}.xlsx").replace("\\", "/")
         download_url = request.build_absolute_uri(MEDIA_URL + relative_path)
+
         return Response(
             {
                 "status": True,
@@ -549,10 +576,12 @@ def LKF_Upload(request):
             },
             status=HTTP_200_OK,
         )
+
     except Exception as e:
         return Response(
             {
-                "status": False, "message":f"An error occurred {str(e)}",
+                "status": False,
+                "message": f"An error occurred: {str(e)}",
             },
             status=HTTP_400_BAD_REQUEST,
         )
