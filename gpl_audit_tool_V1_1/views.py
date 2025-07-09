@@ -2288,6 +2288,7 @@ def get_pre_post_audit(request):
 
    return Response(
        {
+           "status": True,
            "message": "Post logs and Pre-audit file uploaded successfully",
            "download_url": download_url,
        },
