@@ -1972,7 +1972,7 @@ def get_pre_post_audit(request):
                                     "nan"
                                 ]:
                                     merged_df.at[idx, pre_col] = f"{pre_value}"
-                                   
+
                                 else:
                                     merged_df.at[idx, pre_col] = (
                                         f"{pre_value}|{post_value}"
@@ -2000,7 +2000,7 @@ def get_pre_post_audit(request):
                         inplace=True,
                     )
                     merged_df['neighborCellRef'] = merged_df['noughbourCellId'].apply(
-                        lambda x: reversed_post_cell_id_mapping_with_cell.get(x, "").split('=')[1] if '=' in reversed_post_cell_id_mapping_with_cell.get(x, "") else ""
+                        lambda x: reversed_post_cell_id_mapping_with_cell.get(x, "")
                     )
                     for col in columns_to_convert:
                         merged_df.loc[merged_df['Status'] == 'Missing', col] = (
@@ -2093,7 +2093,7 @@ def get_pre_post_audit(request):
             eutranFreqRel_correctin_df = eutranFreq_correctin_data_file_df[eutranFreq_correctin_data_file_df['Node_ID'] == node_name].copy()
             eutranFreqRelation_correctin_df = eutranFreqRelation_correctin_data_f_df[eutranFreqRelation_correctin_data_f_df['Node_ID'].isin([node_name])].copy()
             eutranFreqRelationCellRelation_df = eutranFreqRelation_cellRelation_file[eutranFreqRelation_cellRelation_file['Node_ID'].isin([node_name, 'Cell is not Found in Post'])].copy()
-           
+
             print("eutrancell_relation:- \n", eutranFreqRelationCellRelation_df)
             gpl_commands = []
             gpl_commands.append(f"##################### GPL Parameter Correction Commands {node_name}####################")
