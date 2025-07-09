@@ -423,6 +423,7 @@ def generate_integration_script(request):
             #        file.write(kk_GPS_MMS_script + "\n")
             ########################################################################## GPL/LMS Script ###########################################################################
             gpl_lms_path = f"03_{node_name}_GPL_LMS_script_{current_time}.txt"
+
             Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
             for node in unique_nodes:
                 script_path = os.path.join(
