@@ -4407,13 +4407,7 @@ gs-
 cvms Post_LMS_Settings_5G_$date  
 """
 
-
-
-
-
 RJ_Termpoint_GUtranFreqRelation = """
-
-
 lt all
 
 get GNBCUUPFunction=1  gNBId$ > $gnbid                                                                                       
@@ -4514,7 +4508,11 @@ Relation_121L2_18L
 set EUtranCell.DD=.*,GUtranFreqRelation=627936 cellReselectionPriority 5
 set CWA_CRP_2 cellReselectionPriority 2
 
-
+set ENodeBFunction=1$  endcAllowed  true                                                                                                                 
+set ENodeBFunction=1$  sctpEndcX2Ref Transport=1,SctpEndpoint=X2_ENDC                                                                                        
+set ENodeBFunction=1$  upEndcX2IpAddressRef Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2                                                                     
+set ENodeBFunction=1$  intraRanIpAddressRef Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2                                                                  
+set ^EUtranCell.DD= endcAllowedPlmnList mcc=404,mnc=70,mnclength=2                                                                                                
 """
 
 
