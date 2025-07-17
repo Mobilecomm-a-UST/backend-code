@@ -393,12 +393,12 @@ def generate_integration_script(request):
 
                 if node_name in cell_mapped_node:
                     cell_ids = cell_mapped_node[node_name]
-
+                    Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
                     if any(
                         tech in "".join(cell_ids) for tech in ["_F1_", "_F8_", "_F3_"]
                     ):
                         formatted_text = kk_TN_script_text.format(
-                            eNodeBName=row["eNodeBName"], eNBId=row["eNBId"]
+                            eNodeBName=row["eNodeBName"], eNBId=row["eNBId"], Phy_SiteID_Userlabel = Phy_SiteID_Userlabel
                         )
                         script_path = os.path.join(
                             node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
@@ -408,7 +408,7 @@ def generate_integration_script(request):
 
                     elif any(tech in "".join(cell_ids) for tech in ["_T1_", "_T2_"]):
                         formatted_text = kk_TN_script_text.format(
-                            eNodeBName=row["eNodeBName"], eNBId=row["eNBId"]
+                            eNodeBName=row["eNodeBName"], eNBId=row["eNBId"], Phy_SiteID_Userlabel = Phy_SiteID_Userlabel
                         )
                         script_path = os.path.join(
                             node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
@@ -425,13 +425,13 @@ def generate_integration_script(request):
             ########################################################################## GPL/LMS Script ###########################################################################
             gpl_lms_path = f"03_{node_name}_GPL_LMS_script_{current_time}.txt"
 
-            Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
+            
             for node in unique_nodes:
                 script_path = os.path.join(
                     create_script_paths(base_path_url, node)["lte"], gpl_lms_path
                 )
                 with open(script_path, "a") as file:
-                    file.write(kk_GPL_LMS_script.format(Phy_SiteID_Userlabel = Phy_SiteID_Userlabel) + "\n")
+                    file.write(kk_GPL_LMS_script + "\n")
 
             ############################################################################### 5G Cell Scripts ##########################################################################
             # ---------------------------------------------------------------------------------------------------

@@ -2483,7 +2483,6 @@ confbd-
 #################################################----KK_GPS_MMS_SCRIPT---#######################################################################################################
 kk_GPS_MMS_script = """ 
 ###################################### GPS SCRIPT ######################################
-
 lbl RadioEquipmentClockReference=1
 lbl RadioEquipmentClockReference=2
 
@@ -2607,7 +2606,9 @@ ipv6Address1 2401:4900:c0:1::2fb2
 ipv6Address2 2401:4900:c0:1::2fb4                                                                                                                                                                                                                                         
 mmeSupportLegacyLte true                                                                                                                                                                                                                                
 mmeSupportNbIoT false                                                                                                                                                                                                                                   
-end                                                                                          
+end   
+
+set 0 Userlabel {Phy_SiteID_Userlabel}                                                                                       
 """
 
 ################################# 5G Node for KK CIRCLE #########################################################################################################################
