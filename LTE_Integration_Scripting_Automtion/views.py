@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from datetime import datetime
 import shutil
+import numpy as np
 import socket
 import os
 import json
@@ -1001,11 +1002,11 @@ def generate_integration_script(request):
                                 LTE_UP_IP=row["LTE_UP_IP"],
                                 LTE_UP_GW=row["LTE_UP_GW"],
                             )
-                            if not (pd.isna(abis_ip) or abis_ip == 'nan'):
+                            if not (pd.isna(abis_ip) or abis_ip in ['NA', 'nan']):
                                 print(f"abis generated for {node}")
                                 abis_site_basic_text = ABIS_Site_Basic_script.format(
                                     tnPortId=row["tnPortId"],
-                                    ABIS_vlan = row['ABIS_vlan'],
+                                    ABIS_vlan = int(row['ABIS_vlan']),
                                     ABIS_IP = row['ABIS_IP'],
                                     ABIS_GW = row['ABIS_GW']
                                 )
@@ -1021,7 +1022,7 @@ def generate_integration_script(request):
                 
                 os.makedirs(commissioning_scripts_dir, exist_ok=True)
 
-                site_specific_rru_df = rru_hw_df[rru_hw_df["eNodeBName"] == node].copy()
+                site_specific_rru_df = rru_hw_df[rru_hw_df["eNodeBName"] == node]
                 
                 rru_hw_path = os.path.join(commissioning_scripts_dir, f"02_{node}_SiteEquipment_{current_time}.xml",)
 
@@ -1077,10 +1078,13 @@ def generate_integration_script(request):
                     "4471": RRU_4412_4418_4427_4471_4X4,
                     "AIR" : AIR_5G_GENERATION_SCRIPT,
                 }
+                print(site_specific_rru_df)
 
                 for idx, row in site_specific_rru_df.iterrows():
+                    print(row['Radio_Type'])
                     for rru, rru_template in rru_type.items():
                         if rru in str(row["Radio_Type"]):
+                            print(rru)
                             site_equipment_text += rru_template.format(
                                 eNodeBName=row["eNodeBName"],
                                 Radio_UnitId=row["Radio_UnitId"],
@@ -1166,6 +1170,7 @@ def generate_integration_script(request):
 
             ############################################################################### 5G Cell Scripts ##########################################################################
             # ---------------------------------------------------------------------------------------------------
+            print(nr_cell_df)
             if not nr_cell_df.empty:
                 for node in nr_cell_df["gNodeBName"].unique():
                     nr_cell_df: pd.DataFrame = nr_cell_df[
@@ -1318,10 +1323,11 @@ def generate_integration_script(request):
                                 LTE_UP_IP=row["LTE_UP_IP"],
                                 LTE_UP_GW=row["LTE_UP_GW"],
                             )
-                            if abis_ip != 'NA':
+
+                            if not (pd.isna(abis_ip) or abis_ip in ['NA', 'nan']):
                                 abis_site_basic_text = ABIS_Site_Basic_script.format(
                                     tnPortId=row["tnPortId"],
-                                    ABIS_vlan = row['ABIS_vlan'],
+                                    ABIS_vlan = int(row['ABIS_vlan']),
                                     ABIS_IP = row['ABIS_IP'],
                                     ABIS_GW = row['ABIS_GW']
                                 )

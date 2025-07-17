@@ -178,8 +178,6 @@ gs+
 $date = `date +%y%m%d_%H%M`
 cvms Pre_GPL_LTE_L18L21_$date
 
-set 0 Userlabel {Phy_SiteID_Userlabel}
-
 ########Frequency Creation##########
 
 bl EUtranCellFDD
