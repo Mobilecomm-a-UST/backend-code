@@ -390,31 +390,33 @@ def generate_integration_script(request):
 
                 node_dir = create_script_paths(base_path_url, node_name)["lte"]
                 os.makedirs(node_dir, exist_ok=True)
-
+                
+                Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
+                
                 if node_name in cell_mapped_node:
                     cell_ids = cell_mapped_node[node_name]
-
+                    
                     if any(
                         tech in "".join(cell_ids) for tech in ["_F1_", "_F8_", "_F3_"]
                     ):
                         formatted_text = kk_TN_script_text.format(
-                            eNodeBName=row["eNodeBName"], eNBId=row["eNBId"]
+                            eNodeBName=row["eNodeBName"], eNBId=row["eNBId"],
                         )
                         script_path = os.path.join(
                             node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
                         )
                         with open(script_path, "a") as file:
-                            file.write(formatted_text + "\n" + kk_GPS_MMS_script)
+                            file.write(formatted_text + "\n" + kk_GPS_MMS_script.format(Phy_SiteID_Userlabel = Phy_SiteID_Userlabel))
 
                     elif any(tech in "".join(cell_ids) for tech in ["_T1_", "_T2_"]):
                         formatted_text = kk_TN_script_text.format(
-                            eNodeBName=row["eNodeBName"], eNBId=row["eNBId"]
+                            eNodeBName=row["eNodeBName"], eNBId=row["eNBId"],
                         )
                         script_path = os.path.join(
                             node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
                         )
                         with open(script_path, "a") as file:
-                            file.write(formatted_text + "\n" + kk_GPS_MMS_script)
+                            file.write(formatted_text + "\n" + kk_GPS_MMS_script.format(Phy_SiteID_Userlabel = Phy_SiteID_Userlabel))
 
             ######################################################################### GPS/MME Script #######################################################################
             # gps_mme_path = f"01 GPS_MME_script_{node_name}_{current_time}.txt"
@@ -425,13 +427,13 @@ def generate_integration_script(request):
             ########################################################################## GPL/LMS Script ###########################################################################
             gpl_lms_path = f"03_{node_name}_GPL_LMS_script_{current_time}.txt"
 
-            Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
+            
             for node in unique_nodes:
                 script_path = os.path.join(
                     create_script_paths(base_path_url, node)["lte"], gpl_lms_path
                 )
                 with open(script_path, "a") as file:
-                    file.write(kk_GPL_LMS_script.format(Phy_SiteID_Userlabel = Phy_SiteID_Userlabel) + "\n")
+                    file.write(kk_GPL_LMS_script + "\n")
 
             ############################################################################### 5G Cell Scripts ##########################################################################
             # ---------------------------------------------------------------------------------------------------
@@ -529,6 +531,7 @@ def generate_integration_script(request):
             # -----------------------------------------------------------------------------------------------------------------------------------------------#
             radio_templates = {
                 "2219": RRU_2219_B0_B1_B3_2X2,
+                "2279": RRU_2219_B0_B1_B3_2X2,
                 "4412": RRU_4412_4418_4427_4471_4X4,
                 "4418": RRU_4412_4418_4427_4471_4X4,
                 "4427": RRU_4412_4418_4427_4471_4X4,
@@ -780,6 +783,7 @@ def generate_integration_script(request):
 
                 rru_type = {
                     "2219": RRU_2219_B0_B1_B3_2X2,
+                    "2279": RRU_2219_B0_B1_B3_2X2,
                     "4412": RRU_4412_4418_4427_4471_4X4,
                     "6626": RRU_6626_6X6,
                     "8863": RRU_8863_8X8,
@@ -824,9 +828,9 @@ def generate_integration_script(request):
                 
                 # ---------------------------------------------------------- RJ Circle-specific Script Generation ---------------------------------------------------------------------
                 RJ_Route_4G_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node_name)["lte"],f"03_{node_name}_Route_GPL_LMS_{current_time}.txt")
-                Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
+                
                 with open(RJ_Route_4G_GPL_LMS_path, "a", encoding="utf-8") as file:
-                    file.write(RJ_Route_4G_GPL_LMS.format(Phy_SiteID_Userlabel = Phy_SiteID_Userlabel) + "\n")
+                    file.write(RJ_Route_4G_GPL_LMS + "\n")
 
                 temp_lte_df = lte_df[lte_df["eNodeBName"] == node_name].copy()
 
@@ -842,8 +846,9 @@ def generate_integration_script(request):
                 
                 mme_type = (NOKIA_MME_SCRIPT if (str(temp_lte_df["MME"].unique()[0]).upper()).startswith("NOKIA") else CISCO_MME_SCRIPT)
                 
+                Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
                 with open(RJ_TN_RN_GPS_MME_path, "a", encoding="utf-8") as file:
-                    file.write(RJ_TN_RN_GPS_MME.format(eNodeBName=enodebname, tnPortId=tnPortId, eNBId=enbid) + mme_type + "\n")
+                    file.write(RJ_TN_RN_GPS_MME.format(eNodeBName=enodebname, tnPortId=tnPortId, eNBId=enbid, Phy_SiteID_Userlabel=Phy_SiteID_Userlabel) + mme_type + "\n")
 
             # --------------------------------------------------------------------------------------- 5G Cell Scripts ----------------------------------------------------------------#
             # Implemented RJ Circle-specific 5G Script Generation Logic
@@ -1070,6 +1075,7 @@ def generate_integration_script(request):
                         
                 rru_type = {
                     "2219": RRU_2219_B0_B1_B3_2X2,
+                    "2279": RRU_2219_B0_B1_B3_2X2,
                     "4412": RRU_4412_4418_4427_4471_4X4,
                     "6626": RRU_6626_6X6,
                     "8863": RRU_8863_8X8,
@@ -1131,27 +1137,27 @@ def generate_integration_script(request):
                         formatted_text = AS_TN_RN_GPS_MME_SCRIPT.format(
                             LTE_UP_GW=row["LTE_UP_GW"],
                             eNBId=row["eNBId"],
-                            Phy_SiteID_Userlabel=row["Phy SiteID/Userlabel"],
                             tnPortId=row["tnPortId"],
+                            Phy_SiteID_Userlabel=row["Phy SiteID/Userlabel"],
                         )
                         script_path = os.path.join(
                             node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
                         )
                         with open(script_path, "a") as file:
-                            file.write(formatted_text + "\n" + kk_GPS_MMS_script)
+                            file.write(formatted_text + "\n")
 
                     elif any(tech in "".join(cell_ids) for tech in ["_T1_", "_T2_"]):
                         formatted_text = AS_TN_RN_GPS_MME_SCRIPT.format(
                             LTE_UP_GW=row["LTE_UP_GW"],
                             eNBId=row["eNBId"],
-                            Phy_SiteID_Userlabel=row["Phy SiteID/Userlabel"],
                             tnPortId=row["tnPortId"],
+                            Phy_SiteID_Userlabel=row["Phy SiteID/Userlabel"],
                         )
                         script_path = os.path.join(
                             node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt"
                         )
                         with open(script_path, "a") as file:
-                            file.write(formatted_text + "\n" + kk_GPS_MMS_script)
+                            file.write(formatted_text + "\n")
 
             ######################################################################### GPS/MME Script #######################################################################
             # gps_mme_path = f"01 GPS_MME_script_{node_name}_{current_time}.txt"
@@ -1160,13 +1166,14 @@ def generate_integration_script(request):
             #    with open(script_path,"a") as file:
             #        file.write(kk_GPS_MMS_script + "\n")
             ########################################################################## GPL/LMS Script ###########################################################################
+            
             gpl_lms_path = f"03 GPL_LMS_script_{node_name}_{current_time}.txt"
             #### physical siteID is unique for all node in any circle ######################################################
             Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
             for node in unique_nodes:
                 script_path = os.path.join(create_script_paths(base_path_url, node)["lte"], gpl_lms_path)
                 with open(script_path, "a") as file:
-                    file.write(AS_GPL_LMS_DST_SCRIPT.format(Phy_SiteID_Userlabel = Phy_SiteID_Userlabel) + "\n")
+                    file.write(AS_GPL_LMS_DST_SCRIPT + "\n")
 
             ############################################################################### 5G Cell Scripts ##########################################################################
             # ---------------------------------------------------------------------------------------------------
@@ -1376,6 +1383,7 @@ def generate_integration_script(request):
 
                 rru_type = {
                     "2219": RRU_2219_B0_B1_B3_2X2,
+                    "2279": RRU_2219_B0_B1_B3_2X2,
                     "4412": RRU_4412_4418_4427_4471_4X4,
                     "6626": RRU_6626_6X6,
                     "8863": RRU_8863_8X8,
