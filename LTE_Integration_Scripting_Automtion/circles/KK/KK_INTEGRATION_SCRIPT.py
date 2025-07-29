@@ -2608,6 +2608,23 @@ mmeSupportLegacyLte true
 mmeSupportNbIoT false                                                                                                                                                                                                                                   
 end   
 
+gs+
+#################mme7#################
+crn ENodeBFunction=1,TermPointToMme=KKWHFRHCK02ERPCCMM07
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.103.152.139
+ipAddress2 10.103.152.141
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+
+
+
 set 0 Userlabel {Phy_SiteID_Userlabel}                                                                                       
 """
 
@@ -4398,12 +4415,72 @@ cr Router=.*,DnsClient=1
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
 set Router=.*,DnsClient=1 dscp 28                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
-set . egressQosMarking QosProfiles=1,DscpPcpMap=1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+set . egressQosMarking QosProfiles=1,DscpPcpMap=1 
+
+
+#####################################New Settings##########################
+
+
+lt all
+rbs
+rbs
+set ENodeBFunction=1   x2retryTimerMaxAuto 1440
+set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB1GUtra=1 timeToTriggerB1 480
+set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB1GUtra=1 b1ThresholdRsrp -110
+lbl nrcell
+set NRCellDU=.* advancedDlSuMimoEnabled true
+set nrcelldu=.* csiRsActivePortConfig 2 4
+set nrcelldu=.* csiRsPeriodicity 40
+set CXC4012273 featurestate 1
+set CXC4012547 featurestate 1
+set CXC4012325 featurestate 1
+set CXC4012549	featurestate 1
+set CXC4012493 featurestate 1
+set CXC4012406 featurestate 1
+set CXC4012510 featurestate 1
+set CXC4012375 featurestate 1
+set CXC4012330 featurestate 1
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 dlMaxRetxThreshold 32
+set GNBDUFunction=1,UeCC=1,RadioLinkControl=1,DrbRlc=Default,DrbRlcUeCfg=Base dlMaxRetxThreshold 32
+set GNBDUFunction=1,UeCC=1,DrxProfile=Default,DrxProfileUeCfg=Base drxEnabled        true
+set IntraFreqMC=1,IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base endcActionEvalFail 1
+set IntraFreqMC=1,IntraFreqMCCellProfile=Default,IntraFreqMCCellProfileUeCfg=Base endcActionEvalFail 1
+set nrcelldu=.* endcUlNrLowQualThresh 12
+set nrcelldu=.* endcUlNrQualHyst 6
+set GNBCUUPFunction=1    endcUlNrRetProhibTimer 1000
+set nrcelldu=.* maxNoOfAdvancedDlMuMimoLayers 8
+set nrcellcu=.* mcpcPSCellEnabled true
+set NRCellDU=.* pMax 26
+set GNBDUFunction=1,UeCC=1,Prescheduling=1,PreschedulingUeCfg=Base preschedulingUeMode 1
+set NRCellDU=.* pZeroNomPucch -114
+set NRCellDU=.* pZeroNomPuschGrant 1000
+set NRCellDU=.* pZeroNomSrs -110
+set NRCellDU=.* rachPreambleRecTargetPower -110
+set NRCellDU=.* rachPreambleTransMax 20
+set GNBCUCPFunction=1,AnrFunction=1    removeNrelTime    7
+set IntraFreqMC=1,IntraFreqMCCellProfile=1,IntraFreqMCCellProfileUeCfg=Base rsrpBetterSpCell hysteresis=10
+set NRCellDU=.* secondaryCellOnly false
+set NRCellDU=.* ssbGscn 7811
+set GNBDUFunction=1,Rrc=1 t304 2000
+set GNBDUFunction=1,Rrc=1    t310   2000
+set GNBCUCPFunction=1,UeCC=1,InactivityProfile=Default,InactivityProfileUeCfg=Base tInactivityTimerEndcSn 5
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 tPollRetransmitDl 80
+set GNBDUFunction=1,UeCC=1,RadioLinkControl=1,DrbRlc=Default,DrbRlcUeCfg=Base tPollRetransmitDl 80
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 tPollRetransmitUl 80
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 tPollRetransmitUl 80
+set GNBDUFunction=1,RadioBearerTable=1,SignalingRadioBearer=1 ulMaxRetxThreshold 32
+set GNBDUFunction=1,UeCC=1,RadioLinkControl=1,DrbRlc=Default,DrbRlcUeCfg=Base ulMaxRetxThreshold 32
+set Mcpc=1,McpcPSCellProfile=Default,McpcPSCellProfileUeCfg=Base rsrpCritical threshold=-113
+set Mcpc=1,McpcPSCellProfile=Default_copy,McpcPSCellProfileUeCfg=Base rsrpCritical threshold=-113
+set nrcelldu=.* cellrange 5000
+deb nrcell
+st cell
+end
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
 cvms Post_QOS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
-confbd-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                               
+confbd-                                                                                                                                                                  
 """
 
 

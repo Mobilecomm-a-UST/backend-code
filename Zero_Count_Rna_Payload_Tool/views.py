@@ -1203,8 +1203,7 @@ def kpi_trend_4g_api(request):
 
     date_list = pd.to_datetime(current_dates)
     date_format = sorted([date.strftime("%Y-%m-%d") for date in date_list])
-    print(date_format)
-    date_format_2 = sorted([date.strftime("%Y_%m_%d") for date in date_list])
+    
     current_df.fillna(value=0, inplace=True)
     for col in kpi:
         current_df[col] = current_df[col].astype(float)
