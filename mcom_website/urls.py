@@ -87,6 +87,7 @@ urlpatterns = [
     path("soft_at_5g_summary/", include("soft_at_5g_summary.urls")),
     path ("soft_at_5g_checklist/", include("soft_at_5g_summary.urls")),
     path("twamp_ericsson/", include("twamp_ericsson.urls")),
+    path("mobinate_vs_cats/", include("Mobinet_CATs_TOOL.urls")),
 ]
 
 if settings.DEBUG:

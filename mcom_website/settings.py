@@ -106,7 +106,8 @@ INSTALLED_APPS = [
     "Soft_AT_Checklist_Nokia",
     "LTE_Integration_Scripting_Automtion",
     "soft_at_5g_summary",
-    "gpl_audit_tool_V1_1"
+    "gpl_audit_tool_V1_1",
+    "Mobinet_CATs_TOOL"
 ]
 
 MIDDLEWARE = [

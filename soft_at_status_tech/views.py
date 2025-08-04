@@ -749,7 +749,7 @@ def extract_data_from_log(request):
                                 
                                 if command == "get . fing":
                                     df = df[df["Attribute"].str.contains("fingerprint", na=False)]
-                                print(df)
+                                # print(df)
                                 node_dfs.append(df)
 
                             if not node_dfs:
@@ -802,19 +802,30 @@ def extract_data_from_log(request):
             for sheet_name in xls.sheet_names:
                 if sheet_name == "st cell":
                     df = xls.parse(sheet_name)
+                    # Strip whitespace from column names to avoid hidden spaces
+                    df.columns = df.columns.str.strip()
+                    print(f"Columns in '{sheet_name}':", df.columns.tolist())
+
+                    if 'MO' not in df.columns:
+                        print(f"'MO' column missing in sheet '{sheet_name}', skipping...")
+                        continue
+
+                    # Extract circle
                     circle = df["MO"].str.extract(r"EUtranCell(?:FDD|TDD)=([A-Z]{2})_")
                     layer = df["MO"].str.extract(r"EUtranCell(?:FDD|TDD)=\w+_(F\d|T\d)")[0]
-                    print("layer:", layer)  
-                    circle_clean = circle.dropna()
+                    print("layer:", layer)
 
+                    circle_clean = circle.dropna()
                     if not circle_clean.empty:
                         circle_value = circle_clean.iloc[0, 0].strip()
                     else:
                         circle_value = None
                     template_df.loc[0, 'Circle'] = circle_value
                     print("Circle:", circle_value)
+
                     layer_value = '_'.join(layer.dropna().unique()) if not layer.dropna().empty else "NA"
                     print("Layer Value:", layer_value)
+
                     layer_mapping = {
                         "F1": "L2100",
                         "F3": "L1800",
@@ -823,65 +834,52 @@ def extract_data_from_log(request):
                         "T2": "L2300",
                         "F5": "L850",
                     }
-                    l_layers = [
-                        layer_mapping.get(l, l) for l in layer_value.split("_")
-                    ]
+                    l_layers = [layer_mapping.get(l, l) for l in layer_value.split("_")]
                     l_layers = list(set(l_layers))
                     template_df.loc[0, "Layers(Other Tech Info)"] = "_".join(l_layers)
                     print("Layer Value:", l_layers)
-                
-                site_ids = (
-                    df["MO"].str.extract(r"EUtranCell(?:FDD|TDD)=([\w_]+)")[0].dropna()
-                )
-                for site_value in site_ids:
-                    parts = site_value.split("_")
-                    if len(parts) >= 5:
-                        site = parts[4]
-                        if site.startswith("X"):
-                        # or site.startswith("X"):
-                            site = site[1:]
-                        if site[-1].isalpha():
-                            site = site[:-1]
-                        template_df.loc[0, "2G Site ID"] = site
-                        # print("2G SiteID:",site)
 
-                ant = df["MO"].str.extract(
-                    r"EUtranCell(?:FDD|TDD)=[^\s,=]*([A-Z]_[A-Z])\b"
-                ).dropna()
-                ant = [val for val in ant[0].unique() if val.split("_")[0] == val.split("_")[1]]
+                    # Extract site IDs
+                    site_ids = df["MO"].str.extract(r"EUtranCell(?:FDD|TDD)=([\w_]+)")[0].dropna()
+                    for site_value in site_ids:
+                        parts = site_value.split("_")
+                        if len(parts) >= 5:
+                            site = parts[4]
+                            if site.startswith("X"):
+                                site = site[1:]
+                            if site[-1].isalpha():
+                                site = site[:-1]
+                            template_df.loc[0, "2G Site ID"] = site
+                            # print("2G SiteID:", site)
 
-                total_antennas = len(ant)
-                print("Total unique antenna letters:", total_antennas)
-                template_df.loc[0, "Antenna"] = (total_antennas)
-                print("Antenna:", template_df.loc[0, "Antenna"])
-                cell_config = df["MO"].str.extract(
-                    r"EUtranCell(?:FDD|TDD)=\w+([FT]\d)"
-                )[0]
-                cell_mapping = {
-                    "F1": "L21",
-                    "F3": "L18",
-                    "F8": "L9",
-                    "T1": "L23",
-                    "T2": "L23",
-                    "F5": "L85",
-                }
-                source_counts = cell_config.dropna().value_counts()
-                band_counts_df = pd.DataFrame(
-                    {
+                    # Extract antennas
+                    ant = df["MO"].str.extract(r"EUtranCell(?:FDD|TDD)=[^\s,=]*([A-Z]_[A-Z])\b").dropna()
+                    ant = [val for val in ant[0].unique() if val.split("_")[0] == val.split("_")[1]]
+                    total_antennas = len(ant)
+                    print("Total unique antenna letters:", total_antennas)
+                    template_df.loc[0, "Antenna"] = total_antennas
+                    print("Antenna:", template_df.loc[0, "Antenna"])
+
+                    # Extract cell config
+                    cell_config = df["MO"].str.extract(r"EUtranCell(?:FDD|TDD)=\w+([FT]\d)")[0]
+                    cell_mapping = {
+                        "F1": "L21",
+                        "F3": "L18",
+                        "F8": "L9",
+                        "T1": "L23",
+                        "T2": "L23",
+                        "F5": "L85",
+                    }
+                    source_counts = cell_config.dropna().value_counts()
+                    band_counts_df = pd.DataFrame({
                         "band": cell_config.dropna().map(cell_mapping),
                         "count": cell_config.dropna().map(source_counts),
-                    }
-                )
-                final_band_counts = (
-                    band_counts_df.groupby("band")["count"].max().sort_index()
-                )
+                    })
+                    final_band_counts = band_counts_df.groupby("band")["count"].max().sort_index()
 
-                formatted_config = "+".join(
-                    f"{band}({count})" for band, count in final_band_counts.items()
-                )
-
-                # print("Formatted LTE Config:", formatted_config)
-                combined_config = formatted_config  # default to formatted_config
+                    formatted_config = "+".join(f"{band}({count})" for band, count in final_band_counts.items())
+                    print("Formatted LTE Config:", formatted_config)
+                    combined_config = formatted_config  # default to formatted_config
 
 
                 if "st trx" in xls.sheet_names:
@@ -925,15 +923,6 @@ def extract_data_from_log(request):
                     else:
                         # No TRX info found
                         l_layers_replaced = l_layers if l_layers else []
-                    # ADDITION: Check for presence of G1800/G900 etc. in the MO column even if not in l_layers
-                    # if mask_trx_alphanumeric.any() or mask_trx_numeric.any():
-                    #     trx_layers = set()
-                    #     trx_matches = df["MO"].str.extract(r"Trx=G(\d+)", expand=False)
-                    #     for band in trx_matches.dropna().unique():
-                    #         trx_layers.add(f"GL{band}")
-                    #     for layer in trx_layers:
-                    #         if layer not in l_layers_replaced:
-                    #             l_layers_replaced.append(layer)
                         
                     circle_value = template_df.loc[0, "Circle"] if "Circle" in template_df.columns else None
 
@@ -952,6 +941,9 @@ def extract_data_from_log(request):
                     combined_layers = "_".join(sorted(set(l_layers_replaced))) if l_layers_replaced else "NA"
                     template_df.loc[0, "Layers(Other Tech Info)"] = combined_layers
                     print("Layers(Other Tech Info):", combined_layers)
+                
+                else:
+                    template_df.loc[0, "Layers(Other Tech Info)"] = "NA"
 
                 MO_name_0 = "NA"
 
@@ -1170,26 +1162,9 @@ def extract_data_from_log(request):
                     MO = MO.dropna().iloc[:, 0].tolist()
                     print("Filtered MOs:", MO)
 
-                    if MO:
-                        # Group MOs by base name (excluding last 3 characters)
-                        grouped = {}
-                        for mo in MO:
-                            base = mo[:-3]
-                            suffix = mo[-3:]
-                            if base not in grouped:
-                                grouped[base] = [suffix]
-                            else:
-                                grouped[base].append(suffix)
-
-                        # Reconstruct MOs with grouped suffixes
-                        result_list = [base + "&".join(suffixes) for base, suffixes in grouped.items()]
-                        result = ",".join(result_list)
-                        template_df.loc[0, "RET Configuration (Cell Name)"] = result
-                    else:
-                        result = "NA"
-                        template_df.loc[0, 'RET Configuration (Cell Name)'] = result
-
-                    print("RET Configuration (Cell Name):", result)
+                    # Ensure correct dtypes
+                    template_df["RET Configuration (Cell Name)"] = template_df["RET Configuration (Cell Name)"].astype(object)
+                    template_df["RET Configured on (Layer)"] = template_df["RET Configured on (Layer)"].astype(object)
 
                     RTT_map = {
                         "F1": "L2100",
@@ -1199,80 +1174,47 @@ def extract_data_from_log(request):
                         "T2": "L2300",
                         "F5": "L850",
                     }
-                    # Extract unique layer types from grouped result
-                    layers_found = set()
-                    for base in grouped.keys():
-                        for key in RTT_map:
-                            if key in base:
-                                layers_found.add(RTT_map[key])
-                                break
 
-                    if layers_found:
-                        RTT_cell = "_".join(sorted(layers_found))
+                    if MO:
+                        # Group MOs by base name
+                        grouped = {}
+                        for mo in MO:
+                            base = mo[:-3]
+                            suffix = mo[-3:]
+                            grouped.setdefault(base, []).append(suffix)
+
+                        # Reconstruct MOs
+                        result_list = [base + "&".join(suffixes) for base, suffixes in grouped.items()]
+                        result = ",".join(result_list)
+                        template_df.loc[0, "RET Configuration (Cell Name)"] = result
+                        print("RET Configuration (Cell Name):", result)
+
+                        # Extract unique layer types
+                        layers_found = {
+                            RTT_map[key]
+                            for base in grouped.keys()
+                            for key in RTT_map
+                            if key in base
+                        }
+
+                        RTT_cell = "_".join(sorted(layers_found)) if layers_found else "NA"
+                        template_df.loc[0, "RET Configured on (Layer)"] = RTT_cell
+                        print("RET Configured on (Layer):", RTT_cell)
+
                     else:
-                        RTT_cell = "NA"
-
-                    template_df.loc[0, "RET Configured on (Layer)"] = RTT_cell
-                    print("RET Configured on (Layer):", RTT_cell)
-
+                        result = "NA"
+                        template_df.loc[0, "RET Configuration (Cell Name)"] = result
+                        template_df.loc[0, "RET Configured on (Layer)"] = "NA"
+                
+                
                 else:
-                    template_df.loc[0, "RET Configured on (Layer)"] = "NA"
+                    # One or both sheets not found – set default values
                     template_df.loc[0, "RET Configuration (Cell Name)"] = "NA"
+                    template_df.loc[0, "RET Configured on (Layer)"] = "NA"
 
-                # if "st ret" in xls.sheet_names and "get . sectorc" in xls.sheet_names:
-
-                #     df_st = xls.parse("st ret")
-                #     df_st['MO'] = df_st['MO'].astype(str)
-                #     df_st['AntennaUnitGroup'] = df_st['MO'].str.extract(r'AntennaUnitGroup=(\d+)')
-                #     # df_st["AntennaUnitGroup"] = df_st["MO"].str.extract(
-                #     #     r"AntennaUnitGroup=(\d+)"
-                #     # )
-                #     valid_groups = df_st["AntennaUnitGroup"].dropna().unique()
-
-                #     df_sec = xls.parse("get . sectorc")
-                #     df_sec["SectorCarrier"] = df_sec["Value"].str.extract(
-                #         r"SectorCarrier=(\d+)"
-                #     )
-                #     df_filtered = df_sec[df_sec["SectorCarrier"].isin(valid_groups)]
-
-                #     MO = df_filtered["MO"].str.extract(r"=([\w\d_]+)")
-                #     MO = MO.dropna().iloc[:, 0].tolist()
-                #     print("Filtered MOs:", MO)
-
-                #     if MO:
-                #         base = str(MO[0])[:-3]
-                #         print("base:", base)
-                #         suffixes = [str(s)[len(base) :] for s in MO]
-                #         print("suffixes:", suffixes)
-                #         result = base + "&".join(suffixes)
-                #         template_df.loc[0, "RET Configuration (Cell Name)"] = result
-                #     else:
-                #         result = "NA"
-                #         template_df.loc[0, 'RET Configuration (Cell Name)'] = result
-                #     print("RET Configuration (Cell Name):", result)
-                #     RTT_map = {
-                #         "F1": "L2100",
-                #         "F3": "L1800",
-                #         "F8": "L900",
-                #         "T1": "L2300",
-                #         "T2": "L2300",
-                #         "F5": "L850",
-                #     }
-
-                #     RTT_cell = "NA"
-                #     for key in RTT_map.keys():
-                #         if key in result:
-                #             RTT_cell = RTT_map[key]
-                #             break
-
-                #     template_df.loc[0, "RET Configured on (Layer)"] = RTT_cell
-
-                # else:
-                #     template_df.loc[0, "RET Configured on (Layer)"] = "NA"
-                #     template_df.loc[0, "RET Configuration (Cell Name)"] = "NA"
-
-                if sheet_name == "get . maxtx":
-                    df_maxtx = xls.parse(sheet_name)
+                required_sheets = ["get . maxtx", "get . nooftx", "get . sectorc"]
+                if all(sheet in xls.sheet_names for sheet in required_sheets):
+                    df_maxtx = xls.parse("get . maxtx")
                     df_nooftx = xls.parse("get . nooftx")
                     df_sectorc = xls.parse("get . sectorc")
                     output = ""
@@ -1319,6 +1261,10 @@ def extract_data_from_log(request):
                         output = ", ".join(sorted(set(output_parts)))
                         print("MIMO Power configuration:", output)
                         template_df.loc[0, "MIMO Power configuration"] = output if output else "NA"
+                    
+                else:
+                    template_df.loc[0, "MIMO Power configuration"] = "NA"
+
 
 
                 if sheet_name == "get . fing":
