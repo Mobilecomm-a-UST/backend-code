@@ -1080,7 +1080,7 @@ def overall_record_summary(request):
         GROUP BY 
             "OEM";
 
-         """
+        """
         cursor.execute(query)
         results = cursor.fetchall()
         # print(results)        
@@ -1145,11 +1145,11 @@ def delete_integration_record(request, pk):
 def integration_table_update(request, id=None):
     user = request.user.username
     print("username: ", user)
-    nokia_spocks=['chandan.kumar@mcpsinc.com','nishant.verma@mcpsinc.in','girraj.singh@mcpsinc.in','mohit.batra@mcpsinc.com','abhishek.gupta']
-    zte_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
-    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com','abhishek.gupta']
-    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com', 'abhishek.gupta']
-    ericsson_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta']
+    nokia_spocks=['chandan.kumar@mcpsinc.com','Prerna.PramodKumar@ust.com','girraj.singh@mcpsinc.in','mohit.batra@mcpsinc.com','abhishek.gupta']
+    zte_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta','Prerna.PramodKumar@ust.com']
+    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com','abhishek.gupta', 'Prerna.PramodKumar@ust.com']
+    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com', 'abhishek.gupta', 'Prerna.PramodKumar@ust.com']
+    ericsson_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta', 'Prerna.PramodKumar@ust.com']
   
     if request.method == 'PUT':
         try:
