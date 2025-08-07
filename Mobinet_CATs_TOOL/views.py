@@ -176,48 +176,128 @@ timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 #     except Exception as e:
 #         return Response({'error': str(e)}, status=500)
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+import os
+from django.conf import settings
+
+# Ensure MEDIA_ROOT is set properly
+MEDIA_ROOT = settings.MEDIA_ROOT  # e.g., BASE_DIR / 'media'
+
+@api_view(['POST', 'GET' , 'DELETE'])
+def upload_mobinet_dumps(request):
+    try:
+        mobinet_data_path = os.path.join(MEDIA_ROOT, 'mobinet_dump_data')
+        os.makedirs(mobinet_data_path, exist_ok=True)
+
+        if request.method == 'POST':
+            files = request.FILES.getlist('mobinet_dumps')
+            if not files:
+                return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+            for f in files:
+                file_path = os.path.join(mobinet_data_path, f.name)
+                with open(file_path, 'wb+') as destination:
+                    for chunk in f.chunks():
+                        destination.write(chunk)
+
+            return Response({'status': True, 'message': 'Files uploaded and saved successfully'}, status=status.HTTP_200_OK)
+
+        elif request.method == 'GET':
+            if not os.path.exists(mobinet_data_path):
+                return Response({'files': []}, status=status.HTTP_200_OK)
+
+            files = os.listdir(mobinet_data_path)
+            return Response({
+                'status': True,
+                'message': f'{len(files)} Files found in mobinet_dump_data folder',
+                'files': files,
+                }, status=status.HTTP_200_OK)
+            
+        elif request.method == 'DELETE':
+            if not os.path.exists(mobinet_data_path):
+                return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+            deleted_files = []
+            for filename in os.listdir(mobinet_data_path):
+                file_path = os.path.join(mobinet_data_path, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    deleted_files.append(filename)
+
+            return Response({
+                'status': True,
+                'message': f'{len(deleted_files)} Files deleted successfully',
+                'deleted_files': deleted_files
+            }, status=status.HTTP_200_OK)
+            
+              
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
+       
         
         
 # Frist Api for mobinet_dump site_match and hw_files-------------
 @api_view(['POST'])
 def mobinet_dump(request):
+    print("Start Process_________")
     try:
-        # Read log files (CSV or Excel)
-        log_files = request.FILES.getlist('log_files')
-        if not log_files:
-            return Response({"error": "log files not provided"}, status=400)
- 
+        # Read files from mobinet_dump_data folder-------------
+        mobinet_log_folder = os.path.join(settings.MEDIA_ROOT, 'mobinet_dump_data')
+
+        if not os.path.exists(mobinet_log_folder):
+            return Response({"error": "mobinet_dump_data folder not found"}, status=400)
+
         log_df_list = []
-        for file in log_files:
+        for file in os.listdir(mobinet_log_folder):
+            file_path = os.path.join(mobinet_log_folder, file)
+
+            if not os.path.isfile(file_path):
+                continue  # skip subfolders
+
             try:
-                df = read_file(file)
+                if file_path.endswith('.csv'):
+                   df = pd.read_csv(file_path)
+                elif file_path.endswith(('.xls', '.xlsx')):
+                    df = pd.read_excel(file_path, engine='openpyxl')
+                else:
+                    return Response({"error": f"Unsupported file format: {file}"}, status=400)
                 log_df_list.append(df)
-            except ValueError as e:
-                return Response({"error": str(e)}, status=500)
+            except Exception as e:
+                return Response({"error": f"Error in file {file}: {str(e)}"}, status=500)
+
+        if not log_df_list:
+            return Response({"error": "No valid log files found"}, status=400)
+
         log_df = pd.concat(log_df_list, ignore_index=True)
- 
+        print("Concatenated log_df columns:", log_df.columns)
+        
+        
+        
+
         # Read site list file (CSV or Excel)
         site_list_file = request.FILES.get("site_list")
         if not site_list_file:
             return Response({"error": "site_list file not provided"}, status=400)
- 
+
         try:
             site_df = read_file(site_list_file)
-            # Optional: If sheet name needed specifically for Excel:
             if site_list_file.name.endswith(('.xls', '.xlsx')):
                 site_df = pd.read_excel(site_list_file, engine='openpyxl')
-                site_df.columns = site_df.columns.str.strip()
-               
+            site_df.columns = site_df.columns.str.strip()
         except ValueError as e:
             return Response({"error": str(e)}, status=500)
-       
-        # Get multiple hw_files---
+
+        # Read multiple hw_files
         hw_files = request.FILES.getlist("hw_file")
         if not hw_files:
             return Response({"error": "hw_files not provided"}, status=400)
- 
+
         hw_df_list = []
         for hw_file in hw_files:
             try:
@@ -225,14 +305,14 @@ def mobinet_dump(request):
                 df.columns = df.columns.str.strip()
                 hw_df_list.append(df)
             except Exception as e:
-                return Response({"error": f"error reading one of the hw_files: {str(e)}"}, status=500)
+                return Response({"error": f"Error reading one of the hw_files: {str(e)}"}, status=500)
+
         hw_df = pd.concat(hw_df_list, ignore_index=True)
- 
 
         # Strip and match values
         log_df['Parent Site'] = log_df['Parent Site'].astype(str).str.strip()
         site_df['Unique ID'] = site_df['Unique ID'].astype(str).str.strip()
- 
+
         # Merge logs with site list
         matched_df = pd.merge(
             log_df,
@@ -241,17 +321,17 @@ def mobinet_dump(request):
             left_on='Parent Site',
             right_on='Unique ID'
         )
+        print("Matched DF:")
         print(matched_df)
-        # Unmatched sites.......
+
+        # Unmatched sites
         unmatched_df = site_df.loc[
             ~site_df['Unique ID'].isin(log_df['Parent Site']), ['Unique ID']
         ].copy()
- 
         unmatched_df.rename(columns={'Unique ID': 'Unmatched Unique ID'}, inplace=True)
-       
-        print("Unmatched Unique IDs:____________________")
+        print("Unmatched Unique IDs:")
         print(unmatched_df)
- 
+
         # Merge with HW file
         matchedhw_df = pd.merge(
             matched_df,
@@ -260,63 +340,56 @@ def mobinet_dump(request):
             left_on='Board Model',
             right_on='Module Name'
         )
-        print(matchedhw_df)
         matchedhw_df.drop(columns='Module Name', inplace=True)
-       
-        #remove blank and - data in serial number
-        matchedhw_df = matchedhw_df[matchedhw_df['Serial Number'].notna() & (matchedhw_df['Serial Number'].astype(str).str.strip() != '') &
-                                        (matchedhw_df['Serial Number'].astype(str).str.strip() != '-')]
-     
+
+        # Remove blank and '-' data in serial number
+        matchedhw_df = matchedhw_df[
+            matchedhw_df['Serial Number'].notna() &
+            (matchedhw_df['Serial Number'].astype(str).str.strip() != '') &
+            (matchedhw_df['Serial Number'].astype(str).str.strip() != '-')
+        ]
+
         matchedhw_df['Site+Module'] = matchedhw_df['Parent Site'].astype(str).str.strip() + "_" + matchedhw_df['Board Model'].astype(str).str.strip()
-       
         matchedhw_df['Site+Serial'] = matchedhw_df['Parent Site'].astype(str).str.strip() + "_" + matchedhw_df['Serial Number'].astype(str).str.strip()
-       
         matchedhw_df.drop_duplicates(subset='Serial Number', inplace=True)
-       
-        data_count=matchedhw_df.copy()
-       
+
+        # Count serial numbers per Site+Module
+        data_count = matchedhw_df.copy()
         summary_df = (
             data_count.groupby("Site+Module", as_index=False)
-            .agg({
-                "Serial Number": "count"
-            })
-            .rename(columns={
-                "Serial Number": "Serial Number_count"
-            })
+            .agg({"Serial Number": "count"})
+            .rename(columns={"Serial Number": "Serial Number_count"})
         )
- 
+        print("Summary DF:")
         print(summary_df)
-       
- 
-        # sn_count = matchedhw_df.groupby('Site+Module')['Serial Number'].nunique()
-        # matchedhw_df['Serial Number Count'] = matchedhw_df['Site+Module'].map(sn_count)
-        # matchedhw_df.drop_duplicates(subset='Site+Module', inplace=True)
-       
- 
+
+        # Export Excel
         output_dir = os.path.join(main_folder, 'Mobinet_Summary_output')
         os.makedirs(output_dir, exist_ok=True)
         delete_existing_files(output_dir)
+
         filename = f"mobinet_summary_data_{timestamp}.xlsx"
         output_path = os.path.join(output_dir, filename)
+
         with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
-         final_excel(summary_df, writer, sheet_name='Mobinet_Summary')  
-         final_excel(data_count, writer, sheet_name='Mobinet_Backup_Data')
-         final_excel(unmatched_df, writer, sheet_name='Unmatched_Site_IDs')
- 
-           
-        # Generate download URL----------
+            final_excel(summary_df, writer, sheet_name='Mobinet_Summary')
+            final_excel(data_count, writer, sheet_name='Mobinet_Backup_Data')
+            final_excel(unmatched_df, writer, sheet_name='Unmatched_Site_IDs')
+
+        # Generate download URL
         relative_path = os.path.relpath(output_path, MEDIA_ROOT)
         download_url = request.build_absolute_uri(os.path.join(MEDIA_URL, relative_path).replace("\\", "/"))
         print("End Process_________")
- 
+
         return Response({
             "status": True,
             "message": "File saved successfully",
             "download_url": download_url
         })
+
     except Exception as e:
         return Response({"error": f"find an error: {str(e)}"}, status=500)
-   
+
    
    
     
