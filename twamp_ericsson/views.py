@@ -252,7 +252,7 @@ def twamp_data(request):
             os.makedirs(log_excel_folder, exist_ok=True)
       else:
             try:
-                  shutil.rmtree(log_excel_folder, onexc=on_rm_error)
+                  shutil.rmtree(log_excel_folder, onerror=on_rm_error)
                   os.makedirs(log_excel_folder, exist_ok=True)
             except PermissionError as e:
                   print("Permission denied:- ", str(e))

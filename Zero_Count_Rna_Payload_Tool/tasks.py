@@ -68,7 +68,7 @@ def level_wise_mail_notification():
                                 Ageing: {p0_record.aging}
                                 Date: {p0_record.Date}
                                 Priority: {p0_record.priority}
-                                TOOL LINK: "http://103.242.225.195:3000/"
+                                TOOL LINK: "http://122.176.141.197:3000/"
 
                                 Please review the details and take necessary action.
 
@@ -116,7 +116,7 @@ def level_wise_mail_notification():
                                 Ageing: {p0_record.aging}
                                 Date: {p0_record.Date}
                                 Priority: {p0_record.priority}
-                                TOOL LINK: "http://103.242.225.195:3000/"
+                                TOOL LINK: "http://122.176.141.197:3000/"
 
                                 Please review the details and take necessary action.
 
@@ -162,7 +162,7 @@ def level_wise_mail_notification():
                                 Ageing: {p0_record.aging}
                                 Date: {p0_record.Date}
                                 Priority: {p0_record.priority}
-                                TOOL LINK: "http://103.242.225.195:3000/"
+                                TOOL LINK: "http://122.176.141.197:3000/"
 
                                 Please review the details and take necessary action.
 
@@ -235,7 +235,7 @@ def level_wise_mail_notification():
                                 Ageing: {p1_record.aging}
                                 Date: {p1_record.Date}
                                 Priority: {p1_record.priority}
-                                TOOL LINK: "http://103.242.225.195:3000/"
+                                TOOL LINK: "http://122.176.141.197:3000/"
 
                                 Please review the details and take necessary action.
 
@@ -283,7 +283,7 @@ def level_wise_mail_notification():
                                 Ageing: {p1_record.aging}
                                 Date: {p1_record.Date}
                                 Priority: {p1_record.priority}
-                                TOOL LINK: "http://103.242.225.195:3000/"
+                                TOOL LINK: "http://122.176.141.197:3000/"
 
                                 Please review the details and take necessary action.
 
@@ -329,7 +329,7 @@ def level_wise_mail_notification():
                                 Ageing: {p1_record.aging}
                                 Date: {p1_record.Date}
                                 Priority: {p1_record.priority}
-                                TOOL LINK: "http://103.242.225.195:3000/"
+                                TOOL LINK: "http://122.176.141.197:3000/"
 
                                 Please review the details and take necessary action.
 
@@ -400,7 +400,7 @@ def level_wise_mail_notification():
                                 Ageing: {p2_record.aging}
                                 Date: {p2_record.Date}
                                 Priority: {p2_record.priority}
-                                TOOL LINK: "http://103.242.225.195:3000/"
+                                TOOL LINK: "http://122.176.141.197:3000/"
 
                                 Please review the details and take necessary action.
 
@@ -448,7 +448,7 @@ def level_wise_mail_notification():
                                 Ageing: {p2_record.aging}
                                 Date: {p2_record.Date}
                                 Priority: {p2_record.priority}
-                                TOOL LINK: "http://103.242.225.195:3000/"
+                                TOOL LINK: "http://122.176.141.197:3000/"
 
                                 Please review the details and take necessary action.
 
@@ -494,7 +494,7 @@ def level_wise_mail_notification():
                                 Ageing: {p2_record.aging}
                                 Date: {p2_record.Date}
                                 Priority: {p2_record.priority}
-                                TOOL LINK: "http://103.242.225.195:3000/"
+                                TOOL LINK: "http://122.176.141.197:3000/"
 
                                 Please review the details and take necessary action.
 

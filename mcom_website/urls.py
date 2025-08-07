@@ -79,7 +79,6 @@ urlpatterns = [
     path("universal_alarm/", include("universal_alarm.urls")),
     path("dpr/sdir_status/", include("Daily_Alarm_Status.urls")),
     path("LKF/", include("LKF_StatusApp.urls")),
-    path("gpl_audit/", include("gpl_audit_tool.urls")),
     path('soft_at_status/', include('soft_at_status_tech.urls')),
     path("gpl_audit/", include("gpl_audit_tool_V1_1.urls")),
     path("Soft_AT_Checklist_Ericsson/", include("Soft_AT_Checklist_Ericsson.urls")),
@@ -88,6 +87,7 @@ urlpatterns = [
     path("soft_at_5g_summary/", include("soft_at_5g_summary.urls")),
     path ("soft_at_5g_checklist/", include("soft_at_5g_summary.urls")),
     path("twamp_ericsson/", include("twamp_ericsson.urls")),
+    path("mobinate_vs_cats/", include("Mobinet_CATs_TOOL.urls")),
 ]
 
 if settings.DEBUG:

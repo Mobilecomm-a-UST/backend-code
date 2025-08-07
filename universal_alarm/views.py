@@ -214,7 +214,7 @@ def upload_5g_log_file(request):
         alarm_pattern = re.compile(r'''
             ^\s*
             (?P<dt>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})
-            \s+(?P<sev>[Mm])
+            \s+(?P<sev>[A-z])
             \s+(?P<prob>.+?)
             \s+(?P<mo>[^()]+?)
             (?:\s*\(\s*(?P<add>.*?)\))?
@@ -456,7 +456,7 @@ def upload_4g_log_file(request):
         alarm_pattern = re.compile(r'''
             ^\s*
             (?P<dt>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})   
-            \s+(?P<sev>[Mm])                               
+            \s+(?P<sev>[A-z])                               
             \s+(?P<prob>.+?)                              
             \s+(?P<mo>[^()]+?)                             
             (?:\s*\(\s*(?P<add>.*?)\))?                  
