@@ -252,7 +252,7 @@ def twamp_data(request):
             os.makedirs(log_excel_folder, exist_ok=True)
       else:
             try:
-                  shutil.rmtree(log_excel_folder, onerror=on_rm_error)
+                  shutil.rmtree(log_excel_folder, onexc=on_rm_error)
                   os.makedirs(log_excel_folder, exist_ok=True)
             except PermissionError as e:
                   print("Permission denied:- ", str(e))
@@ -279,7 +279,7 @@ def twamp_data(request):
 
                         
             hget_address_ipv4_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\shget\s+address\s+address',
+                  r'[A-Z0-9_-]+>\shget\s+address|Address\s+address|Address',
                   r'(MO)\s+(address)\s+(addressIPv4Id)\s+(primaryAddress)\s+(usedAddress)',
                   r'\s*(Router=\S+,InterfaceIPv4=\S+,AddressIPv4=\S+)\s+(\d{1,3}(?:\.\d{1,3}){3}\/\d+)\s+(\S+)\s+(true|false)\s+(\d{1,3}(?:\.\d{1,3}){3}\/\d+)$',
                   r'^Total:\s\d+',
@@ -313,7 +313,8 @@ def twamp_data(request):
                   
                   if "MO" in df.columns:
                         # Filter rows where MO column contains 'AddressIPv4=TN_B_CP'
-                        ControlPlane = df["MO"].str.contains(r"AddressIPv4=TN_[A-Za-z0-9]_CP", na=False)
+                        ControlPlane = df["MO"].str.contains(r"AddressIPv4=\S+_CP", na=False)
+                        print("____________________________________",ControlPlane)
                         if ControlPlane.any():
                               matched_address = df.loc[ControlPlane, "address"].str.split("/").str[0].values[0]
                               template_df.loc[0, "ControlPlane"] = matched_address
@@ -321,7 +322,7 @@ def twamp_data(request):
                               template_df.loc[0, "ControlPlane"] = "Missing"
 
                         # Filter rows where MO column contains 'AddressIPv4=TN_B_UP'
-                        UserPlane = df["MO"].str.contains(r"AddressIPv4=TN_[A-Za-z0-9]_UP", na=False)
+                        UserPlane = df["MO"].str.contains(r"AddressIPv4=\S+_UP", na=False)
                         if UserPlane.any():
                               matched_address = df.loc[UserPlane, "address"].str.split("/").str[0].values[0]
                               template_df.loc[0, "UserPlane"] = matched_address
@@ -329,7 +330,7 @@ def twamp_data(request):
                               template_df.loc[0, "UserPlane"] = "Missing"
 
                         # Filter rows where MO column contains 'AddressIPv4|AddressIPv6=TN_B_OAM'
-                        OAM = df["MO"].str.contains(r"AddressIPv4|AddressIPv6=TN_[A-Za-z0-9]_OAM", na=False)
+                        OAM = df["MO"].str.contains(r"AddressIPv4|AddressIPv6=\S+_OAM", na=False)
                         if OAM.any():
                               matched_address = df.loc[OAM, "address"].str.split("/").str[0].values[0]
                               template_df.loc[0, "Mplane IP"] = matched_address
@@ -339,6 +340,19 @@ def twamp_data(request):
                         template_df.loc[0, "ControlPlane"] = "Missing"
                         template_df.loc[0, "UserPlane"] = "Missing"
                         template_df.loc[0, "Mplane IP"] = "Missing"
+
+
+                  if circle == "KK":
+                        all_plane = df["MO"].str.contains(r"AddressIPv6=X2_ENDC", na=False)
+                        if all_plane.any():
+                              matched_address = df.loc[all_plane, "address"].str.split("/").str[0].values[0]
+                              template_df.loc[0, "ControlPlane"] = matched_address
+                              template_df.loc[0, "UserPlane"] = matched_address
+                              template_df.loc[0, "Mplane IP"] = matched_address
+                        else:
+                              template_df.loc[0, "ControlPlane"] = "Missing"
+                              template_df.loc[0, "UserPlane"] = "Missing"
+                              template_df.loc[0, "Mplane IP"] = "Missing"
 
                   template_df.loc[0, "Circle"] = circle
                   if 'Node_ID' in df.columns:
