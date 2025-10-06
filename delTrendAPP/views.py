@@ -1,3 +1,4 @@
+##updated Del Trend code-----
 import pandas as pd
 import datetime
 from datetime import date, timedelta
@@ -13,10 +14,62 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import openpyxl as xl
 from commom_utilities.utils import *
+from zipfile import ZipFile, ZIP_DEFLATED
+from django.conf import settings
 import os
+import shutil
+import zipfile
 
-import glob
+def mark_rows_vectorized(df):
+    specified_columns = [
+        "Short name",
+        "date",
+        "MV Freq_Band",
+        "Freq_Bandwidth",
+        "4G_ECGI"
+    ]
+    complete_empty_mask = (
+        df[specified_columns].isnull()
+        | (df[specified_columns] == 0)
+        | (df[specified_columns] == "")
+    ).all(axis=1)
+    non_specified_columns = df.columns.difference(specified_columns)
+    partial_empty_mask = (
+        df[non_specified_columns].isnull()
+        | (df[non_specified_columns] == 0)
+        | (df[non_specified_columns] == "")
+    ).all(axis=1)
+    df["mark_value"] = "non_empty"
+    df.loc[complete_empty_mask, "mark_value"] = "complete_empty"
+    df.loc[partial_empty_mask & ~complete_empty_mask, "mark_value"] = "partial"
 
+    new_column_order = specified_columns + [col for col in df.columns if col not in specified_columns]
+    df = df[new_column_order]
+
+    # Save to Excel
+    # df.to_excel("marked_data.xlsx", index=False)
+
+
+    return df["mark_value"]
+
+
+def process_remove_duplicates(data):
+    # data = data.drop(columns=["id"], axis=1)
+
+    print(data.columns[4:])
+
+    columns_to_convert = data.columns[4:]
+    data[columns_to_convert] = data[columns_to_convert].apply(
+        pd.to_numeric, errors="coerce"
+    )
+
+    data["mark_value"] = mark_rows_vectorized(data)
+
+    # data.to_csv("data.csv", index=False)
+
+    data = data[data["mark_value"] != "partial"]
+
+    return data
 
 @api_view(["POST"])
 def old_del_trend(request):
@@ -115,6 +168,8 @@ def old_del_trend(request):
 
     df_raw_kpi_4G["Short name"].fillna(inplace=True, method="ffill")
     df_raw_kpi_4G.rename(columns={"Unnamed: 1": "date"}, inplace=True)
+    df_raw_kpi_4G.rename(columns={"Date": "date"}, inplace=True)
+    df_raw_kpi_4G=process_remove_duplicates(df_raw_kpi_4G)
 
 
     lis = list(df_raw_kpi_4G["Short name"])
@@ -178,6 +233,7 @@ def old_del_trend(request):
     def perticular_tech(tech, site_list):
 
         print(type(df_raw_kpi_4G['ENBID'][0]))
+        print(df_raw_kpi_4G.columns)
         
 
         df_filtered = df_raw_kpi_4G[
@@ -191,18 +247,24 @@ def old_del_trend(request):
         
         for col in df_filtered.columns:
             if col not in ['Shortname', 'SITE_ID', 'CELL_ID', 'ENBID', 'add', 'date', 'MV Freq_Band', 'SECTOR']:
-                df_filtered[col] = pd.to_numeric(df_filtered[col], errors='coerce')
-
+             df_filtered[col] = df_filtered[col].astype(str).str.replace(",", "").str.strip()
+             df_filtered[col] = pd.to_numeric(df_filtered[col], errors='coerce')
         
 
         PsOs_filter = os.path.join(
             door_path, "process_outputs", "last_filtered_input.xlsx"
         )
 
+       # Better pivot_table call
         df_pivoted = df_filtered.pivot_table(
-            index=["SITE_ID", "Shortname", "CELL_ID", "ENBID", "SECTOR"], columns="date"
+            index=["SITE_ID", "Shortname", "CELL_ID", "ENBID", "SECTOR"],
+            columns="date",
+            aggfunc='first'
         )
+        df_raw_kpi_4G[x] = df_raw_kpi_4G[x].replace(to_replace="^-$|^na$|^N/A$", value=0, regex=True)
+
         print(df_pivoted)
+        
         save_name = str(tech) + "_pivot.xlsx"
         PsOs_pivot = os.path.join(door_path, "process_outputs", save_name)
 
@@ -272,11 +334,12 @@ def old_del_trend(request):
             trend_ws["J" + str(j)].value = date1
             trend_ws["F" + str(j)].value = "DL"
 
-            trend_ws[coln1 + str(j)].value = col1[i]
-            trend_ws[coln2 + str(j)].value = col2[i]
-            trend_ws[coln3 + str(j)].value = col3[i]
-            trend_ws[coln4 + str(j)].value = col4[i]
-            trend_ws[coln5 + str(j)].value = col5[i]
+            trend_ws[coln1 + str(j)].value = 0 if pd.isna(col1[i]) else col1[i]
+            trend_ws[coln2 + str(j)].value = 0 if pd.isna(col2[i]) else col2[i]
+            trend_ws[coln3 + str(j)].value = 0 if pd.isna(col3[i]) else col3[i]
+            trend_ws[coln4 + str(j)].value = 0 if pd.isna(col4[i]) else col4[i]
+            trend_ws[coln5 + str(j)].value = 0 if pd.isna(col5[i]) else col5[i]
+
             # trend_ws[me+str(j)].value='=COUNTIF(P5:T5,">=98.5")'
 
     # for fdd

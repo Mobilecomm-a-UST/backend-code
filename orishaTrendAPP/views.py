@@ -50,7 +50,7 @@ from datetime import date, timedelta
 @api_view(["POST"])
 def old_or_trend(request):
     try:
-        raw_kpi = request.FILES["raw_kpi"] if 'raw_kpi' in request.FILES else None
+        raw_kpi = request.FILES["raw_file"] if 'raw_file' in request.FILES else None
         if raw_kpi:
              location=MEDIA_ROOT+r'\trends\temporary_files'
              fs=FileSystemStorage(location=location)
@@ -59,7 +59,7 @@ def old_or_trend(request):
              df_raw_kpi=pd.read_excel(file_path)
              print(df_raw_kpi)
             #  os.remove(path=file_path)
-        site_list=request.FILES['site_list'] if 'site_list' in request.FILES else None
+        site_list=request.FILES['site_id'] if 'site_id' in request.FILES else None
         if site_list:
              location=MEDIA_ROOT+r'\trends\temporary_files'
              fs=FileSystemStorage(location=location)
@@ -434,7 +434,7 @@ def old_or_trend(request):
 @api_view(["POST"])
 def old_or_Trend_rna(request):
     try:
-        raw_kpi = request.FILES["raw_kpi"] if 'raw_kpi' in request.FILES else None
+        raw_kpi = request.FILES["raw_file"] if 'raw_file' in request.FILES else None
         if raw_kpi:
              location=MEDIA_ROOT+r'\trends\temporary_files'
              fs=FileSystemStorage(location=location)
@@ -443,7 +443,7 @@ def old_or_Trend_rna(request):
              df_raw_kpi=pd.read_excel(file_path)
              print(df_raw_kpi)
             #  os.remove(path=file_path)
-        site_list=request.FILES['site_list'] if 'site_list' in request.FILES else None
+        site_list=request.FILES['site_id'] if 'site_id' in request.FILES else None
         if site_list:
              location=MEDIA_ROOT+r'\trends\temporary_files'
              fs=FileSystemStorage(location=location)
@@ -808,5 +808,442 @@ def old_or_Trend_rna(request):
     except Exception as e:
         logging.error(f"Unexpected error occurred: {e}")
         return Response({'status': False, 'message': 'An unexpected error occurred.'})
+
+
+#########new code for trend 2G and 4G-------------------------------------------------------------------->
+
+from django.shortcuts import render
+import os
+from django.conf import settings
+from rest_framework.decorators import api_view , parser_classes
+from rest_framework.response import Response
+import warnings
+from pathlib import Path
+import stat
+import shutil
+from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
+import pandas as pd
+from datetime import date, timedelta,datetime
+from rest_framework import status
+import openpyxl as xl
+import re
+
+
+orfolder=os.path.join(MEDIA_ROOT, 'OR_newTrendapp')
+os.makedirs(orfolder , exist_ok=True)
+template_file_path = os.path.join(orfolder, "Templates")
+os.makedirs(template_file_path, exist_ok=True)
+
+#for 2G---------------------------------------------------------------------------------------------
+@api_view(['POST'])
+def trendfor2g(request):
+    raw_2g= request.FILES.get('raw_file')
+    print("raw_2g", raw_2g)
+    if not raw_2g:
+        return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    site_id = request.data.get('site_id')
+    # print("site_id", site_id)
+    if not site_id:
+        return Response({"error": "Site ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    offer_date= request.data.get('offered_date')
+    if offer_date:
+        offer_date =datetime.strptime(offer_date,"%Y-%m-%d").date() 
+    else:
+        offer_date = date.today()
+        
+    #process of site_id----
+    if isinstance(site_id, str):
+        # split on spaces, commas, or newlines
+        site_id = re.split(r"[\s,]+", site_id.strip())
+        site_id = [s.strip() for s in site_id if s.strip()]
+        print("Processed site_id as string:", site_id)
+
+    elif isinstance(site_id, list):
+        if len(site_id) == 1 and isinstance(site_id[0], str):
+            site_id = re.split(r"[\s,]+", site_id[0].strip())
+            site_id = [s.strip() for s in site_id if s.strip()]
+        print("Processed site_id as list:", site_id)
+
+    # create dataframe
+    site_id_df = pd.DataFrame(site_id, columns=["Site ID"])
+    site_id_df["Site ID"] = "E" + site_id_df["Site ID"].str.replace("-", "", regex=False)
+    print(site_id_df)
+
+    
+    
+   # Process of raw_2g ---- and read the file
+    if raw_2g.name.endswith('.xlsx'):
+        raw_2g_df = pd.read_excel(raw_2g, engine='openpyxl')
+    elif raw_2g.name.endswith('.csv'):
+        raw_2g_df = pd.read_csv(raw_2g)
+    else:   
+        return Response({"error": "Unsupported file format. Please upload an Excel or CSV file."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    raw_2g_df.columns = raw_2g_df.columns.str.strip()
+    if 'Short name' in raw_2g_df.columns:
+        raw_2g_df['Short name'] = raw_2g_df['Short name'].ffill()
+    if 'Unnamed: 1' in raw_2g_df.columns:
+        raw_2g_df.rename(columns={'Unnamed: 1': 'Date'}, inplace=True)
+        
+    raw_2g_df['site_id'] = raw_2g_df['Short name'].astype(str).str.strip().str.split("-").str[-1].str[:-1]
+    raw_2g_df.fillna(0.00, inplace=True)
+    # Filter the DataFrame based on site_id_df
+    raw_2g_df = raw_2g_df[raw_2g_df['site_id'].isin(site_id_df['Site ID'])]
+    if raw_2g_df.empty:
+        return Response({"error": "No data found for the provided Site ID."}, status=status.HTTP_404_NOT_FOUND)
+     
+    print(raw_2g_df)
+    
+    gsm = [
+            "Total Voice Traffic",
+            "SDCCH Drop Call Rate [BBH]",
+            "TCH Drop Call Rate[BBH]",
+            "Handover Success Rate [BBH]",
+            "TCH Assignment Success Rate [BBH]",
+            "SDCCH Blocking Rate [BBH]",
+            "TCH Blocking Rate [BBH]",
+        ]
+    
+    raw_2g_df['Date'] = pd.to_datetime(raw_2g_df['Date'], errors='coerce')
+    G2_pivot = raw_2g_df.pivot_table(
+        values=gsm,
+        columns='Date',
+        index=['Short name', 'site_id'],
+        aggfunc='first'
+    )
+    G2_pivot.to_excel("G2_pivot.xlsx")
+
+    print("G2_pivot", G2_pivot.head())
+    
+    template_file= os.path.join(template_file_path, "Orisha_2G_TEMPLATE.xlsx")
+    if not os.path.exists(template_file):
+        return Response({"error": "Template file not found"}, status=status.HTTP_404_NOT_FOUND)
+    print("Template file found at:", template_file)
+    
+    wb=xl.load_workbook(template_file)
+    wb = xl.load_workbook(template_file)
+    ws1 = wb.active
+    
+    # offered_date = date(2023, 8, 12) 
+    print("offered_date", offer_date)
+    cl = [(offer_date - timedelta(i)) for i in range(1, 6)]
+
+    alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    def num_hash(num):
+            if num < 26:
+                return alpha[num-1]
+            else:
+                q, r = num//26, num % 26
+                if r == 0:
+                    if q == 1:
+                        return alpha[r-1]
+                    else:
+                        return num_hash(q-1) + alpha[r-1]
+                else:
+                    return num_hash(q) + alpha[r-1] 
+
+    def titleToNumber(s):
+        result = 0
+        for B in range(len(s)):
+            result *= 26
+            result += ord(s[B]) - ord('A') + 1
+        return result
+
+    def overwrite(gsm_name,coln1,ws):
+        coln2=num_hash(titleToNumber(coln1)+1)
+        coln3=num_hash(titleToNumber(coln1)+2)
+        coln4=num_hash(titleToNumber(coln1)+3)
+        coln5=num_hash(titleToNumber(coln1)+4)
+        
+        index_GSM=G2_pivot.index  
+        dr=G2_pivot[gsm_name]
+        li=dr.columns.to_list()
+        
+        col1=dr[li[0]].to_list()
+        col2=dr[li[1]].to_list()
+        col3=dr[li[2]].to_list()
+        col4=dr[li[3]].to_list()
+        col5=dr[li[4]].to_list()
+
+
+        ws[coln1+"2"].value=cl[4]
+        ws[coln2+"2"].value=cl[3]
+        ws[coln3+"2"].value=cl[2]
+        ws[coln4+"2"].value=cl[1]
+        ws[coln5+"2"].value=cl[0]
+        
+        for i,value in enumerate(index_GSM):
+                j=i+3
+                
+                ws['A'+str(j)].value='OR'
+                ws['D'+str(j)].value='Relocation'
+                ws['E'+str(j)].value=offer_date
+              
+                # ws['E'+str(j)].value=index_GSM[i][2]
+                ws['B'+str(j)].value=index_GSM[i][0]
+                ws['C'+str(j)].value=index_GSM[i][1]
+                # ws['D'+str(j)].value=index_GSM[i][1]
+                
+                ws[coln1+str(j)].value=col1[i]
+                ws[coln2+str(j)].value=col2[i]
+                ws[coln3+str(j)].value=col3[i]
+                ws[coln4+str(j)].value=col4[i]
+                ws[coln5+str(j)].value=col5[i]
+
+    for gsm_name in gsm:
+        mapping = {
+            'Total Voice Traffic': 'F',
+            'SDCCH Drop Call Rate [BBH]': 'K',
+            'TCH Drop Call Rate[BBH]': 'P',
+            'Handover Success Rate [BBH]': 'U',
+            'TCH Assignment Success Rate [BBH]': 'Z',
+            'SDCCH Blocking Rate [BBH]': 'AE',
+            'TCH Blocking Rate [BBH]': 'AJ',
+        }
+        overwrite(gsm_name, mapping[gsm_name], ws1)
+
+    output_path = os.path.join(orfolder, 'OUTPUT', 'OR_2G_Trend.xlsx')
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    wb.save(output_path)
+    
+    relative_path = os.path.join("OR_newTrendapp", "OUTPUT", "OR_2G_Trend.xlsx").replace("\\", "/")
+    download_url = request.build_absolute_uri(MEDIA_URL + relative_path)
+
+    # download_url =  os.path.join(MEDIA_URL, 'OR_newTrendapp', 'OUTPUT', 'OR_2G_Trend.xlsx').replace("\\", "/")
+    
+
+    return Response({
+        "status": True,
+        "message": "File saved successfully",
+        "download_url": download_url
+        
+    }, status=status.HTTP_200_OK)
+    
+
+
+#for 4G---------------------------------------------------------------------------------------------
+@api_view(['POST'])
+def trendfor4g(request):
+    raw_4g = request.FILES.get('raw_file')
+    if not raw_4g:
+        return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+    site_id = request.data.get('site_id')
+    if not site_id:
+        return Response({"error": "Site ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    offer_date= request.data.get('offered_date')
+    if offer_date:
+        offer_date =datetime.strptime(offer_date, '%Y-%m-%d').date() 
+    else:
+        offer_date = date.today()
+   
+    # Normalize site_id to list
+    if isinstance(site_id, str):
+        site_id = re.split(r"[\s,]+", site_id.strip())
+        site_id = [s.strip() for s in site_id if s.strip()]
+        print("Processed site_id as string:", site_id)
+
+    elif isinstance(site_id, list):
+        if len(site_id) == 1 and isinstance(site_id[0], str):
+            site_id = re.split(r"[\s,]+", site_id[0].strip())
+            site_id = [s.strip() for s in site_id if s.strip()]
+        print("Processed site_id as list:", site_id)
+
+# create dataframe
+    site_id_df = pd.DataFrame(site_id, columns=["Site ID"])
+    site_id_df["Site ID"] = site_id_df["Site ID"].str.replace("-", "", regex=False)
+    print(site_id_df)
+    
+       
+ 
+    # Read raw file
+    if raw_4g.name.endswith('.xlsx'):
+        raw_4g_df = pd.read_excel(raw_4g, engine='openpyxl')
+    elif raw_4g.name.endswith('.csv'):
+        raw_4g_df = pd.read_csv(raw_4g)
+    else:
+        return Response({"error": "Unsupported file format"}, status=status.HTTP_400_BAD_REQUEST)
+ 
+    # Forward fill Short name & rename columns
+    if 'Short name' in raw_4g_df.columns:
+        raw_4g_df['Short name'] = raw_4g_df['Short name'].ffill()
+    if 'Unnamed: 1' in raw_4g_df.columns:
+        raw_4g_df.rename(columns={'Unnamed: 1': 'Date'}, inplace=True)
+    
+    print("Processed raw_4g_df:", raw_4g_df)
+ 
+    # Convert throughput to Mbps
+    if 'MV_DL User Throughput_Kbps [CDBH]' in raw_4g_df.columns:
+        raw_4g_df['MV_DL User Throughput_Mbps [CDBH]'] = raw_4g_df['MV_DL User Throughput_Kbps [CDBH]'] / 1024
+ 
+    # Extract site/cell info
+    raw_4g_df["site_id"] = raw_4g_df['Short name'].apply(lambda x: x.split("_")[-2][:-1] if "_" in x else x)
+    raw_4g_df["cell_id"] = raw_4g_df['4G_ECGI'].apply(lambda x: x.split("-")[-2] if isinstance(x, str) and "-" in x else x)
+    raw_4g_df["lnbts_id"] = raw_4g_df['4G_ECGI'].apply(
+        lambda x: x.split("-")[-1] if isinstance(x, str) and "-" in x else (x[:-1] if isinstance(x, str) else x)
+    )
+    raw_4g_df["comb"] = raw_4g_df["cell_id"].astype(str) +  raw_4g_df["lnbts_id"].astype(str)
+    # Filter based on site_id_df-----------------
+    raw_4g_df = raw_4g_df[raw_4g_df['site_id'].isin(site_id_df['Site ID'])]
+    if raw_4g_df.empty:
+        return Response({"error": "No data found for the provided Site ID."}, status=status.HTTP_404_NOT_FOUND)
+    print("Processed raw_4g_df:", raw_4g_df)
+ 
+    # Pivot table
+    kpi_cols = ["RRC Setup Success Rate [CDBH]",
+        "ERAB Setup Success Rate [CDBH]",
+        "PS Drop Call Rate % [CDBH]",
+        "MV_DL User Throughput_Mbps [CDBH]",
+        "MV_UL User Throughput_Kbps [CDBH]",
+        "MV_PS handover success rate [LTE Intra System] [CDBH]",
+        "MV_PS handover success rate [LTE Inter System] [CDBH]",
+        "MV_CSFB Redirection Success Rate [CDBH]",
+        "MV_VoLTE ERAB Setup Success Rate [CBBH]",
+        "MV_VoLTE ERAB Setup Success Rate",
+        # "MV_VoLTE DCR [CBBH]",
+        "MV_VoLTE DCR [CDBH]",
+        "VoLTE Packet Loss DL [CBBH]",
+        "VoLTE Packet Loss UL [CBBH]",
+        "MV_VoLTE SRVCC Per Call Rate",
+        "VoLTE SRVCC Per Call Rate [CBBH]",
+        "VoLTE Intra-LTE Handover Success Ratio [CBBH]",
+        "VoLTE Inter-Frequency Handover Success Ratio [CBBH]",
+        "E-UTRAN Average CQI [CDBH]",
+        "UL RSSI [CDBH]",
+        "4G Data Volume [GB]",
+        "VoLTE Traffic",
+        "Average number of used DL PRBs [CDBH]",
+        "MV_PUSCH SINR [CBBH]",
+        
+        ]
+    raw_4g_df['Date'] = pd.to_datetime(raw_4g_df['Date'], errors='coerce')
+    df_pivot = raw_4g_df.pivot_table(values=kpi_cols, columns='Date',
+                              index=['Short name', 'cell_id', 'site_id', 'comb', 'lnbts_id'])
+    df_pivot = df_pivot.fillna(0.00)
+    print("df_pivot", df_pivot.head())
+ 
+    # Load template
+    template_file= os.path.join(template_file_path, "Orisha_4G_TEMPLATE.xlsx")
+    wb = xl.load_workbook(template_file)
+    ws = wb.active
+    alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    def num_hash(num):
+            if num < 26:
+                    return alpha[num-1]
+            else:
+                q, r = num//26, num % 26
+                if r == 0:
+                    if q == 1:
+                        return alpha[r-1]
+                    else:
+                        return num_hash(q-1) + alpha[r-1]
+                else:
+                    return num_hash(q) + alpha[r-1]
+                        
+    def titleToNumber(s):
+                result= 0
+                for B in range(len(s)):
+                    result *= 26
+                    result += ord(s[B]) - ord('A') + 1
+                return result  
+ 
+    # Get reference dates
+ 
+    # offer_date = date(2023, 8, 12)  # Example base date
+
+    cl = [offer_date - timedelta(i) for i in range(1, 6)]
+   
+    def overwrite(kpi_name,coln1):
+        coln2=num_hash(titleToNumber(coln1)+1)
+        coln3=num_hash(titleToNumber(coln1)+2)
+        coln4=num_hash(titleToNumber(coln1)+3)
+        coln5=num_hash(titleToNumber(coln1)+4)
+        index=df_pivot.index
+        # print('done')
+        # print(len(index))
+        dr=df_pivot[kpi_name]
+        # print(kpi_name)
+       
+        li=dr.columns
+        col1=dr[li[0]].to_list()
+        col2=dr[li[1]].to_list()
+        col3=dr[li[2]].to_list()
+        col4=dr[li[3]].to_list()
+        col5=dr[li[4]].to_list()
+
+        ws[coln1 + "4"].value = cl[4]
+        ws[coln2 + "4"].value = cl[3]
+        ws[coln3 + "4"].value = cl[2]
+        ws[coln4 + "4"].value = cl[1]
+        ws[coln5 + "4"].value = cl[0]
+
+        for i,value in enumerate(index):
+            j=i+5
+
+           
+            ws['A'+str(j)].value='OR'
+            ws['M'+str(j)].value='NOKIA'
+            ws['L'+str(j)].value=offer_date
+            
+            ws['B'+str(j)].value=index[i][2]
+            ws['C'+str(j)].value=index[i][3]
+            
+            ws['D'+str(j)].value=index[i][1]
+            ws['E'+str(j)].value=index[i][4]
+            ws['F'+str(j)].value=index[i][3]
+            ws['H'+str(j)].value=index[i][0]
+        
+
+            ws[coln1 + str(j)].value = col1[i]
+            ws[coln2 + str(j)].value = col2[i]
+            ws[coln3 + str(j)].value = col3[i]
+            ws[coln4 + str(j)].value = col4[i]
+            ws[coln5 + str(j)].value = col5[i]
+ 
+    mapping = {
+        "RRC Setup Success Rate [CDBH]": 'Q',
+        "ERAB Setup Success Rate [CDBH]": 'W',
+        "PS Drop Call Rate % [CDBH]": 'AC',
+        "MV_DL User Throughput_Mbps [CDBH]": 'AI',
+        "MV_UL User Throughput_Kbps [CDBH]": 'AO',
+        "MV_PS handover success rate [LTE Intra System] [CDBH]": 'AU',
+        "MV_PS handover success rate [LTE Inter System] [CDBH]": 'BA',
+        "MV_CSFB Redirection Success Rate [CDBH]": 'BG',
+        "MV_VoLTE ERAB Setup Success Rate [CBBH]": 'BM',
+        "MV_VoLTE DCR [CDBH]": 'BS',
+        "VoLTE Packet Loss DL [CBBH]": 'BY',
+        "VoLTE Packet Loss UL [CBBH]": 'CE',
+        "MV_VoLTE SRVCC Per Call Rate": 'CK',
+        "VoLTE Intra-LTE Handover Success Ratio [CBBH]": 'CQ',
+        "VoLTE Inter-Frequency Handover Success Ratio [CBBH]": 'CW',
+        "E-UTRAN Average CQI [CDBH]": 'DC',
+        "UL RSSI [CDBH]": 'DI',
+        "4G Data Volume [GB]": 'DO',
+        "VoLTE Traffic": 'DW',
+        "Average number of used DL PRBs [CDBH]": 'EC',
+        "MV_PUSCH SINR [CBBH]":"EH"
+    }
+ 
+    for kpi_name, start_col in mapping.items():
+        overwrite(kpi_name, start_col)
+ 
+    # Save output
+    output_path = os.path.join(orfolder, 'OUTPUT', 'OR_4G_Trend.xlsx')
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    
+    wb.save(output_path)
+ 
+    relative_path = os.path.join("OR_newTrendapp", "OUTPUT", "OR_4G_Trend.xlsx").replace("\\", "/")
+    download_url = request.build_absolute_uri(MEDIA_URL + relative_path)
+    print("End-------------------------------")
+ 
+    return Response({"status": True,
+                     "message": "Successfully uploaded",
+                     "download_url": download_url},
+                    status=status.HTTP_200_OK)
+ 
 
 
