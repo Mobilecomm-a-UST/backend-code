@@ -16,6 +16,8 @@ def send_email_spoc_circle(df, spoc_dict):
         'P3':'Low',
     }
     for index, row in df.iterrows():
+
+        # Get SPOC details from the dictionary
         circle = row['Circle']
         # spoc_details = spoc_dict.get(circle, {})
         # spoc_name = spoc_details.get('Name', 'SPOC')
@@ -33,6 +35,7 @@ def send_email_spoc_circle(df, spoc_dict):
         l3_management_email = ";".join(l3_management_email)
 
         l4_management_email = level4.objects.filter(circle=circle).values_list('email', flat=True)
+
         # Combine emails into a single string separated by ";"
         l4_management_email = ";".join(l4_management_email)
 
@@ -41,11 +44,12 @@ def send_email_spoc_circle(df, spoc_dict):
             print(f"No email found for Circle: {circle}. Skipping...")
             continue
         if ticket_type == 'Payload':
-        
-        # Email subject
+            # Email subject
             subject = "RCA Genie - Payload Dip Ticket/Priority: {priority}".format(priority=priority_dict[row['priority']])
+    
         if ticket_type == 'Sleeping Cell':
             subject = "RCA Genie - Sleeping Cell Ticket/Priority: {priority}".format(priority=priority_dict[row['priority']])
+
         # Email body with the note
         body = f"""
             Hi {spoc_name},
@@ -63,7 +67,7 @@ def send_email_spoc_circle(df, spoc_dict):
             Aging: {row['aging']}
             Date: {row['Date']}
             Priority: {row['priority']}
-            TOOL LINK: "http://103.242.225.195:3000/"
+            TOOL LINK: "http://122.176.141.197:3000/"
 
             Please review the details and take necessary action.
 
@@ -77,9 +81,7 @@ def send_email_spoc_circle(df, spoc_dict):
         cc_mails = [ l2_management_email, l3_management_email, l4_management_email,
             'Mohit.Batra@ust.com',
             'Vinay.Duklan@ust.com',
-            'Nishant.Verma@ust.com',
-            'saurabh.rathore@mcpsinc.com',
-            'Nilesh.Jain@ust.com'
+            'Saurabh.Rathore@ust.com',
         ]
         cc_mails_str = ';'.join(cc_mails)
         

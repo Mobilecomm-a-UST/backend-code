@@ -1341,3 +1341,1185 @@ def pre_post_tech(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+
+    ### KTK Trend New------------------------------\
+        
+        
+#function to fill zeros and round floats in specified columns of given sheets
+def fill_zeros_and_round(wb, sheet_names, columns_to_fill, start_row=4):
+    for sheet_name in sheet_names:
+        ws = wb[sheet_name]
+        end_row = ws.max_row
+
+        # Fill zeros in all specified columns
+        for col in columns_to_fill:
+            for row in range(start_row, end_row + 1):
+                ws[f"{col}{row}"].value = 0
+
+        # Round any existing floats in the sheet
+        for row in ws.iter_rows(min_row=start_row, max_row=end_row, max_col=ws.max_column):
+            for cell in row:
+                if isinstance(cell.value, float):
+                    cell.value = round(cell.value, 2)
+    return wb
+
+
+# for huawai trend-----------------------------------
+def G2_trend_HUI(df_2G_raw_kpi_HUI,df_site_list_2G,trend_wb,offered_date,df_mapping_file):
+        print(df_2G_raw_kpi_HUI)
+        if 'Unnamed: 1' in df_2G_raw_kpi_HUI.columns:
+          df_2G_raw_kpi_HUI.rename(columns={'Unnamed: 1': 'Date'}, inplace=True)
+          df_2G_raw_kpi_HUI["2G Site Name"] = df_2G_raw_kpi_HUI["2G Site Name"].str.replace(r"^2G_", "", regex=True)
+          df_2G_raw_kpi_HUI["2G Cell Name"] = ( df_2G_raw_kpi_HUI["2G Cell Name"] .str.replace(r"^2G_", "", regex=True).str.replace(r"^[A-Za-z]", "", regex=True)  
+)
+
+
+        ########################## merging fies ##############################################
+        df_2G_raw_kpi_HUI=pd.merge(df_2G_raw_kpi_HUI,df_mapping_file,left_on='2G Site Name',right_on='Site ID',how='left')
+        print("----------------------------raw_kpi_2G_ERI-----------------------------------------")
+        print(df_2G_raw_kpi_HUI.columns)
+      
+        ######################## ********************************* ###########################
+
+        date1=offered_date
+        # date1=date.today()
+        dt1 = date1 - timedelta(1)
+        dt2 = date1 - timedelta(2)
+        dt3 = date1 - timedelta(3)
+        dt4 = date1 - timedelta(4)
+        dt5 = date1 - timedelta(5)
+        ls=[dt1,dt2,dt3,dt4,dt5]
+        
+        alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        def num_hash(num):
+                if num < 26:
+                    return alpha[num-1]
+                else:
+                    q, r = num//26, num % 26
+                    if r == 0:
+                        if q == 1:
+                            return alpha[r-1]
+                        else:
+                            return num_hash(q-1) + alpha[r-1]
+                    else:
+                        return num_hash(q) + alpha[r-1]
+    
+    # Driver code
+
+    # printString(27906)
+
+        def titleToNumber(s):
+        # This process is similar to binary-to-
+        # decimal conversion
+            result = 0
+            for B in range(len(s)):
+                result *= 26
+                result += ord(s[B]) - ord('A') + 1
+            return result
+
+
+        def overwrite(df_pivoted,kpi_name,coln1,trend_ws):
+            coln2=num_hash(titleToNumber(coln1)+1)
+            coln3=num_hash(titleToNumber(coln1)+2)
+            coln4=num_hash(titleToNumber(coln1)+3)
+            coln5=num_hash(titleToNumber(coln1)+4)
+            print(kpi_name)
+            index_pivot=df_pivoted.index.to_list()
+            print("index ;###############################",index_pivot)
+            print(len(index_pivot))
+            print("index of pivoted table: ",index_pivot)
+           
+            dr=df_pivoted[kpi_name]
+           
+
+            print("columns of dr table",dr.columns)
+            cl=dr.columns.to_list()
+            print("column list",cl)
+            
+            # site_id=dr["SITE_ID"].to_list() 
+            # cell_id=dr["CELL_ID"].to_list()    
+            col1=dr[str(cl[0])].to_list()
+            col2=dr[str(cl[1])].to_list()
+            col3=dr[str(cl[2])].to_list()
+            col4=dr[str(cl[3])].to_list()
+            col5=dr[str(cl[4])].to_list()
+
+            trend_ws[coln1+"3"].value=cl[0]
+            trend_ws[coln2+"3"].value=cl[1]
+            trend_ws[coln3+"3"].value=cl[2]
+            trend_ws[coln4+"3"].value=cl[3]
+            trend_ws[coln5+"3"].value=cl[4]
+
+            # me=column_index_from_string(coln5)+1
+            # me=get_column_letter(me)
+            for i,value in enumerate(index_pivot):
+                j=i+4
+                
+                trend_ws["H"+str(j)].value=date1
+                trend_ws["I"+str(j)].value="Done"
+                trend_ws["E"+str(j)].value="G900"
+                trend_ws["F"+str(j)].value="Done"
+                trend_ws["D"+str(j)].value="2G+FDD"
+
+
+
+                trend_ws["A"+str(j)].value=index_pivot[i][1]
+                trend_ws["B"+str(j)].value=index_pivot[i][0] 
+                trend_ws["C"+str(j)].value=index_pivot[i][0] 
+                trend_ws["G"+str(j)].value=index_pivot[i][2] 
+               
+
+                
+                
+                
+                trend_ws[coln1+str(j)].value=col1[i]
+                trend_ws[coln2+str(j)].value=col2[i]
+                trend_ws[coln3+str(j)].value=col3[i]
+                trend_ws[coln4+str(j)].value=col4[i]
+                trend_ws[coln5+str(j)].value=col5[i]
+                
+                    
+        
+        G2_kpi1=[ "Drop Call Rate [BBH]",
+                "Handover Success Rate [BBH]",
+                "TCH Blocking Rate [BBH]",
+                "SDCCH Blocking Rate [BBH]",
+                "SDCCH Drop Call Rate [BBH]",
+                "RX Quality [BBH]",
+                "Total Voice Traffic [BBH]",
+                "Network availability [RNA] [BBH]",
+                
+        ]
+
+        site_list_2G=list(df_site_list_2G["Site ID"])
+             
+        # df_2G_raw_kpi.rename(columns={"Cell Name": "CellName"}, inplace=True)
+    
+        G2_filter_df = df_2G_raw_kpi_HUI[(df_2G_raw_kpi_HUI["2G Site Name"].isin(site_list_2G))]
+        print("---------------------------- 2g df=-----------------------------------")
+
+        if not pd.api.types.is_datetime64_any_dtype(G2_filter_df["Date"]):
+            G2_filter_df["Date"] = pd.to_datetime(G2_filter_df["Date"], errors="coerce")
+
+        # ✅ Drop any rows with invalid Date (if necessary)
+        G2_filter_df = G2_filter_df.dropna(subset=["Date"])
+
+        # ✅ Convert KPI columns to numeric
+        exclude_cols = ["2G Site Name", "2G Cell Name", "Integration", "Date", "Site Name", "Site ID"]
+        kpi_cols = [col for col in G2_filter_df.columns if col not in exclude_cols]
+
+        for col in kpi_cols:
+            G2_filter_df[col] = pd.to_numeric(G2_filter_df[col], errors="coerce")
+
+        G2_filter_df.fillna(value=0, inplace=True)
+
+        # ✅ Select only numeric columns to pivot (robust solution)
+        numeric_cols = G2_filter_df.select_dtypes(include="number").columns.tolist()
+
+        df_pivoted_2G = G2_filter_df.pivot_table(
+            index=["2G Site Name", "2G Cell Name", "Integration"],
+            columns="Date",
+            values=numeric_cols,
+            aggfunc="mean"
+        )
+
+        df_pivoted_2G.fillna(0, inplace=True)
+
+        print("___________pivoted________", df_pivoted_2G)
+        df_pivoted_2G.to_excel("Pivoted.xlsx")
+
+
+
+        trend_ws=trend_wb["2G_KPI_HUI"]
+        if not df_pivoted_2G.empty:
+            for kpi_name in G2_kpi1:
+                    if(kpi_name=="Drop Call Rate [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"J",trend_ws)
+                    if(kpi_name=="Handover Success Rate [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"P",trend_ws)
+                    if(kpi_name=="TCH Blocking Rate [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"V",trend_ws)
+                    if(kpi_name=="SDCCH Blocking Rate [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"AB",trend_ws)
+                    if(kpi_name=="SDCCH Drop Call Rate [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"AH",trend_ws)
+                    if(kpi_name=="RX Quality [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"AN",trend_ws)
+                    if(kpi_name=="Total Voice Traffic [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"AT",trend_ws)
+                    if(kpi_name=="Network availability [RNA] [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"AZ",trend_ws)     
+                         
+            # trend_wb.save("Trend_2G_HUI.xlsx")          
+# 
+
+
+
+
+
+#for errsision of 2g trend-----------------------------
+
+def G2_trend_ERI(raw_kpi_2G_ERI,df_site_list_2G,trend_wb,offered_date,df_mapping_file):
+        print(raw_kpi_2G_ERI)
+        if 'Unnamed: 1' in raw_kpi_2G_ERI.columns:
+            raw_kpi_2G_ERI.rename(columns={'Unnamed: 1': 'Date'}, inplace=True)
+        ########################## merging fies ##############################################
+        raw_kpi_2G_ERI=pd.merge(raw_kpi_2G_ERI,df_mapping_file,left_on='2G Site Name',right_on='Site ID',how='left')
+        print("----------------------------raw_kpi_2G_ERI-----------------------------------------")
+        print(raw_kpi_2G_ERI.columns)
+      
+        ######################## ********************************* ###########################
+
+        date1=offered_date
+        # date1=date.today()
+        dt1 = date1 - timedelta(1)
+        dt2 = date1 - timedelta(2)
+        dt3 = date1 - timedelta(3)
+        dt4 = date1 - timedelta(4)
+        dt5 = date1 - timedelta(5)
+        ls=[dt1,dt2,dt3,dt4,dt5]
+        
+        alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        def num_hash(num):
+                if num < 26:
+                    return alpha[num-1]
+                else:
+                    q, r = num//26, num % 26
+                    if r == 0:
+                        if q == 1:
+                            return alpha[r-1]
+                        else:
+                            return num_hash(q-1) + alpha[r-1]
+                    else:
+                        return num_hash(q) + alpha[r-1]
+    
+    # Driver code
+
+    # printString(27906)
+
+        def titleToNumber(s):
+        # This process is similar to binary-to-
+        # decimal conversion
+            result = 0
+            for B in range(len(s)):
+                result *= 26
+                result += ord(s[B]) - ord('A') + 1
+            return result
+
+
+        def overwrite(df_pivoted,kpi_name,coln1,trend_ws):
+            coln2=num_hash(titleToNumber(coln1)+1)
+            coln3=num_hash(titleToNumber(coln1)+2)
+            coln4=num_hash(titleToNumber(coln1)+3)
+            coln5=num_hash(titleToNumber(coln1)+4)
+            print(kpi_name)
+            index_pivot=df_pivoted.index.to_list()
+            print("index ;###############################",index_pivot)
+            print(len(index_pivot))
+            print("index of pivoted table: ",index_pivot)
+           
+            dr=df_pivoted[kpi_name]
+           
+
+            print("columns of dr table",dr.columns)
+            cl=dr.columns.to_list()
+            print("column list",cl)
+            
+            # site_id=dr["SITE_ID"].to_list() 
+            # cell_id=dr["CELL_ID"].to_list()    
+            col1=dr[str(cl[0])].to_list()
+            col2=dr[str(cl[1])].to_list()
+            col3=dr[str(cl[2])].to_list()
+            col4=dr[str(cl[3])].to_list()
+            col5=dr[str(cl[4])].to_list()
+
+            trend_ws[coln1+"3"].value=cl[0]
+            trend_ws[coln2+"3"].value=cl[1]
+            trend_ws[coln3+"3"].value=cl[2]
+            trend_ws[coln4+"3"].value=cl[3]
+            trend_ws[coln5+"3"].value=cl[4]
+
+            # me=column_index_from_string(coln5)+1
+            # me=get_column_letter(me)
+            for i,value in enumerate(index_pivot):
+                j=i+4
+                
+                trend_ws["H"+str(j)].value=date1
+                trend_ws["I"+str(j)].value="Done"
+                trend_ws["E"+str(j)].value="G900"
+                trend_ws["F"+str(j)].value="Done"
+                trend_ws["D"+str(j)].value="2G+FDD"
+
+
+
+                trend_ws["A"+str(j)].value=index_pivot[i][1]
+                trend_ws["B"+str(j)].value=index_pivot[i][0] 
+                trend_ws["C"+str(j)].value=index_pivot[i][0] 
+                trend_ws["G"+str(j)].value=index_pivot[i][2] 
+               
+
+                
+                
+                
+                trend_ws[coln1+str(j)].value=col1[i]
+                trend_ws[coln2+str(j)].value=col2[i]
+                trend_ws[coln3+str(j)].value=col3[i]
+                trend_ws[coln4+str(j)].value=col4[i]
+                trend_ws[coln5+str(j)].value=col5[i]
+                
+                    
+        
+        G2_kpi1=[ "Drop Call Rate [BBH]",
+                "Handover Success Rate [BBH]",
+                "TCH Blocking Rate [BBH]",
+                "SDCCH Blocking Rate [BBH]",
+                "SDCCH Drop Call Rate [BBH]",
+                "RX Quality [BBH]",
+                "Total Voice Traffic [BBH]",
+                "Network availability [RNA] [BBH]",
+        ]
+                
+
+        site_list_2G=list(df_site_list_2G["Site ID"])
+             
+        # df_2G_raw_kpi.rename(columns={"Cell Name": "CellName"}, inplace=True)
+        G2_filter_df = raw_kpi_2G_ERI[(raw_kpi_2G_ERI["2G Site Name"].isin(site_list_2G))]
+        print("---------------------------- 2g df=-----------------------------------")
+
+        if not pd.api.types.is_datetime64_any_dtype(G2_filter_df["Date"]):
+            G2_filter_df["Date"] = pd.to_datetime(G2_filter_df["Date"], errors="coerce")
+
+        # ✅ Drop any rows with invalid Date (if necessary)
+        G2_filter_df = G2_filter_df.dropna(subset=["Date"])
+
+        # ✅ Convert KPI columns to numeric
+        exclude_cols = ["2G Site Name", "2G Cell Name", "Integration", "Date", "Site Name", "Site ID"]
+        kpi_cols = [col for col in G2_filter_df.columns if col not in exclude_cols]
+
+        for col in kpi_cols:
+            G2_filter_df[col] = pd.to_numeric(G2_filter_df[col], errors="coerce")
+
+        G2_filter_df.fillna(value=0, inplace=True)
+
+        # ✅ Select only numeric columns to pivot (robust solution)
+        numeric_cols = G2_filter_df.select_dtypes(include="number").columns.tolist()
+
+        df_pivoted_2G = G2_filter_df.pivot_table(
+            index=["2G Site Name", "2G Cell Name", "Integration"],
+            columns="Date",
+            values=numeric_cols,
+            aggfunc="mean"
+        )
+
+        df_pivoted_2G.fillna(0, inplace=True)
+
+        print("___________pivoted________", df_pivoted_2G)
+        df_pivoted_2G.to_excel("Pivoted.xlsx")
+
+
+
+        trend_ws=trend_wb["2G_KPI_ERI"]
+        if not df_pivoted_2G.empty:
+            for kpi_name in G2_kpi1:
+                    if(kpi_name=="Drop Call Rate [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"J",trend_ws)
+                    if(kpi_name=="Handover Success Rate [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"P",trend_ws)
+                    if(kpi_name=="TCH Blocking Rate [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"V",trend_ws)
+                    if(kpi_name=="SDCCH Blocking Rate [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"AB",trend_ws)
+                    if(kpi_name=="SDCCH Drop Call Rate [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"AH",trend_ws)
+                    if(kpi_name=="RX Quality [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"AN",trend_ws)
+                    if(kpi_name=="Total Voice Traffic [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"AT",trend_ws)
+                    if(kpi_name=="Network availability [RNA] [BBH]"):
+                        overwrite(df_pivoted_2G,kpi_name,"AZ",trend_ws)    
+                        
+        # trend_wb.save("Trend_2G_ERI.xlsx")                
+               
+                        
+    
+@api_view(["POST"])
+def new_ktk_trend(request):
+        raw_kpi = request.FILES["4G_raw_kpi"] if '4G_raw_kpi' in request.FILES else None
+        
+        
+        site_list = request.FILES["4G_site_list"] if '4G_site_list' in request.FILES else None
+        offered_date = request.POST.get("offered_date")
+        print(offered_date)
+        offered_date=datetime.datetime.strptime(offered_date,"%Y-%m-%d").date()
+        print("offered_date:",offered_date)
+
+        location= MEDIA_ROOT + r"\trends\temporary_files"
+        fs = FileSystemStorage(location=location)
+
+       ####################### for converting 4G raw kpi file to a dataframe ###########################
+        raw_kpi = fs.save(raw_kpi.name, raw_kpi)
+        filepath = fs.path(raw_kpi)
+        print("file_path:-",filepath)
+        df_raw_kpi=pd.read_excel(filepath)
+        # df_raw_kpi=process_remove_duplicates(df_raw_kpi)
+        # df_raw_kpi[""]
+        # df_raw_kpi=pd.read_csv(filepath)
+        os.remove(path=filepath)
+        print(filepath,"deleted...............")
+        print(df_raw_kpi)
+
+      ####################### for converting sitelist file to a dataframe ###########################
+        
+        site_list = fs.save(site_list.name, site_list)
+        # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+        filepath = fs.path(site_list)
+        print("file_path:-",filepath)
+        df_site_list=pd.read_excel(filepath)
+        os.remove(path=filepath)
+        print(filepath,"deleted...............")
+        print(df_site_list)
+
+############################# 2G FILE###############################
+        
+
+       ####################### get and read 2G raw kpi file_eri to a dataframe ###########################
+        raw_kpi_2G_ERI = request.FILES["2G_raw_kpi_eri"] if '2G_raw_kpi_eri' in request.FILES else None
+        raw_kpi_2G_ERI= fs.save(raw_kpi_2G_ERI.name, raw_kpi_2G_ERI)
+        filepath = fs.path(raw_kpi_2G_ERI)
+        print("file_path:-",filepath)
+        raw_kpi_2G_ERI=pd.read_excel(filepath)
+      
+        
+        # df_raw_kpi=pd.read_csv(filepath)
+        os.remove(path=filepath)
+        print(filepath,"deleted...............")
+        print(raw_kpi_2G_ERI)
+        
+         ####################### get and read 2G raw kpi file_hui to a dataframe ###########################
+        raw_kpi_2G_HUI = request.FILES["2G_raw_kpi_hui"] if '2G_raw_kpi_hui' in request.FILES else None
+        raw_kpi_2G_HUI= fs.save(raw_kpi_2G_HUI.name, raw_kpi_2G_HUI)
+        filepath = fs.path(raw_kpi_2G_HUI)
+        print("file_path:-",filepath)
+        raw_kpi_2G_HUI=pd.read_excel(filepath)
+      
+        # df_raw_kpi=pd.read_csv(filepath)
+        os.remove(path=filepath)
+        print(filepath,"deleted...............")
+        print(raw_kpi_2G_HUI)
+
+      ####################### for converting 2G sitelist file to a dataframe ###########################
+        site_list_2G = request.FILES["2G_site_list"] if '2G_site_list' in request.FILES else None
+        site_list_2G = fs.save(site_list_2G.name, site_list_2G)
+        # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+        filepath = fs.path(site_list_2G)
+        print("file_path:-",filepath)
+        df_site_list_2G=pd.read_excel(filepath)
+        os.remove(path=filepath)
+        print(filepath,"deleted...............")
+        print(df_site_list_2G)
+#####################################################################################
+
+    ###################### mapping file read and saving in dataframe ########################
+        mapping_file = request.FILES["mapping_file"] if 'mapping_file' in request.FILES else None
+        mapping_file = fs.save(mapping_file.name,mapping_file)
+        # the fileurl variable now contains the url to the file. This can be used to serve the file when needed.
+        filepath = fs.path(mapping_file)
+        print("file_path:-",filepath)
+        df_mapping_file=pd.read_excel(filepath)
+        os.remove(path=filepath)
+        print(filepath,"deleted...............")
+        print(df_mapping_file)
+    ################# *************************************************######################
+
+        door_root= os.path.join(MEDIA_ROOT,'trends',"ktk")
+
+        path_of_blnk_temp=os.path.join(door_root,"template","ktk_template_new.xlsx")
+        trend_wb=load_workbook(path_of_blnk_temp)
+        print(trend_wb.sheetnames)
+
+
+        print("##################################################################################")
+
+        ############### 2G trend process call ################
+        G2_trend_ERI(raw_kpi_2G_ERI,df_site_list_2G,trend_wb,offered_date,df_mapping_file)
+        G2_trend_HUI(raw_kpi_2G_HUI,df_site_list_2G,trend_wb,offered_date,df_mapping_file)
+
+
+        ################## ************* #######################
+
+        g2_site=[]
+        f8_site=[]
+        f3_site=[]
+        t1t2_site=[]
+
+
+        kpi=[
+        "MV_RRC Setup Success Rate [CDBH]",
+        "MV_ERAB Setup Success Rate [CDBH]",
+        "MV_PS Drop Call Rate % [CDBH]",
+        "MV_DL User Throughput_Kbps [CDBH]",
+        "MV_UL User Throughput_Kbps [CDBH]",
+        "MV_Radio NW Availability",
+        "MV_E-UTRAN Average CQI [CDBH]",
+        "MV_PS handover success rate [LTE Intra System] [CDBH]",
+        "MV_PS handover success rate [LTE Inter System] [CDBH]",
+        "MV_CSFB Redirection Success Rate",
+        "MV_Average number of used DL PRBs [CDBH]",
+        "MV_4G Data Volume_GB_Pl[CDBH]",
+        "MV_VoLTE ERAB Setup Success Rate",
+        "MV_VoLTE DCR [CBBH]",
+        "MV_VoLTE Packet Loss DL [CBBH]",
+        "MV_VoLTE Packet Loss UL [CBBH]",
+        "MV_VoLTE DCR [CDBH]",
+        "MV_VoLTE IntraF HOSR Exec [CBBH]",
+        "MV_VoLTE InterF HOSR Exec [CBBH]",
+        "MV_VoLTE CSSR%",
+       ]
+        
+
+        kpiStrToZero=[
+        "MV_RRC Setup Success Rate [CDBH]",
+        "MV_ERAB Setup Success Rate [CDBH]",
+        "MV_PS Drop Call Rate % [CDBH]",
+        "MV_DL User Throughput_Kbps [CDBH]",
+        "MV_UL User Throughput_Kbps [CDBH]",
+        "MV_Radio NW Availability",
+        "MV_E-UTRAN Average CQI [CDBH]",
+        "MV_PS handover success rate [LTE Intra System] [CDBH]",
+        "MV_PS handover success rate [LTE Inter System] [CDBH]",
+        "MV_CSFB Redirection Success Rate",
+        "MV_Average number of used DL PRBs [CDBH]",
+        "MV_4G Data Volume_GB_Pl[CDBH]",
+        "MV_VoLTE ERAB Setup Success Rate",
+        "MV_VoLTE DCR [CBBH]",
+        "MV_VoLTE Packet Loss DL [CBBH]",
+        "MV_VoLTE Packet Loss UL [CBBH]",
+        "MV_VoLTE DCR [CDBH]",
+        "MV_VoLTE IntraF HOSR Exec [CBBH]",
+        "MV_VoLTE InterF HOSR Exec [CBBH]",
+        "MV_VoLTE CSSR%",
+       ]
+
+
+            
+       
+      
+        
+        ########################## the below code is to replace every string to zero from numeric columns ##################
+
+        for x in kpiStrToZero:
+             df_raw_kpi[x] = df_raw_kpi[x].replace(to_replace='.*', value=0, regex=True)
+             print("______________________running____________________-----")
+        ######################################  * * * * * * * * * * * * * * ################################################
+       
+        site_list=list(df_site_list["Site ID"])
+
+ 
+
+        print("__________________raw KPI after converting str to zero_______________")
+        print(df_raw_kpi)
+
+        # df_raw_kpi[""].fillna( inplace=True, method="ffill")
+        if 'Unnamed: 1' in df_raw_kpi.columns:
+            df_raw_kpi.rename(columns={'Unnamed: 1': 'Date'}, inplace=True)
+            
+        df_raw_kpi["MV_DL User Throughput_Kbps [CDBH]"] = (df_raw_kpi["MV_DL User Throughput_Kbps [CDBH]"] / 1024).round(2)
+        df_raw_kpi["MV_UL User Throughput_Kbps [CDBH]"] = (df_raw_kpi["MV_UL User Throughput_Kbps [CDBH]"] / 1024).round(2)
+        df_raw_kpi["MV_4G Data Volume_GB_Pl[CDBH]"] = (df_raw_kpi["MV_4G Data Volume_GB_Pl[CDBH]"] * 1024).round(2)
+
+        df_raw_kpi["Short name"]=df_raw_kpi["Short name"].ffill()
+        df_raw_kpi["Short name"] =df_raw_kpi["Short name"].apply(lambda x: x.strip()) # to remove all tralling spaces..... and leading spaces..
+        df_raw_kpi.fillna(value=0.00,inplace=True)
+
+        # df_raw_kpi.rename( columns={'Unnamed: 1':'date'}, inplace=True )
+
+        # df_raw_kpi["MV_DL User Throughput_Kbps [CDBH]"] = (df_raw_kpi["MV_DL User Throughput_Kbps [CDBH]"]/1024)
+        # df_raw_kpi.rename(columns={"MV_DL User Throughput_Kbps [CDBH]" :"MV_DL User Throughput_Mbps [CDBH]" } ,inplace = True )
+
+        # df_raw_kpi["MV_UL User Throughput_Kbps [CDBH]"] = (df_raw_kpi["MV_UL User Throughput_Kbps [CDBH]"]/1024)
+        # df_raw_kpi.rename(columns={"MV_UL User Throughput_Kbps [CDBH]" :"MV_UL User Throughput_Mbps [CDBH]" } ,inplace = True )
+
+        # print(df_raw_kpi)
+
+        
+        # print(df_raw_kpi.columns)
+
+
+
+        lis=list(df_raw_kpi["Short name"])
+        sit_id_lis=[]
+        cell_id_lis=[]
+        for item in lis:
+            if("_" in item):
+                cell_id=item.split("_")[-2]
+                ln=len(item.split("_")[-1])
+                #print(ln)
+                sit_id=item.split("_")[-2][:-ln]
+            else:
+                cell_id=item
+                sit_id=item
+            cell_id_lis.append(cell_id)
+            sit_id_lis.append(sit_id)
+
+        # print(sit_id)
+        # print(cell_id_lis)
+
+        df_raw_kpi.insert(1, "SITE_ID", sit_id_lis)
+        df_raw_kpi.insert(2, "CELL_ID", cell_id_lis)
+         
+
+
+
+       ############################### tech extraction code by alpana mam ###############################
+
+        lis1=list(df_raw_kpi["Short name"])
+        techlist=[]
+        for cell in lis1:
+            if ('_F1_' in cell or '_F3_' in cell or '_F8_' in cell or '_T1' in cell or '_T2_' in cell):
+                if('_F1_' in cell or '_F3_' in cell or '_F8_'):
+                    tech="FDD"
+                if("_T1_" in cell or "_T2_"in cell):
+                    tech="TDD" 
+                techlist.append(tech) 
+            else:
+                tech=cell
+                techlist.append(tech)     
+        # df_raw_kpi["tech"]=techlist
+        df_raw_kpi.insert(3, "tech", techlist)
+
+        ############################ **************************************** ############################
+    
+
+
+
+        df_raw_kpi.fillna(value=0,inplace=True)
+        df_raw_kpi.rename(columns={"Short name": "Shortname"}, inplace=True)
+        print(df_raw_kpi)
+        
+
+        ########################## merging fies ##############################################
+        df_raw_kpi=pd.merge(df_raw_kpi,df_mapping_file,left_on='SITE_ID',right_on='Site ID',how='left')
+        print(df_raw_kpi)
+        ######################## ********************************* ###########################
+
+
+        process_op_path=os.path.join(door_root,"process output")
+        
+        savepath=os.path.join(process_op_path,"desired input.xlsx")
+        df_raw_kpi.to_excel(savepath)
+    
+        # date1=date(2023,2,27)
+        date1=offered_date
+        # date1=date.today()
+        dt1 = date1 - timedelta(1)
+        dt2 = date1 - timedelta(2)
+        dt3 = date1 - timedelta(3)
+        dt4 = date1 - timedelta(4)
+        dt5 = date1 - timedelta(5)
+        ls=[dt1,dt2,dt3,dt4,dt5]
+        only_site_fil = df_raw_kpi[(df_raw_kpi.SITE_ID.isin(site_list))]
+        only_site_fil.fillna(value=0,inplace=True)
+
+        
+        savepath=os.path.join(process_op_path,"only_site_date_filtered_input.xlsx")
+        
+       
+        
+       
+
+        def perticular_tech(tech, site_list):
+    # Filter relevant rows
+            df_filtered = only_site_fil[
+                (only_site_fil.SITE_ID.isin(site_list)) &
+                (only_site_fil.Shortname.str.contains('|'.join(tech)))
+            ]
+
+            # print("__________filter___________-", df_filtered)
+
+            if not df_filtered.empty:
+                # Save filtered data
+                address = "last_filtered_input" + str(tech) + ".xlsx"
+                savepath = os.path.join(process_op_path, address)
+                df_filtered.to_excel(savepath, index=False)
+
+                # Ensure Date is proper datetime
+                if not pd.api.types.is_datetime64_any_dtype(df_filtered["Date"]):
+                    df_filtered["Date"] = pd.to_datetime(df_filtered["Date"], errors="coerce")
+
+                # Convert KPI columns to numeric
+                exclude_cols = [
+                    "SITE_ID", "Shortname", "CELL_ID",
+                    "tech", "Site Name", "Integration", "Date"
+                ]
+                kpi_cols = [col for col in df_filtered.columns if col not in exclude_cols]
+                df_filtered[kpi_cols] = df_filtered[kpi_cols].apply(pd.to_numeric, errors="coerce")
+
+                df_filtered.fillna(value=0, inplace=True)
+
+                # Pivot only numeric KPI columns
+                df_pivoted = df_filtered.pivot_table(
+                    index=[
+                        "SITE_ID", "Shortname", "CELL_ID", 
+                        "tech", "Site Name", "Integration"
+                    ],
+                    columns="Date",
+                    values=kpi_cols,
+                    aggfunc="mean"
+                )
+                df_pivoted.fillna(value=0, inplace=True)
+
+                # print("technology:", tech)
+                # print(df_pivoted)
+
+                # Save pivoted data
+                address_pivot = "pivoted_input" + str(tech) + ".xlsx"
+                savepath = os.path.join(process_op_path, address_pivot)
+                df_pivoted.to_excel(savepath, index=True)
+
+                # print("________________pivoted______________", df_pivoted)
+                return df_pivoted
+
+            return df_filtered
+
+
+
+      
+        alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        def num_hash(num):
+                if num < 26:
+                    return alpha[num-1]
+                else:
+                    q, r = num//26, num % 26
+                    if r == 0:
+                        if q == 1:
+                            return alpha[r-1]
+                        else:
+                            return num_hash(q-1) + alpha[r-1]
+                    else:
+                        return num_hash(q) + alpha[r-1]
+    
+    # Driver code
+
+    # printString(27906)
+
+        def titleToNumber(s):
+        # This process is similar to binary-to-
+        # decimal conversion
+            result = 0
+            for B in range(len(s)):
+                result *= 26
+                result += ord(s[B]) - ord('A') + 1
+            return result
+
+
+        def overwrite(df_pivoted,kpi_name,coln1,trend_ws):
+            
+            coln2=num_hash(titleToNumber(coln1)+1)
+            coln3=num_hash(titleToNumber(coln1)+2)
+            coln4=num_hash(titleToNumber(coln1)+3)
+            coln5=num_hash(titleToNumber(coln1)+4)
+            # print(kpi_name)
+            index_pivot=df_pivoted.index.to_list()
+            print("index ;###############################",index_pivot)
+            print(len(index_pivot))
+            print("index of pivoted table: ",index_pivot)
+           
+            dr=df_pivoted[kpi_name]
+           
+
+            print("columns of dr table",dr.columns)
+            cl=dr.columns.to_list()
+            # print("column list",cl)
+            
+            # site_id=dr["SITE_ID"].to_list() 
+            # cell_id=dr["CELL_ID"].to_list()
+            try:    
+                col1=dr[str(cl[0])].to_list()
+            except:
+                col1=[0]*len(dr.index)
+            try:    
+                col2=dr[str(cl[1])].to_list()
+            except:
+                col2=[0]*len(dr.index)
+            try:    
+                col3=dr[str(cl[2])].to_list()
+            except:
+                col3=[0]*len(dr.index)
+            try:    
+                col4=dr[str(cl[3])].to_list()
+            except:
+                col4=[0]*len(dr.index)
+            try:    
+                col5=dr[str(cl[4])].to_list()
+            except:
+                col5=[0]*len(dr.index)
+            # col2=dr[str(cl[1])].to_list()
+            # col3=dr[str(cl[2])].to_list()
+            # col4=dr[str(cl[3])].to_list()
+            # col5=dr[str(cl[4])].to_list()
+            try:
+                trend_ws[coln1+"3"].value=cl[0]
+            except:
+                trend_ws[coln1+"3"].value='UNNAMMED0'
+            try:
+                trend_ws[coln2+"3"].value=cl[1]
+            except:
+                trend_ws[coln2+"3"].value='UNNAMMED1'
+            try:
+                trend_ws[coln3+"3"].value=cl[2]
+            except:
+                trend_ws[coln3+"3"].value='UNNAMMED2'
+            try:
+                trend_ws[coln4+"3"].value=cl[3]
+            except:
+                trend_ws[coln4+"3"].value='UNNAMMED3'
+            try:
+                trend_ws[coln5+"3"].value=cl[4]
+            except:
+                trend_ws[coln5+"3"].value='UNNAMMED4'
+       
+            for i, value in enumerate(index_pivot):
+                j = i + 4
+                trend_ws["A" + str(j)].value = 'KTK'
+                trend_ws["L" + str(j)].value = 'Done'
+                trend_ws["K" + str(j)].value = date1
+
+                # Safely assign index values
+                trend_ws["B" + str(j)].value = index_pivot[i][0] if len(index_pivot[i]) > 0 else ''
+                trend_ws["C" + str(j)].value = index_pivot[i][7] if len(index_pivot[i]) > 7 else ''
+                trend_ws["E" + str(j)].value = index_pivot[i][2] if len(index_pivot[i]) > 2 else ''
+                trend_ws["F" + str(j)].value = index_pivot[i][0] if len(index_pivot[i]) > 0 else ''
+                trend_ws["G" + str(j)].value = index_pivot[i][1] if len(index_pivot[i]) > 1 else ''
+                trend_ws["H" + str(j)].value = index_pivot[i][4] if len(index_pivot[i]) > 4 else ''
+                trend_ws["I" + str(j)].value = index_pivot[i][3] if len(index_pivot[i]) > 3 else ''
+                trend_ws["J" + str(j)].value = index_pivot[i][5] if len(index_pivot[i]) > 5 else ''
+
+                # Assign KPI values
+                trend_ws[coln1 + str(j)].value = col1[i]
+                trend_ws[coln2 + str(j)].value = col2[i]
+                trend_ws[coln3 + str(j)].value = col3[i]
+                trend_ws[coln4 + str(j)].value = col4[i]
+                trend_ws[coln5 + str(j)].value = col5[i]
+                
+                
+        pivot_fdd=perticular_tech(["_F3_"],site_list)
+        trend_ws=trend_wb["FDD KPI"]
+    
+        if not pivot_fdd.empty:
+            for kpi_name in kpi:
+                if(kpi_name=="MV_RRC Setup Success Rate [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"O",trend_ws)
+
+                if(kpi_name=="MV_ERAB Setup Success Rate [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"V",trend_ws)
+
+                if(kpi_name=="MV_PS Drop Call Rate % [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"AC",trend_ws)
+
+                if(kpi_name=="MV_DL User Throughput_Kbps [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"AJ",trend_ws)
+
+                if(kpi_name=="MV_UL User Throughput_Kbps [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"AQ",trend_ws)
+
+                if(kpi_name=="MV_Radio NW Availability"):
+                    overwrite(pivot_fdd,kpi_name,"AX",trend_ws)
+                
+                if(kpi_name=="MV_E-UTRAN Average CQI [CDBH]"): 
+                    overwrite(pivot_fdd,kpi_name,"BE",trend_ws)
+           
+            
+                if(kpi_name=="MV_PS handover success rate [LTE Intra System] [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"BS",trend_ws)
+                
+                if(kpi_name=="MV_PS handover success rate [LTE Inter System] [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"BZ",trend_ws)
+                
+                if(kpi_name=="MV_CSFB Redirection Success Rate"):
+                    overwrite(pivot_fdd,kpi_name,"CG",trend_ws)
+                
+
+                if(kpi_name=="MV_Average number of used DL PRBs [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"CU",trend_ws)
+                
+                if(kpi_name=="MV_4G Data Volume_GB_Pl[CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"DB",trend_ws)
+                
+                if(kpi_name=="MV_VoLTE ERAB Setup Success Rate"):
+                    overwrite(pivot_fdd,kpi_name,"DI",trend_ws)
+                
+                if(kpi_name=="MV_VoLTE DCR [CBBH]"):
+                    overwrite(pivot_fdd,kpi_name,"DP",trend_ws)
+
+                if(kpi_name=="MV_VoLTE Packet Loss DL [CBBH]"):
+                    overwrite(pivot_fdd,kpi_name,"DW",trend_ws)
+
+                if(kpi_name=="MV_VoLTE Packet Loss UL [CBBH]"):
+                    overwrite(pivot_fdd,kpi_name,"ED",trend_ws)
+
+                if(kpi_name=="MV_VoLTE DCR [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"EY",trend_ws)
+                    
+                if(kpi_name=="MV_VoLTE IntraF HOSR Exec [CBBH]"):
+                    overwrite(pivot_fdd,kpi_name,"FF",trend_ws)
+                    
+                if(kpi_name=="MV_VoLTE InterF HOSR Exec [CBBH]"):
+                    overwrite(pivot_fdd,kpi_name,"FM",trend_ws)
+
+                # if kpi_name == "MV_VoLTE CSSR%":
+                #     overwrite(pivot_fdd, kpi_name, "FT", trend_ws)# L2100 & l900
+                
+           # TO
+
+   
+   
+
+        # for tdd
+        pivot_fdd=perticular_tech(["_T1_","_T2_"],site_list)
+        trend_ws=trend_wb["TDD KPI"]
+        if not pivot_fdd.empty:
+           for kpi_name in kpi:
+                if(kpi_name=="MV_RRC Setup Success Rate [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"O",trend_ws)
+
+                if(kpi_name=="MV_ERAB Setup Success Rate [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"V",trend_ws)
+
+                if(kpi_name=="MV_PS Drop Call Rate % [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"AC",trend_ws)
+
+                if(kpi_name=="MV_DL User Throughput_Kbps [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"AJ",trend_ws)
+
+                if(kpi_name=="MV_UL User Throughput_Kbps [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"AQ",trend_ws)
+
+                if(kpi_name=="MV_Radio NW Availability"):
+                    overwrite(pivot_fdd,kpi_name,"AX",trend_ws)
+                
+                if(kpi_name=="MV_E-UTRAN Average CQI [CDBH]"): 
+                    overwrite(pivot_fdd,kpi_name,"BE",trend_ws)
+                
+        
+                
+                if(kpi_name=="MV_PS handover success rate [LTE Intra System] [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"BS",trend_ws)
+                
+                if(kpi_name=="MV_PS handover success rate [LTE Inter System] [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"BZ",trend_ws)
+                
+                if(kpi_name=="MV_CSFB Redirection Success Rate"):
+                    overwrite(pivot_fdd,kpi_name,"CG",trend_ws)
+                
+
+                if(kpi_name=="MV_Average number of used DL PRBs [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"CU",trend_ws)
+                
+                if(kpi_name=="MV_4G Data Volume_GB_Pl[CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"DB",trend_ws)
+                
+                if(kpi_name=="MV_VoLTE ERAB Setup Success Rate"):
+                    overwrite(pivot_fdd,kpi_name,"DI",trend_ws)
+                
+                if(kpi_name=="MV_VoLTE DCR [CBBH]"):
+                    overwrite(pivot_fdd,kpi_name,"DP",trend_ws)
+
+                if(kpi_name=="MV_VoLTE Packet Loss DL [CBBH]"):
+                    overwrite(pivot_fdd,kpi_name,"DW",trend_ws)
+
+                if(kpi_name=="MV_VoLTE Packet Loss UL [CBBH]"):
+                    overwrite(pivot_fdd,kpi_name,"ED",trend_ws)
+
+                if(kpi_name=="MV_VoLTE DCR [CDBH]"):
+                    overwrite(pivot_fdd,kpi_name,"EY",trend_ws)
+                    
+                if(kpi_name=="MV_VoLTE IntraF HOSR Exec [CBBH]"):
+                    overwrite(pivot_fdd,kpi_name,"FF",trend_ws)
+                    
+                if(kpi_name=="MV_VoLTE InterF HOSR Exec [CBBH]"):
+                    overwrite(pivot_fdd,kpi_name,"FM",trend_ws)
+
+                # if kpi_name == "MV_VoLTE CSSR%":
+                #     overwrite(pivot_fdd, kpi_name, "FT", trend_ws)
+
+
+            
+
+        pivot_fdd=perticular_tech(["_F8_"],site_list)
+        trend_ws=trend_wb["L900 KPI"]
+        if not pivot_fdd.empty:
+            for kpi_name in kpi:
+                    if(kpi_name=="MV_RRC Setup Success Rate [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"P",trend_ws)
+
+                    if(kpi_name=="MV_ERAB Setup Success Rate [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"W",trend_ws)
+
+                    if(kpi_name=="MV_PS Drop Call Rate % [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"AD",trend_ws)
+
+                    if(kpi_name=="MV_DL User Throughput_Kbps [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"BM",trend_ws)
+                                  
+                    # if (kpi_name== 0):     
+                    #  overwrite(pivot_fdd,0,"CH",trend_ws)
+              
+
+                    # if(kpi_name=="MV_UL User Throughput_Kbps [CDBH]"):
+                    #     overwrite(pivot_fdd,kpi_name,"AQ",trend_ws)
+
+                    # if(kpi_name=="MV_Radio NW Availability"):
+                    #     overwrite(pivot_fdd,kpi_name,"AX",trend_ws)
+                    
+                    # if(kpi_name=="MV_E-UTRAN Average CQI [CDBH]"): 
+                    #     overwrite(pivot_fdd,kpi_name,"BE",trend_ws)
+                    
+                    # if(kpi_name=="SINR"):             # TO ADD
+                    #     overwrite(pivot_fdd,kpi_name,"BL",trend_ws)
+                    
+                    if(kpi_name=="MV_PS handover success rate [LTE Intra System] [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"AK",trend_ws)
+                    
+                    if(kpi_name=="MV_PS handover success rate [LTE Inter System] [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"AR",trend_ws)
+                    
+                    # if(kpi_name=="MV_CSFB Redirection Success Rate"):
+                    #     overwrite(pivot_fdd,kpi_name,"CG",trend_ws)
+                    
+
+                    if(kpi_name=="MV_Average number of used DL PRBs [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"CV",trend_ws)
+                    
+                    if(kpi_name=="MV_4G Data Volume_GB_Pl[CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"DC",trend_ws)
+                    
+                    # if(kpi_name=="MV_VoLTE ERAB Setup Success Rate"):
+                    #     overwrite(pivot_fdd,kpi_name,"AY",trend_ws)
+                    
+                    if(kpi_name=="MV_VoLTE DCR [CBBH]"):
+                        overwrite(pivot_fdd,kpi_name,"BF",trend_ws)
+
+                    if(kpi_name=="MV_VoLTE Packet Loss DL [CBBH]"):
+                        overwrite(pivot_fdd,kpi_name,"BT",trend_ws)
+
+                    if(kpi_name=="MV_VoLTE Packet Loss UL [CBBH]"):
+                        overwrite(pivot_fdd,kpi_name,"CA",trend_ws)
+
+                    # if(kpi_name=="MV_VoLTE DCR [CDBH]"):
+                    #     overwrite(pivot_fdd,kpi_name,"EY",trend_ws)
+                        
+                    if(kpi_name=="MV_VoLTE IntraF HOSR Exec [CBBH]"):
+                        overwrite(pivot_fdd,kpi_name,"CO",trend_ws)
+                        
+                    # if(kpi_name=="MV_VoLTE InterF HOSR Exec [CBBH]"):
+                    #     overwrite(pivot_fdd,kpi_name,"FM",trend_ws)
+
+                    if kpi_name == "MV_VoLTE CSSR%":
+                        overwrite(pivot_fdd, kpi_name, "AY", trend_ws)
+
+
+
+            
+
+
+
+        pivot_fdd=perticular_tech(["_F1_"],site_list)
+        trend_ws=trend_wb["L2100 KPI"]
+        if not pivot_fdd.empty:
+
+            for kpi_name in kpi:
+                    if(kpi_name=="MV_RRC Setup Success Rate [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"P",trend_ws)
+
+                    if(kpi_name=="MV_ERAB Setup Success Rate [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"W",trend_ws)
+
+                    if(kpi_name=="MV_PS Drop Call Rate % [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"AD",trend_ws)
+
+                    if(kpi_name=="MV_DL User Throughput_Kbps [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"BM",trend_ws)
+
+                    # if(kpi_name=="MV_UL User Throughput_Kbps [CDBH]"):
+                    #     overwrite(pivot_fdd,kpi_name,"AQ",trend_ws)
+
+                    # if(kpi_name=="MV_Radio NW Availability"):
+                    #     overwrite(pivot_fdd,kpi_name,"AX",trend_ws)
+                    
+                    # if(kpi_name=="MV_E-UTRAN Average CQI [CDBH]"): 
+                    #     overwrite(pivot_fdd,kpi_name,"BE",trend_ws)
+                    
+                    # if(kpi_name=="SINR"):             # TO ADD
+                    #     overwrite(pivot_fdd,kpi_name,"BL",trend_ws)
+                    
+                    if(kpi_name=="MV_PS handover success rate [LTE Intra System] [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"AK",trend_ws)
+                    
+                    if(kpi_name=="MV_PS handover success rate [LTE Inter System] [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"AR",trend_ws)
+                        
+             
+                    
+                    # if(kpi_name=="MV_CSFB Redirection Success Rate"):
+                    #     overwrite(pivot_fdd,kpi_name,"CG",trend_ws)
+                    
+
+                    if(kpi_name=="MV_Average number of used DL PRBs [CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"CV",trend_ws)
+                    
+                    if(kpi_name=="MV_4G Data Volume_GB_Pl[CDBH]"):
+                        overwrite(pivot_fdd,kpi_name,"DC",trend_ws)
+                    
+                    # if(kpi_name=="MV_VoLTE ERAB Setup Success Rate"):
+                    #     overwrite(pivot_fdd,kpi_name,"AY",trend_ws)
+                    
+                    if(kpi_name=="MV_VoLTE DCR [CBBH]"):
+                        overwrite(pivot_fdd,kpi_name,"BF",trend_ws)
+
+                    if(kpi_name=="MV_VoLTE Packet Loss DL [CBBH]"):
+                        overwrite(pivot_fdd,kpi_name,"BT",trend_ws)
+
+                    if(kpi_name=="MV_VoLTE Packet Loss UL [CBBH]"):
+                        overwrite(pivot_fdd,kpi_name,"CA",trend_ws)
+
+                    # if(kpi_name=="MV_VoLTE DCR [CDBH]"):
+                    #     overwrite(pivot_fdd,kpi_name,"EY",trend_ws)
+                        
+                    if(kpi_name=="MV_VoLTE IntraF HOSR Exec [CBBH]"):
+                        overwrite(pivot_fdd,kpi_name,"CO",trend_ws)
+                        
+                    # if(kpi_name=="MV_VoLTE InterF HOSR Exec [CBBH]"):
+                    #     overwrite(pivot_fdd,kpi_name,"FM",trend_ws)
+
+                    if kpi_name == "MV_VoLTE CSSR%":
+                        overwrite(pivot_fdd, kpi_name, "AY", trend_ws)
+
+
+
+                
+
+        output_path=os.path.join(door_root,"output","ktk_trend_output.xlsx")
+        
+        trend_wb.save(output_path)
+        print("file saved")
+        wb = load_workbook(output_path)
+
+        # Process L2100 and L900 KPI sheets
+        fill_zeros_and_round(wb, ["L2100 KPI", "L900 KPI"], ["CH","CI","CJ","CK","CL"])
+
+        # Process FDD and TDD KPI sheets
+        fill_zeros_and_round(
+            wb,
+            ["FDD KPI", "TDD KPI"],
+            ["BL","BM","BN","BO","BP","BQ","CN","CO","CP","CQ","CR","EK","EL","EM","EN","EO","ER","ES","ET","EU","EV","FT","FU","FV","FW","FX"]
+        )
+
+        # Save the workbook
+        wb.save(output_path)
+        
+        print("END Trend Process------------------------------------------------------")
+        download_path=os.path.join(MEDIA_URL,"trends","ktk","output","ktk_trend_output.xlsx")
+        return Response({"status":True,"message":"Succesfully uploaded","Download_url":download_path})

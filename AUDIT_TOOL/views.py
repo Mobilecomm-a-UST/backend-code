@@ -20,7 +20,7 @@ class TaskList(APIView):
     def get(self, request):
         print(request.user)
         date=datetime.datetime.now().date()
-        print(date)
+        print(date) 
         tasks = Task.objects.filter(created_at__date=date,user=request.user)
         # tasks = Task.objects.all()
         serializer = TaskSerializer(tasks, many=True)

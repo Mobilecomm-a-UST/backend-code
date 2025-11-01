@@ -299,9 +299,9 @@ def monitor_task_status(user_name,task_id, task_pk,output_file_save_name,circle)
         task.circle = circle
         task.save()
         to_address = user_name
-        cc_mails = "Nishant.Verma@ust.com;Mohit.Batra@ust.com"
+        cc_mails = "Manoj.Kumar@ust.com;Mohit.Batra@ust.com"
         # subject = "2G Audit Report"
-        body = "Your 2G Audit Report is ready. Please download the report from the below link. \n\n"+ str("http://103.242.225.195:8000") + str(file_link)
+        body = "Your 2G Audit Report is ready. Please download the report from the below link. \n\n"+ str("http://122.176.141.197:8000") + str(file_link)
         send_email.delay(to_address, cc_mails ,subject, body)
         
         

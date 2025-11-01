@@ -12,25 +12,22 @@ def send_email_for_relocation(objs):
     df = pd.DataFrame(list(objs.values()))
 
     to_mails = [
-                'Chandan.Kumar2@ust.com',
-                'Abhishek.Gupta@ust.com',
-                'Rahul.Dahiya@ust.com',
-                'Aashish.Sharma@ust.com',
-                'krishna.kantverma@ust.com',
-                'Amit.Rai@ust.com',
-                ]
+        'Chandan.Kumar2@ust.com',
+        'Abhishek.Gupta@ust.com',
+        'Rahul.Dahiya@ust.com',
+        'Aashish.Sharma@ust.com',
+        'krishna.kantverma@ust.com',
+        'Amit.Rai@ust.com',
+        'Deepak.KumarYadav@ust.com',
+    ]
     
     to_email = ";".join(to_mails)
 
-    cc_mails = ['Abhinav.Verma@ust.com',
-                'Prerna.PramodKumar@ust.com',
-                # 'Vinay.Duklan@ust.com'
-                ]
+    cc_mails = ['Abhinav.Verma@ust.com','Prerna.PramodKumar@ust.com','Vinay.Duklan@ust.com']
     
     cc_mails_str = ";".join(cc_mails)
 
-    to_email_second = ['Mohit.Batra@ust.com',
-                                    'saurabh.rathore@ust.com']
+    to_email_second = ['Mohit.Batra@ust.com','saurabh.rathore@ust.com','Deepak.KumarYadav@ust.com']
     
     to_email_str = ";".join(to_email_second)
 

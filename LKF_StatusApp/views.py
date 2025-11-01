@@ -16,7 +16,8 @@ from collections import Counter
 from datetime import datetime
 from openpyxl.utils import get_column_letter
 
-def format_and_autofit_excel(file_path):
+# Function to format and autofit Excel files--------
+def format_excel(file_path):
     wb = load_workbook(file_path)
     ws = wb.active
 
@@ -132,7 +133,9 @@ def delete_existing_files(folder_path):
 
 #_-_-_post api__________
 @api_view(["POST"])
+
 def LKF_Upload(request):
+    print("LKF_started processing the files-------------------------")
     try:
         files = request.FILES.getlist("files")
         if not files:
@@ -394,10 +397,9 @@ def LKF_Upload(request):
             os.makedirs(template_file_path, exist_ok=True)
 
         excel_files_paths = [os.path.join(log_excel_folder, file) for file in os.listdir(log_excel_folder)]
-        #find the final output file....
         output_path_final = os.path.join(base_media_url, "LKF_Final_Output")
         os.makedirs(output_path_final, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M")
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
         final_output = os.path.join(output_path_final, f'LKF_Status_output_{timestamp}.xlsx')
         delete_existing_files(output_path_final)
 
@@ -406,8 +408,10 @@ def LKF_Upload(request):
             template_path = os.path.join(template_file_path, "template.xlsx")
             template_df = pd.read_excel(template_path)
             xls = pd.ExcelFile(excel_file)
+            
+            
 
-
+            trx=None
             for sheet_name in xls.sheet_names:
                 
        #find the fingerprint         
@@ -422,49 +426,30 @@ def LKF_Upload(request):
        #find the baseband and rru              
                 if sheet_name == "hget field prod":
                     df = xls.parse(sheet_name)
+
+                    # Extract Baseband (e.g., "6651" from "RAN Processor 6651")
                     base = df['productName'].str.extract(r'(?:Baseband|RAN Processor)\s+(\w+)', expand=False).dropna()
                     baseband = base.iloc[0] if not base.empty else "NA"
                     template_df.loc[0, 'Baseband'] = baseband
-                    
-                    
-                    
 
-                    rru_df = df[df['productName'].str.contains(r'(AIR\s\d+\sB\d+[A-Z]*|Radio\s\d+\sB\d+[A-Z]*|RRUS\s\d+\sB\d+[A-Z]*)', na=False)]
-                    model_band = rru_df['productName'].str.extract(r'(AIR\s\d+\sB\d+[A-Z]*|Radio\s\d+\sB\d+[A-Z]*|RRUS\s\d+\sB\d+[A-Z]*)', expand=False)
+                    # Define regex pattern for RRU model match
+                    rru_pattern = r'(AIR\s\d+\sB\d+[A-Z]*|Radio\s(?:\d+\s*)+B\d+(?:\s*\d+)*\s*[A-Z]*)'
+
+                    # Filter and extract RRU models
+                    rru_df = df[df['productName'].str.contains(rru_pattern, na=False)]
+                    model_band = rru_df['productName'].str.extract(rru_pattern, expand=False)
+
+                    # Count occurrences---
                     countRRU = model_band.value_counts()
-                    result = '+'.join(f"{item}*{count}" for item, count in countRRU.items())
+
+                    # Format output like "Model*Count + Model*Count"
+                    result = ' + '.join(f"{item}*{count}" for item, count in countRRU.items())
                     template_df.loc[0, 'RRU Model'] = result if result else "NA"
-                    
-                    
-           #`find the site id and mo`       
-                if sheet_name == "st cell":
-                    df = xls.parse(sheet_name)
-               
-                    df['ip_address'] = df['ip_address'].astype(str).fillna('NA')
-                    ip_address = df['ip_address'].dropna().unique()
-                    template_df.loc[0, 'Node IP'] = ip_address[0] if len(ip_address) > 0 else "NA"
 
-               
-                    df['site_value'] = df['site_value'].astype(str).fillna('NA')
-                    mo = df['site_value'].unique()
-                    template_df.loc[0, 'MO Name'] = mo[0] if len(mo) > 0 else "NA"
-
-                    df['site_id'] = df['site_value'].str.extractall(r'[A-Z]+(\d+)').groupby(level=0).last()
-                    site_id = df['site_id'].iloc[0] if not df['site_id'].empty and pd.notna(df['site_id'].iloc[0]) else "NA"
-                    template_df.loc[0, "Site Id"] = site_id
-
-           #find the trx       
-           
-                if sheet_name == "st trx":
-                    df = xls.parse(sheet_name)
-                    trx = len(df)-1
-                    trx = None if trx == 0 else trx
-                    template_df.loc[0, "TRX"] = trx
-
-              
-                 
-                    
+        
                 
+            
+      
         # find the 5g count and power      
                 if sheet_name == "get . maxtx":
                     df = xls.parse(sheet_name)
@@ -529,7 +514,7 @@ def LKF_Upload(request):
 
                             elif layer == "L1800" and count > 0:
                                 template_df.loc[0, "FDD-L1800"] = count
-                                template_df.loc[0, "FDD-Power"] = f"{power}W"
+                                template_df.loc[0, "L1800 Power"] = f"{power}W"
 
                             elif layer == "L2100" and count > 0:
                                 template_df.loc[0, "L2100"] = count
@@ -550,21 +535,88 @@ def LKF_Upload(request):
                                 else:
                                     template_df.loc[0, "TDD-10Mhz"] += count
                                 template_df.loc[0, "TDD Power"] = f"{power}W"
+                                
+                                    
+                    layers = []
+                    trx = None  # Define outside loop
+
+                    # Step 1: Loop through all sheets
+                    for sheet_name in xls.sheet_names:
+                        df = xls.parse(sheet_name)
+
+                        # Extract TRX from "st trx" sheet
+                        if sheet_name == "st trx":
+                            trx_count = max(len(df) - 1, 0)
+                            trx = trx_count if trx_count > 0 else None
+                            template_df.loc[0, "TRX"] = trx  # optional: store for reference
+
+                        # Process "hget field prod" to build layers
+                        elif sheet_name == "st cell":
+                            df = xls.parse(sheet_name)
+                
+                            df['ip_address'] = df['ip_address'].astype(str).fillna('NA')
+                            ip_address = df['ip_address'].dropna().unique()
+                            template_df.loc[0, 'Node IP'] = ip_address[0] if len(ip_address) > 0 else "NA"
+
+                    
+                            df['site_value'] = df['site_value'].astype(str).fillna('NA')
+                            mo = df['site_value'].unique()
+                            template_df.loc[0, 'MO Name'] = mo[0] if len(mo) > 0 else "NA"
+
+                            df['site_id'] = df['site_value'].str.extractall(r'[A-Z]+(\d+)').groupby(level=0).last()
+                            site_id = df['site_id'].iloc[0] if not df['site_id'].empty and pd.notna(df['site_id'].iloc[0]) else "NA"
+                            template_df.loc[0, "Site Id"] = site_id
+                        
+                        
+                            
+                            # Layer extraction from MO
+                            extracted_layers = df["MO"].str.extractall(r'_([FT]\d)_')
+                            layer_matches = extracted_layers[0].dropna().unique().tolist()
+
+                            layer_map = {
+                                "F1": "L2100",
+                                "F3": "L1800",
+                                "F5": "L85",
+                                "F8": "L900",
+                            }
+
+                            for key, value in layer_map.items():
+                                if key in layer_matches:
+                                    layers.append(value)
+
+                            if "T1" in layer_matches or "T2" in layer_matches:
+                                layers.append("TDD")
+
+                            if df["MO"].str.contains("NRCellDU").any():
+                                layers.append("5G")
+
+                    # Step 2: Add TRX to layers if applicable
+                    if pd.notna(trx) and trx > 1:
+                        layers.append("TRX")
+
+                    # Step 3: Finalize and store Layer string
+                    layer_str = "+".join(layers)
+                    print("TRX:-------------------------", trx)
+                    print("Layer:", layer_str)
+
+                    template_df.loc[0, "Layer"] = layer_str if layer_str else "NA"
+
+                                
+                                
                                  
          #save the output log file----
             base_name = os.path.splitext(os.path.basename(excel_file))[0]
             output_filename = f"{base_name}_output.xlsx"
             individual_output_path = os.path.join(output_path_tem, output_filename)
-
             template_df.to_excel(individual_output_path, index=False)
             all_dfs.append(template_df)
 
-        # Merge all processed DataFrames into one
         merged_df = pd.concat(all_dfs, ignore_index=True)
         merged_df.to_excel(final_output, index=False)
-        
-        format_and_autofit_excel(final_output)
-        
+        format_excel(final_output)
+
+        # Generate download URL
+        print("End of all files processing and saving the output file-----------------------------------------")
         relative_path = os.path.join(f"LKF_StatusApp/LKF_Final_Output/LKF_Status_output_{timestamp}.xlsx").replace("\\", "/")
         download_url = request.build_absolute_uri(MEDIA_URL + relative_path)
 

@@ -88,6 +88,10 @@ urlpatterns = [
     path ("soft_at_5g_checklist/", include("soft_at_5g_summary.urls")),
     path("twamp_ericsson/", include("twamp_ericsson.urls")),
     path("mobinate_vs_cats/", include("Mobinet_CATs_TOOL.urls")),
+    path("relocation_tracking/", include("relocation_tracking.urls")),
+    path("degrow_dismental/" , include("degrowDismental.urls")),
+    path("alok_tracker/" , include("alok_tracker.urls")),
+    path("Alarm_old_new_Tool/" , include("Alarm_old_new_Tool.urls")),
 ]
 
 if settings.DEBUG:

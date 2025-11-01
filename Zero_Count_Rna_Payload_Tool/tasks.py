@@ -82,11 +82,8 @@ def level_wise_mail_notification():
                         to_mails=[spoc_email, l2_management_email]
                         cc_mails = [
                                     'Mohit.Batra@ust.com',
-                                #     'Vinay.Duklan@ust.com',
-                                    'Nishant.Verma@ust.com',
-                                    'saurabh.rathore@mcpsinc.com',
-                                    # 'Saurabh.Rathore@ust.com',
-                                    'Nilesh.Jain@ust.com',
+                                      
+                                    'Saurabh.Rathore@ust.com',
                                     l3_management_email,
                                     l4_management_email
                                 ]
@@ -127,15 +124,13 @@ def level_wise_mail_notification():
 
                                 """
                         to_mails=[spoc_email, l3_management_email,l2_management_email]
+
                         cc_mails = [
-                                    'Mohit.Batra@ust.com',
-                                #     'Vinay.Duklan@ust.com',
-                                    'Nishant.Verma@ust.com',
-                                    'saurabh.rathore@mcpsinc.com',
-                                    # 'Saurabh.Rathore@ust.com',
-                                    'Nilesh.Jain@ust.com',
-                                    l4_management_email
-                                ]
+                                'Mohit.Batra@ust.com',
+                                'Saurabh.Rathore@ust.com',
+                                  
+                                l4_management_email
+                        ]
                         cc_mails_str = ';'.join(cc_mails)
                         to_mails_str = ';'.join(to_mails)
                         print("to: ",to_mails_str)
@@ -175,11 +170,8 @@ def level_wise_mail_notification():
                         to_mails=[l4_management_email, l3_management_email,l2_management_email,spoc_email]
                         cc_mails = [
                                     'Mohit.Batra@ust.com',
-                                #     'Vinay.Duklan@ust.com',
-                                    'Nishant.Verma@ust.com',
-                                    'saurabh.rathore@mcpsinc.com',
-                                    # 'Saurabh.Rathore@ust.com',
-                                    'Nilesh.Jain@ust.com',
+                                    'Saurabh.Rathore@ust.com',
+                                    'Vinay.Duklan@ust.com',
                                 ]
                         cc_mails_str = ';'.join(cc_mails)
                         to_mails_str = ';'.join(to_mails)   
@@ -249,11 +241,10 @@ def level_wise_mail_notification():
                         to_mails=[spoc_email, l2_management_email]
                         cc_mails = [
                                     'Mohit.Batra@ust.com',
-                                #     'Vinay.Duklan@ust.com',
-                                    'Nishant.Verma@ust.com',
-                                    'saurabh.rathore@mcpsinc.com',
+                                    'Vinay.Duklan@ust.com',
+                                    'Saurabh.Rathore@ust.com',
                                     # 'Saurabh.Rathore@ust.com',
-                                    'Nilesh.Jain@ust.com',
+                                      
                                     l3_management_email,
                                     l4_management_email
                                 ]
@@ -296,11 +287,8 @@ def level_wise_mail_notification():
                         to_mails=[spoc_email, l3_management_email,l2_management_email]
                         cc_mails = [
                                     'Mohit.Batra@ust.com',
-                                #     'Vinay.Duklan@ust.com',
-                                    'Nishant.Verma@ust.com',
-                                    'saurabh.rathore@mcpsinc.com',
-                                    # 'Saurabh.Rathore@ust.com',
-                                    'Nilesh.Jain@ust.com',
+                                    'Vinay.Duklan@ust.com',
+                                    'Saurabh.Rathore@ust.com',                                      
                                     l4_management_email
                                 ]
                         cc_mails_str = ';'.join(cc_mails)
@@ -341,13 +329,10 @@ def level_wise_mail_notification():
                                 """
                         to_mails=[l4_management_email, l3_management_email,l2_management_email,spoc_email]
                         cc_mails = [
-                                    'Mohit.Batra@ust.com',
-                                #     'Vinay.Duklan@ust.com',
-                                    'Nishant.Verma@ust.com',
-                                    'saurabh.rathore@mcpsinc.com',
-                                    # 'Saurabh.Rathore@ust.com',
-                                    'Nilesh.Jain@ust.com',
-                                ]
+                                'Mohit.Batra@ust.com',
+                                'Vinay.Duklan@ust.com',
+                                'Saurabh.Rathore@ust.com',
+                        ]
                         cc_mails_str = ';'.join(cc_mails)
                         to_mails_str = ';'.join(to_mails)   
                         print("to: ",to_mails_str)
@@ -415,10 +400,10 @@ def level_wise_mail_notification():
                         cc_mails = [
                                     'Mohit.Batra@ust.com',
                                 #     'Vinay.Duklan@ust.com',
-                                    'Nishant.Verma@ust.com',
-                                    'saurabh.rathore@mcpsinc.com',
+                                      
+                                    'Saurabh.Rathore@ust.com',
                                     # 'Saurabh.Rathore@ust.com',
-                                    'Nilesh.Jain@ust.com',
+                                      
                                     l3_management_email,
                                     l4_management_email
                                 ]
@@ -462,10 +447,10 @@ def level_wise_mail_notification():
                         cc_mails = [
                                     'Mohit.Batra@ust.com',
                                 #     'Vinay.Duklan@ust.com',
-                                    'Nishant.Verma@ust.com',
-                                    'saurabh.rathore@mcpsinc.com',
+                                      
+                                    'Saurabh.Rathore@ust.com',
                                     # 'Saurabh.Rathore@ust.com',
-                                    'Nilesh.Jain@ust.com',
+                                      
                                     l4_management_email
                                 ]
                         cc_mails_str = ';'.join(cc_mails)
@@ -508,10 +493,10 @@ def level_wise_mail_notification():
                         cc_mails = [
                                     'Mohit.Batra@ust.com',
                                 #     'Vinay.Duklan@ust.com',
-                                    'Nishant.Verma@ust.com',
-                                    'saurabh.rathore@mcpsinc.com',
+                                      
+                                    'Saurabh.Rathore@ust.com',
                                     # 'Saurabh.Rathore@ust.com',
-                                    'Nilesh.Jain@ust.com',
+                                      
                                 ]
                         cc_mails_str = ';'.join(cc_mails)
                         to_mails_str = ';'.join(to_mails)   

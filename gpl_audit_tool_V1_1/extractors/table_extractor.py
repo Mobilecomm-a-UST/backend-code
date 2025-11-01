@@ -7,36 +7,43 @@ class TableExtractor:
 
     def get_nodeID(self):
         for line in self.lines:
-            search = re.search(r"MeContext=([\w-]+)", line)
-            if search:
-                return search.group(1)
+            match = re.search(r"MeContext=([\w-]+)", line)
+            if match:
+                return match.group(1)
+        return None
 
     def parse_tables(self, command):
         tables = []
         current_header = []
         command_found = False
 
+        # matched_command = rf"^\s*[A-Z0-9-_]+\s*>\s*{command}"
+        matched_command = rf"^\s*[A-Z0-9-_]+\s*>\s*{re.escape(command)}"
+        print("Regex Pattern:", matched_command)
+        print("real command:- ", self.get_nodeID()+"> "+command)
         for line in self.lines:
             line = line.strip()
 
             if not command_found:
-                if re.match(rf"^[A-Z0-9-_]+>\s{re.escape(command)}", line):
+                if re.match(matched_command, line, flags=re.IGNORECASE):
+                    print("Matched command:", line)
                     command_found = True
                 continue
-            elif re.match(r"^[A-Z0-9-_]+>", line):
+
+            if re.match(r"^[A-Z0-9-_]+\s*>\s*$", line, flags=re.IGNORECASE):
                 break
-                
+
             if not line or line.startswith("."):
                 continue
 
-            if line.startswith("MO"):
+            if line.upper().startswith("MO"):
                 current_header = [col.strip() for col in line.split(";")]
                 continue
 
             if current_header:
                 row = [cell.strip() for cell in line.split(";")]
                 tables.append((current_header, row))
-
+        print("table for the feature state:-", tables)
         return tables
 
     def extract_table(self, command):

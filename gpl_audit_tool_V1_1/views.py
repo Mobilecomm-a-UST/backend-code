@@ -1,4 +1,5 @@
 from gettext import GNUTranslations
+import json
 from operator import index
 from optparse import Values
 import os
@@ -141,9 +142,6 @@ def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
                 startrow + row_num + 1, startcol + col_num, cell_value, format_style
             )
 
-
-
-# Create your views here.
 def get_commands(command_lines):
     pool = ThreadPool()
     result = {}
@@ -196,13 +194,48 @@ def get_commands(command_lines):
 
     return result
 
+def get_LTE_NR_GPL_AUDIT_commands(command_lines):
+    pool = ThreadPool()
+    result = {}
+
+    tasks = [
+        ############################################## LTE CELL DATA ########################################
+        (r"#+Start:\s*LTE\s*CELL\s*DATA\s*#+", r"#+\s*END\s+OF\s+LTE\s+CELL\s+DATA\s*#+", "LTE_CELL_DATA"),
+
+        #################################################### NR CELL DATA ###################################
+        (r"#+Start:\s*NR\s*CELL\s*DATA\s*#+", r"#+\s*END\s+OF\s+NR\s+CELL\s+DATA\s*#+", "NR_CELL_DATA"),
+        
+        #################################################### NR CELL DATA ###################################
+        (r"#+Start:\s*NR\s*GENBID\s*DATA\s*#+", r"#+\s*END\s+OF\s+NR\s+GNBID\s+DATA\s*#+", "NR_GNBID_DATA"),
+
+        ######################################################### LTE GPL Audit ###############################
+        (r"#+Start:\s*LTE\s*GPL\s*Audit\s*#+", r"#+\s*END\s+of\s+LTE\s+GPL\s+Audit\s*#+", "LTE_GPL_Audit"),
+
+        ################################################### Relation Audit ####################################
+        (r"#+Start:\s*Relation\s*Audit\s*#+", r"#+\s*END\s+of\s+Relation\s*Audit\s*#+", "Relation_Audit"),
+
+        ################################################ NR Baseline Audit #######################################
+        (r"#+\s*NR\s*Baseline\s*Audit\s*#+", r"#+\s*END\s+of\s+NR\s+Baseline\s+Audit\s*#+", "NR_Baseline_Audit"),
+    ]
+
+    for start, end, key in tasks:
+        pool.submit_task(
+            CommandExtractor.extract_command,
+            command_lines,
+            start,
+            end,
+            result,
+            key
+        )
+
+    pool.wait_for_completion()
+    return result
 
 def process_files(file, log_path, result):
     with open(log_path, 'r') as f:
         log_lines = [line.strip() for line in f.readlines()]
     extractor = TableExtractor(log_lines)
     return file, extract_tables(extractor, result)
-
 
 def extract_tables(extractor, result):
     dataframes = {}
@@ -262,11 +295,6 @@ def extract_tables(extractor, result):
                 )
             dataframes[key] = merged_df
     return dataframes
-
-
-
-
-
 
 @api_view(['POST'])
 def get_log_parser(request):
@@ -376,12 +404,6 @@ def get_log_parser(request):
         "message": "Data processed successfully.",
         "download_urls": all_download_urls
     }, status=status.HTTP_200_OK)
-
-
-
-
-
-
 
 @csrf_exempt
 @api_view(['POST'])
@@ -535,7 +557,7 @@ async def get_pre_post_audit(request):
     ).unique()[0]
     def _write_excel_sync(gpl_pre_post_file_path, all_post_merged_df, all_pre_merged_df, format_excel_sheet):
         with pd.ExcelWriter(gpl_pre_post_file_path, engine="xlsxwriter") as writer:
-            workbook = writer.book
+            workbook = writer.book  # noqa: F841
             for sheet_name, df in all_post_merged_df.items():
                 if sheet_name == "Summary":
                     df.to_excel(
@@ -1330,8 +1352,9 @@ async def get_pre_post_audit(request):
         },
         status=status.HTTP_200_OK,
     )
+
 @api_view(['POST'])
-def get_pre_post_audit(request):
+def get_pre_post_audit(request):  # noqa: F811
    ########################################################## Get pre and post files from frontend ##############################################
    pre_log_files = request.FILES.getlist('pre_log_files')
    post_log_files = request.FILES.getlist('post_log_files')
@@ -1446,9 +1469,8 @@ def get_pre_post_audit(request):
    pre_cell_id_df["cellId"] = pre_cell_id_df["cellId"].astype(str)
    post_cell_id_df["cellId"] = post_cell_id_df["cellId"].astype(str)
    all_post_merged_df["Summary"] = pd.merge(
-       pre_cell_id_df, post_cell_id_df, on=["cellId"], how="outer"
-   ).fillna("NA")
-   
+            pre_cell_id_df, post_cell_id_df, on=["cellId"], how="outer"
+    ).fillna("NA")
    
    all_post_merged_df["Summary"] = all_post_merged_df["Summary"].sort_values(
        by=["Pre SiteId", "Pre CellName", "cellId"], ascending=True
@@ -2296,6 +2318,6 @@ def get_pre_post_audit(request):
 
 
 
-
-
+    
+    
 

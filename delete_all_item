@@ -1,2 +1,0 @@
-from trend.models import DPR_table1 
-DPR_table1.objects.all().delete()

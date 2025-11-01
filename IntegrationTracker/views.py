@@ -60,13 +60,13 @@ def generate_date_list(start_date):
 def get_excel_temp_link(request):
     #mcom123 temp id.
     # Path to the Excel file
-    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.8.1.xlsm')
+    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.8.2.xlsm')
 
     # Check if the file exists
     if os.path.exists(file_path):
         # Construct the URL to access the file
-        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.8.1.xlsm')              
-        return Response({'file_url': file_url,'template_version':'v1.8.1'}, status=status.HTTP_200_OK)
+        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.8.2.xlsm')              
+        return Response({'file_url': file_url,'template_version':'v1.8.2'}, status=status.HTTP_200_OK)
     else:
         # Return a 404 response if the file does not exist
         return Response({'error': 'Excel file not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -112,7 +112,7 @@ def upload_excel(request):
     file = request.data['file']
     value_in_cell = read_excel_cell(file.read(), sheet_name='Sheet2', cell='BE37')
     print("cell_value:",value_in_cell)
-    if value_in_cell == "mcom_v1.8":
+    if value_in_cell == "mcom_v1.8.2":
             try:
                 df = pd.read_excel(file,sheet_name="Tracker",keep_default_na=False,skiprows=1)
             except Exception as e:
@@ -377,62 +377,179 @@ def upload_excel(request):
 #     return Response(circle_counts)
 
 
-@api_view(['GET','POST'])
-def datewise_integration_data(request):
-    print("User: ", request.user.username)
-    date_str = request.POST.get('date')
-    # print("date_str:",date_str)    
-        # Parse the date string into a datetime object
-    if date_str:
-            try:
-                print("user defined date")
-                date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
-                date1=date_obj
-                date2=date_obj- timedelta(days=1)
-                date3=date_obj- timedelta(days=2)
-                print(date1,date2,date3)
-                year = date_obj.year
-            except ValueError:
-                return JsonResponse({'error': 'Invalid date format'}, status=400)
+# @api_view(['GET','POST'])
+# def datewise_integration_data(request):
+#     print("User: ", request.user.username)
+#     date_str = request.POST.get('date')
+#     # print("date_str:",date_str)    
+#         # Parse the date string into a datetime object
+#     if date_str:
+#             try:
+#                 print("user defined date")
+#                 date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+#                 date1=date_obj
+#                 date2=date_obj- timedelta(days=1)
+#                 date3=date_obj- timedelta(days=2)
+#                 print(date1,date2,date3)
+#                 year = date_obj.year
+#             except ValueError:
+#                 return JsonResponse({'error': 'Invalid date format'}, status=400)
 
-    else:
-                print("Default Dates")
-                latest_date =IntegrationData.objects.latest('Integration_Date').Integration_Date
-                print('latest date:',latest_date)
-                date1=latest_date
-                date2=latest_date- timedelta(days=1)
-                date3=latest_date- timedelta(days=2)
-                print(date1,date2,date3)
+#     else:
+#                 # print("Default Dates")
+#                 latest_date =IntegrationData.objects.latest('Integration_Date').Integration_Date
+#                 # print('latest date:',latest_date)
+#                 date1=latest_date
+#                 date2=latest_date- timedelta(days=1)
+#                 date3=latest_date- timedelta(days=2)
+#                 print(date1,date2,date3)
 
-                latest_year = latest_date.year
-                print("latest_year:", latest_year)
-                year= latest_year
+#                 latest_year = latest_date.year
+#                 # print("latest_year:", latest_year)
+#                 year= latest_year
 
 
 
  
+#     with connection.cursor() as cursor:
+#         activity_type = [
+#             '5G SECTOR ADDITION', 
+#             '5G RELOCATION', 
+#             'HT INCREMENT', 
+#             'FEMTO', 
+#             'DE-GROW', 
+#             'IBS', 
+#             'IDSC',
+#             'MACRO', 
+#             'ODSC', 
+#             '5G BW UPGRADE',
+#             'RRU UPGRADE', 
+#             'OPERATIONS', 
+#             'OTHERS', 
+#            'RECTIFICATION',
+#             'RELOCATION', 
+#             '5G RRU SWAP',
+#             'RET', 
+#             'TRAFFIC SHIFTING', 
+#             'ULS_HPSC', 
+#             'UPGRADE',
+#         ]
+        
+#         activity_columns = [a.replace(' ', '_').replace('-', '_') for a in activity_type]
+#         dates = [date1, date2, date3]
+
+#         join_clauses = []
+#         alias_list = []
+
+#         for index, date in enumerate(dates):
+#             alias = f"d{index+1}"
+#             alias_list.append(alias)
+#             date_tag = f"D{index+1}"
+#             columns_def = ",".join([f'"{date_tag}_{col}" INTEGER' for col in activity_columns])
+#             print('date wise data count' , columns_def)
+#             select_cte = f"""
+#                 SELECT * FROM crosstab($$
+#                     SELECT 
+#                         UPPER("CIRCLE") AS "CIRCLE",
+#                         "Activity_Name",
+#                         COALESCE(cnt, 0)::INTEGER AS cnt
+#                     FROM 
+#                         (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "C"
+#                     CROSS JOIN
+#                         (SELECT unnest(ARRAY{activity_type}) AS "Activity_Name") AS a
+#                     LEFT JOIN (
+#                         SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT("id") AS cnt
+#                         FROM public."IntegrationTracker_integrationdata"
+#                         WHERE "Integration_Date" = '{date}'
+#                         GROUP BY "CIRCLE", "Activity_Name"
+#                     ) AS r USING ("CIRCLE", "Activity_Name")
+#                     ORDER BY 1, 2
+#                 $$) AS ct(cir text, {columns_def})
+#             """
+#             # print('query:',select_cte)
+#             join_clauses.append(f"({select_cte}) AS {alias}")
+
+#         # print('join_clauses:',join_clauses)
+
+#         # Build the full outer joins dynamically
+#         final_query = join_clauses[0]
+#         for i in range(1, len(join_clauses)):
+#             final_query = f"""
+#                 {final_query}
+#                 FULL OUTER JOIN
+#                 {join_clauses[i]}
+#                 USING (cir)
+#             """
+#         # print('final_query:',final_query)
+
+#         query = f"SELECT * FROM {final_query};"
+#         cursor.execute(query)
+#         results = cursor.fetchall()
+#         # print(results)
+        
+#     results_as_strings = []
+#     for row in results:
+#         # Convert each element in the row to a string
+#         row_as_string = [str(element) for element in row]
+#         # Append the row as a string to the list
+#         results_as_strings.append(row_as_string)
+    
+
+#     rows_as_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in results_as_strings]
+#     # rows_as_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in results]
+
+
+
+#     jsonResult =  json.dumps(rows_as_dict)
+#     # jsonResult = json.loads(jsonResult)
+#     ############################ DATE WISE OVER ALL DATA FOR DOWNLOAD ##############################
+#     objs = IntegrationData.objects.filter(Integration_Date=date1)
+    
+#     # Serialize queryset using serializer
+#     serializer = IntegrationDataSerializer(objs, many=True)
+#     # print(jsonResult)
+#     data={"table_data":jsonResult,"latest_dates":[date1,date2,date3],"download_data":serializer.data}
+#     return Response(data)
+
+
+
+# ########### DATE WISE INTEGRATION DATA new ###########
+@api_view(['GET','POST'])
+def datewise_integration_data(request):
+    print("User: ", request.user.username)
+    date_str = request.POST.get('date')
+    
+    # Parse dates
+    if date_str:
+        try:
+            print("user defined date")
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+            date1 = date_obj
+            date2 = date_obj - timedelta(days=1)
+            date3 = date_obj - timedelta(days=2)
+            print(date1, date2, date3)
+            year = date_obj.year
+        except ValueError:
+            return JsonResponse({'error': 'Invalid date format'}, status=400)
+    else:
+        latest_date = IntegrationData.objects.latest('Integration_Date').Integration_Date
+        date1 = latest_date
+        date2 = latest_date - timedelta(days=1)
+        date3 = latest_date - timedelta(days=2)
+        print(date1, date2, date3)
+        year = latest_date.year
+
+    fixed_circles = [
+        'AP','BIH','CHN','DEL','HP','HRY','JK','JRK','KK','KOL',
+        'MAH','MP','MUM','NESA','ORI','PUN','RAJ','ROTN','UPE','UPW','WB'
+    ]
+
     with connection.cursor() as cursor:
         activity_type = [
-            '5G SECTOR ADDITION', 
-            '5G RELOCATION', 
-            'HT INCREMENT', 
-            'FEMTO', 
-            'DE-GROW', 
-            'IBS', 
-            'IDSC',
-            'MACRO', 
-            'ODSC', 
-            'OPERATIONS', 
-            'RRU UPGRADE', 
-            '5G BW UPGRADE', 
-            'OTHERS', 
-            '5G RRU SWAP',
-            'RELOCATION', 
-            'RECTIFICATION', 
-            'RET', 
-            'TRAFFIC SHIFTING', 
-            'ULS_HPSC', 
-            'UPGRADE'
+            '5G SECTOR ADDITION','5G RELOCATION','HT INCREMENT','FEMTO','DE-GROW',
+            'IBS','IDSC','MACRO','ODSC','5G BW UPGRADE','RRU UPGRADE','OPERATIONS',
+            'OTHERS','RECTIFICATION','RELOCATION','5G RRU SWAP','RET',
+            'TRAFFIC SHIFTING','ULS_HPSC','UPGRADE','RRU SWAP'
         ]
         
         activity_columns = [a.replace(' ', '_').replace('-', '_') for a in activity_type]
@@ -446,29 +563,31 @@ def datewise_integration_data(request):
             alias_list.append(alias)
             date_tag = f"D{index+1}"
             columns_def = ",".join([f'"{date_tag}_{col}" INTEGER' for col in activity_columns])
-            print('date wise data count' , columns_def)
+
             select_cte = f"""
                 SELECT * FROM crosstab($$
                     SELECT 
-                        UPPER("CIRCLE") AS "CIRCLE",
-                        "Activity_Name",
-                        COALESCE(cnt, 0)::INTEGER AS cnt
+                        c.cir AS "CIRCLE",
+                        a."Activity_Name",
+                        COALESCE(r.cnt, 0)::INTEGER AS cnt
                     FROM 
-                        (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "C"
+                        (SELECT unnest(ARRAY{fixed_circles}) AS cir) c
                     CROSS JOIN
-                        (SELECT unnest(ARRAY{activity_type}) AS "Activity_Name") AS a
+                        (SELECT unnest(ARRAY{activity_type}) AS "Activity_Name") a
                     LEFT JOIN (
-                        SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT("id") AS cnt
+                        SELECT UPPER("CIRCLE") AS "CIRCLE", "Activity_Name", COUNT("id") AS cnt
                         FROM public."IntegrationTracker_integrationdata"
                         WHERE "Integration_Date" = '{date}'
                         GROUP BY "CIRCLE", "Activity_Name"
-                    ) AS r USING ("CIRCLE", "Activity_Name")
-                    ORDER BY 1, 2
+                    ) r 
+                    ON UPPER(c.cir) = r."CIRCLE" 
+                    AND a."Activity_Name" = r."Activity_Name"
+                    ORDER BY c.cir, array_position(ARRAY{activity_type}, a."Activity_Name")
                 $$) AS ct(cir text, {columns_def})
             """
             join_clauses.append(f"({select_cte}) AS {alias}")
 
-        # Build the full outer joins dynamically
+        # Build the FULL OUTER JOIN dynamically
         final_query = join_clauses[0]
         for i in range(1, len(join_clauses)):
             final_query = f"""
@@ -481,28 +600,20 @@ def datewise_integration_data(request):
         query = f"SELECT * FROM {final_query};"
         cursor.execute(query)
         results = cursor.fetchall()
-        # print(results)
-        
-    results_as_strings = []
-    for row in results:
-        # Convert each element in the row to a string
-        row_as_string = [str(element) for element in row]
-        # Append the row as a string to the list
-        results_as_strings.append(row_as_string)
-    
 
-    rows_as_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in results_as_strings]
+        results_as_strings = [[str(element) for element in row] for row in results]
+        rows_as_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in results_as_strings]
 
-
-    jsonResult =  json.dumps(rows_as_dict)
-    # jsonResult = json.loads(jsonResult)
-    ############################ DATE WISE OVER ALL DATA FOR DOWNLOAD ##############################
+    # Serialize download data
     objs = IntegrationData.objects.filter(Integration_Date=date1)
-    
-    # Serialize queryset using serializer
     serializer = IntegrationDataSerializer(objs, many=True)
-    # print(jsonResult)
-    data={"table_data":jsonResult,"latest_dates":[date1,date2,date3],"download_data":serializer.data}
+
+    data = {
+        "table_data": json.dumps(rows_as_dict),
+        "latest_dates": [date1, date2, date3],
+        "download_data": serializer.data
+    }
+    print('integration data in datewise',data)
     return Response(data)
 
 
@@ -551,6 +662,185 @@ def get_dates():
 
 import asyncio
 
+# @api_view(["POST"])
+# def date_range_wise_integration_data(request):
+#     print("User:", request.user.username)
+
+#     from_date = request.data.get("from_date")
+#     to_date = request.data.get("to_date")
+
+#     try:
+#         if from_date and to_date:
+#             from_date = datetime.strptime(from_date, '%Y-%m-%d').date()
+#             to_date = datetime.strptime(to_date, '%Y-%m-%d').date()
+#         else:
+#             from_date, to_date = get_dates()
+#     except ValueError:
+#         raise ValidationError("Dates must be in YYYY-MM-DD format.")
+
+#     # Ensure unique, cleaned activity types
+#     raw_activities = [
+#         '5G SECTOR ADDITION', 
+#         '5G RELOCATION', 
+#         'HT INCREMENT', 
+#         'FEMTO', 
+#         'DE-GROW', 
+#         'IBS', 
+#         'IDSC',
+#         'MACRO', 
+#         'ODSC', 
+#         'OPERATIONS', 
+#         'RRU UPGRADE', 
+#         '5G BW UPGRADE', 
+#         'OTHERS', 
+#         '5G RRU SWAP',
+#         'RELOCATION', 
+#         'RECTIFICATION', 
+#         'RET', 
+#         'TRAFFIC SHIFTING', 
+#         'ULS_HPSC', 
+#         'UPGRADE',
+#         '5G AIR SWAP'
+#         'UPGRADE'
+#     ]
+#     activity_type = sorted(set(raw_activities))  # Remove duplicates just in case
+
+#     # Create SQL-safe column aliases
+#     def sql_safe(name):
+#         return f"D1_{name.upper().replace(' ', '').replace('-', '')}"
+
+#     activity_columns = [f'"{sql_safe(a)}" INTEGER' for a in activity_type]
+
+#     print('activity columnsa data ' , {', '.join(activity_columns)})
+
+#     # Ensure unique, cleaned activity types
+#     raw_activities = [
+#         '5G SECTOR ADDITION', 
+#         '5G RELOCATION', 
+#         'HT INCREMENT', 
+#         'FEMTO', 
+#         'DE-GROW', 
+#         'IBS', 
+#         'IDSC',
+#         'MACRO', 
+#         'ODSC', 
+#         'OPERATIONS', 
+#         'RRU UPGRADE', 
+#         '5G BW UPGRADE', 
+#         'OTHERS', 
+#         '5G RRU SWAP',
+#         'RELOCATION', 
+#         'RECTIFICATION', 
+#         'RET', 
+#         'TRAFFIC SHIFTING', 
+#         'ULS_HPSC', 
+#         'UPGRADE',
+#         '5G AIR SWAP'
+#     ]
+#     activity_type = sorted(set(raw_activities))  # Remove duplicates just in case
+
+#     # Create SQL-safe column aliases
+#     def sql_safe(name):
+#         return f"D1_{name.upper().replace(' ', '').replace('-', '')}"
+
+#     activity_columns = [f'"{sql_safe(a)}" INTEGER' for a in activity_type]
+
+#     print('activity columnsa data ' , {', '.join(activity_columns)})
+
+#     def fetch_crosstab_data(activity_type: list, activity_columns: list) -> tuple:
+#         with connection.cursor() as cursor:
+#             # Escape and format activity list for SQL
+#             activity_array = ','.join([f"'{a}'" for a in activity_type])
+#             query = f"""
+#                 SELECT * FROM crosstab($$
+#                     SELECT 
+#                         "CIRCLE",
+#                         "Activity_Name",
+#                         COALESCE("cnt", 0)::INTEGER AS cnt
+#                     FROM 
+#                         (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS c
+#                     CROSS JOIN
+#                         (SELECT unnest(ARRAY[
+#                                     '5G BW UPGRADE',
+#                                     '5G RELOCATION',
+#                                     '5G RRU SWAP',
+#                                     '5G SECTOR ADDITION',
+#                                     'DE-GROW',
+#                                     'FEMTO',
+#                                     'HT INCREMENT',
+#                                     'IBS',
+#                                     'IDSC',
+#                                     'MACRO',
+#                                     'ODSC',
+#                                     'OPERATIONS',
+#                                     'OTHERS',
+#                                     'RECTIFICATION',
+#                                     'RELOCATION',
+#                                     'RET',
+#                                     'RRU UPGRADE',
+#                                     'TRAFFIC SHIFTING',
+#                                     'ULS_HPSC',
+#                                     'UPGRADE',
+#                                     'RRU SWAP'
+#         ]) AS "Activity_Name") AS a
+#                     LEFT JOIN (
+#                         SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT(id) AS cnt
+#                         FROM public."IntegrationTracker_integrationdata"
+#                         WHERE "Integration_Date" BETWEEN '{from_date}' AND '{to_date}'
+#                         GROUP BY "CIRCLE", "Activity_Name"
+#                     ) r USING ("CIRCLE", "Activity_Name")
+#                     ORDER BY 1, 2
+#                 $$) AS ct (
+#                     "cir" TEXT, "D1_5G_BW_UPGRADE" INTEGER,
+#                 "D1_5G_RELOCATION" INTEGER,
+#                 "D1_5G_RRU_SWAP" INTEGER,
+#                 "D1_5G_SECTOR_ADDITION" INTEGER,
+#                 "D1_DE_GROW" INTEGER,
+#                 "D1_FEMTO" INTEGER,
+#                 "D1_HT_INCREMENT" INTEGER,
+#                 "D1_IBS" INTEGER,
+#                 "D1_IDSC" INTEGER,
+#                 "D1_MACRO" INTEGER,
+#                 "D1_ODSC" INTEGER,
+#                 "D1_OPERATIONS" INTEGER,
+#                 "D1_OTHERS" INTEGER,
+#                 "D1_RECTIFICATION" INTEGER,
+#                 "D1_RELOCATION" INTEGER,
+#                 "D1_RET" INTEGER,
+#                 "D1_RRU_UPGRADE" INTEGER,
+#                 "D1_TRAFFIC_SHIFTING" INTEGER,
+#                 "D1_ULS_HPSC" INTEGER,
+#                 "D1_UPGRADE" INTEGER,
+#                 "D1_RRU_SWAP" INTEGER
+#                 )
+#             """
+#             cursor.execute(query)
+#             results = cursor.fetchall()
+#             columns = [col[0] for col in cursor.description]
+#             return results, columns
+
+#     async def get_data_async():
+#         results, columns = await sync_to_async(fetch_crosstab_data)(activity_type, activity_columns)
+#         rows_as_dict = [dict(zip(columns, row)) for row in results]
+#         jsonResult = json.dumps(rows_as_dict)
+
+#         objs = await sync_to_async(
+#             lambda: list(IntegrationData.objects.filter(Integration_Date__range=(from_date, to_date)))
+#         )()
+        
+#         serializer = IntegrationDataSerializer(objs, many=True)
+
+#         return {
+#             "table_data": jsonResult,
+#             "date_range": [from_date.isoformat(), to_date.isoformat()],
+#             "download_data": serializer.data
+#         }
+
+#     data = asyncio.run(get_data_async())
+#     return Response(data)
+
+# ############# DATE RANGE WISE INTEGRATION DATA END New ################
+
 @api_view(["POST"])
 def date_range_wise_integration_data(request):
     print("User:", request.user.username)
@@ -559,146 +849,83 @@ def date_range_wise_integration_data(request):
     to_date = request.data.get("to_date")
 
     try:
-        if from_date and to_date:
-            from_date = datetime.strptime(from_date, '%Y-%m-%d').date()
-            to_date = datetime.strptime(to_date, '%Y-%m-%d').date()
+        if from_date:
+            from_date = datetime.strptime(from_date, "%Y-%m-%d").date()
         else:
-            from_date, to_date = get_dates()
+            from_date = (datetime.today() - timedelta(days=7)).date()  # default: last 7 days
+
+        if to_date:
+            to_date = datetime.strptime(to_date, "%Y-%m-%d").date()
+        else:
+            to_date = datetime.today().date()  # default: today
     except ValueError:
         raise ValidationError("Dates must be in YYYY-MM-DD format.")
 
-    # Ensure unique, cleaned activity types
+    # ✅ Activity list (unique + sorted)
     raw_activities = [
-        '5G SECTOR ADDITION', 
-        '5G RELOCATION', 
-        'HT INCREMENT', 
-        'FEMTO', 
-        'DE-GROW', 
-        'IBS', 
-        'IDSC',
-        'MACRO', 
-        'ODSC', 
-        'OPERATIONS', 
-        'RRU UPGRADE', 
-        '5G BW UPGRADE', 
-        'OTHERS', 
-        '5G RRU SWAP',
-        'RELOCATION', 
-        'RECTIFICATION', 
-        'RET', 
-        'TRAFFIC SHIFTING', 
-        'ULS_HPSC', 
-        'UPGRADE',
-        '5G AIR SWAP'
-        'UPGRADE'
+        "5G SECTOR ADDITION",
+        "5G RELOCATION",
+        "HT INCREMENT",
+        "FEMTO",
+        "DE-GROW",
+        "IBS",
+        "IDSC",
+        "MACRO",
+        "ODSC",
+        "OPERATIONS",
+        "RRU UPGRADE",
+        "5G BW UPGRADE",
+        "OTHERS",
+        "5G RRU SWAP",
+        "RELOCATION",
+        "RECTIFICATION",
+        "RET",
+        "TRAFFIC SHIFTING",
+        "ULS_HPSC",
+        "UPGRADE",
+        "5G AIR SWAP",
+        "RRU SWAP",
     ]
-    activity_type = sorted(set(raw_activities))  # Remove duplicates just in case
+    activity_type = sorted(set(raw_activities))
 
-    # Create SQL-safe column aliases
+    # ✅ Create SQL-safe column aliases
     def sql_safe(name):
-        return f"D1_{name.upper().replace(' ', '').replace('-', '')}"
+        return f"D1_{name.upper().replace(' ', '_').replace('-', '_')}"
 
     activity_columns = [f'"{sql_safe(a)}" INTEGER' for a in activity_type]
 
-    print('activity columnsa data ' , {', '.join(activity_columns)})
+    print("activity columns →", activity_columns)
 
-    # Ensure unique, cleaned activity types
-    raw_activities = [
-        '5G SECTOR ADDITION', 
-        '5G RELOCATION', 
-        'HT INCREMENT', 
-        'FEMTO', 
-        'DE-GROW', 
-        'IBS', 
-        'IDSC',
-        'MACRO', 
-        'ODSC', 
-        'OPERATIONS', 
-        'RRU UPGRADE', 
-        '5G BW UPGRADE', 
-        'OTHERS', 
-        '5G RRU SWAP',
-        'RELOCATION', 
-        'RECTIFICATION', 
-        'RET', 
-        'TRAFFIC SHIFTING', 
-        'ULS_HPSC', 
-        'UPGRADE',
-        '5G AIR SWAP'
-    ]
-    activity_type = sorted(set(raw_activities))  # Remove duplicates just in case
-
-    # Create SQL-safe column aliases
-    def sql_safe(name):
-        return f"D1_{name.upper().replace(' ', '').replace('-', '')}"
-
-    activity_columns = [f'"{sql_safe(a)}" INTEGER' for a in activity_type]
-
-    print('activity columnsa data ' , {', '.join(activity_columns)})
-
+    # ✅ Crosstab fetcher
     def fetch_crosstab_data(activity_type: list, activity_columns: list) -> tuple:
         with connection.cursor() as cursor:
-            # Escape and format activity list for SQL
-            activity_array = ','.join([f"'{a}'" for a in activity_type])
+            # Escape activity array for SQL
+            activity_array = ",".join([f"'{a}'" for a in activity_type])
+            activity_columns_def = ",\n".join(activity_columns)
+
             query = f"""
                 SELECT * FROM crosstab($$
                     SELECT 
-                        "CIRCLE",
-                        "Activity_Name",
-                        COALESCE("cnt", 0)::INTEGER AS cnt
+                        UPPER(c."CIRCLE") AS "CIRCLE",
+                        a."Activity_Name",
+                        COALESCE(r.cnt, 0)::INTEGER AS cnt
                     FROM 
-                        (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS c
+                        (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" 
+                         FROM public."IntegrationTracker_integrationdata") c
                     CROSS JOIN
-                        (SELECT unnest(ARRAY[
-                                    '5G BW UPGRADE',
-                                    '5G RELOCATION',
-                                    '5G RRU SWAP',
-                                    '5G SECTOR ADDITION',
-                                    'DE-GROW',
-                                    'FEMTO',
-                                    'HT INCREMENT',
-                                    'IBS',
-                                    'IDSC',
-                                    'MACRO',
-                                    'ODSC',
-                                    'OPERATIONS',
-                                    'OTHERS',
-                                    'RECTIFICATION',
-                                    'RELOCATION',
-                                    'RET',
-                                    'RRU UPGRADE',
-                                    'TRAFFIC SHIFTING',
-                                    'ULS_HPSC',
-                                    'UPGRADE'
-        ]) AS "Activity_Name") AS a
+                        (SELECT unnest(ARRAY[{activity_array}]) AS "Activity_Name") a
                     LEFT JOIN (
-                        SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT(id) AS cnt
+                        SELECT UPPER("CIRCLE") AS "CIRCLE", 
+                               UPPER("Activity_Name") AS "Activity_Name", 
+                               COUNT(id) AS cnt
                         FROM public."IntegrationTracker_integrationdata"
                         WHERE "Integration_Date" BETWEEN '{from_date}' AND '{to_date}'
                         GROUP BY "CIRCLE", "Activity_Name"
-                    ) r USING ("CIRCLE", "Activity_Name")
-                    ORDER BY 1, 2
+                    ) r ON c."CIRCLE" = r."CIRCLE" AND a."Activity_Name" = r."Activity_Name"
+                    ORDER BY 1, array_position(ARRAY[{activity_array}], a."Activity_Name")
                 $$) AS ct (
-                    "cir" TEXT, "D1_5G_BW_UPGRADE" INTEGER,
-                "D1_5G_RELOCATION" INTEGER,
-                "D1_5G_RRU_SWAP" INTEGER,
-                "D1_5G_SECTOR_ADDITION" INTEGER,
-                "D1_DE_GROW" INTEGER,
-                "D1_FEMTO" INTEGER,
-                "D1_HT_INCREMENT" INTEGER,
-                "D1_IBS" INTEGER,
-                "D1_IDSC" INTEGER,
-                "D1_MACRO" INTEGER,
-                "D1_ODSC" INTEGER,
-                "D1_OPERATIONS" INTEGER,
-                "D1_OTHERS" INTEGER,
-                "D1_RECTIFICATION" INTEGER,
-                "D1_RELOCATION" INTEGER,
-                "D1_RET" INTEGER,
-                "D1_RRU_UPGRADE" INTEGER,
-                "D1_TRAFFIC_SHIFTING" INTEGER,
-                "D1_ULS_HPSC" INTEGER,
-                "D1_UPGRADE" INTEGER
+                    cir TEXT,
+                    {activity_columns_def}
                 )
             """
             cursor.execute(query)
@@ -706,6 +933,7 @@ def date_range_wise_integration_data(request):
             columns = [col[0] for col in cursor.description]
             return results, columns
 
+    # ✅ Async wrapper
     async def get_data_async():
         results, columns = await sync_to_async(fetch_crosstab_data)(activity_type, activity_columns)
         rows_as_dict = [dict(zip(columns, row)) for row in results]
@@ -714,18 +942,17 @@ def date_range_wise_integration_data(request):
         objs = await sync_to_async(
             lambda: list(IntegrationData.objects.filter(Integration_Date__range=(from_date, to_date)))
         )()
-        
+
         serializer = IntegrationDataSerializer(objs, many=True)
 
         return {
             "table_data": jsonResult,
             "date_range": [from_date.isoformat(), to_date.isoformat()],
-            "download_data": serializer.data
+            "download_data": serializer.data,
         }
 
     data = asyncio.run(get_data_async())
     return Response(data)
-
 
 
 @api_view(["POST"])
@@ -785,114 +1012,222 @@ def calculate_previous_months(given_month,given_year):
 
     return {"Month2":month2,"Month3":month3,"Year2":year2,"Year3":year3,"Month4":month4,"Year4":year4,"Month5":month5,"Year5":year5,"Month6":month6,"Year6":year6}
 
+# @api_view(['GET', 'POST'])
+# def monthwise_integration_data(request):
+#     print("User: ", request.user.username)
+#     month = request.POST.get("month")
+#     year = request.POST.get("year")
+
+#     if month and year:
+#         print("User-defined month/year")
+#         base_month = int(month)
+#         base_year = int(year)
+#     else:
+#         print("Using default latest month/year")
+#         latest_date = IntegrationData.objects.latest('Integration_Date').Integration_Date
+#         base_month = latest_date.month
+#         base_year = latest_date.year
+
+#     date_dict = calculate_previous_months(base_month, base_year)
+
+#     ################################################################################ Prepare list of (month, year, index) tuples ########################################################################
+#     month_year_list = [(base_month, base_year, 1)]
+#     for i in range(2, 7):
+#         month_year_list.append((date_dict[f"Month{i}"], date_dict[f"Year{i}"], i))
+
+#         activity_list = [
+#             '5G BW UPGRADE',
+#             '5G RELOCATION',
+#             '5G RRU SWAP',
+#             '5G SECTOR ADDITION',
+#             'DE-GROW',
+#             'FEMTO',
+#             'HT INCREMENT',
+#             'IBS',
+#             'IDSC',
+#             'MACRO',
+#             'ODSC',
+#             'OPERATIONS',
+#             'OTHERS',
+#             'RECTIFICATION',
+#             'RELOCATION',
+#             'RET',
+#             'RRU UPGRADE',
+#             'TRAFFIC SHIFTING',
+#             'ULS_HPSC',
+#             'UPGRADE',
+#             'RRU SWAP'
+#         ]
+
+#     def build_crosstab(month, year, index):
+#         label = f"M{index}"
+#         columns = ",".join([f'"{label}_{a.replace(" ", "_").replace("-", "_")}" INTEGER' for a in activity_list])
+#         array_activities = ",".join([f"'{a}'" for a in activity_list])
+
+
+#         return f"""
+#             (
+#                 SELECT * FROM crosstab($$
+#                     SELECT 
+#                         UPPER("CIRCLE") AS "CIRCLE",
+#                         "Activity_Name",
+#                         COALESCE(cnt, 0)::INTEGER AS cnt
+#                     FROM 
+#                         (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "C"
+#                     CROSS JOIN
+#                         (SELECT unnest(ARRAY[{array_activities}]) AS "Activity_Name") AS a
+#                     LEFT JOIN (
+#                         SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT("id") AS cnt
+#                         FROM public."IntegrationTracker_integrationdata"
+#                         WHERE EXTRACT(MONTH FROM "Integration_Date") = {month}
+#                           AND EXTRACT(YEAR FROM "Integration_Date") = {year}
+#                         GROUP BY "CIRCLE", "Activity_Name"
+#                     ) AS r USING ("CIRCLE", "Activity_Name")
+#                     ORDER BY 1, 2
+#                 $$) AS ct(cir TEXT, {columns})
+#             ) AS d{index}
+#         """
+
+#     ######################################################################### ✅ Build the complete SQL query with full joins ##########################################################################
+#     join_parts = []
+#     for i, (month, year, index) in enumerate(month_year_list):
+#         part = build_crosstab(month, year, index)
+#         if i == 0:
+#             join_parts.append(part)
+#         else:
+#             join_parts.append(f"FULL OUTER JOIN {part} USING (cir)")
+
+#     final_query = " ".join(join_parts)
+#     full_sql = f"SELECT * FROM {final_query};"
+
+#     ########################################################################################### ✅ Execute the query ##################################################################################
+#     with connection.cursor() as cursor:
+#         cursor.execute(full_sql)
+#         results = cursor.fetchall()
+#         columns = [col[0] for col in cursor.description]
+
+#     results_as_dicts = [dict(zip(columns, row)) for row in results]
+#     jsonResult = json.dumps(results_as_dicts)
+
+#     ############################################################################################# Get first (latest) month/year for filtering data ######################################################
+#     latest_month, latest_year, _ = month_year_list[0]
+#     ################################################################################################ Fetch data for download #############################################################################
+#     objs = IntegrationData.objects.filter(
+#         Integration_Date__year=latest_year,
+#         Integration_Date__month=latest_month
+#     )
+#     serializer = IntegrationDataSerializer(objs, many=True)
+#     print(month_year_list)
+#     ############################################################################################################ Return all collected data #################################################################
+#     data={"table_data":jsonResult,"latest_months":[month for month,_,_ in month_year_list],"latest_year":[year for _,year,_ in month_year_list],"download_data":serializer.data}
+#     return Response(data)
+
+
+######### Monthwise Integration Data New API ########
 @api_view(['GET', 'POST'])
 def monthwise_integration_data(request):
-    print("User: ", request.user.username)
-    month = request.POST.get("month")
-    year = request.POST.get("year")
+    try:
+        print("User: ", request.user.username)
 
-    if month and year:
-        print("User-defined month/year")
-        base_month = int(month)
-        base_year = int(year)
-    else:
-        print("Using default latest month/year")
-        latest_date = IntegrationData.objects.latest('Integration_Date').Integration_Date
-        base_month = latest_date.month
-        base_year = latest_date.year
+        # ✅ Use request.data instead of request.POST
+        month = request.data.get("month")
+        year = request.data.get("year")
 
-    date_dict = calculate_previous_months(base_month, base_year)
+        if month and year:
+            print("User-defined month/year")
+            base_month = int(month)
+            base_year = int(year)
+        else:
+            print("Using default latest month/year")
+            latest_date = IntegrationData.objects.latest('Integration_Date').Integration_Date
+            base_month = latest_date.month
+            base_year = latest_date.year
 
-    ################################################################################ Prepare list of (month, year, index) tuples ########################################################################
-    month_year_list = [(base_month, base_year, 1)]
-    for i in range(2, 7):
-        month_year_list.append((date_dict[f"Month{i}"], date_dict[f"Year{i}"], i))
+        date_dict = calculate_previous_months(base_month, base_year)
 
+        # ✅ Prepare month-year list
+        month_year_list = [(base_month, base_year, 1)]
+        for i in range(2, 7):
+            month_year_list.append((date_dict[f"Month{i}"], date_dict[f"Year{i}"], i))
+
+        # ✅ Activity list (correct indentation)
         activity_list = [
-            '5G BW UPGRADE',
-            '5G RELOCATION',
-            '5G RRU SWAP',
-            '5G SECTOR ADDITION',
-            'DE-GROW',
-            'FEMTO',
-            'HT INCREMENT',
-            'IBS',
-            'IDSC',
-            'MACRO',
-            'ODSC',
-            'OPERATIONS',
-            'OTHERS',
-            'RECTIFICATION',
-            'RELOCATION',
-            'RET',
-            'RRU UPGRADE',
-            'TRAFFIC SHIFTING',
-            'ULS_HPSC',
-            'UPGRADE'
+            '5G BW UPGRADE', '5G RELOCATION', '5G RRU SWAP', '5G SECTOR ADDITION',
+            'DE-GROW', 'FEMTO', 'HT INCREMENT', 'IBS', 'IDSC', 'MACRO', 'ODSC',
+            'OPERATIONS', 'OTHERS', 'RECTIFICATION', 'RELOCATION', 'RET',
+            'RRU UPGRADE', 'TRAFFIC SHIFTING', 'ULS_HPSC', 'UPGRADE', 'RRU SWAP'
         ]
 
-    def build_crosstab(month, year, index):
-        label = f"M{index}"
-        columns = ",".join([f'"{label}_{a.replace(" ", "_").replace("-", "_")}" INTEGER' for a in activity_list])
-        array_activities = ",".join([f"'{a}'" for a in activity_list])
+        def build_crosstab(month, year, index):
+            label = f"M{index}"
+            safe_activities = [a.upper() for a in activity_list]
+            columns = ",".join([f'"{label}_{a.replace(" ", "_").replace("-", "_")}" INTEGER' for a in safe_activities])
+            array_activities = ",".join([f"'{a}'" for a in safe_activities])
 
+            return f"""
+                (
+                    SELECT * FROM crosstab($$
+                        SELECT 
+                            UPPER("CIRCLE") AS "CIRCLE",
+                            UPPER("Activity_Name") AS "Activity_Name",
+                            COALESCE(cnt, 0)::INTEGER AS cnt
+                        FROM 
+                            (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "C"
+                        CROSS JOIN
+                            (SELECT unnest(ARRAY[{array_activities}]) AS "Activity_Name") AS a
+                        LEFT JOIN (
+                            SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT("id") AS cnt
+                            FROM public."IntegrationTracker_integrationdata"
+                            WHERE EXTRACT(MONTH FROM "Integration_Date") = {month}
+                              AND EXTRACT(YEAR FROM "Integration_Date") = {year}
+                            GROUP BY "CIRCLE", "Activity_Name"
+                        ) AS r USING ("CIRCLE", "Activity_Name")
+                        ORDER BY 1, 2
+                    $$, $$ SELECT unnest(ARRAY[{array_activities}]) $$) 
+                    AS ct(cir TEXT, {columns})
+                ) AS d{index}
+            """
 
-        return f"""
-            (
-                SELECT * FROM crosstab($$
-                    SELECT 
-                        UPPER("CIRCLE") AS "CIRCLE",
-                        "Activity_Name",
-                        COALESCE(cnt, 0)::INTEGER AS cnt
-                    FROM 
-                        (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE" FROM public."IntegrationTracker_integrationdata") AS "C"
-                    CROSS JOIN
-                        (SELECT unnest(ARRAY[{array_activities}]) AS "Activity_Name") AS a
-                    LEFT JOIN (
-                        SELECT UPPER("CIRCLE") AS "CIRCLE", UPPER("Activity_Name") AS "Activity_Name", COUNT("id") AS cnt
-                        FROM public."IntegrationTracker_integrationdata"
-                        WHERE EXTRACT(MONTH FROM "Integration_Date") = {month}
-                          AND EXTRACT(YEAR FROM "Integration_Date") = {year}
-                        GROUP BY "CIRCLE", "Activity_Name"
-                    ) AS r USING ("CIRCLE", "Activity_Name")
-                    ORDER BY 1, 2
-                $$) AS ct(cir TEXT, {columns})
-            ) AS d{index}
-        """
+        # ✅ Build final SQL
+        join_parts = []
+        for i, (month, year, index) in enumerate(month_year_list):
+            part = build_crosstab(month, year, index)
+            if i == 0:
+                join_parts.append(part)
+            else:
+                join_parts.append(f"FULL OUTER JOIN {part} USING (cir)")
 
-    ######################################################################### ✅ Build the complete SQL query with full joins ##########################################################################
-    join_parts = []
-    for i, (month, year, index) in enumerate(month_year_list):
-        part = build_crosstab(month, year, index)
-        if i == 0:
-            join_parts.append(part)
-        else:
-            join_parts.append(f"FULL OUTER JOIN {part} USING (cir)")
+        full_sql = f"SELECT * FROM {' '.join(join_parts)};"
 
-    final_query = " ".join(join_parts)
-    full_sql = f"SELECT * FROM {final_query};"
+        # ✅ Execute query
+        with connection.cursor() as cursor:
+            cursor.execute(full_sql)
+            results = cursor.fetchall()
+            columns = [col[0] for col in cursor.description]
 
-    ########################################################################################### ✅ Execute the query ##################################################################################
-    with connection.cursor() as cursor:
-        cursor.execute(full_sql)
-        results = cursor.fetchall()
-        columns = [col[0] for col in cursor.description]
+        results_as_dicts = [dict(zip(columns, row)) for row in results]
+        jsonResult = json.dumps(results_as_dicts)
 
-    results_as_dicts = [dict(zip(columns, row)) for row in results]
-    jsonResult = json.dumps(results_as_dicts)
+        # ✅ Latest month/year for filtering
+        latest_month, latest_year, _ = month_year_list[0]
 
-    ############################################################################################# Get first (latest) month/year for filtering data ######################################################
-    latest_month, latest_year, _ = month_year_list[0]
-    ################################################################################################ Fetch data for download #############################################################################
-    objs = IntegrationData.objects.filter(
-        Integration_Date__year=latest_year,
-        Integration_Date__month=latest_month
-    )
-    serializer = IntegrationDataSerializer(objs, many=True)
-    print(month_year_list)
-    ############################################################################################################ Return all collected data #################################################################
-    data={"table_data":jsonResult,"latest_months":[month for month,_,_ in month_year_list],"latest_year":[year for _,year,_ in month_year_list],"download_data":serializer.data}
-    return Response(data)
+        objs = IntegrationData.objects.filter(
+            Integration_Date__year=latest_year,
+            Integration_Date__month=latest_month
+        )
+        serializer = IntegrationDataSerializer(objs, many=True)
+
+        data = {
+            "table_data": jsonResult,
+            "latest_months": [month for month, _, _ in month_year_list],
+            "latest_year": [year for _, year, _ in month_year_list],
+            "download_data": serializer.data
+        }
+        return Response(data)
+
+    except Exception as e:
+        # ✅ Always return a Response even on error
+        return Response({"error": str(e)}, status=400)
 
 
 @api_view(["POST"])
@@ -1070,7 +1405,7 @@ def overall_record_summary(request):
     with connection.cursor() as cursor:
 
         query = f"""
-                SELECT 
+        SELECT 
             "OEM",
             MIN("Integration_Date") AS from_integration_date,
             MAX("Integration_Date") AS to_integration_date,

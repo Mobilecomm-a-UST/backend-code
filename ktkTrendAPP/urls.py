@@ -6,5 +6,6 @@ urlpatterns = [
     path("makeKpiTrend/old/2G",views.G2_trend),
     path("makeKpiTrend/old/",views.old_ktk_trend),
     path("makeKpiTrend/pre_post/",views.pre_post_tech),
+    path("makeKpiTrend/new/",views.new_ktk_trend),
 
 ]

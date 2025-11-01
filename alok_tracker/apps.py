@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class KpimonitoringtoolConfig(AppConfig):
+class AlokTrackerConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'KpiMonitoringTool'
+    name = 'alok_tracker'

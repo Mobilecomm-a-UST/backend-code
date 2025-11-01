@@ -877,7 +877,7 @@ def get_site_id(short_name):
     # Define a dictionary with prefixes and their corresponding parsing logic
     prefix_parsers = {
         "Sams-": lambda sn: sn.split(",")[1].split("_")[-1],
-        "BH_": lambda sn: sn.split("_")[-2][:8],
+        "BH_": lambda sn: sn.split("_")[-2][:-1],
         "WB_": lambda sn: (
             sn.split("_")[-2][:-1]
             if re.match(r"[A-Z]", sn.split("_")[-2][-1])
@@ -933,10 +933,15 @@ def get_site_id(short_name):
             if re.match(r"[A-Z]", sn.split("_")[-2][-1])
             else sn.split("_")[-2]
         ),
+        # "DL_": lambda sn: (
+        #     sn.split("_")[-2][:-1]
+        #     if re.match(r"[A-Z]", sn.split("_")[-2][-1])
+        #     else sn.split("_")[-2]
+        # ),
         "DL_": lambda sn: (
-            sn.split("_")[-2][:-1]
+            re.sub(r"^X+", "", sn.split("_")[-2][:-1])
             if re.match(r"[A-Z]", sn.split("_")[-2][-1])
-            else sn.split("_")[-2]
+            else re.sub(r"^X+", "", sn.split("_")[-2])
         ),
         "JK_": lambda sn: (
             sn.split("_")[-2][:-1]

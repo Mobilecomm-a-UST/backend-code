@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "Bihar_trend",
     "vendor_management",
-    # "Soft_AT_APP",
     "rajTrendAPP",
     "kolTrendAPP",
     "hrTrendAPP",
@@ -100,14 +99,17 @@ INSTALLED_APPS = [
     "universal_alarm",
     "Daily_Alarm_Status",
     "LKF_StatusApp",
-    #"gpl_audit_tool",
     "soft_at_status_tech",
     "Soft_AT_Checklist_Ericsson",
     "Soft_AT_Checklist_Nokia",
     "LTE_Integration_Scripting_Automtion",
     "soft_at_5g_summary",
     "gpl_audit_tool_V1_1",
-    "Mobinet_CATs_TOOL"
+    "Mobinet_CATs_TOOL",
+    "relocation_tracking",
+    "degrowDismental",
+    "alok_tracker",
+    "Alarm_old_new_Tool",
 ]
 
 MIDDLEWARE = [
