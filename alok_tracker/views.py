@@ -10,7 +10,7 @@ from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from django.utils import timezone
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 CENTRAL_COLUMNS = [
     'Integration Date',    
@@ -387,25 +387,49 @@ def daily_dashboard_file(request):
     site_tagging = request.data.get('site_tagging')
     relocation_method = request.data.get('relocation_method')
     new_toco_name = request.data.get('new_toco_name')
+    start_date = request.data.get('from_date')
+    end_date = request.data.get('to_date')
    
-    all_unique_circles = AlokTrackerModel.objects.distinct("circle").values_list("circle", flat=True)
-    all_unique_site_tagging = AlokTrackerModel.objects.distinct("site_tagging").values_list("site_tagging", flat=True)
-    all_unique_relocation_method = AlokTrackerModel.objects.distinct("relocation_method").values_list("relocation_method", flat=True)
-    all_unique_new_toco_name = AlokTrackerModel.objects.distinct("new_toco_name").values_list("new_toco_name", flat=True)
-   
+    all_unique_circles = list(
+        AlokTrackerModel.objects.exclude(circle__isnull=True)
+        .distinct("circle")
+        .values_list("circle", flat=True)
+    )
+
+    all_unique_site_tagging = list(
+        AlokTrackerModel.objects.exclude(site_tagging__isnull=True)
+        .distinct("site_tagging")
+        .values_list("site_tagging", flat=True)
+    )
+
+    all_unique_relocation_method = list(
+        AlokTrackerModel.objects.exclude(relocation_method__isnull=True)
+        .distinct("relocation_method")
+        .values_list("relocation_method", flat=True)
+    )
+
+    all_unique_new_toco_name = list(
+        AlokTrackerModel.objects.exclude(new_toco_name__isnull=True)
+        .distinct("new_toco_name")
+        .values_list("new_toco_name", flat=True)
+    )
+
+    # ✅ Add "ALL" at the top of each list
     unique_data = {
-        "unique_circle": ['ALL'] + list(all_unique_circles),
-        "unique_site_tagging": ['ALL'] +list(all_unique_site_tagging), 
-        "unique_relocation_method": ['ALL'] + list(all_unique_relocation_method), 
-        "unique_new_toco_name": ['ALL'] + list(all_unique_new_toco_name), 
+        "unique_circle": ["ALL"] + sorted(all_unique_circles),
+        "unique_site_tagging": ["ALL"] + sorted(all_unique_site_tagging),
+        "unique_relocation_method": ["ALL"] + sorted(all_unique_relocation_method),
+        "unique_new_toco_name": ["ALL"] + sorted(all_unique_new_toco_name),
     }
- 
- 
+
     # Default to 'ALL' if not provided
     circle = circle or 'ALL'
     site_tagging = site_tagging or 'ALL'
     relocation_method = relocation_method or 'ALL'
     new_toco_name = new_toco_name or 'ALL'
+    
+    start_date = dtime.strptime(start_date, "%Y-%m-%d").date() if start_date else None
+    end_date = dtime.strptime(end_date, "%Y-%m-%d").date() if end_date else None
  
     try:
         ############################################################## 🔹 Dynamic filters #########################################################
@@ -434,28 +458,23 @@ def daily_dashboard_file(request):
         ################################################################### 🔹 Determine start_date and end_date for 26 → 25 cycle #####################
         today = dtime.today().date()
  
-        if today.day >= 26:
-            start_date = today.replace(day=25)
-            if today.month == 12:
-                end_date = today.replace(year=today.year + 1, month=1, day=25)
+        if not start_date or not end_date:
+            if today.day >= 26:
+                start_date = today.replace(day=25)
+                if today.month == 12:
+                    end_date = today.replace(year=today.year + 1, month=1, day=25)
+                else:
+                    end_date = today.replace(month=today.month + 1, day=25)
             else:
-                end_date = today.replace(month=today.month + 1, day=25)
-        else:
-            if today.month == 1:
-                start_date = today.replace(year=today.year - 1, month=12, day=25)
-            else:
-                start_date = today.replace(month=today.month - 1, day=25)
-            end_date = today.replace(day=25)
+                if today.month == 1:
+                    start_date = today.replace(year=today.year - 1, month=12, day=25)
+                else:
+                    start_date = today.replace(month=today.month - 1, day=25)
+                end_date = today.replace(day=25)
  
         ############################################################## 🔹 Generate date range and formatted column headers ###########################
-        date_range = pd.date_range(start=start_date, end=end_date).date
-        # formatted_dates = [d.strftime("%d-%b-%y") for d in date_range]
- 
-        # print("DATE RANGE : ", date_range)
- 
-        # # 🔹 Initialize result DataFrame
-        # result = pd.DataFrame({"Milestone Track/Site Count": [], "CF": []})
-        # result = result.set_index("Milestone Track/Site Count")
+        
+        date_range = pd.date_range(start=start_date, end=min(end_date, today)).date
  
         formatted_dates = [d.strftime("%d-%b-%y") for d in date_range]
         result_columns = ["Milestone Track/Site Count", "CF"] + formatted_dates
@@ -463,9 +482,8 @@ def daily_dashboard_file(request):
  
         ###################################################### 🔹 Milestone list #############################################################
         milestones = [
-            "Allocation Date",
             "RFAI Date",
-            
+            "Allocation Date",
             "RFAI Survey Date",
             "RFAI Survey Done Date",
             "MO Punch Date",
@@ -541,6 +559,15 @@ def daily_dashboard_file(request):
         ############################################# 🔹 Arrange columns #####################################
         result = result[["Milestone Track/Site Count", "CF"] + formatted_dates]
         
+        last_col = formatted_dates[-1]
+        result[last_col] = pd.to_numeric(result[last_col], errors='coerce')
+
+        # ✅ Compute difference with next row (current - next)
+        result['Gap'] = result[last_col].diff(-1)
+
+        # ✅ Optional: convert to int and replace NaN with blank
+        result['Gap'] = result['Gap'].fillna('-').astype(str)
+        
         result['Milestone Track/Site Count'] = result['Milestone Track/Site Count'].apply(lambda col: col.replace(" Date", "") if " Date" in col else col)
         
         ############################################################################################################################
@@ -580,26 +607,61 @@ def weekly_monthly_dashboard_view(request):
     site_tagging = request.data.get('site_tagging')
     relocation_method = request.data.get('relocation_method')
     new_toco_name = request.data.get('new_toco_name')
+    month_filtered = request.data.get('month')
+    year_filtered = request.data.get('year')
  
     # Default to 'ALL' if not provided
     circle = circle or 'ALL'
     site_tagging = site_tagging or 'ALL'
     relocation_method = relocation_method or 'ALL'
     new_toco_name = new_toco_name or 'ALL'
+    
+    if month_filtered and year_filtered:
+        month_filtered = int(month_filtered)
+        year_filtered = int(year_filtered)
+
+        month_end = date(year_filtered, month_filtered, 25)
+
+        if month_filtered == 1:
+            month_start = date(year_filtered - 1, 12, 26)
+        else:
+            month_start = date(year_filtered, month_filtered - 1, 26)
+    else:
+        month_start = None
+        month_end = None
    
-    all_unique_circles = AlokTrackerModel.objects.distinct("circle").values_list("circle", flat=True)
-    all_unique_site_tagging = AlokTrackerModel.objects.distinct("site_tagging").values_list("site_tagging", flat=True)
-    all_unique_relocation_method = AlokTrackerModel.objects.distinct("relocation_method").values_list("relocation_method", flat=True)
-    all_unique_new_toco_name = AlokTrackerModel.objects.distinct("new_toco_name").values_list("new_toco_name", flat=True)
-   
+    all_unique_circles = list(
+        AlokTrackerModel.objects.exclude(circle__isnull=True)
+        .distinct("circle")
+        .values_list("circle", flat=True)
+    )
+
+    all_unique_site_tagging = list(
+        AlokTrackerModel.objects.exclude(site_tagging__isnull=True)
+        .distinct("site_tagging")
+        .values_list("site_tagging", flat=True)
+    )
+
+    all_unique_relocation_method = list(
+        AlokTrackerModel.objects.exclude(relocation_method__isnull=True)
+        .distinct("relocation_method")
+        .values_list("relocation_method", flat=True)
+    )
+
+    all_unique_new_toco_name = list(
+        AlokTrackerModel.objects.exclude(new_toco_name__isnull=True)
+        .distinct("new_toco_name")
+        .values_list("new_toco_name", flat=True)
+    )
+
+    # ✅ Add "ALL" at the top of each list
     unique_data = {
-        "unique_circle": ['ALL'] + list(all_unique_circles),
-        "unique_site_tagging": ['ALL'] +list(all_unique_site_tagging), 
-        "unique_relocation_method": ['ALL'] + list(all_unique_relocation_method), 
-        "unique_new_toco_name": ['ALL'] + list(all_unique_new_toco_name), 
+        "unique_circle": ["ALL"] + sorted(all_unique_circles),
+        "unique_site_tagging": ["ALL"] + sorted(all_unique_site_tagging),
+        "unique_relocation_method": ["ALL"] + sorted(all_unique_relocation_method),
+        "unique_new_toco_name": ["ALL"] + sorted(all_unique_new_toco_name),
     }
- 
- 
+
     try:
         # 🔹 Dynamic filters
         filters = {}
@@ -660,6 +722,11 @@ def weekly_monthly_dashboard_view(request):
  
         # 🗓️ 4. Create weekly periods for current month
         weeks = []
+        
+        if month_start and month_end:
+            current_cycle_start = month_start
+            current_cycle_end = month_end
+        
         week_start = current_cycle_start
  
         # First week: from 26th → Sunday
@@ -704,12 +771,12 @@ def weekly_monthly_dashboard_view(request):
         data = []
         print(df.columns)
         for milestone in milestones:
-           
+            
             milestone_df_format = milestone.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
             print(milestone_df_format)
             if milestone_df_format not in df.columns:
                 continue
-           
+            
             milestone_data = pd.to_datetime(df[milestone_df_format], errors='coerce').dt.date
             row = {"Milestone Track/Site Count": milestone}
             if milestone_data.dropna().empty:
@@ -728,23 +795,13 @@ def weekly_monthly_dashboard_view(request):
             # CF → sites before financial year start
             row["CF"] = (milestone_data < fy_start).sum()
  
-            # Monthly columns
-            # for start, end in months:
-            #     month_name = end.strftime("%b-%y")
-            #     row[month_name] = ((milestone_data >= start) & (milestone_data <= end)).sum()
- 
-            cumulative_month = 0
+            cumulative_month = row["CF"]
             print("data:- \n",milestone_data)
             for start, end in months:
                 month_name = end.strftime("%b-%y")
                 count = ((milestone_data >= start) & (milestone_data <= end)).sum()
                 cumulative_month += count
                 row[month_name] = cumulative_month
- 
-            # Weekly columns for current cycle
-            # for i, (start, end) in enumerate(weeks, 1):
-            #     week_name = f"{current_cycle_end.strftime('%b-%y')} W{i}"
-            #     row[week_name] = ((milestone_data >= start) & (milestone_data <= end)).sum()
  
             cumulative_week = 0
             for i, (start, end) in enumerate(weeks, 1):
@@ -815,3 +872,106 @@ def weekly_monthly_dashboard_view(request):
         return Response({"error": f"{str(e)}"},status=500)
     
 
+@api_view(['GET', 'POST'])
+def gap_view(request):
+    circle = request.data.get('circle')
+    site_tagging = request.data.get('site_tagging')
+    relocation_method = request.data.get('relocation_method')
+    new_toco_name = request.data.get('new_toco_name')
+    last_date = request.data.get('last_date')
+    milestone1 = request.data.get('milestone1')
+    milestone2 = request.data.get('milestone2')
+    
+    circle = circle or 'ALL'
+    site_tagging = site_tagging or 'ALL'
+    relocation_method = relocation_method or 'ALL'
+    new_toco_name = new_toco_name or 'ALL'
+    last_date = dtime.strptime(last_date, "%Y-%m-%d").date() if last_date else None
+    
+    try:
+        
+        today = dtime.today().date()
+ 
+        if not last_date:
+            if today.day >= 26:
+                if today.month == 12:
+                    last_date = today.replace(year=today.year + 1, month=1, day=25)
+                else:
+                    last_date = today.replace(month=today.month + 1, day=25)
+            else:
+                last_date = today.replace(day=25)
+                
+            last_date = min(today - timedelta(days=1), last_date)
+                
+        filters = {}
+        if circle != 'ALL':
+            filters['circle'] = circle
+        if site_tagging != 'ALL':
+            filters['site_tagging'] = site_tagging
+        if relocation_method != 'ALL':
+            filters['relocation_method'] = relocation_method
+        if new_toco_name != 'ALL':
+            filters['new_toco_name'] = new_toco_name
+        filters[f"{milestone1}__lte"] = last_date
+ 
+        # 🔹 Fetch data
+        obj1 = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
+        df1 = pd.DataFrame(obj1.values())
+        
+        filters[f"{milestone2}__lte"] = last_date
+        
+        obj2 = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
+        df2 = pd.DataFrame(obj2.values())
+        
+        df1['key'] = df1['circle'].astype(str) + "_" + df1['site'].astype(str)
+        df2['key'] = df2['circle'].astype(str) + "_" + df2['site'].astype(str)
+
+        df = df1[~df1['key'].isin(df2['key'])].drop(columns=['key'])
+        
+        for col in df.columns:
+            if col != 'last_updated_date':
+                converted = pd.to_datetime(df[col], errors='coerce')
+ 
+                if converted.notna().sum() > 0:
+                    df[col] = converted.dt.strftime('%d-%b-%y')
+            else:
+                converted = pd.to_datetime(df[col], errors='coerce')
+                if converted.notna().sum() > 0:
+                    df[col] = converted.dt.strftime('%d-%b-%y %H:%M:%S')
+ 
+ 
+        print("1")
+        current_date = dtime.now().strftime("%Y-%m-%d")
+        current_time = dtime.now().strftime("%H-%M-%S")
+ 
+        BASE_URL = os.path.join(settings.MEDIA_ROOT, "alok_sir_tracking")
+        os.makedirs(BASE_URL, exist_ok=True)
+        output_folder = os.path.join(BASE_URL, f"generated_files_{current_date}")
+        os.makedirs(output_folder, exist_ok=True)
+       
+        tracker_file_path = os.path.join(output_folder, f"TRACKER_GAP_FILE_{milestone1}_{milestone2}_{circle}_{site_tagging}_{relocation_method}_{new_toco_name}_{current_date}_{current_time}.xlsx")
+        print('2')
+        df.insert(0, "Unique ID", range(1, len(df) + 1))
+        print(df)
+       
+        df.drop(columns=['id', df.columns.tolist()[-1], df.columns.tolist()[-2]], inplace=True)
+ 
+        template_path = os.path.join(BASE_URL, "template", "templateAlok.xlsx")
+        wb = load_workbook(template_path)
+        ws = wb.active  
+        print("3")
+        start_row = 5
+        for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=False), start=start_row):
+            for c_idx, value in enumerate(row, start=1):
+                ws.cell(row=r_idx, column=c_idx, value=value)
+ 
+        wb.save(tracker_file_path)
+        print("4")
+        relative_path = tracker_file_path.replace(settings.MEDIA_ROOT, '').lstrip(os.sep)
+        download_url = request.build_absolute_uri(
+            os.path.join(settings.MEDIA_URL, relative_path).replace('\\', '/')
+        )
+        
+        return Response({'message': 'request processed successfully !!!', "download_link": download_url}, status=200)
+    except Exception as e:
+        return Response({"error": f"{str(e)}"},status=500)

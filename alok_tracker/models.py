@@ -1,7 +1,6 @@
 from django.db import models
 
 class AlokTrackerModel(models.Model):
-    # unique_id = models.CharField(max_length=50, null=True, blank=True)
     circle = models.CharField(max_length=100, null=True, blank=True)
     site_tagging = models.CharField(max_length=100, null=True, blank=True)
     old_toco_name = models.CharField(max_length=100, null=True, blank=True)
@@ -57,7 +56,8 @@ class AlokTrackerModel(models.Model):
     last_updated_by = models.CharField(max_length=255,null=True, blank=True)
 
     class Meta:
-        db_table = "relocation_site_project_tracker"
+        db_table = "alok_model"
+        unique_together = ('circle', 'new_site_id')
 
     def __str__(self):
         return f"{self.circle} - {self.new_site_id}"
