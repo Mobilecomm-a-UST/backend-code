@@ -171,7 +171,6 @@ eNodeBPlmnId mcc=404,mnc=94,mncLength=2
 alignTtiBundWUlTrigSinr 1
 dscpLabel 46
 eNBId {eNBId}
-
 gtpuErrorIndicationDscp 46
 measuringEcgiWithAgActive false
 rrcConnReestActive true
@@ -332,7 +331,6 @@ eNodeBPlmnId mcc=404,mnc=94,mncLength=2
 alignTtiBundWUlTrigSinr 1
 dscpLabel 46
 eNBId 765887
-
 gtpuErrorIndicationDscp 46
 measuringEcgiWithAgActive false
 rrcConnReestActive true
@@ -354,1286 +352,4643 @@ confb-
 
 TN_s3_LTE_GPL_LMS = """
 
-lt all
-rbs
-rbs
-
-
-Confbd+
+confb+
 gs+
 
-get Router=OAM,RouteTableIPv.*Static=.*,Dst=.*,NextHop= address$ > $OAM-Nexthop
-get Router=LTEUP,RouteTableIPv4Static=.*,Dst=.*,NextHop= address$ > $UP-Nexthop
-get Router=LTECP,RouteTableIPv4Static=.*,Dst=.*,NextHop= address$ > $CP-Nexthop
-
-
-rdel Router=LTEUP,RouteTableIPv4Static=2,Dst=
-
-rdel Router=LTECP,RouteTableIPv4Static=3,Dst=
-
-
-
-
-
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=OSS3
-dst 10.45.86.0/23
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=OSS3,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=OSS1
-dst 10.45.60.0/24
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=OSS1,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=OSS
-dst 10.45.25.0/24
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=OSS,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=OSS-New
-dst 100.74.16.0/20
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=OSS-New,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM1
-dst 10.19.105.0/22
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM1,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM
-dst 10.19.104.0/22
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM2
-dst 10.19.108.0/22
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM2,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM2_Raj
-dst 10.19.109.0/24
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM2_Raj,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM3
-dst 10.19.186.0/24
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM3,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM3_Raj
-dst 10.19.186.0/25
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM3_Raj,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM4
-dst 10.19.182.0/24
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM4,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM4_Raj
-dst 10.19.182.0/25
-end
-
-crn Transport=1,Router=OAM,RouteTableIPv4Static=1,Dst=ENM4_Raj,NextHop=1
-address $OAM-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_95
-dst 100.86.0.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_95,NextHop=8
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_94
-dst 100.85.128.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_94,NextHop=94
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_93
-dst 100.84.64.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_93,NextHop=4
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_92
-dst 100.84.96.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_92,NextHop=8
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_82
-dst 100.84.0.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_82,NextHop=82
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_77
-dst 100.83.208.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_77,NextHop=77
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_76
-dst 100.83.192.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_76,NextHop=76
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_75
-dst 100.81.56.0/21
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_75,NextHop=75
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_73
-dst 100.81.16.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_73,NextHop=73
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_71
-dst 10.97.90.0/23
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_71,NextHop=71
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_67
-dst 100.87.64.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_67,NextHop=67
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_66
-dst 100.86.192.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_66,NextHop=66
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_59
-dst 100.88.160.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_59,NextHop=2
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_57
-dst 100.88.96.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_57,NextHop=2
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_5
-dst 10.72.16.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_5,NextHop=15
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_43
-dst 100.87.192.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_43,NextHop=43
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_32
-dst 10.80.136.0/21
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_32,NextHop=41
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_31
-dst 10.80.160.0/21
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_31,NextHop=41
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_30
-dst 10.72.56.0/21
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_30,NextHop=41
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_28
-dst 10.72.48.0/21
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_28,NextHop=41
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_26
-dst 10.29.112.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_26,NextHop=41
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_25
-dst 10.29.80.0/20
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_25,NextHop=41
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_23
-dst 10.29.24.0/21
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_23,NextHop=41
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_22
-dst 10.29.8.0/21
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_22,NextHop=41
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_2
-dst 10.29.56.0/21
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_2,NextHop=8
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_1
-dst 10.29.40.0/21
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=X2_1,NextHop=4
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=Twamp
-dst 10.61.96.208/28
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=Twamp,NextHop=7
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW9
-dst 10.61.86.248/29
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW9,NextHop=13
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW8
-dst 10.75.212.142/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW8,NextHop=1
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW7
-dst 10.75.212.27/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW7,NextHop=11
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW6
-dst 10.206.17.12/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW6,NextHop=11
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW5
-dst 10.50.98.17/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW5,NextHop=44
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW4
-dst 10.50.98.5/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW4,NextHop=4
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW3
-dst 10.40.18.96/28
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW3,NextHop=31
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW2
-dst 10.206.32.65/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW2,NextHop=11
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW18
-dst 10.19.207.133/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW18,NextHop=2
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW17
-dst 10.1.253.189/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW17,NextHop=2
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW16
-dst 10.1.170.192/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW16,NextHop=2
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW15
-dst 10.19.187.133/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW15,NextHop=15
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW14
-dst 10.19.131.245/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW14,NextHop=14
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW13
-dst 10.19.131.229/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW13,NextHop=13
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW12
-dst 10.19.131.213/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW12,NextHop=12
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW11
-dst 10.1.131.250/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW11,NextHop=11
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW10
-dst 10.92.7.118/32
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW10,NextHop=10
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW1
-dst 10.206.0.0/19
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW1,NextHop=2
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SBRUP
-dst 0.0.0.0/0
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=SBRUP,NextHop=2
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=CUPGW
-dst 10.1.159.128/27
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=CUPGW,NextHop=17
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_new_3
-dst 100.83.208.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_new_3,NextHop=7
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_92
-dst 100.86.16.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_92,NextHop=93
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_91
-dst 100.84.80.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_91,NextHop=2
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_90
-dst 100.84.112.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_90,NextHop=2
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_84
-dst 100.84.16.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_84,NextHop=84
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_80
-dst 100.85.144.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_80,NextHop=81
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_76
-dst 100.83.192.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_76,NextHop=76
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_74
-dst 100.81.48.0/21
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_74,NextHop=74
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_72
-dst 100.81.0.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_72,NextHop=72
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_70
-dst 10.97.88.0/23
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_70,NextHop=70
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_7
-dst 10.29.96.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_7,NextHop=15
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_69
-dst 100.88.176.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_69,NextHop=3
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_68
-dst 100.87.80.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_68,NextHop=68
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_65
-dst 100.86.208.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_65,NextHop=65
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_62
-dst 10.29.32.0/21
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_62,NextHop=62
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_61
-dst 10.29.64.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_61,NextHop=61
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_58
-dst 100.88.112.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_58,NextHop=3
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_5
-dst 10.72.0.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_5,NextHop=17
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_44
-dst 100.87.208.0/20
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_44,NextHop=44
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_4
-dst 10.0.235.0/24
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_4,NextHop=9
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_3
-dst 10.206.32.0/24
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_3,NextHop=7
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_20
-dst 10.80.128.0/21
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_20,NextHop=40
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_2
-dst 10.29.48.0/21
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_2,NextHop=15
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_19
-dst 10.80.152.0/21
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_19,NextHop=40
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_18
-dst 10.72.40.0/21
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_18,NextHop=40
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_16
-dst 10.72.32.0/21
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_16,NextHop=40
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_11
-dst 10.29.16.0/21
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_11,NextHop=40
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_10
-dst 10.29.0.0/21
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=X2_10,NextHop=40
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=SBRCP
-dst 0.0.0.0/0
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=SBRCP,NextHop=2
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=RNC
-dst 10.163.190.0/24
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=RNC,NextHop=6
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME9
-dst 10.1.163.144/32
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME9,NextHop=20
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME8
-dst 10.92.7.0/24
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME8,NextHop=20
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME7
-dst 10.75.212.0/24
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME7,NextHop=20
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME6
-dst 10.61.0.0/24
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME6,NextHop=20
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME3
-dst 10.206.27.0/24
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME3,NextHop=30
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME2
-dst 10.206.20.0/24
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME2,NextHop=5
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME1
-dst 10.206.4.0/24
-end
-
-crn Transport=1,Router=LTECP,RouteTableIPv4Static=3,Dst=MME1,NextHop=3
-address $CP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference 
-end
-gs-
-
-cvms After_Routeaddd
-
-
-Confbd-
-gs-
-
-
+cvms pre_common_GPL+LMS_APX                                                                                                                            
+﻿                                                                                                                                                                                                                      
+confbd+                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+pr EUtranCellTDD=TN_E_T1_.*A_[LMN]                                                                                                                                                                                     
+if $nr_of_mos = 0                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=2                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=10 ENodeBFunction=1,SectorCarrier=11 ENodeBFunction=1,SectorCarrier=12                                                                                                                  
+elseif $nr_of_mos = 3                                                                                                                                                                                                  
+cr ENodeBFunction=1,UlCompGroup=2                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=10 ENodeBFunction=1,SectorCarrier=11 ENodeBFunction=1,SectorCarrier=12 ENodeBFunction=1,SectorCarrier=40 ENodeBFunction=1,SectorCarrier=41 ENodeBFunction=1,SectorCarrier=42            
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+wait 2                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+cr ENodeBFunction=1,UlCompGroup=2                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=10 ENodeBFunction=1,SectorCarrier=11 ENodeBFunction=1,SectorCarrier=12 ENodeBFunction=1,SectorCarrier=40 ENodeBFunction=1,SectorCarrier=41                                              
+y                                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=2                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=10 ENodeBFunction=1,SectorCarrier=11 ENodeBFunction=1,SectorCarrier=12 ENodeBFunction=1,SectorCarrier=40  ENodeBFunction=1,SectorCarrier=42                                             
+y                                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=2                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=10 ENodeBFunction=1,SectorCarrier=11 ENodeBFunction=1,SectorCarrier=12 ENodeBFunction=1,SectorCarrier=41 ENodeBFunction=1,SectorCarrier=42                                              
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+pr EUtranCellTDD=TN_E_T2_.*A_[LMN]                                                                                                                                                                                     
+if $nr_of_mos = 0                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=3                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=30 ENodeBFunction=1,SectorCarrier=31 ENodeBFunction=1,SectorCarrier=32                                                                                                                  
+elseif $nr_of_mos = 3                                                                                                                                                                                                  
+cr ENodeBFunction=1,UlCompGroup=3                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=30 ENodeBFunction=1,SectorCarrier=31 ENodeBFunction=1,SectorCarrier=32 ENodeBFunction=1,SectorCarrier=50 ENodeBFunction=1,SectorCarrier=51  ENodeBFunction=1,SectorCarrier=52           
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+cr ENodeBFunction=1,UlCompGroup=3                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=30 ENodeBFunction=1,SectorCarrier=31 ENodeBFunction=1,SectorCarrier=32 ENodeBFunction=1,SectorCarrier=50 ENodeBFunction=1,SectorCarrier=51                                              
+y                                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=3                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=30 ENodeBFunction=1,SectorCarrier=31 ENodeBFunction=1,SectorCarrier=32 ENodeBFunction=1,SectorCarrier=50 ENodeBFunction=1,SectorCarrier=52                                              
+y                                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=3                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=30 ENodeBFunction=1,SectorCarrier=31 ENodeBFunction=1,SectorCarrier=32 ENodeBFunction=1,SectorCarrier=51 ENodeBFunction=1,SectorCarrier=52                                              
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+pr EUtranCellTDD=TN_E_T1_.*A_L                                                                                                                                                                                         
+if $nr_of_mos = 1                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=2                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=10 ENodeBFunction=1,SectorCarrier=11 ENodeBFunction=1,SectorCarrier=12 ENodeBFunction=1,SectorCarrier=40                                                                                
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+pr EUtranCellTDD=TN_E_T1_.*B_M                                                                                                                                                                                         
+if $nr_of_mos = 1                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=2                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=10 ENodeBFunction=1,SectorCarrier=11 ENodeBFunction=1,SectorCarrier=12 ENodeBFunction=1,SectorCarrier=41                                                                                
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+pr EUtranCellTDD=TN_E_T1_.*C_N                                                                                                                                                                                         
+if $nr_of_mos = 1                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=2                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=10 ENodeBFunction=1,SectorCarrier=11 ENodeBFunction=1,SectorCarrier=12 ENodeBFunction=1,SectorCarrier=42                                                                                
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+pr EUtranCellTDD=TN_E_T2_.*A_L                                                                                                                                                                                         
+if $nr_of_mos = 1                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=3                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=30 ENodeBFunction=1,SectorCarrier=31 ENodeBFunction=1,SectorCarrier=32 ENodeBFunction=1,SectorCarrier=50                                                                                
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+pr EUtranCellTDD=TN_E_T2_.*B_M                                                                                                                                                                                         
+if $nr_of_mos = 0                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=3                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=30 ENodeBFunction=1,SectorCarrier=31 ENodeBFunction=1,SectorCarrier=32 ENodeBFunction=1,SectorCarrier=51                                                                                
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+pr EUtranCellTDD=TN_E_T2_.*C_N                                                                                                                                                                                         
+if $nr_of_mos = 0                                                                                                                                                                                                      
+cr ENodeBFunction=1,UlCompGroup=3                                                                                                                                                                                      
+ENodeBFunction=1,SectorCarrier=30 ENodeBFunction=1,SectorCarrier=31 ENodeBFunction=1,SectorCarrier=32 ENodeBFunction=1,SectorCarrier=52                                                                                
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+deb ENodeBFunction=1,UlCompGroup=2                                                                                                                                                                                     
+deb ENodeBFunction=1,UlCompGroup=3                                                                                                                                                                                     
+
+
+
+pr EUtranCellFDD=TN_E_F3
+if $nr_of_mos = 3
+cr ENodeBFunction=1,UlCompGroup=4
+ENodeBFunction=1,SectorCarrier=20 ENodeBFunction=1,SectorCarrier=21 ENodeBFunction=1,SectorCarrier=22
+elseif $nr_of_mos = 2
+cr ENodeBFunction=1,UlCompGroup=4
+ENodeBFunction=1,SectorCarrier=20 ENodeBFunction=1,SectorCarrier=21
+elseif $nr_of_mos = 1
+cr ENodeBFunction=1,UlCompGroup=4
+ENodeBFunction=1,SectorCarrier=20
+elseif $nr_of_mos = 4
+cr ENodeBFunction=1,UlCompGroup=4
+ENodeBFunction=1,SectorCarrier=20 ENodeBFunction=1,SectorCarrier=21 ENodeBFunction=1,SectorCarrier=22 ENodeBFunction=1,SectorCarrier=23
+fi
+deb ENodeBFunction=1,UlCompGroup=4
+
+
+
+confbd-
+
+                                                                                                                     
+lt all                                                                                                                                                                                                                 
+rbs                                                                                                                                                                                                                    
+rbs                                                                                                                                                                                                                    
+                                                                                                                                                                                                                       
+confbd+                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+                                                                                                                                                                                           
+                                                                                                                                                                                         
+                                                                                                                                                                                                                       
+set CXC4010620 featurestate 0                                                                                                                                                                                          
+rdel EUtraNetwork=1,EUtranFrequency=3696                                                                                                                                                                               
+wait 2                                                                                                                                                                                                                 
+rdel ^Eutrancell.dd=.*,EUtranFreqRelation=3696                                                                                                                                                                         
+wait 10                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+lt all                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+//Define new EARFCN                                                                                                                                                                                                    
+                                                                                                                                                                                                                       
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=3710                                                                                                                                                                
+3710                                                                                                                                                                                                                   
+0                                                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+unset all                                                                                                                                                                                                              
+                                                                                                                                                                                                                       
+$Par[1] = L900                                                                                                                                                                                                         
+$Par[2] = L1800                                                                                                                                                                                                        
+$Par[3] = L2100                                                                                                                                                                                                        
+$Par[4] = TDD20                                                                                                                                                                                                        
+$Par[5] = TDD10                                                                                                                                                                                                        
+$Par[6] = TDD20SC                                                                                                                                                                                                      
+$Par[7] = TDD10SC                                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+mr L900                                                                                                                                                                                                                
+mr L1800                                                                                                                                                                                                               
+mr L2100                                                                                                                                                                                                               
+mr TDD20                                                                                                                                                                                                               
+mr TDD10                                                                                                                                                                                                               
+mr TDD20SC                                                                                                                                                                                                             
+mr TDD10SC                                                                                                                                                                                                             
+                                                                                                                                                                                                                       
+ma L900 EUtranCellFDD earfcn 3696                                                                                                                                                                                      
+ma L1800 EutrancellFDD earfcn 1615                                                                                                                                                                                     
+ma L2100 EutrancellFDD earfcn 390                                                                                                                                                                                      
+ma TDD20 EutrancellTDD earfcn 39150                                                                                                                                                                                    
+ma TDD10 EutrancellTDD earfcn 39294                                                                                                                                                                                    
+ma TDD20SC EUtranCellTDD earfcn 39151                                                                                                                                                                                  
+ma TDD10SC EUtranCellTDD earfcn 39295                                                                                                                                                                                  
+                                                                                                                                                                                                                       
+func New_Earfcn                                                                                                                                                                                                        
+for $mo in $Par[$i]                                                                                                                                                                                                    
+ $mordn = rdn($mo)                                                                                                                                                                                                     
+ pr $mordn,EUtranFreqRelation=3710                                                                                                                                                                                     
+ if $nr_of_mos = 0                                                                                                                                                                                                     
+  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=3710                                                                                                                                                                   
+  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=3710                                                                                                                                                                 
+  2                                                                                                                                                                                                                    
+ fi                                                                                                                                                                                                                    
+done                                                                                                                                                                                                                   
+endfunc                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+//Define new earfcn                                                                                                                                                                                                    
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+for $i = 1 to 7                                                                                                                                                                                                        
+New_Earfcn                                                                                                                                                                                                             
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+bl ^EutrancellFdd.*F8                                                                                                                                                                                                  
+                                                                                                                                                                                                                       
+//Change earfcn                                                                                                                                                                                                        
+                                                                                                                                                                                                                       
+pr L900                                                                                                                                                                                                                
+for $mo in L900                                                                                                                                                                                                        
+ facc $mo changeFrequency 3710                                                                                                                                                                                         
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+wait 5                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+deb unlockedL9cells                                                                                                                                                                                                    
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                               
+                                                                                                                                                                                                                       
+rdel ^Eutrancell.dd=.*,EUtranFreqRelation=3696                                                                                                                                                                         
+wait 10                                                                                                                                                                                                                
+rdel EUtraNetwork=1,EUtranFrequency=3696                                                                                                                                                                               
+wait 3                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+set CXC4010620 featurestate 1                                                                                                                                                                                          
+                                                                                                                                                                                                                       
+$date = `date +%y%m%d_%H%M`                                                                                                                                                                                            
+                                                                                                                                                                                        
+                                                                                                                                                                            
+
+                                                                                                                              
+lt all                                                                                                                                                                                                                 
+                                                                                                                                                                                                                 
+confbd+                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+$date = `date +%y%m%d_%H%M`                                                                                                                                                                                            
+                                                                                                                                                                                             
+                                                                                                                                                                                                                       
+########Frequency Creation##########                                                                                                                                                                                   
+del ENodeBFunction=1,GeraNetwork=1,GeranFrequency=                                                                                                                                                                     
+                                                                                                                                                                                                                       
+wait 2                                                                                                                                                                                                                 
+rdel EUtranFrequency=3696                                                                                                                                                                                              
+wait 2                                                                                                                                                                                                                 
+rdel EUtranFreqRelation=3696                                                                                                                                                                                           
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+lt all                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+cr ENodeBFunction=1,GeraNetwork=1                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+cr ENodeBFunction=1,GeraNetwork=1,GeranFreqGroup=1                                                                                                                                                                     
+1 #frequencyGroupId                                                                                                                                                                                                    
+                                                                                                                                                                                                                       
+func Gran_freq                                                                                                                                                                                                         
+cr ENodeBFunction=1,GeraNetwork=1,GeranFrequency=$t                                                                                                                                                                    
+$t                                                                                                                                                                                                                     
+0                                                                                                                                                                                                                      
+set ENodeBFunction=1,GeraNetwork=1,GeranFrequency=$t geranFreqGroupRef ENodeBFunction=1,GeraNetwork=1,GeranFreqGroup=1                                                                                                 
+endfunc                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+for $t = 669 to 680                                                                                                                                                                                                    
+Gran_freq                                                                                                                                                                                                              
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+for $t = 757 to 768                                                                                                                                                                                                    
+Gran_freq                                                                                                                                                                                                              
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+lt all                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+rdel =39050$                                                                                                                                                                                                           
+                                                                                                                                                                                                                       
+wait 3                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+rdel =39200$                                                                                                                                                                                                           
+                                                                                                                                                                                                                       
+wait 3                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+rdel =1540$                                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+wait 3                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+rdel =1508$                                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+wait 3                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+rdel =1555$                                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+wait 3                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+rdel =1590$                                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+wait 3                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39150                                                                                                                                                               
+39150                                                                                                                                                                                                                  
+0                                                                                                                                                                                                                      
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39294                                                                                                                                                               
+39294                                                                                                                                                                                                                  
+0                                                                                                                                                                                                                      
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=390                                                                                                                                                                 
+390                                                                                                                                                                                                                    
+0                                                                                                                                                                                                                      
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=1615                                                                                                                                                                
+1615                                                                                                                                                                                                                   
+0                                                                                                                                                                                                                      
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=3710                                                                                                                                                                
+3710                                                                                                                                                                                                                   
+0                                                                                                                                                                                                                      
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39151                                                                                                                                                               
+39151                                                                                                                                                                                                                  
+0                                                                                                                                                                                                                      
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39295                                                                                                                                                               
+39295                                                                                                                                                                                                                  
+0                                                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+##########GERANFREQ##################                                                                                                                                                                                  
+                                                                                                                                                                                                                       
+unset all                                                                                                                                                                                                              
+                                                                                                                                                                                                                       
+$Par[1] = L2100                                                                                                                                                                                                        
+$Par[2] = TDD20                                                                                                                                                                                                        
+$Par[3] = TDD10                                                                                                                                                                                                        
+$Par[4] = L1800                                                                                                                                                                                                        
+$Par[5] = L900                                                                                                                                                                                                         
+$Par[6] = TDD20SC                                                                                                                                                                                                      
+$Par[7] = TDD10SC                                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+mr L2100                                                                                                                                                                                                               
+mr TDD20                                                                                                                                                                                                               
+mr TDD10                                                                                                                                                                                                               
+mr L1800                                                                                                                                                                                                               
+mr L900                                                                                                                                                                                                                
+mr TDD20SC                                                                                                                                                                                                             
+mr TDD10SC                                                                                                                                                                                                             
+                                                                                                                                                                                                                       
+ma L2100 EUtranCellFDD earfcn 390                                                                                                                                                                                      
+ma L1800 EUtranCellFDD earfcn 1615                                                                                                                                                                                     
+ma TDD10 EUtranCellTDD earfcn 39294                                                                                                                                                                                    
+ma TDD20 EUtranCellTDD earfcn 39150                                                                                                                                                                                    
+ma L900 EUtranCellFDD earfcn 3710                                                                                                                                                                                      
+ma TDD20SC EUtranCellTDD earfcn 39151                                                                                                                                                                                  
+ma TDD10SC EUtranCellTDD earfcn 39295                                                                                                                                                                                  
+                                                                                                                                                                                                                       
+func Gran_Rel                                                                                                                                                                                                          
+for $mo in $Par[$i]                                                                                                                                                                                                    
+ $mordn = rdn($mo)                                                                                                                                                                                                     
+ pr $mordn,GeranFreqGroupRelation=1                                                                                                                                                                                    
+ if $nr_of_mos = 0                                                                                                                                                                                                     
+  cr ENodeBFunction=1,$mordn,GeranFreqGroupRelation=1                                                                                                                                                                  
+  ENodeBFunction=1,GeraNetwork=1,GeranFreqGroup=1                                                                                                                                                                      
+  1                                                                                                                                                                                                                    
+ fi                                                                                                                                                                                                                    
+done                                                                                                                                                                                                                   
+endfunc                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+func EURel_39150                                                                                                                                                                                                       
+for $mo in $Par[$i]                                                                                                                                                                                                    
+ $mordn = rdn($mo)                                                                                                                                                                                                     
+ pr $mordn,EUtranFreqRelation=39150                                                                                                                                                                                    
+ if $nr_of_mos = 0                                                                                                                                                                                                     
+  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=39150                                                                                                                                                                  
+  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39150                                                                                                                                                                
+  6                                                                                                                                                                                                                    
+ fi                                                                                                                                                                                                                    
+done                                                                                                                                                                                                                   
+endfunc                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+func EURel_39294                                                                                                                                                                                                       
+for $mo in $Par[$i]                                                                                                                                                                                                    
+ $mordn = rdn($mo)                                                                                                                                                                                                     
+ pr $mordn,EUtranFreqRelation=39294                                                                                                                                                                                    
+ if $nr_of_mos = 0                                                                                                                                                                                                     
+  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=39294                                                                                                                                                                  
+  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39294                                                                                                                                                                
+  5                                                                                                                                                                                                                    
+ fi                                                                                                                                                                                                                    
+done                                                                                                                                                                                                                   
+endfunc                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+func EURel_390                                                                                                                                                                                                         
+for $mo in $Par[$i]                                                                                                                                                                                                    
+ $mordn = rdn($mo)                                                                                                                                                                                                     
+ pr $mordn,EUtranFreqRelation=390$                                                                                                                                                                                     
+ if $nr_of_mos = 0                                                                                                                                                                                                     
+  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=390                                                                                                                                                                    
+  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=390                                                                                                                                                                  
+  3                                                                                                                                                                                                                    
+ fi                                                                                                                                                                                                                    
+done                                                                                                                                                                                                                   
+endfunc                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+func EURel_1615                                                                                                                                                                                                        
+for $mo in $Par[$i]                                                                                                                                                                                                    
+ $mordn = rdn($mo)                                                                                                                                                                                                     
+ pr $mordn,EUtranFreqRelation=1615                                                                                                                                                                                     
+ if $nr_of_mos = 0                                                                                                                                                                                                     
+  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=1615                                                                                                                                                                   
+  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=1615                                                                                                                                                                 
+  4                                                                                                                                                                                                                    
+ fi                                                                                                                                                                                                                    
+done                                                                                                                                                                                                                   
+endfunc                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+func EURel_3710                                                                                                                                                                                                        
+for $mo in $Par[$i]                                                                                                                                                                                                    
+ $mordn = rdn($mo)                                                                                                                                                                                                     
+ pr $mordn,EUtranFreqRelation=3710                                                                                                                                                                                     
+ if $nr_of_mos = 0                                                                                                                                                                                                     
+  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=3710                                                                                                                                                                   
+  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=3710                                                                                                                                                                 
+  2                                                                                                                                                                                                                    
+ fi                                                                                                                                                                                                                    
+done                                                                                                                                                                                                                   
+endfunc                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+func EURel_39151                                                                                                                                                                                                       
+for $mo in $Par[$i]                                                                                                                                                                                                    
+ $mordn = rdn($mo)                                                                                                                                                                                                     
+ pr $mordn,EUtranFreqRelation=39151                                                                                                                                                                                    
+ if $nr_of_mos = 0                                                                                                                                                                                                     
+  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=39151                                                                                                                                                                  
+  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39151                                                                                                                                                                
+  7                                                                                                                                                                                                                    
+ fi                                                                                                                                                                                                                    
+done                                                                                                                                                                                                                   
+endfunc                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+func EURel_39295                                                                                                                                                                                                       
+for $mo in $Par[$i]                                                                                                                                                                                                    
+ $mordn = rdn($mo)                                                                                                                                                                                                     
+ pr $mordn,EUtranFreqRelation=39295                                                                                                                                                                                    
+ if $nr_of_mos = 0                                                                                                                                                                                                     
+  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=39295                                                                                                                                                                  
+  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39295                                                                                                                                                                
+  7                                                                                                                                                                                                                    
+ fi                                                                                                                                                                                                                    
+done                                                                                                                                                                                                                   
+endfunc                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+for $i = 1 to 7                                                                                                                                                                                                        
+EURel_39294                                                                                                                                                                                                            
+EURel_39150                                                                                                                                                                                                            
+EURel_390                                                                                                                                                                                                              
+EURel_1615                                                                                                                                                                                                             
+EURel_3710                                                                                                                                                                                                             
+EURel_39151                                                                                                                                                                                                            
+EURel_39295                                                                                                                                                                                                            
+Gran_Rel                                                                                                                                                                                                               
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+########################################                                                                                                                                                                               
+cr Transport=1,Synchronization=1,TimeSyncIO=1,GnssInfo=1                                                                                                                                                               
+########################################                                                                                                                                                                               
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+get ENodeBFunction=1,EUtranCellTDD=TN_ eUtranCellTDDId > $temp                                                                                                                                                         
+l echo $temp > $temp.txt                                                                                                                                                                                               
+$nodename = `$gawk  '{ print substr ($NR,12,6) }' $temp.txt                                                                                                                                                            
+                                                                                                                                                                                                                       
+get ENodeBFunction=1,EUtranCellFDD=TN_ eUtranCellFDDId > $temp                                                                                                                                                         
+l echo $temp > $temp.txt                                                                                                                                                                                               
+$nodename = `$gawk  '{ print substr ($NR,12,6) }' $temp.txt                                                                                                                                                            
+                                                                                                                                                                                                                       
+### Fixed Parameter                                                                                                                                                                                                    
+                                                                                                                                                                                                                       
+## Admission control                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+set AdmissionControl=1 admNrRrcDifferentiationThr 750                                                                                                                                                                  
+set AdmissionControl=1 admNrRbDifferentiationThr 750                                                                                                                                                                   
+set AdmissionControl=1 arpBasedPreEmptionState 0                                                                                                                                                                       
+set AdmissionControl=1 ulAdmOverloadThr 950                                                                                                                                                                            
+set AdmissionControl=1 ulTransNwBandwidth 2000                                                                                                                                                                         
+set AdmissionControl=1 dlAdmDifferentiationThr 950                                                                                                                                                                     
+set AdmissionControl=1 ulAdmDifferentiationThr 950                                                                                                                                                                     
+                                                                                                                                                                                                                       
+#ANRFUNCTION                                                                                                                                                                                                           
+                                                                                                                                                                                                                       
+set ENodeBFunction=1,AnrFunction=1 cellRelHoAttRateThreshold 15                                                                                                                                                        
+set ENodeBFunction=1,AnrFunction=1 maxNoPciReportsEvent 30                                                                                                                                                             
+set ENodeBFunction=1,AnrFunction=1 probCellDetectLowHoSuccTime 4                                                                                                                                                       
+set ENodeBFunction=1,AnrFunction=1 probCellDetectMedHoSuccTime 2                                                                                                                                                       
+set ENodeBFunction=1,AnrFunction=1 problematicCellPolicy 1                                                                                                                                                             
+set ENodeBFunction=1,AnrFunction=1 removeNcellTime   1                                                                                                                                                                 
+set ENodeBFunction=1,AnrFunction=1 removeNenbTime    1                                                                                                                                                                 
+set ENodeBFunction=1,AnrFunction=1 removeNrelTime 7                                                                                                                                                                    
+set ENodeBFunction=1,AnrFunction=1 probCellDetectMedHoSuccThres 50                                                                                                                                                     
+set AnrFunction=1,AnrFunctionEUtran=1 cellAddRsrpThresholdEutran -1240                                                                                                                                                 
+set AnrFunction=1,AnrFunctionEUtran=1 cellAddRsrqThresholdEutran -1530                                                                                                                                                 
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1 anrStateUtran 1                                                                                                                                                  
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionGeran=1 anrStateGsm 1                                                                                                                                                    
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 anrIntraFreqState 1                                                                                                                                             
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 anrInterFreqState 1                                                                                                                                             
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 hoAllowedEutranPolicy 1                                                                                                                                         
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 x2SetupPolicy 1                                                                                                                                                 
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1 hoAllowedUtranPolicy 1                                                                                                                                           
+set AnrFunction=1,AnrFunctionEUtran=1 anrUesEUtraIntraFMax 0                                                                                                                                                           
+set AnrFunction=1,AnrFunctionEUtran=1 anrUesThreshInterFMax 0                                                                                                                                                          
+set AnrFunction=1,AnrFunctionEUtran=1 anrUesEUtraIntraFMin 0                                                                                                                                                           
+set AnrFunction=1,AnrFunctionEUtran=1 anrUesThreshInterFMin 0                                                                                                                                                          
+set AnrFunction=1,AnrFunctionUtran=1 cellAddEcNoThresholdUtranDelta -10                                                                                                                                                
+set AnrFunction=1,AnrFunctionUtran=1 cellAddRscpThresholdUtranDelta -1                                                                                                                                                 
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1 hoAllowedUtranPolicy 1                                                                                                                                           
+set AnrPciConflictDrxProfile=1                              anrPciConflictDrxInactivityTimer 8                                                                                                                         
+set AnrPciConflictDrxProfile=1                              anrPciConflictOnDurationTimer 4                                                                                                                            
+                                                                                                                                                                                                                       
+#CarrierAggFunction                                                                                                                                                                                                    
+                                                                                                                                                                                                                       
+set CarrierAggregationFunction=1                            dynamicSCellSelectionMethod 2                                                                                                                              
+set CarrierAggregationFunction=1                            fourLayerMimoPreferred false                                                                                                                               
+set CarrierAggregationFunction=1                            enhancedSelectionOfMimoAndCa false                                                                                                                         
+set CarrierAggregationFunction=1                            waitForAdditionalSCellOpportunity 10000                                                                                                                    
+set CarrierAggregationFunction=1                            sCellActProhibitTimer 10                                                                                                                                   
+set CarrierAggregationFunction=1                            selectionPolicyUlWeighting -1                                                                                                                              
+set CarrierAggregationFunction=1                            waitForBlindSelSCellRepLessTtt 600                                                                                                                         
+set CarrierAggregationFunction=1                            laaSCellDeactProhibitTimer 200                                                                                                                             
+                                                                                                                                                                                                                       
+#DRB                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+set RadioBearerTable=default,DataRadioBearer=1 tPollRetransmitUl 80                                                                                                                                                    
+set RadioBearerTable=default,DataRadioBearer=1 tPollRetransmitDl 80                                                                                                                                                    
+                                                                                                                                                                                                                       
+#DrxProfile                                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+lset QciTable=default,QciProfilePredefined=qci1 drxProfileRef DrxProfile=1                                                                                                                                             
+lset QciTable=default,QciProfilePredefined=qci2 drxProfileRef DrxProfile=2                                                                                                                                             
+lset QciTable=default,QciProfilePredefined=qci5 drxProfileRef DrxProfile=0                                                                                                                                             
+lset ENodeBFunction=1,DrxProfile=1$ drxRetransmissionTimer 2                                                                                                                                                           
+lset ENodeBFunction=1,DrxProfile=2$ drxRetransmissionTimer 1                                                                                                                                                           
+lset ENodeBFunction=1,DrxProfile=0$ drxRetransmissionTimer 4                                                                                                                                                           
+lset ENodeBFunction=1,DrxProfile=1$ longDrxCycle 3                                                                                                                                                                     
+lset ENodeBFunction=1,DrxProfile=2$ longDrxCycle 3                                                                                                                                                                     
+lset ENodeBFunction=1,DrxProfile=0$ longDrxCycle 9                                                                                                                                                                     
+lset ENodeBFunction=1,DrxProfile=1$ longDrxCycleonly 3                                                                                                                                                                 
+lset ENodeBFunction=1,DrxProfile=2$ longDrxCycleonly 3                                                                                                                                                                 
+lset ENodeBFunction=1,DrxProfile=0$ longDrxCycleonly 9                                                                                                                                                                 
+lset ENodeBFunction=1,DrxProfile=1$ onDurationTimer 7                                                                                                                                                                  
+lset ENodeBFunction=1,DrxProfile=2$ onDurationTimer 6                                                                                                                                                                  
+lset ENodeBFunction=1,DrxProfile=0$ onDurationTimer 7                                                                                                                                                                  
+lset ENodeBFunction=1,DrxProfile=1$ shortDrxCycle 7                                                                                                                                                                    
+lset ENodeBFunction=1,DrxProfile=2$ shortDrxCycle 7                                                                                                                                                                    
+lset ENodeBFunction=1,DrxProfile=0$ shortDrxCycle 9                                                                                                                                                                    
+lset ENodeBFunction=1,DrxProfile=1$ shortDrxCycleTimer 0                                                                                                                                                               
+lset ENodeBFunction=1,DrxProfile=2$ shortDrxCycleTimer 0                                                                                                                                                               
+lset ENodeBFunction=1,DrxProfile=0$ shortDrxCycleTimer 1                                                                                                                                                               
+lset QciTable=default,QciProfilePredefined=qci1 drxProfileRef DrxProfile=1                                                                                                                                             
+lset QciTable=default,QciProfilePredefined=qci2 drxProfileRef DrxProfile=2                                                                                                                                             
+lset QciTable=default,QciProfilePredefined=qci5 drxProfileRef DrxProfile=0                                                                                                                                             
+lset ENodeBFunction=1,DrxProfile=1$ drxInactivityTimer 6                                                                                                                                                               
+lset ENodeBFunction=1,DrxProfile=2$ drxInactivityTimer 6                                                                                                                                                               
+lset ENodeBFunction=1,DrxProfile=0$ drxInactivityTimer 14                                                                                                                                                              
+lset ENodeBFunction=1,DrxProfile=1$ drxState 0                                                                                                                                                                         
+                                                                                                                                                                                                                       
+#### Alpha & Pusch ####                                                                                                                                                                                                
+ma allcells_alpha_not_opt ^eutrancell.DD alpha !10                                                                                                                                                                     
+set allcells_alpha_not_opt alpha 7                                                                                                                                                                                     
+set EUtranCellFDD=TN_E_F8_.* alpha 8                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+ma fdd_pzero_not_opt ^eutrancellFDD pZeroNominalPusch !-100                                                                                                                                                            
+ma tdd_pzero_not_opt ^eutrancellTDD pZeroNominalPusch !-100                                                                                                                                                            
+set fdd_pzero_not_opt pZeroNominalPusch -67                                                                                                                                                                            
+set tdd_pzero_not_opt pZeroNominalPusch -67                                                                                                                                                                            
+set EUtranCellFDD=TN_E_F8_.* pzeronominalPusch -83                                                                                                                                                                     
+                                                                                                                                                                                                                       
+#EnodeBFunction                                                                                                                                                                                                        
+                                                                                                                                                                                                                       
+set ENodeBFunction alignTtiBundWUlTrigSinr 1                                                                                                                                                                           
+set ENodeBFunction=1 dscpLabel 46                                                                                                                                                                                      
+set ENodeBFunction=1 gtpuErrorIndicationDscp 46                                                                                                                                                                        
+set ENodeBFunction rrcConnReestActive 1                                                                                                                                                                                
+set ENodeBFunction=1 tRelocOverall 20                                                                                                                                                                                  
+set ENodeBFunction=1 tS1HoCancelTimer 3                                                                                                                                                                                
+set ENodeBFunction=1                                        enabledUlTrigMeas false                                                                                                                                    
+set ENodeBFunction=1                                        zzzTemporary52    1                                                                                                                                        
+set ENodeBFunction=1                                        zzzTemporary55    -2000000000                                                                                                                              
+set ENodeBFunction=1                                        csfbMeasFromIdleMode 1                                                                                                                                     
+set ENodeBFunction=1 s1GtpuEchoDscp 46                                                                                                                                                                                 
+set ENodeBFunction=1 x2GtpuEchoDscp 46                                                                                                                                                                                 
+set ENodeBFunction=1                                        x2SetupTwoWayRelations true                                                                                                                                
+set ENodeBFunction=1                                        dnsLookupOnTai 1                                                                                                                                           
+set ENodeBFunction=1                                        zzzTemporary13    -2000000000                                                                                                                              
+set ENodeBFunction=1                                        caAwareMfbiIntraCellHo false                                                                                                                               
+set ENodeBFunction=1                                        mfbiSupportPolicy false                                                                                                                                    
+set ENodeBFunction=1                                        s1HODirDataPathAvail True                                                                                                                                  
+set ENodeBFunction=1                                        timePhaseMaxDeviationIeNbCa 30                                                                                                                             
+set ENodeBFunction=1                                        s1GtpuEchoEnable 0                                                                                                                                         
+set ENodeBFunction=1                                        checkEmergencySoftLock false                                                                                                                               
+set ENodeBFunction=1                                        combCellSectorSelectThreshRx 300                                                                                                                           
+set ENodeBFunction=1                                        combCellSectorSelectThreshTx 300                                                                                                                           
+set ENodeBFunction=1                                        licConnectedUsersPercentileConf 90                                                                                                                         
+set ENodeBFunction=1                                        tddVoipDrxProfileId -1                                                                                                                                     
+set ENodeBFunction=1                                        timePhaseMaxDeviation 100                                                                                                                                  
+set ENodeBFunction=1                                        timePhaseMaxDeviationEdrx 10                                                                                                                               
+set ENodeBFunction=1                                        timePhaseMaxDeviationMbms 50                                                                                                                               
+set ENodeBFunction=1                                        timePhaseMaxDeviationOtdoa 9                                                                                                                               
+set ENodeBFunction=1                                        timePhaseMaxDeviationSib16 100                                                                                                                             
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd 15                                                                                                                                
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd1 15                                                                                                                               
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd2 15                                                                                                                               
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd3 15                                                                                                                               
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd4 15                                                                                                                               
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd5 15                                                                                                                               
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd6 15                                                                                                                               
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd7 15                                                                                                                               
+set ENodeBFunction=1                                        timePhaseMaxDevIeNBUlComp 30                                                                                                                               
+set ENodeBFunction=1                                        ulMaxWaitingTimeGlobal 0                                                                                                                                   
+set ENodeBFunction=1                                        ulSchedulerDynamicBWAllocationEnabled true                                                                                                                 
+set ENodeBFunction=1                                        useBandPrioritiesInSCellEval false                                                                                                                         
+set EUtranCell                                  useBandPrioritiesInSib1 false                                                                                                                                          
+set ENodeBFunction=1                                        x2GtpuEchoEnable  0                                                                                                                                        
+set ENodeBFunction=1                                        x2IpAddrViaS1Active true                                                                                                                                   
+set ENodeBFunction=1                                        x2retryTimerMaxAuto 1440                                                                                                                                   
+set ENodeBFunction=1                                        forcedSiTunnelingActive false                                                                                                                              
+                                                                                                                                                                                                                       
+#EUTRANCELLFDD                                                                                                                                                                                                         
+                                                                                                                                                                                                                       
+set EUtranCellFDD pdcchOuterLoopUpStep 8                                                                                                                                                                               
+set EUtranCellFDD pdcchOuterLoopUpStepPCell 6                                                                                                                                                                          
+set EUtranCellFDD ttiBundlingAfterHO 1                                                                                                                                                                                 
+set EUtranCellFDD ttiBundlingAfterReest 1                                                                                                                                                                              
+set EUtranCellFDD ttiBundlingSwitchThres 150                                                                                                                                                                           
+set EUtranCellFDD ttiBundlingSwitchThresHyst 30                                                                                                                                                                        
+set EUtranCellFDD cellDownlinkCaCapacity 0                                                                                                                                                                             
+set EUtranCellFDD mappingInfo mappingInfoSIB12=7                                                                                                                                                                       
+set EUtranCellFDD mappingInfo mappingInfoSIB4=2                                                                                                                                                                        
+set EUtranCellFDD mappingInfo mappingInfoSIB6=4                                                                                                                                                                        
+set EUtranCellFDD                                 servOrPrioTriggeredErabAction 3                                                                                                                                      
+set EUtranCellFDD  dlInternalChannelBandwidth 0                                                                                                                                                                        
+set EUtranCellFDD  ulInternalChannelBandwidth 0                                                                                                                                                                        
+set EUtranCellFDD  beamWeightSet16Tr 0                                                                                                                                                                                 
+set Eutrancell adaptiveCfiHoProhibit 0                                                                                                                                                                                 
+set EUtranCell enableSinrUplinkClpc true                                                                                                                                                                               
+set EUtranCell pdcchCovImproveQci1 true                                                                                                                                                                                
+set EUtranCell pdcchOuterLoopUpStepVolte 9                                                                                                                                                                             
+set EUtranCell pdcchTargetBlervolte 4                                                                                                                                                                                  
+set EUtranCell allocThrPucchFormat1 50                                                                                                                                                                                 
+set EUtranCell allocTimerPucchFormat1 50                                                                                                                                                                               
+set EUtranCell deallocThrPucchFormat1 100                                                                                                                                                                              
+set EUtranCell deallocTimerPucchFormat1 6000                                                                                                                                                                           
+set EUtranCell drxActive true                                                                                                                                                                                          
+set EUtranCellTDD dlBlerTargetEnabled 1                                                                                                                                                                                
+set EUtranCellFDD dlBlerTargetEnabled 1                                                                                                                                                                                
+set EUtranCellFDD=  enableServiceSpecificHARQ true                                                                                                                                                                     
+set EUtranCellTDD=  enableServiceSpecificHARQ true                                                                                                                                                                     
+set EUtranCell pdcchCovImproveDtx true                                                                                                                                                                                 
+set EUtranCell pdcchCovImproveSrb false                                                                                                                                                                                
+set EUtranCell pdcchTargetBler 24                                                                                                                                                                                      
+set EUtranCell pdcchTargetBlerPCell 22                                                                                                                                                                                 
+set EUtranCell pMaxServingCell 1000                                                                                                                                                                                    
+set EUtranCell qRxLevMinOffset 1000                                                                                                                                                                                    
+set EUtranCell tReorderingAutoConfiguration true                                                                                                                                                                       
+set EUtranCell tTimeAlignmentTimer 0                                                                                                                                                                                   
+set EUtranCell ulBlerTargetEnabled true                                                                                                                                                                                
+set EUtranCellFDD=  ulHarqVolteBlerTarget 3                                                                                                                                                                            
+set EUtranCellTDD=  ulHarqVolteBlerTarget 3                                                                                                                                                                            
+set EUtranCell cfraEnable true                                                                                                                                                                                         
+set EUtranCell changeNotification changeNotificationSIB15=true                                                                                                                                                         
+set EUtranCell changeNotification changeNotificationSIB16=true                                                                                                                                                         
+set EUtranCell changeNotification changeNotificationSIB8=true                                                                                                                                                          
+set EUtranCell hoOptAdjThresholdAbs 5                                                                                                                                                                                  
+set EUtranCell hoOptAdjThresholdPerc 50                                                                                                                                                                                
+set EUtranCell prsPowerBoosting 0                                                                                                                                                                                      
+set EUtranCell transmissionMode 4                                                                                                                                                                                      
+set EUtrancell ns05FullBandUsersInCellThres 1                                                                                                                                                                          
+set EUtranCell ns05FullBandSchedEnabled false                                                                                                                                                                          
+set EUtranCell  puschNcpChannelEstWindowSize 1                                                                                                                                                                         
+set EUtranCell mobCtrlAtPoorCovActive true                                                                                                                                                                             
+set EUtranCell  servOrPrioTriggeredIFHo 0                                                                                                                                                                              
+set EUtranCell  ul64qamEnabled    true                                                                                                                                                                                 
+set EUtranCell  dl256QamStatus    2                                                                                                                                                                                    
+set EUtranCell  dl256QamEnabled   true                                                                                                                                                                                 
+set EUtranCell  dlFrequencyAllocationProportion 100                                                                                                                                                                    
+set EUtranCellFDD  commonSrPeriodicity 10                                                                                                                                                                              
+set EUtranCellTDD  commonSrPeriodicity 20                                                                                                                                                                              
+set EUtranCellFDD mappingInfo mappingInfoSIB5=3                                                                                                                                                                        
+set EUtranCell changeNotification changeNotificationSIB7=true                                                                                                                                                          
+set EUtranCell changeNotification changeNotificationSIB2=true                                                                                                                                                          
+set EUtranCell changeNotification changeNotificationSIB3=true                                                                                                                                                          
+set EUtranCell changeNotification changeNotificationSIB4=true                                                                                                                                                          
+set EUtranCell changeNotification changeNotificationSIB1=true                                                                                                                                                          
+set EUtranCell changeNotification changeNotificationSIB6=true                                                                                                                                                          
+set EUtranCell changeNotification changeNotificationSIB5=true                                                                                                                                                          
+set EUtranCell changeNotification changeNotificationSIB13=true                                                                                                                                                         
+set EUtranCell mappingInfoCe mappingInfoSIB10=0                                                                                                                                                                        
+set EUtranCell  qRxLevMinCe       -140                                                                                                                                                                                 
+set EUtranCell  pdcchLaGinrMargin 40                                                                                                                                                                                   
+set EUtranCell  acBarringPresence acBarringForMmtelVideoPresence=0                                                                                                                                                     
+set EUtranCell  acBarringPresence acBarringForMmtelVoicePresence=0                                                                                                                                                     
+set EUtranCell  acBarringPresence acBarringPriorityMmtelVideo=0                                                                                                                                                        
+set EUtranCell  acBarringPresence acBarringPriorityMmtelVoice=0                                                                                                                                                        
+set EUtranCell  acBarringPresence acBarringForMoDataPresence=0                                                                                                                                                         
+set EUtranCell  noOfEnhAdptReTxCand 0                                                                                                                                                                                  
+set EUtranCell  dynUlResourceAllocEnabled false                                                                                                                                                                        
+set EUtranCell systemInformationBlock6 tReselectionUtra=4                                                                                                                                                              
+set EUtranCell advCellSupAction 2                                                                                                                                                                                      
+set EUtranCell  primaryPlmnReserved false                                                                                                                                                                              
+set EUtranCell  harqOffsetDl      3                                                                                                                                                                                    
+set EUtranCell  harqOffsetUl      3                                                                                                                                                                                    
+set EUtranCell  highSpeedUEActive false                                                                                                                                                                                
+set EUtranCell  initialBufferSizeDefault 86                                                                                                                                                                            
+set EUtranCell  prsTransmisScheme 0                                                                                                                                                                                    
+set EUtranCell  puschPwrOffset64qam 0                                                                                                                                                                                  
+set EUtranCell  systemInformationBlock3 tEvaluation=240                                                                                                                                                                
+set EUtranCell  elcEnabled        false                                                                                                                                                                                
+set EUtranCell  preambleInitialReceivedTargetPower -110                                                                                                                                                                
+set EUtranCell  acBarringForCsfb acBarringFactor=95                                                                                                                                                                    
+set EUtranCell  acBarringForCsfb acBarringForSpecialAC=false false false false false                                                                                                                                   
+set EUtranCell  acBarringForCsfb acBarringTime=64                                                                                                                                                                      
+set EUtranCell  acBarringForEmergency false                                                                                                                                                                            
+set EUtranCell  acBarringForMoData acBarringFactor=95                                                                                                                                                                  
+set EUtranCell  acBarringForMoData acBarringForSpecialAC=false false false false false                                                                                                                                 
+set EUtranCell  acBarringForMoData acBarringTime=64                                                                                                                                                                    
+set EUtranCell  acBarringForMoSignalling acBarringFactor=95                                                                                                                                                            
+set EUtranCell  acBarringForMoSignalling acBarringForSpecialAC=false false false false false                                                                                                                           
+set EUtranCell  acBarringForMoSignalling acBarringTime=64                                                                                                                                                              
+set EUtranCell  acBarringInfoPresent false                                                                                                                                                                             
+set EUtranCell  acBarringPresence acBarringForCsfbPresence=0                                                                                                                                                           
+set EUtranCell  acBarringPresence acBarringForMoSignPresence=0                                                                                                                                                         
+set EUtranCell  acBarringPresence acBarringPriorityCsfb=0                                                                                                                                                              
+set EUtranCell  acBarringPresence acBarringPriorityMoData=0                                                                                                                                                            
+set EUtranCell  acBarringPresence acBarringPriorityMoSignaling=0                                                                                                                                                       
+set EUtranCell  spifhoSetupBearerAtInitialCtxtSetup false                                                                                                                                                              
+set EUtranCell  srDetectHighThres 70                                                                                                                                                                                   
+set EUtranCell  srProcessingLevel 0                                                                                                                                                                                    
+set EUtranCell  ssacBarringForMMTELVideo acBarringFactor=95                                                                                                                                                            
+set EUtranCell  ssacBarringForMMTELVideo acBarringForSpecialAC=false false false false false                                                                                                                           
+set EUtranCell  ssacBarringForMMTELVideo acBarringTime=64                                                                                                                                                              
+set EUtranCell  ssacBarringForMMTELVoice acBarringFactor=95                                                                                                                                                            
+set EUtranCell  ssacBarringForMMTELVoice acBarringForSpecialAC=false false false false false                                                                                                                           
+set EUtranCell  ssacBarringForMMTELVoice acBarringTime=64                                                                                                                                                              
+set EUtranCell  systemInformationBlock3 nCellChangeHigh=16                                                                                                                                                             
+set EUtranCell  systemInformationBlock3 nCellChangeMedium=16                                                                                                                                                           
+set EUtranCell  systemInformationBlock3 qHystSfHigh=0                                                                                                                                                                  
+set EUtranCell  systemInformationBlock3 qHystSfMedium=0                                                                                                                                                                
+set EUtranCell  systemInformationBlock3 sIntraSearchQ=0                                                                                                                                                                
+set EUtranCell  systemInformationBlock3 sNonIntraSearchv920Active=false                                                                                                                                                
+set EUtranCell  systemInformationBlock3 sIntraSearchv920Active=false                                                                                                                                                   
+set EUtranCell  systemInformationBlock3 tHystNormal=240                                                                                                                                                                
+set EUtranCell  systemInformationBlock6 tReselectionUtraSfHigh=100                                                                                                                                                     
+set EUtranCell  systemInformationBlock6 tReselectionUtraSfMedium=100                                                                                                                                                   
+set EUtranCell  systemInformationBlock7 tReselectionGeran=2                                                                                                                                                            
+set EUtranCell  systemInformationBlock7 tReselectionGeranSfHigh=100                                                                                                                                                    
+set EUtranCell  systemInformationBlock7 tReselectionGeranSfMedium=100                                                                                                                                                  
+                                                                                                                                                                                                                       
+set EUtranCell  tUeBlockingTimer  200                                                                                                                                                                                  
+set EUtranCell  ulConfigurableFrequencyStart 0                                                                                                                                                                         
+set EUtranCell  ulFrequencyAllocationProportion 100                                                                                                                                                                    
+set EUtranCell  ulImprovedUeSchedLastEnabled true                                                                                                                                                                      
+set EUtranCell  ulPsdLoadThresholdSinrClpc 2                                                                                                                                                                           
+set EUtranCell  ulSCellPriority   5                                                                                                                                                                                    
+set EUtranCell  ulSchedCtrlForOocUesEnabled true                                                                                                                                                                       
+set EUtranCell  ulSrsEnable       false                                                                                                                                                                                
+set EUtranCell  ulTrigActive      true                                                                                                                                                                                 
+set EUtranCell  ulTxPsdDistrThr   40                                                                                                                                                                                   
+set EUtranCell  uncertAltitude    0                                                                                                                                                                                    
+set EUtranCell  uncertSemiMajor   0                                                                                                                                                                                    
+set EUtranCell  uncertSemiMinor   0                                                                                                                                                                                    
+set EUtranCellTDD hoOptStatTime 24                                                                                                                                                                                     
+set EUtranCellTDD mappingInfo mappingInfoSIB7=5                                                                                                                                                                        
+set EUtranCell pdcchCfiMode 5                                                                                                                                                                                          
+set EUtranCellTDD  dlMaxMuMimoLayers 0                                                                                                                                                                                 
+set EUtranCellTDD  ulMaxMuMimoLayers 0                                                                                                                                                                                 
+set EUtranCellTDD  subframeAssignment 2                                                                                                                                                                                
+set EUtranCellTDD  timePhaseMaxDeviationTddIndex 0                                                                                                                                                                     
+                                                                                                                                                                                                                       
+#EUTRANFREQRELATION                                                                                                                                                                                                    
+                                                                                                                                                                                                                       
+set EUtranFreqRelation tReselectionEutra 2                                                                                                                                                                             
+set EUtranFreqRelation caTriggeredRedirectionActive false                                                                                                                                                              
+set EUtranFreqRelation anrMeasOn true                                                                                                                                                                                  
+set EUtranFreqRelation       qRxLevMinCe       -140                                                                                                                                                                    
+set EUtranFreqRelation pMax 1000                                                                                                                                                                                       
+set EUtranFreqRelation        tReselectionEutraCe 2                                                                                                                                                                    
+set EUtranFreqRelation tReselectionEutraSfHigh 100                                                                                                                                                                     
+set EUtranFreqRelation tReselectionEutraSfMedium 100                                                                                                                                                                   
+set LoadBalancingFunction=1                txPwrForOverlaidCellDetect 370                                                                                                                                              
+set RadioBearerTable=default,MACConfiguration=1 ulMaxHARQTx 5                                                                                                                                                          
+set RadioBearerTable=default,MACConfiguration=1 dlMaxHARQTx 4                                                                                                                                                          
+set RadioBearerTable=default,MACConfiguration=1 ulTtiBundlingMaxHARQTx 7                                                                                                                                               
+set EUtranCell.*,MimoSleepFunction=1              switchUpMonitorDurTimer 5                                                                                                                                            
+set Paging=1                                                pagingDiscardTimerDrxNb 3                                                                                                                                  
+set Paging=1                                                maxNoOfPagingRecordsNb 3                                                                                                                                   
+set Paging=1                                                noOfDefPagCyclPrim 8                                                                                                                                       
+                                                                                                                                                                                                                       
+#QciProfilePredefined                                                                                                                                                                                                  
+                                                                                                                                                                                                                       
+set ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1 tReorderingUl 50                                                                                                                                       
+set RadioBearerTable=default,SignalingRadioBearer=1 tReorderingUl 35                                                                                                                                                   
+set QciTable=default,QciProfilePredefined=QCI1 absPrioOverride 0                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=QCI2 absPrioOverride 0                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=QCI5 absPrioOverride 1                                                                                                                                                       
+                                                                                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=QCI1 aqmMode 2                                                                                                                                                               
+set QciTable=default,QciProfilePredefined=QCI2 aqmMode 2                                                                                                                                                               
+set QciTable=default,QciProfilePredefined=QCI5 aqmMode 0                                                                                                                                                               
+                                                                                                                                                                                                                       
+set QciProfilePredefined=qci1 counterActiveMode 0                                                                                                                                                                      
+set QciProfilePredefined=qci2 counterActiveMode 0                                                                                                                                                                      
+set QciProfilePredefined=qci5 counterActiveMode 0                                                                                                                                                                      
+set QciProfilePredefined=qci6 counterActiveMode 0                                                                                                                                                                      
+set QciProfilePredefined=qci8 counterActiveMode 0                                                                                                                                                                      
+set QciProfilePredefined=qci9 counterActiveMode 0                                                                                                                                                                      
+                                                                                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci6 dataFwdPerQciEnabled true                                                                                                                                               
+set QciTable=default,QciProfilePredefined=qci8 dataFwdPerQciEnabled true                                                                                                                                               
+set QciTable=default,QciProfilePredefined=qci9 dataFwdPerQciEnabled true                                                                                                                                               
+set QciTable=default,QciProfilePredefined=qci7 dataFwdPerQciEnabled true                                                                                                                                               
+set QciTable=default,QciProfilePredefined=QCI1 dataFwdPerQciEnabled 1                                                                                                                                                  
+set QciTable=default,QciProfilePredefined=QCI2 dataFwdPerQciEnabled 1                                                                                                                                                  
+set QciTable=default,QciProfilePredefined=QCI5 dataFwdPerQciEnabled 1                                                                                                                                                  
+set QciTable=default,QciProfilePredefined=qci1 harqPriority 1                                                                                                                                                          
+set QciTable=default,QciProfilePredefined=qci1 dlMaxHARQTxQci 7                                                                                                                                                        
+set QciTable=default,QciProfilePredefined=qci1 ulMaxHARQTxQci 7                                                                                                                                                        
+set ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci2 dlMinBitRate 384                                                                                                                                       
+set ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci2 ulMinBitRate 384                                                                                                                                       
+set QciTable=default,QciProfilePredefined=QCI1 dlResourceAllocationStrategy 1                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI2 dlResourceAllocationStrategy 1                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI5 dlResourceAllocationStrategy 0                                                                                                                                          
+set QciTable=default,QciProfilePredefined=qci1 drxPriority 99                                                                                                                                                          
+set QciTable=default,QciProfilePredefined=qci2 drxPriority 100                                                                                                                                                         
+set QciTable=default,QciProfilePredefined=qci5 drxPriority 1                                                                                                                                                           
+lset QciTable=default,QciProfilePredefined=qci1 drxProfileRef DrxProfile=1                                                                                                                                             
+lset QciTable=default,QciProfilePredefined=qci2 drxProfileRef DrxProfile=2                                                                                                                                             
+lset QciTable=default,QciProfilePredefined=qci5 drxProfileRef DrxProfile=0                                                                                                                                             
+set QciTable=default,QciProfilePredefined=QCI1 dscp 34                                                                                                                                                                 
+set QciTable=default,QciProfilePredefined=QCI2 dscp 34                                                                                                                                                                 
+set QciTable=default,QciProfilePredefined=QCI5 dscp 46                                                                                                                                                                 
+set QciTable=default,QciProfilePredefined=qci1 harqPriority 1                                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI1 inactivityTimerOffset 30                                                                                                                                                
+set QciTable=default,QciProfilePredefined=QCI2 inactivityTimerOffset 30                                                                                                                                                
+set QciTable=default,QciProfilePredefined=QCI5 inactivityTimerOffset 0                                                                                                                                                 
+set QciProfilePredefined=qci6 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3                                                                                                                            
+set QciProfilePredefined=qci7 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3                                                                                                                            
+set QciProfilePredefined=qci8 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3                                                                                                                            
+set QciProfilePredefined=qci9 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3                                                                                                                            
+set QciProfilePredefined=qci1 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=1                                                                                                                            
+set QciProfilePredefined=qci2 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=2                                                                                                                            
+set QciProfilePredefined=qci5 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=1                                                                                                                            
+set QciTable=default,QciProfilePredefined=QCI1 Pdb 80                                                                                                                                                                  
+set QciTable=default,QciProfilePredefined=QCI2 Pdb 150                                                                                                                                                                 
+set QciTable=default,QciProfilePredefined=QCI5 Pdb 100                                                                                                                                                                 
+set QciTable=default,QciProfilePredefined=QCI1 PdbOffset 100                                                                                                                                                           
+set QciTable=default,QciProfilePredefined=QCI2 PdbOffset 50                                                                                                                                                            
+set QciTable=default,QciProfilePredefined=QCI5 PdbOffset 0                                                                                                                                                             
+set QciTable=default,QciProfilePredefined=QCI1 pdcpSNLength 12                                                                                                                                                         
+set QciTable=default,QciProfilePredefined=QCI2 pdcpSNLength 12                                                                                                                                                         
+set QciTable=default,QciProfilePredefined=QCI5 pdcpSNLength 12                                                                                                                                                         
+set QciTable=default,QciProfilePredefined=QCI1 Priority 1                                                                                                                                                              
+set QciTable=default,QciProfilePredefined=QCI2 Priority 4                                                                                                                                                              
+set QciTable=default,QciProfilePredefined=QCI5 Priority 2                                                                                                                                                              
+set QciTable=default,QciProfilePredefined=QCI1 resourcetype 1                                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI2 resourcetype 1                                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI5 resourcetype 0                                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI1 rlcMode 1                                                                                                                                                               
+set QciTable=default,QciProfilePredefined=QCI2 rlcMode 1                                                                                                                                                               
+set QciTable=default,QciProfilePredefined=QCI5 rlcMode 0                                                                                                                                                               
+set QciTable=default,QciProfilePredefined=QCI1 rlcSNLength 10                                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI2 rlcSNLength 10                                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI5 rlcSNLength 10                                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI1 rlfPriority 10                                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI1 rohcEnabled 1                                                                                                                                                           
+set QciTable=default,QciProfilePredefined=QCI2 rohcEnabled 0                                                                                                                                                           
+set QciTable=default,QciProfilePredefined=QCI5 rohcEnabled 0                                                                                                                                                           
+set QciTable=default,QciProfilePredefined=QCI1 schedulingAlgorithm 6                                                                                                                                                   
+set QciTable=default,QciProfilePredefined=QCI2 schedulingAlgorithm 3                                                                                                                                                   
+set QciTable=default,QciProfilePredefined=QCI5 schedulingAlgorithm 0                                                                                                                                                   
+set QciTable=default,QciProfilePredefined=QCI1 serviceType 1                                                                                                                                                           
+set QciTable=default,QciProfilePredefined=QCI2 serviceType 0                                                                                                                                                           
+set QciTable=default,QciProfilePredefined=QCI5 serviceType 2                                                                                                                                                           
+set QciTable=default,QciProfilePredefined=qci1 tReorderingDl 120                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=QCI6 dscp 32                                                                                                                                                                 
+set QciTable=default,QciProfilePredefined=QCI7 dscp 40                                                                                                                                                                 
+set QciTable=default,QciProfilePredefined=QCI8 dscp 30                                                                                                                                                                 
+set QciTable=default,QciProfilePredefined=QCI9 dscp 26                                                                                                                                                                 
+set QciTable=default,QciProfilePredefined=QCI6 schedulingAlgorithm 3                                                                                                                                                   
+set QciTable=default,QciProfilePredefined=QCI7 schedulingAlgorithm 3                                                                                                                                                   
+set QciTable=default,QciProfilePredefined=QCI8 schedulingAlgorithm 3                                                                                                                                                   
+set QciTable=default,QciProfilePredefined=QCI9 schedulingAlgorithm 3                                                                                                                                                   
+set QciTable=default,QciProfilePredefined=QCI6 absPrioOverride 0                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=QCI7 absPrioOverride 0                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=QCI8 absPrioOverride 0                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=QCI9 absPrioOverride 0                                                                                                                                                       
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set Rcs=1 rlcDlDeliveryFailureAction 2                                                                                                                                                                                 
+set Rcs=1 tInactivityTimer 10                                                                                                                                                                                          
+set EUtranCell.*,UeMeasControl=1,ReportConfigCsfbUtra=1 hysteresis        10                                                                                                                                           
+set EUtranCell.*,UeMeasControl=1,ReportConfigSCellA6=1 triggerQuantityA6 0                                                                                                                                             
+set . ulTrafficDelay -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,                                                                           
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1                                                                                                                                                                                 
+set . dlTrafficDelay -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,                                                                           
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1                                                                                                                                                                                 
+set RlfProfile=1$ t301 1000                                                                                                                                                                                            
+set RlfProfile=1$ t310 500                                                                                                                                                                                             
+set RlfProfile=1$ t311 5000                                                                                                                                                                                            
+set ENodeBFunction=1,RlfProfile n310 10                                                                                                                                                                                
+set ENodeBFunction=1,RlfProfile n311 1                                                                                                                                                                                 
+set ENodeBFunction=1,Rrc=1 t311 5000                                                                                                                                                                                   
+set ENodeBFunction=1,Rrc=1 tRrcConnReest 2                                                                                                                                                                             
+set ENodeBFunction=1,Rrc=1 tWaitForRrcConnReest 9                                                                                                                                                                      
+set ENodeBFunction=1,Rrc=1 t301 1000                                                                                                                                                                                   
+set ENodeBFunction=1,Rrc=1 t304 2000                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+#QOS                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+set Transport=1,SctpProfile=1 heartbeatInterval 6000                                                                                                                                                                   
+set SecurityHandling=1                                      cipheringAlgoPrio 1 2 0                                                                                                                                    
+set RadioBearerTable=default,SignalingRadioBearer=1 tPollRetransmitDl 80                                                                                                                                               
+set RadioBearerTable=default,SignalingRadioBearer=1 tPollRetransmitUl 80                                                                                                                                               
+cr ENodeBFunction=1,TimerProfile=0                                                                                                                                                                                     
+6                                                                                                                                                                                                                      
+8                                                                                                                                                                                                                      
+3                                                                                                                                                                                                                      
+10                                                                                                                                                                                                                     
+set ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1 timerProfileRef ENodeBFunction=1,TimerProfile=0                                                                                                        
+set TimerProfile=0                                          tWaitForRrcConnReest 6                                                                                                                                     
+set TimerProfile=0                                          tRrcConnectionReconfiguration 12                                                                                                                           
+set TimerProfile=0                                          tRrcConnReest 3                                                                                                                                            
+set TimerProfile=0                                          tRelocOverall 20                                                                                                                                           
+set EUtranCellFDD=.*,UeMeasControl=1                  filterCoefficientEUtraRsrp 4                                                                                                                                     
+set EUtranCellTDD=.*,UeMeasControl=1                  filterCoefficientEUtraRsrp 4                                                                                                                                     
+set EUtranCellFDD=.*,UeMeasControl=1 ueMeasurementsActiveIF true                                                                                                                                                       
+set EUtranCellTDD=.*,UeMeasControl=1 ueMeasurementsActiveIF true                                                                                                                                                       
+set ENodeBFunction=1                                        zzzTemporary13    -2000000000                                                                                                                              
+set ENodeBFunction=1,EUtranCellFDD=.*,UeMeasControl=1 sMeasure 0                                                                                                                                                       
+set EUtranCell.*,UeMeasControl=1                  lowPrioMeasThresh 0                                                                                                                                                  
+set EUtranCell.*,UeMeasControl=1                  maxUtranCellsToMeasure 32                                                                                                                                            
+set EUtranCell.*,UeMeasControl=1                  allowReleaseQci1 false                                                                                                                                               
+set EUtranCell.*,UeMeasControl=1                  ulSinrOffset 30                                                                                                                                                      
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+####IFLB                                                                                                                                                                                                               
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set LoadBalancingFunction=1 lbCeiling 500                                                                                                                                                                              
+set LoadBalancingFunction=1 lbThreshold 20                                                                                                                                                                             
+set LoadBalancingFunction=1 lbHitRateEUtranAddThreshold 5                                                                                                                                                              
+set LoadBalancingFunction=1 lbHitRateEUtranMeasUeIntensity 10                                                                                                                                                          
+set LoadBalancingFunction=1 lbHitRateEUtranMeasUeThreshold 10                                                                                                                                                          
+set LoadBalancingFunction=1 lbHitRateEUtranRemoveThreshold 2                                                                                                                                                           
+set LoadBalancingFunction=1 lbMeasScalingLimit 30                                                                                                                                                                      
+set LoadBalancingFunction=1 lbRateOffsetCoefficient 320                                                                                                                                                                
+set LoadBalancingFunction=1 lbRateOffsetLoadThreshold 1500                                                                                                                                                             
+set QciTable=default,QciProfilePredefined=qci1              qciSubscriptionQuanta 60                                                                                                                                   
+set QciTable=default,QciProfilePredefined=qci2              qciSubscriptionQuanta 384                                                                                                                                  
+set QciTable=default,QciProfilePredefined=qci5              qciSubscriptionQuanta 1                                                                                                                                    
+set QciTable=default,QciProfilePredefined=qci6              qciSubscriptionQuanta 200                                                                                                                                  
+set QciTable=default,QciProfilePredefined=qci7              qciSubscriptionQuanta 200                                                                                                                                  
+set QciTable=default,QciProfilePredefined=qci8              qciSubscriptionQuanta 200                                                                                                                                  
+set QciTable=default,QciProfilePredefined=qci9              qciSubscriptionQuanta 200                                                                                                                                  
+set AutoCellCapEstFunction=1 useEstimatedCellCap true                                                                                                                                                                  
+                                                                                                                                                                                                                       
+##############                                                                                                                                                                                                         
+                                                                                                                                                                                                                       
+for $mo in TDD10                                                                                                                                                                                                       
+$mordn = rdn($mo)                                                                                                                                                                                                      
+set $mordn cellSubscriptionCapacity 12000                                                                                                                                                                              
+set $mordn  noOfPucchSrUsers   710                                                                                                                                                                                     
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+for $mo in TDD20                                                                                                                                                                                                       
+$mordn = rdn($mo)                                                                                                                                                                                                      
+set $mordn cellSubscriptionCapacity 24000                                                                                                                                                                              
+set $mordn noOfPucchSrUsers   970                                                                                                                                                                                      
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+for $mo in TDD20SC                                                                                                                                                                                                     
+$mordn = rdn($mo)                                                                                                                                                                                                      
+set $mordn cellSubscriptionCapacity 24000                                                                                                                                                                              
+set $mordn noOfPucchSrUsers   970                                                                                                                                                                                      
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+for $mo in TDD10SC                                                                                                                                                                                                     
+$mordn = rdn($mo)                                                                                                                                                                                                      
+set $mordn cellSubscriptionCapacity 12000                                                                                                                                                                              
+set $mordn noOfPucchSrUsers   710                                                                                                                                                                                      
+done                                                                                                                                                                                                                   
+############                                                                                                                                                                                                           
+                                                                                                                                                                                                                       
+##############                                                                                                                                                                                                         
+ma L1800 EUtranCellFDD earfcn 1615                                                                                                                                                                                     
+wait 1                                                                                                                                                                                                                 
+if $nr_of_mos != 0                                                                                                                                                                                                     
+for $mo in L1800                                                                                                                                                                                                       
+$mordn = rdn($mo)                                                                                                                                                                                                      
+set $mordn cellSubscriptionCapacity 18000                                                                                                                                                                              
+done                                                                                                                                                                                                                   
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+ma L2100 EUtranCellFDD earfcn 390                                                                                                                                                                                      
+wait 1                                                                                                                                                                                                                 
+if $nr_of_mos != 0                                                                                                                                                                                                     
+for $mo in L2100                                                                                                                                                                                                       
+$mordn = rdn($mo)                                                                                                                                                                                                      
+set $mordn cellSubscriptionCapacity 12000                                                                                                                                                                              
+done                                                                                                                                                                                                                   
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+ma L900 EUtranCellFDD earfcn 3710                                                                                                                                                                                      
+wait 1                                                                                                                                                                                                                 
+if $nr_of_mos != 0                                                                                                                                                                                                     
+for $mo in L900                                                                                                                                                                                                        
+$mordn = rdn($mo)                                                                                                                                                                                                      
+set $mordn cellSubscriptionCapacity 5000                                                                                                                                                                               
+done                                                                                                                                                                                                                   
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+############                                                                                                                                                                                                           
+                                                                                                                                                                                                                       
+set EUtranFreqRelation=.* lbBnrPolicy 2                                                                                                                                                                                
+set EutrancellFDD=.* cellCapMaxCellSubCap 60000                                                                                                                                                                        
+set EutrancellFDD=.* cellCapMinCellSubCap 1500                                                                                                                                                                         
+set EutrancellFDD=.* cellCapMinMaxWriProt true                                                                                                                                                                         
+set EutrancellTDD=.* cellCapMaxCellSubCap 60000                                                                                                                                                                        
+set EutrancellTDD=.* cellCapMinCellSubCap 1500                                                                                                                                                                         
+set EutrancellTDD=.* cellCapMinMaxWriProt true                                                                                                                                                                         
+set  CXC4011373   featurestate  1                                                                                                                                                                                      
+set  CXC4011370   featurestate  1                                                                                                                                                                                      
+set  CXC4011698   featurestate  1                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set EutrancellFDD=.* dlInterferenceManagementActive TRUE                                                                                                                                                               
+set EUtranCellFDD=.* noOfChannelSelectionsets 4                                                                                                                                                                        
+set EUtranCellFDD=.* channelSelectionsetSize 2                                                                                                                                                                         
+set EutrancellFDD=.* advCellSupSensitivity 25                                                                                                                                                                          
+set EUtranCellFDD=.* covTriggerdBlindHoAllowed 0                                                                                                                                                                       
+set EUtranCellFDD=.* qRxLevMinOffset 1000                                                                                                                                                                              
+set EUtranCellFDD=.* qQualMin -34                                                                                                                                                                                      
+set EUtranCellFDD=.* qQualMinOffset 0                                                                                                                                                                                  
+set EUtranCellFDD=.*,EUtranFreqRelation=.* qoffsetfreq 0                                                                                                                                                               
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5 480                                                                                                                                              
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigA5=1 triggerquantitya5 0                                                                                                                                              
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 a3offset 30                                                                                                                                           
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 timeToTriggerA3 480                                                                                                                                   
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 triggerQuantityA3 0                                                                                                                                   
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigB2Utra=1 triggerQuantityB2 0                                                                                                                                          
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1Search 480                                                                                                                                    
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2Search 480                                                                                                                                    
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2Critical 480                                                                                                                                  
+set EUtranCellFDD=.*,UeMeasControl=1 excludeInterFreqAtCritical true                                                                                                                                                   
+set EUtranCellFDD=.* pdcchOuterLoopInitialAdjVolte -46                                                                                                                                                                 
+set EUtranCellFDD=.* pdcchOuterLoopInitialAdj -70                                                                                                                                                                      
+set EUtranCellFDD=.* pdcchOuterLoopInitialAdjPCell -70                                                                                                                                                                 
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigSearch=1 inhibitA2SearchConfig 1                                                                                                                                      
+set EUtranCellFDD=.*,UeMeasControl=1 ueMeasurementsActive 1                                                                                                                                                            
+set EutrancellFDD=.*,UeMeasControl=1                  a5B2MobilityTimer 0                                                                                                                                              
+set EutrancellFDD=.*,UeMeasControl=1         bothA5RsrpRsrqCheck False                                                                                                                                                 
+set EutrancellFDD=.*,UeMeasControl=1                  inhibitB2RsrqConfig true                                                                                                                                         
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2OutSearch  40                                                                                                                                 
+set EutrancellFDD=.* SystemInformationBlock3 snonintrasearchQ=0                                                                                                                                                        
+set EutrancellFDD=.* SystemInformationBlock3 sintrasearchp=44                                                                                                                                                          
+lset EUtranCellFDD=.*,EUtranFreqRelation=.* mobilityAction 1                                                                                                                                                           
+set EUtranCellFDD=.* mappingInfo mappingInfoSIB3=1                                                                                                                                                                     
+set EUtranCellFDD=.* mappingInfo mappingInfoSIB5=3                                                                                                                                                                     
+set EUtranCellFDD=.* mappingInfo mappingInfoSIB7=5                                                                                                                                                                     
+set EUtranCellFDD=.* mappingInfo mappingInfoSIB12=7                                                                                                                                                                    
+set EUtranCellFDD=.* mappingInfo mappingInfoSIB4=2                                                                                                                                                                     
+set EUtranCellFDD=.* mappingInfo mappingInfoSIB6=4                                                                                                                                                                     
+                                                                                                                                                                                                                       
+set EUtranCellFDD=.*      lbEUtranAcceptOffloadThreshold  10                                                                                                                                                           
+set EUtranCellFDD=.*       lbEUtranTriggerOffloadThreshold 30                                                                                                                                                          
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigSCellA1A2=1 hysteresisA1A2RsrpBidirectional 10                                                                                                                        
+                                                                                                                                                                                                                       
+set EUtranCellFDD=.*,EUtranFreqRelation=.*          allowedPlmnList   mcc=404,mnc=94,mncLength=2                                                                                                                       
+                                                                                                                                                                                                                       
+set EUtranCellFDD=.* bsrThreshold 100                                                                                                                                                                                  
+set EUtranCellFDD=.* noOfUlImprovedUe 2                                                                                                                                                                                
+                                                                                                                                                                                                                       
+#TDD                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraIFBestCell=1 triggerQuantityA3 0                                                                                                                                 
+                                                                                                                                                                                                                       
+set EutrancellTdd=.* dlInterferenceManagementActive TRUE                                                                                                                                                               
+set EutrancellTDD=.* specialSubframePattern 7                                                                                                                                                                          
+set EutrancellTDD=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1,ReportConfigEUtraBestCellAnr=1 a3offsetAnrDelta 0                                                                                                     
+set EutrancellTDD=.*,UeMeasControl=1,ReportConfigA5=1,ReportConfigA5Anr=1 a5Threshold1RsrpAnrDelta 1                                                                                                                   
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThresholdRsrq -195                                                                                                                                 
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrq  -195                                                                                                                                           
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrq  -195                                                                                                                                           
+set EutrancellTDD=.* highSpeedUEActive False                                                                                                                                                                           
+set EUtranCellTDD=.*,UeMeasControl=1 ueMeasurementsActive 1                                                                                                                                                            
+set eutrancelltdd pdcchpowerboostmax 0                                                                                                                                                                                 
+set EUtranCellTDD noOfChannelSelectionsets 6                                                                                                                                                                           
+set EutrancellTDD=.* advCellSupSensitivity 25                                                                                                                                                                          
+set EUtranCellTDD covTriggerdBlindHoAllowed 0                                                                                                                                                                          
+set EUtranCellTDD=.* qQualMin -34                                                                                                                                                                                      
+set EUtranCellTDD=.* qQualMinOffset 0                                                                                                                                                                                  
+set EUtranCellTDD=.*,EUtranFreqRelation=.* qoffsetfreq 0                                                                                                                                                               
+set EutrancellTDD=.*,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5 480                                                                                                                                              
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1 triggerquantitya5 0                                                                                                                                              
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 a3offset 30                                                                                                                                           
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 hysteresisA3 10                                                                                                                                       
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 timeToTriggerA3 480                                                                                                                                   
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraIFBestCell=1 triggerQuantityA3 0                                                                                                                                 
+set EutrancellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1Search 480                                                                                                                                    
+set EutrancellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2Search 480                                                                                                                                    
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrp 0                                                                                                                                   
+set EutrancellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2Critical 480                                                                                                                                  
+set EUtranCellTDD=.*,UeMeasControl=1 excludeInterFreqAtCritical True                                                                                                                                                   
+set EUtranCellTDD=.* pdcchOuterLoopInitialAdjVolte -46                                                                                                                                                                 
+set EUtranCellTDD pdcchOuterLoopInitialAdj -70                                                                                                                                                                         
+set EUtranCellTDD pdcchOuterLoopInitialAdjPCell -70                                                                                                                                                                    
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 inhibitA2SearchConfig 1                                                                                                                                      
+set Eutrancelltdd=.*,UeMeasControl=1                  a5B2MobilityTimer 0                                                                                                                                              
+set Eutrancelltdd=.*,UeMeasControl=1         bothA5RsrpRsrqCheck False                                                                                                                                                 
+set Eutrancelltdd=.*,UeMeasControl=1                  inhibitB2RsrqConfig true                                                                                                                                         
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2OutSearch  40                                                                                                                                 
+set EutrancellTdd=.* SystemInformationBlock3 snonintrasearchQ=0                                                                                                                                                        
+set EutrancellTdd=.* SystemInformationBlock3 sintrasearchp=44                                                                                                                                                          
+lset EUtranCellTDD=.*,EUtranFreqRelation=.* mobilityAction 1                                                                                                                                                           
+set ExternalEUtrancellTDD=.*    lbEUtranCellOffloadCapacity  1000                                                                                                                                                      
+set TDD mappingInfo mappingInfoSIB3=1                                                                                                                                                                                  
+set TDD mappingInfo mappingInfoSIB4=2                                                                                                                                                                                  
+set TDD mappingInfo mappingInfoSIB5=3                                                                                                                                                                                  
+set TDD mappingInfo mappingInfoSIB6=4                                                                                                                                                                                  
+set TDD mappingInfo mappingInfoSIB7=5                                                                                                                                                                                  
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSCellA1A2=1 hysteresisA1A2RsrpBidirectional 10                                                                                                                        
+set EUtranCellTDD=.*,EUtranFreqRelation=.*          allowedPlmnList   mcc=404,mnc=94,mncLength=2                                                                                                                       
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+for $mo in L2100                                                                                                                                                                                                       
+$mordn = rdn($mo)                                                                                                                                                                                                      
+cr $mordn,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1                                                                                                                                                               
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+for $mo in L1800                                                                                                                                                                                                       
+$mordn = rdn($mo)                                                                                                                                                                                                      
+cr $mordn,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1                                                                                                                                                               
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+for $mo in L900                                                                                                                                                                                                        
+$mordn = rdn($mo)                                                                                                                                                                                                      
+cr $mordn,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1                                                                                                                                                               
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+for $mo in TDD10                                                                                                                                                                                                       
+$mordn = rdn($mo)                                                                                                                                                                                                      
+cr $mordn,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1                                                                                                                                                               
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+for $mo in TDD20                                                                                                                                                                                                       
+$mordn = rdn($mo)                                                                                                                                                                                                      
+cr $mordn,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1                                                                                                                                                               
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+for $mo in TDD20SC                                                                                                                                                                                                     
+$mordn = rdn($mo)                                                                                                                                                                                                      
+cr $mordn,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1                                                                                                                                                               
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+for $mo in TDD10SC                                                                                                                                                                                                     
+$mordn = rdn($mo)                                                                                                                                                                                                      
+cr $mordn,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1                                                                                                                                                               
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1 maxReportCellsPm 8                                                                                                                                 
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1 reportIntervalPm 5                                                                                                                                 
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1 maxReportCellsPm 8                                                                                                                                 
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1 reportIntervalPm 5                                                                                                                                 
+                                                                                                                                                                                                                       
+set EUtranCellTDD=.* bsrThreshold 100                                                                                                                                                                                  
+set EUtranCellTDD=.* noOfUlImprovedUe 2                                                                                                                                                                                
+set .  timeAndPhaseSynchAlignment True                                                                                                                                                                                 
+set .  timeAndPhaseSynchCritical False                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+#Common Parameter                                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+set EUtranFreqRelation=39150 allowedmeasbandwidth 100                                                                                                                                                                  
+set EUtranFreqRelation=39294 allowedmeasbandwidth 50                                                                                                                                                                   
+set EUtranFreqRelation=390$ allowedmeasbandwidth 50                                                                                                                                                                    
+set EUtranFreqRelation=1615 allowedmeasbandwidth 75                                                                                                                                                                    
+set EUtranFreqRelation=3710 allowedmeasbandwidth 25                                                                                                                                                                    
+set EUtranFreqRelation=39151 allowedmeasbandwidth 100                                                                                                                                                                  
+set EUtranFreqRelation=39295 allowedmeasbandwidth 50                                                                                                                                                                   
+                                                                                                                                                                                                                       
+set EUtranFreqRelation=390$ anrMeasOn true                                                                                                                                                                             
+set EUtranFreqRelation=39150 anrMeasOn true                                                                                                                                                                            
+set EUtranFreqRelation=39294 anrMeasOn true                                                                                                                                                                            
+set EUtranFreqRelation=1615 anrMeasOn true                                                                                                                                                                             
+set EUtranFreqRelation=3710 anrMeasOn true                                                                                                                                                                             
+set EUtranFreqRelation=39151 anrMeasOn true                                                                                                                                                                            
+set EUtranFreqRelation=39295 anrMeasOn true                                                                                                                                                                            
+                                                                                                                                                                                                                       
+set . maxTimeEventBasedPciConf 30                                                                                                                                                                                      
+set . measuringEcgiWithAgActive false                                                                                                                                                                                  
+set AnrFunction=1 probCellDetectLowHoSuccThres 10                                                                                                                                                                      
+                                                                                                                                                                                                                       
+# UL COMP                                                                                                                                                                                                              
+                                                                                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci1 rlfProfileRef RlfProfile=1                                                                                                                                              
+set QciTable=default,QciProfilePredefined=QCI6 ResourceAllocationStrategy 1                                                                                                                                            
+set QciTable=default,QciProfilePredefined=QCI8 ResourceAllocationStrategy 1                                                                                                                                            
+set QciTable=default,QciProfilePredefined=QCI9 ResourceAllocationStrategy 1                                                                                                                                            
+set QciTable=default,QciProfilePredefined=QCI6 dlResourceAllocationStrategy 1                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI8 dlResourceAllocationStrategy 1                                                                                                                                          
+set QciTable=default,QciProfilePredefined=QCI9 dlResourceAllocationStrategy 1                                                                                                                                          
+set QciTable=default,QciProfilePredefined=qci5              tReorderingUl 60                                                                                                                                           
+set QciTable=default,QciProfilePredefined=qci6             tReorderingUl 60                                                                                                                                            
+set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 dlMaxRetxThreshold 16                                                                                                                                  
+set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 ulMaxRetxThreshold 16                                                                                                                                  
+set ENodeBFunction=1,Rrc=1 t300 2000                                                                                                                                                                                   
+set ENodeBFunction=1,Rrc=1 t320 30                                                                                                                                                                                     
+set QciTable=default,QciProfilePredefined=qci1 rlfProfileRef RlfProfile=1                                                                                                                                              
+set RlfProfile=1$ n310 10                                                                                                                                                                                              
+set RlfProfile=1$ n311 1                                                                                                                                                                                               
+set RlfProfile=1$ t301 1000                                                                                                                                                                                            
+set RlfProfile=1$ t310 500                                                                                                                                                                                             
+set RlfProfile=1$ t311 5000                                                                                                                                                                                            
+set RlfProfile=0$ n310 20                                                                                                                                                                                              
+set RlfProfile=0$ n311 1                                                                                                                                                                                               
+set RlfProfile=0$ t301 2000                                                                                                                                                                                            
+set RlfProfile=0$ t310 2000                                                                                                                                                                                            
+set RlfProfile=0$ t311 10000                                                                                                                                                                                           
+                                                                                                                                                                                                                       
+#CA                                                                                                                                                                                                                    
+set LoadBalancingFunction=1 lbDiffCaOffset 300                                                                                                                                                                         
+set CarrierAggregationFunction caRateAdjustCoeff 5                                                                                                                                                                     
+set CarrierAggregationFunction waitForCaOpportunity 2000                                                                                                                                                               
+set CarrierAggregationFunction sCellScheduleSinrThres -50                                                                                                                                                              
+set CarrierAggregationFunction sCellActDeactDataThres 20                                                                                                                                                               
+set CarrierAggregationFunction sCellActDeactDataThresHyst 20                                                                                                                                                           
+set CarrierAggregationFunction sCellDeactProhibitTimer 50                                                                                                                                                              
+set CarrierAggregationFunction causagelimit 200                                                                                                                                                                        
+set CarrierAggregationFunction sCellActProhibitTimer 10                                                                                                                                                                
+set CarrierAggregationFunction caPreemptionThreshold 50                                                                                                                                                                
+set CarrierAggregationFunction sCellSelectionMode 0                                                                                                                                                                    
+set LoadBalancingFunction lbCaThreshold 2000                                                                                                                                                                           
+set LoadBalancingFunction lbCaCapHysteresis 20                                                                                                                                                                         
+set CarrierAggregationFunction pdcchEnhancedLaForVolte False                                                                                                                                                           
+                                                                                                                                                                                                                       
+#GERAN                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+set GeranFreqGroupRelation=1         csFallbackPrio    4                                                                                                                                                               
+set GeranFreqGroupRelation=1         csFallbackPrioEC    4                                                                                                                                                             
+set AnrFunction=1,AnrFunctionGeran=1 anrStateGsm 1                                                                                                                                                                     
+set GeranFreqGroup qRxLevMin -111                                                                                                                                                                                      
+set GeranFreqGroup pmaxgeran 1000                                                                                                                                                                                      
+set GeranFreqGroup Qoffsetfreq 0                                                                                                                                                                                       
+set GeranFreqGroup nccpermitted 11111111                                                                                                                                                                               
+set GeranFreqGroup anrMeasOn TRUE                                                                                                                                                                                      
+set GeranFreqGroup mobilityAction 1                                                                                                                                                                                    
+set GeranFreqGroup mobilityActionCsfb 1                                                                                                                                                                                
+set GeranFreqGroup userLabel SIB7                                                                                                                                                                                      
+set CXC4011664 featurestate 0                                                                                                                                                                                          
+set CXC4011346 featurestate 1                                                                                                                                                                                          
+set CXC4012240 featurestate 1                                                                                                                                                                                          
+set CXC4010618 featurestate 1                                                                                                                                                                                          
+                                                                                                                                                                                                                       
+# UL COMP                                                                                                                                                                                                              
+                                                                                                                                                                                                                       
+###### L2100 ######                                                                                                                                                                                                    
+pr EUtranCellFDD=TN_E_F1                                                                                                                                                                                               
+if $nr_of_mos = 3                                                                                                                                                                                                      
+        cr ENodeBFunction=1,UlCompGroup=1                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=50 ENodeBFunction=1,SectorCarrier=51 ENodeBFunction=1,SectorCarrier=52                                                                                                          
+else if $nr_of_mos = 2                                                                                                                                                                                                 
+        cr ENodeBFunction=1,UlCompGroup=1                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=50 ENodeBFunction=1,SectorCarrier=51                                                                                                                                            
+else if $nr_of_mos = 1                                                                                                                                                                                                 
+        cr ENodeBFunction=1,UlCompGroup=1                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=50                                                                                                                                                                              
+else if $nr_of_mos = 4                                                                                                                                                                                                 
+        cr ENodeBFunction=1,UlCompGroup=1                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=50 ENodeBFunction=1,SectorCarrier=51 ENodeBFunction=1,SectorCarrier=52 ENodeBFunction=1,SectorCarrier=                                                                          
+53                                                                                                                                                                                                                     
+fi                                                                                                                                                                                                                     
+deb ENodeBFunction=1,UlCompGroup=1                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+###### L1800 ######                                                                                                                                                                                                    
+pr EUtranCellFDD=TN_E_F3                                                                                                                                                                                               
+if $nr_of_mos = 3                                                                                                                                                                                                      
+        cr ENodeBFunction=1,UlCompGroup=4                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=20 ENodeBFunction=1,SectorCarrier=21 ENodeBFunction=1,SectorCarrier=22                                                                                                          
+else if $nr_of_mos = 2                                                                                                                                                                                                 
+        cr ENodeBFunction=1,UlCompGroup=4                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=20 ENodeBFunction=1,SectorCarrier=21                                                                                                                                            
+else if $nr_of_mos = 1                                                                                                                                                                                                 
+        cr ENodeBFunction=1,UlCompGroup=4                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=20                                                                                                                                                                              
+else if $nr_of_mos = 4                                                                                                                                                                                                 
+        cr ENodeBFunction=1,UlCompGroup=4                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=20 ENodeBFunction=1,SectorCarrier=21 ENodeBFunction=1,SectorCarrier=22 ENodeBFunction=1,SectorCarrier=                                                                          
+23                                                                                                                                                                                                                     
+fi                                                                                                                                                                                                                     
+deb ENodeBFunction=1,UlCompGroup=4                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+###### L900 ######                                                                                                                                                                                                     
+pr EUtranCellFDD=TN_E_F8                                                                                                                                                                                               
+if $nr_of_mos = 3                                                                                                                                                                                                      
+        cr ENodeBFunction=1,UlCompGroup=5                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=80 ENodeBFunction=1,SectorCarrier=81 ENodeBFunction=1,SectorCarrier=82                                                                                                          
+else if $nr_of_mos = 2                                                                                                                                                                                                 
+        cr ENodeBFunction=1,UlCompGroup=5                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=80 ENodeBFunction=1,SectorCarrier=81                                                                                                                                            
+else if $nr_of_mos = 1                                                                                                                                                                                                 
+        cr ENodeBFunction=1,UlCompGroup=5                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=80                                                                                                                                                                              
+else if $nr_of_mos = 4                                                                                                                                                                                                 
+        cr ENodeBFunction=1,UlCompGroup=5                                                                                                                                                                              
+        ENodeBFunction=1,SectorCarrier=80 ENodeBFunction=1,SectorCarrier=81 ENodeBFunction=1,SectorCarrier=82 ENodeBFunction=1,SectorCarrier=                                                                          
+83                                                                                                                                                                                                                     
+fi                                                                                                                                                                                                                     
+deb ENodeBFunction=1,UlCompGroup=5                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+#RIM                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+set CXC4010973 featurestate 1                                                                                                                                                                                          
+set ENodeBFunction=1                                        forcedSiTunnelingActive false                                                                                                                              
+set CXC4010956 featurestate 1                                                                                                                                                                                          
+                                                                                                                                                                                                                       
+set EutrancellFDD=.* noOfPucchSrUsers 420                                                                                                                                                                              
+set EutrancellFDD=.* noOfPucchCqiUsers 320                                                                                                                                                                             
+                                                                                                                                                                                                                       
+set EUTRANCELLTDD=.*  noOfPucchCqiUsers   620                                                                                                                                                                          
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+###Paging                                                                                                                                                                                                              
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set ENodeBFunction=1,Paging=1 maxNoOfPagingRecords                 7                                                                                                                                                   
+set ENodeBFunction=1,Paging=1 nB                                   3                                                                                                                                                   
+                                                                                                                                                                                                                       
+####                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+### Additional Parameters                                                                                                                                                                                              
+                                                                                                                                                                                                                       
+lset UeMeasControl PrioOffsetPerQci qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,offsetPerQciPrio=7                                                                                       
+                                                                                                                                                                                                                       
+set . zzzTemporary60 1                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+##Features_GPL                                                                                                                                                                                                         
+set CXC4011018|CXC4012015|CXC4012017|CXC4012026 featurestate 1                                                                                                                                                                                                                      
+set  CXC4011368   featurestate  0                                                                                                                                                                                      
+set  CXC4010512   featurestate  0                                                                                                                                                                                      
+set  CXC4010955   featurestate  0                                                                                                                                                                                      
+set  CXC4010973   featurestate  1                                                                                                                                                                                      
+set  CXC4011055   featurestate  0                                                                                                                                                                                      
+set  CXC4011246   featurestate  0                                                                                                                                                                                      
+set  CXC4011346   featurestate  1                                                                                                                                                                                      
+set  CXC4011478   featurestate  0                                                                                                                                                                                      
+set  cxc4011554   featurestate  0                                                                                                                                                                                      
+set  CXC4011663   featurestate  0                                                                                                                                                                                      
+set  CXC4011664   featurestate  0                                                                                                                                                                                      
+set  CXC4011736   featurestate  0                                                                                                                                                                                      
+set  CXC4011810   featurestate  0                                                                                                                                                                                      
+set  cxc4011911   featurestate  0                                                                                                                                                                                      
+set  cxc4011966   featurestate  0                                                                                                                                                                                      
+set  CXC4011983   featurestate  0                                                                                                                                                                                      
+set  CXC4011714   featurestate  0                                                                                                                                                                                      
+set  CXC4010319   featurestate  1                                                                                                                                                                                      
+set  CXC4010320   featurestate  1                                                                                                                                                                                      
+set  CXC4010609   featurestate  1                                                                                                                                                                                      
+set  CXC4010613   featurestate  1                                                                                                                                                                                      
+set  CXC4010616   featurestate  1                                                                                                                                                                                      
+set  CXC4010618   featurestate  1                                                                                                                                                                                      
+set  CXC4010620   featurestate  1                                                                                                                                                                                      
+set  CXC4010717   featurestate  1                                                                                                                                                                                      
+set  CXC4010723   featurestate  1                                                                                                                                                                                      
+set  CXC4010770   featurestate  1                                                                                                                                                                                      
+set  CXC4010841   featurestate  1                                                                                                                                                                                      
+set  CXC4010856   featurestate  1                                                                                                                                                                                      
+set  CXC4010912   featurestate  1                                                                                                                                                                                      
+set  CXC4010956   featurestate  1                                                                                                                                                                                      
+set  CXC4010959   featurestate  1                                                                                                                                                                                      
+set  CXC4010961   featurestate  1                                                                                                                                                                                      
+set  CXC4010962   featurestate  1                                                                                                                                                                                      
+set  CXC4010967   featurestate  1                                                                                                                                                                                      
+set  CXC4010974   featurestate  1                                                                                                                                                                                      
+set  CXC4010980   featurestate  1                                                                                                                                                                                      
+set  CXC4010990   featurestate  1                                                                                                                                                                                      
+set  CXC4011011   featurestate  1                                                                                                                                                                                      
+set  CXC4011033   featurestate  1                                                                                                                                                                                      
+set  CXC4011034   featurestate  1                                                                                                                                                                                      
+set  CXC4011050   featurestate  1                                                                                                                                                                                      
+set  CXC4011057   featurestate  1                                                                                                                                                                                      
+set  CXC4011059   featurestate  1                                                                                                                                                                                      
+set  CXC4011060   featurestate  1                                                                                                                                                                                      
+set  CXC4011061   featurestate  1                                                                                                                                                                                      
+set  CXC4011062   featurestate  0                                                                                                                                                                                      
+set  CXC4011064   featurestate  1                                                                                                                                                                                      
+set  CXC4011074   featurestate  1                                                                                                                                                                                      
+set  CXC4011075   featurestate  1                                                                                                                                                                                      
+set  CXC4011157   featurestate  1                                                                                                                                                                                      
+set  CXC4011183   featurestate  1                                                                                                                                                                                      
+set  CXC4011245   featurestate  1                                                                                                                                                                                      
+set  CXC4011247   featurestate  1                                                                                                                                                                                      
+set  CXC4011251   featurestate  1                                                                                                                                                                                      
+set  CXC4011252   featurestate  1                                                                                                                                                                                      
+set  CXC4011253   featurestate  1                                                                                                                                                                                      
+set  CXC4011255   featurestate  1                                                                                                                                                                                      
+set  CXC4011258   featurestate  1                                                                                                                                                                                      
+set  CXC4011319   featurestate  1                                                                                                                                                                                      
+set  CXC4011327   featurestate  1                                                                                                                                                                                      
+set  CXC4011345   featurestate  1                                                                                                                                                                                      
+set  CXC4011366   featurestate  1                                                                                                                                                                                      
+set  CXC4011370   featurestate  1                                                                                                                                                                                      
+set  CXC4011372   featurestate  1                                                                                                                                                                                      
+set  CXC4011373   featurestate  1                                                                                                                                                                                      
+set  CXC4011376   featurestate  1                                                                                                                                                                                      
+set  CXC4011378   featurestate  1                                                                                                                                                                                      
+set  CXC4011422   featurestate  1                                                                                                                                                                                      
+set  CXC4011443   featurestate  1                                                                                                                                                                                      
+set  CXC4011444   featurestate  1                                                                                                                                                                                      
+set  CXC4011477   featurestate  1                                                                                                                                                                                      
+set  CXC4011479   featurestate  1                                                                                                                                                                                      
+set  CXC4011481   featurestate  1                                                                                                                                                                                      
+set  CXC4011482   featurestate  1                                                                                                                                                                                      
+set  CXC4011485   featurestate  1                                                                                                                                                                                      
+set  CXC4011515   featurestate  1                                                                                                                                                                                      
+set  CXC4011698   featurestate  1                                                                                                                                                                                      
+set  CXC4011711   featurestate  1                                                                                                                                                                                      
+set  CXC4011715   featurestate  1                                                                                                                                                                                      
+set  CXC4011813   featurestate  1                                                                                                                                                                                      
+set  CXC4011815   featurestate  1                                                                                                                                                                                      
+set  CXC4011910   featurestate  1                                                                                                                                                                                      
+set  CXC4011913   featurestate  1                                                                                                                                                                                      
+set  CXC4011914   featurestate  1                                                                                                                                                                                      
+set  CXC4011918   featurestate  1                                                                                                                                                                                      
+set  CXC4011940   featurestate  1                                                                                                                                                                                      
+set  CXC4011941   featurestate  1                                                                                                                                                                                      
+set  CXC4011955   featurestate  1                                                                                                                                                                                      
+set  CXC4011969   featurestate  1                                                                                                                                                                                      
+set  CXC4012003   featurestate  1                                                                                                                                                                                      
+set  CXC4012018   featurestate  1                                                                                                                                                                                      
+set  CXC4012070   featurestate  1                                                                                                                                                                                      
+set  CXC4012089   featurestate  1                                                                                                                                                                                      
+set  CXC4011476   featurestate  1                                                                                                                                                                                      
+set  CXC4011559   featurestate  1                                                                                                                                                                                      
+set  CXC4011922   featurestate  1                                                                                                                                                                                      
+set  CXC4011946   featurestate  1                                                                                                                                                                                      
+set  CXC4012129   featurestate  1                                                                                                                                                                                      
+set  CXC4012240   featurestate  1                                                                                                                                                                                      
+set  CXC4011072   featurestate  0                                                                                                                                                                                      
+set  CXC4011974   featurestate  1                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+## old Features_GPL                                                                                                                                                                                                    
+                                                                                                                                                                                                                       
+set  CXC4011667   featurestate  1                                                                                                                                                                                      
+set  CXC4011056   featurestate  1                                                                                                                                                                                      
+set  CXC4010949   featurestate  1                                                                                                                                                                                      
+set  CXC4010963   featurestate  1                                                                                                                                                                                      
+set  CXC4010964   featurestate  1                                                                                                                                                                                      
+set  CXC4011063   featurestate  1                                                                                                                                                                                      
+set  CXC4011067   featurestate  1                                                                                                                                                                                      
+set  CXC4011068   featurestate  1                                                                                                                                                                                      
+set  CXC4011069   featurestate  1                                                                                                                                                                                      
+set  CXC4011163   featurestate  1                                                                                                                                                                                      
+set  CXC4011256   featurestate  1                                                                                                                                                                                      
+set  CXC4011317   featurestate  1                                                                                                                                                                                      
+set  CXC4011356   featurestate  1                                                                                                                                                                                      
+set  CXC4011427   featurestate  1                                                                                                                                                                                      
+set  CXC4011512   featurestate  1                                                                                                                                                                                      
+set  CXC4011618   featurestate  1                                                                                                                                                                                      
+set  CXC4011699   featurestate  1                                                                                                                                                                                      
+set  CXC4011707   featurestate  1                                                                                                                                                                                      
+set  CXC4011710   featurestate  1                                                                                                                                                                                      
+set  CXC4011716   featurestate  1                                                                                                                                                                                      
+set  CXC4011804   featurestate  1                                                                                                                                                                                      
+set  CXC4011807   featurestate  1                                                                                                                                                                                      
+set  CXC4011809   featurestate  1                                                                                                                                                                                      
+set  CXC4011811   featurestate  1                                                                                                                                                                                      
+set  CXC4011814   featurestate  1                                                                                                                                                                                      
+set  CXC4011817   featurestate  1                                                                                                                                                                                      
+set  CXC4011820   featurestate  1                                                                                                                                                                                      
+set  CXC4011917   featurestate  1                                                                                                                                                                                      
+set  CXC4011930   featurestate  1                                                                                                                                                                                      
+set  CXC4011933   featurestate  1                                                                                                                                                                                      
+set  CXC4011803   featurestate  1                                                                                                                                                                                      
+set  CXC4011937   featurestate  1                                                                                                                                                                                      
+set  CXC4011938   featurestate  1                                                                                                                                                                                      
+set  CXC4011939   featurestate  1                                                                                                                                                                                      
+set  CXC4011942   featurestate  1                                                                                                                                                                                      
+set  CXC4011951   featurestate  1                                                                                                                                                                                      
+set  CXC4011958   featurestate  0                                                                                                                                                                                      
+set  CXC4011967   featurestate  1                                                                                                                                                                                      
+set  CXC4011973   featurestate  1                                                                                                                                                                                      
+set  CXC4011975   featurestate  1                                                                                                                                                                                      
+set  CXC4011982   featurestate  1                                                                                                                                                                                      
+set  CXC4011991   featurestate  1                                                                                                                                                                                      
+set  CXC4012022   featurestate  1                                                                                                                                                                                      
+set  CXC4040004   featurestate  1                                                                                                                                                                                      
+set  CXC4040005   featurestate  1                                                                                                                                                                                      
+set  CXC4040006   featurestate  1                                                                                                                                                                                      
+set  CXC4040008   featurestate  1                                                                                                                                                                                      
+set  CXC4040009   featurestate  1                                                                                                                                                                                      
+set  CXC4040010   featurestate  1                                                                                                                                                                                      
+set  CXC4040013   featurestate  1                                                                                                                                                                                      
+set  CXC4040014   featurestate  1                                                                                                                                                                                      
+set  CXC4011155   featurestate  1                                                                                                                                                                                      
+set  CXC4012261   featurestate  1                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+## 20Q2Features                                                                                                                                                                                                        
+                                                                                                                                                                                                                       
+set CXC4012271 featurestate 1                                                                                                                                                                                          
+Set CXC4012297 featurestate 1                                                                                                                                                                                          
+                                                                                                                                                                                                                       
+## additional Feature                                                                                                                                                                                                  
+                                                                                                                                                                                                                       
+set CXC4012370 featurestate 0                                                                                                                                                                                          
+set QciTable=default,QciProfilePredefined=qci6              rohcForUlDataEnabled              FALSE                                                                                                                    
+set QciTable=default,QciProfilePredefined=qci7              rohcForUlDataEnabled              FALSE                                                                                                                    
+set QciTable=default,QciProfilePredefined=qci8              rohcForUlDataEnabled              FALSE                                                                                                                    
+set QciTable=default,QciProfilePredefined=qci9              rohcForUlDataEnabled              FALSE                                                                                                                    
+                                                                                                                                                                                                                       
+set CXC4012316 featurestate 1                                                                                                                                                                                          
+set . eUlFssSwitchThresh 30                                                                                                                                                                                            
+set . noOfEnhAdptReTxCand -1                                                                                                                                                                                           
+set QciTable=default,QciProfilePredefined=qci6              resourceAllocationStrategy              1                                                                                                                  
+set QciTable=default,QciProfilePredefined=qci7              resourceAllocationStrategy              1                                                                                                                  
+set QciTable=default,QciProfilePredefined=qci8              resourceAllocationStrategy              1                                                                                                                  
+set QciTable=default,QciProfilePredefined=qci9              resourceAllocationStrategy              1                                                                                                                  
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+### QOS ###                                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+lt all                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+set ENodeBFunction=1                                        dscpLabel                       46                                                                                                                         
+set ENodeBFunction=1                                        gtpuErrorIndicationDscp         46                                                                                                                         
+set ENodeBFunction=1                                        interEnbCaTunnelDscp            26                                                                                                                         
+set ENodeBFunction=1                                        interEnbUlCompTunnelDscp        26                                                                                                                         
+set ENodeBFunction=1                                        s1GtpuEchoDscp                  46                                                                                                                         
+set ENodeBFunction=1                                        x2GtpuEchoDscp                  46                                                                                                                         
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+cr Transport=1,QosProfiles=1,DscpPcpMap=1                                                                                                                                                                              
+set QciTable=default,QciProfilePredefined=qci1$ dscp 34                                                                                                                                                                
+set QciTable=default,QciProfilePredefined=qci2$ dscp 34                                                                                                                                                                
+set QciTable=default,QciProfilePredefined=qci3$ dscp 26                                                                                                                                                                
+set QciTable=default,QciProfilePredefined=qci4$ dscp 26                                                                                                                                                                
+set QciTable=default,QciProfilePredefined=qci5$ dscp 46                                                                                                                                                                
+set QciTable=default,QciProfilePredefined=qci6$ dscp 32                                                                                                                                                                
+set QciTable=default,QciProfilePredefined=qci7$ dscp 40                                                                                                                                                                
+set QciTable=default,QciProfilePredefined=qci8$ dscp 30                                                                                                                                                                
+set QciTable=default,QciProfilePredefined=qci9$ dscp 26                                                                                                                                                                
+set SysM=1,OamTrafficClass=1 dscp 28                                                                                                                                                                                   
+set SctpProfile= dscp 46                                                                                                                                                                                               
+set Ntp=1,NtpFrequencySync= dscp 46                                                                                                                                                                                    
+set . egressQosMarking  QosProfiles=1,DscpPcpMap=1                                                                                                                                                                     
+                                                                                                                                                                                                                       
+lt all                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+set QosProfiles=1,DscpPcpMap=1  pcp0                                                                                                                                                                                   
+set QosProfiles=1,DscpPcpMap=1  pcp1                                                                                                                                                                                   
+set QosProfiles=1,DscpPcpMap=1  pcp2                                                                                                                                                                                   
+set QosProfiles=1,DscpPcpMap=1  pcp3                                                                                                                                                                                   
+set QosProfiles=1,DscpPcpMap=1  pcp4                                                                                                                                                                                   
+set QosProfiles=1,DscpPcpMap=1  pcp5                                                                                                                                                                                   
+set QosProfiles=1,DscpPcpMap=1  pcp6                                                                                                                                                                                   
+set QosProfiles=1,DscpPcpMap=1  pcp7                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp0 0,1,2,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,36,37,38,39,41,43,45,47,48,49,50,51,52,5                                                                          
+3,54,55,56,57,58,59,60,61,62,63                                                                                                                                                                                        
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp2 22,24,26                                                                                                                                                               
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp3 6,8,10,30,32                                                                                                                                                           
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp4 12,14,40                                                                                                                                                               
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp5 4,28                                                                                                                                                                   
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp6 16,18,34,42,44                                                                                                                                                         
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp7 20,46                                                                                                                                                                  
+set SctpProfile=Node_Internal_F1  dscp 46                                                                                                                                                                              
+set SctpProfile=1 dscp 46                                                                                                                                                                                              
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set Router=OAM,DnsClient=1 dscp 28                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+set Router=LTECP,InterfaceIPv4=TN_C_CP                      egressQosMarking  QosProfiles=1,DscpPcpMap=1                                                                                                               
+set Router=LTEUP,InterfaceIPv4=TN_C_UP                      egressQosMarking  QosProfiles=1,DscpPcpMap=1                                                                                                               
+set Router=OAM,InterfaceIPv4=TN_C_OAM                       egressQosMarking  QosProfiles=1,DscpPcpMap=1                                                                                                               
+set Router=OAM,InterfaceIPv6=TN_C_OAM                       egressQosMarking  QosProfiles=1,DscpPcpMap=1                                                                                                               
+                                                                                                                                                                                                                       
+set VlanPort=                                               egressQosMarking  QosProfiles=1,DscpPcpMap=1                                                                                                               
+set VlanPort=TN_C_CP                                        egressQosMarking  QosProfiles=1,DscpPcpMap=1                                                                                                               
+set VlanPort=TN_C_OAM                                       egressQosMarking  QosProfiles=1,DscpPcpMap=1                                                                                                               
+set VlanPort=TN_C_UP                                        egressQosMarking  QosProfiles=1,DscpPcpMap=1                                                                                                               
+set VlanPort=TN_.*                                          egressQosMarking  QosProfiles=1,DscpPcpMap=1                                                                                                               
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+#### SCTP ####                                                                                                                                                                                                         
+                                                                                                                                                                                                                       
+lt all                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+set Transport=1,SctpProfile=1 alphaIndex 3                                                                                                                                                                             
+set Transport=1,SctpProfile=1 assocMaxRtx 8                                                                                                                                                                            
+set Transport=1,SctpProfile=1 betaIndex 2                                                                                                                                                                              
+set Transport=1,SctpProfile=1 bundlingActivated TRUE                                                                                                                                                                   
+set Transport=1,SctpProfile=1 bundlingAdaptiveActivated TRUE                                                                                                                                                           
+set Transport=1,SctpProfile=1 bundlingTimer 0                                                                                                                                                                          
+set Transport=1,SctpProfile=1 cookieLife 60                                                                                                                                                                            
+set Transport=1,SctpProfile=1 dscp 46                                                                                                                                                                                  
+set Transport=1,SctpProfile=1 minRto 1000                                                                                                                                                                              
+set Transport=1,SctpProfile=1 hbMaxBurst 1                                                                                                                                                                             
+set Transport=1,SctpProfile=1 heartbeatActivated TRUE                                                                                                                                                                  
+set Transport=1,SctpProfile=1 heartbeatInterval 6000                                                                                                                                                                   
+set Transport=1,SctpProfile=1 incCookieLife 30                                                                                                                                                                         
+set Transport=1,SctpProfile=1 initARWnd 16384                                                                                                                                                                          
+set Transport=1,SctpProfile=1 initRto 2000                                                                                                                                                                             
+set Transport=1,SctpProfile=1 initialHeartbeatInterval 500                                                                                                                                                             
+set Transport=1,SctpProfile=1 maxActivateThr 65535                                                                                                                                                                     
+set Transport=1,SctpProfile=1 maxBurst 4                                                                                                                                                                               
+set Transport=1,SctpProfile=1 maxInStreams 2                                                                                                                                                                           
+set Transport=1,SctpProfile=1 maxInitRt 5                                                                                                                                                                              
+set Transport=1,SctpProfile=1 maxOutStreams 2                                                                                                                                                                          
+set Transport=1,SctpProfile=1 maxRto 4000                                                                                                                                                                              
+set Transport=1,SctpProfile=1 maxSctpPduSize 1480                                                                                                                                                                      
+set Transport=1,SctpProfile=1 maxShutdownRt 5                                                                                                                                                                          
+set Transport=1,SctpProfile=1 minActivateThr 1                                                                                                                                                                         
+set Transport=1,SctpProfile=1 noSwitchback TRUE                                                                                                                                                                        
+set Transport=1,SctpProfile=1 pathMaxRtx 4                                                                                                                                                                             
+set Transport=1,SctpProfile=1 primaryPathAvoidance TRUE                                                                                                                                                                
+set Transport=1,SctpProfile=1 primaryPathMaxRtx 0                                                                                                                                                                      
+set Transport=1,SctpProfile=1 sackTimer 100                                                                                                                                                                            
+set Transport=1,SctpProfile=1 thrTransmitBuffer 48                                                                                                                                                                     
+set Transport=1,SctpProfile=1 thrTransmitBufferCongCeased 85                                                                                                                                                           
+set Transport=1,SctpProfile=1 transmitBufferSize 64                                                                                                                                                                    
+set Transport=1,SctpProfile=1 userLabel SCTP                                                                                                                                                                           
+                                                                                                                                                                                                                       
+cr Transport=1,Router=LTEUP,TwampResponder=1                                                                                                                                                                           
+Transport=1,Router=LTEUP,InterfaceIPv4=TN_C_UP,AddressIPv4=TN_C_UP                                                                                                                                                     
+4001                                                                                                                                                                                                                   
+set Transport=1,Router=LTEUP,TwampResponder=1 userLabel TWAMP1                                                                                                                                                         
+                                                                                                                                                                                                                       
+set EUtranCellFDD pZeroNominalPucch -110                                                                                                                                                                               
+set EUtranCellTDD pZeroNominalPucch -110                                                                                                                                                                               
+                                                                                                                                                                                                                       
+set Fm=1 heartbeatInterval 100                                                                                                                                                                                         
+                                                                                                                                                                                                                       
+/cm/sysconread                                                                                                                                                                                                         
+/cm/sysconwrite 1225 50                                                                                                                                                                                                
+/cm/sysconwrite 1566 33                                                                                                                                                                                                
+/cm/sysconwrite 1627 3                                                                                                                                                                                                 
+/cm/sysconwrite 153 128                                                                                                                                                                                                
+/cm/sysconwrite 278 1                                                                                                                                                                                                  
+/cm/sysconwrite 296 200                                                                                                                                                                                                
+/cm/sysconwrite 1738 230                                                                                                                                                                                               
+/cm/sysconwrite 2959 1                                                                                                                                                                                                 
+/cm/sysconwrite L4885 1                                                                                                                                                                                                
+/cm/sysconread                                                                                                                                                                                                         
+                                                                                                                                                                                                                       
+set ENodeBFunction=1 measuringEcgiWithAgActive true                                                                                                                                                                    
+set ENodeBFunction=1,AnrFunction=1 pciConflictDetectionEcgiMeas         false                                                                                                                                          
+set ENodeBFunction=1,AnrFunction=1 pciConflictMobilityEcgiMeas          true                                                                                                                                           
+set ENodeBFunction=1,AnrFunction=1 problematicCellPolicy 1                                                                                                                                                             
+set ENodeBFunction=1,AnrFunction=1 probCellDetectMedHoSuccThres         98                                                                                                                                             
+set ENodeBFunction=1,AnrFunction=1 probCellDetectMedHoSuccTime          1                                                                                                                                              
+set ENodeBFunction=1,AnrFunction=1 probCellDetectLowHoSuccThres         80                                                                                                                                             
+set ENodeBFunction=1,AnrFunction=1 probCellDetectLowHoSuccTime          2                                                                                                                                              
+                                                                                                                                                                                                                       
+set ENodeBFunction=1,Rrc=1 tRrcConnectionReconfiguration 10                                                                                                                                                            
+                                                                                                                                                                                                                       
+set CXC4011955 featurestate 0                                                                                                                                                                                          
+set . ulPhyProcResTradingEnabled 1                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+set EUtranCellTDD=TN_E_T1_.* noOfPucchFormat1PrbPairsPerFrameConf 6                                                                                                                                                    
+set EUtranCellTDD=TN_E_T1_.* noOfPucchFormat2PrbPairsPerFrameConf 2                                                                                                                                                    
+                                                                                                                                                                                                                       
+set EUtranCellTDD=TN_E_T2_.* noOfPucchFormat1PrbPairsPerFrameConf 12                                                                                                                                                   
+set EUtranCellTDD=TN_E_T2_.* noOfPucchFormat2PrbPairsPerFrameConf 4                                                                                                                                                    
+                                                                                                                                                                                                                       
+set EUtranCellFDD=TN_E_F1_.* noOfPucchFormat1PrbPairsPerFrameConf 3                                                                                                                                                    
+set EUtranCellFDD=TN_E_F3_.* noOfPucchFormat1PrbPairsPerFrameConf 4                                                                                                                                                    
+set EUtranCellFDD=TN_E_F8_.* noOfPucchFormat1PrbPairsPerFrameConf 2                                                                                                                                                    
+set EUtranCellFDD=.* noOfPucchFormat2PrbPairsPerFrameConf 1                                                                                                                                                            
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+## Correction                                                                                                                                                                                                          
+                                                                                                                                                                                                                       
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRp -140                                                                                                                                 
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -240                                                                                                                             
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -240                                                                                                                             
+set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 dlMaxRetxThreshold 16                                                                                                                                  
+set ENodeBFunction=1,RadioBearerTable=default,SignalingRadioBearer=1 dlMaxRetxThreshold 16                                                                                                                             
+set EUtranFreqRelation tReselectionEutra 2                                                                                                                                                                             
+set TimerProfile=0                                          tRrcConnectionReconfiguration 8                                                                                                                            
+set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 ulMaxRetxThreshold 16                                                                                                                                  
+set ENodeBFunction=1,RadioBearerTable=default,SignalingRadioBearer=1 ulMaxRetxThreshold 16                                                                                                                             
+set EUtranCell prsPowerBoosting 3                                                                                                                                                                                      
+set QciTable=default,QciProfilePredefined=QCI6$ schedulingAlgorithm 4                                                                                                                                                  
+set QciTable=default,QciProfilePredefined=QCI7$ schedulingAlgorithm 4                                                                                                                                                  
+set QciTable=default,QciProfilePredefined=QCI8$ schedulingAlgorithm 4                                                                                                                                                  
+set QciTable=default,QciProfilePredefined=QCI9$ schedulingAlgorithm 4                                                                                                                                                  
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1 anrStateUtran 0                                                                                                                                                  
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1 hoAllowedUtranPolicy 0                                                                                                                                           
+set EUtranCellFDD=.*,UeMeasControl=1 excludeInterFreqAtCritical False                                                                                                                                                  
+set CarrierAggregationFunction=1                            selectionPolicyUlWeighting 50                                                                                                                              
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97                                                                                                                                       
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97                                                                                                                                       
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigB2GeranUlTrig=1 b2Threshold2Geran -97                                                                                                                                 
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigB2GeranUlTrig=1 b2Threshold2Geran -97                                                                                                                                 
+set QciTable=default,QciProfilePredefined=qci1$              resourceAllocationStrategy              1                                                                                                                 
+set QciTable=default,QciProfilePredefined=qci2$              resourceAllocationStrategy              1                                                                                                                 
+set QciTable=default,QciProfilePredefined=qci3$              resourceAllocationStrategy              1                                                                                                                 
+set QciTable=default,QciProfilePredefined=qci4$              resourceAllocationStrategy              1                                                                                                                 
+set QciTable=default,QciProfilePredefined=qci5$              resourceAllocationStrategy              1                                                                                                                 
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+##New Addition                                                                                                                                                                                                         
+                                                                                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a1ThresholdRsrpPrimOffset=2                                                                                                                      
+set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a2ThresholdRsrpPrimOffset=2                                                                                                                      
+set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a5Threshold1RsrpOffset=2                                                                                                                         
+set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a5Threshold2RsrpOffset=2                                                                                                                         
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigEUtraBadCovPrim=1 a2ThresholdRsrpPrim -140                                                                                                                            
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraBadCovPrim=1 a2ThresholdRsrpPrim -140                                                                                                                            
+set EUtranCellFDD=.*,UeMeasControl=1                  filterCoefficientEUtraRsrq 11                                                                                                                                    
+set EUtranCellTDD=.*,UeMeasControl=1                  filterCoefficientEUtraRsrq 11                                                                                                                                    
+set AnrFunction=1,AnrFunctionEUtran=1                       lbCellOffloadCapacityPolicy  30000                                                                                                                         
+set SectorCarrier radioTransmitPerfMode 2                                                                                                                                                                              
+set EUtranCellFDD=.* srvccDelayTimer 3000                                                                                                                                                                              
+set EUtranCellTDD=.* srvccDelayTimer 3000                                                                                                                                                                              
+set EUtranCellFDD=.*,UeMeasControl=1 ueMeasurementsActiveUTRAN False                                                                                                                                                   
+set EUtranCellTDD=.*,UeMeasControl=1 ueMeasurementsActiveUTRAN False                                                                                                                                                   
+seti ENodeBFunction=1,Rrc=1        tRrcConnectionSetup  10                                                                                                                                                             
+set ReportConfigCsfbUtra=1 hysteresis 10                                                                                                                                                                               
+set EUTRANCELL dlInternalChannelBandwidth 0                                                                                                                                                                            
+set EUTRANCELL UlInternalChannelBandwidth 0                                                                                                                                                                            
+set ReportConfigSCellA6=1 timeToTriggerA6   40                                                                                                                                                                         
+set EUtranCell  systemInformationBlock3 sNonIntraSearchP=10                                                                                                                                                            
+set AnrFunction=1 plmnWhiteListEnabled false                                                                                                                                                                           
+set ReportConfigSearch=1 hysteresisA2CriticalRsrq 10                                                                                                                                                                   
+set ReportConfigSCellA1A2=1 hysteresisA1A2Rsrp 10                                                                                                                                                                      
+set ReportConfigElcA1A2=1 hysteresisA1A2Rsrp 10                                                                                                                                                                        
+set ReportConfigB1Geran=1 hysteresisB1      10                                                                                                                                                                         
+set ReportConfigB1Utra=1 hysteresisB1      10                                                                                                                                                                          
+set ReportConfigElcA1A2=1 a1a2ThresholdRsrp -134                                                                                                                                                                       
+set ReportConfigSCellA1A2=1 a1a2ThresholdRsrp -126                                                                                                                                                                     
+set ReportConfigSCellA1A2=1 a1a2ThresholdRsrpBidir -140                                                                                                                                                                
+set ReportConfigSCellA1A2=1 a1a2ThresholdRsrq -165                                                                                                                                                                     
+set ReportConfigSearch=1 a2CriticalThresholdRsrq -195                                                                                                                                                                  
+set ReportConfigSearch=1 a2OuterSearchThrRsrpOffset 0                                                                                                                                                                  
+set ReportConfigSearch=1 a2OuterSearchThrRsrqOffset 0                                                                                                                                                                  
+set MdtConfiguration=1                                      a2ThresholdRsrpMdt -140                                                                                                                                    
+set MdtConfiguration=1                                      a2ThresholdRsrqMdt -195                                                                                                                                    
+set UeMeasControl=1      a3SuspendCsgTimer 0                                                                                                                                                                           
+set ReportConfigA5Anr=1 a5Threshold1RsrqAnrDelta 10                                                                                                                                                                    
+set ReportConfigA5Anr=1 a5Threshold2RsrpAnrDelta 1                                                                                                                                                                     
+set ReportConfigA5Anr=1 a5Threshold2RsrqAnrDelta 10                                                                                                                                                                    
+set ReportConfigB1Geran=1 b1ThresholdGeran  -110                                                                                                                                                                       
+set ReportConfigB2Geran=1 b2Threshold1Rsrq  -195                                                                                                                                                                       
+set EUtranCell  systemInformationBlock3 threshServingLowQ=1000                                                                                                                                                         
+set UeMeasControl=1      targetA2UlSearchOffset 20                                                                                                                                                                     
+set ReportConfigElcA1A2=1 timeToTriggerA1   40                                                                                                                                                                         
+set ReportConfigSCellA1A2=1 timeToTriggerA1   40                                                                                                                                                                       
+set ReportConfigSearch=1 timeToTriggerA1SearchRsrq 1024                                                                                                                                                                
+set ReportConfigSearch=1 timeToTriggerA1UlSearch 480                                                                                                                                                                   
+set ReportConfigElcA1A2=1 timeToTriggerA2   40                                                                                                                                                                         
+set ReportConfigSCellA1A2=1 timeToTriggerA2   40                                                                                                                                                                       
+set ReportConfigSearch=1 timeToTriggerA2CriticalRsrq 1024                                                                                                                                                              
+set MdtConfiguration=1                                      timeToTriggerA2Mdt 640                                                                                                                                     
+set ReportConfigSearch=1 timeToTriggerA2OutSearchRsrq -1                                                                                                                                                               
+set ReportConfigSearch=1 timeToTriggerA2SearchRsrq 1024                                                                                                                                                                
+set ReportConfigA5=1 timeToTriggerA5Rsrq 1024                                                                                                                                                                          
+set ReportConfigB1Geran=1 timeToTriggerB1   640                                                                                                                                                                        
+set ReportConfigB1Utra=1 timeToTriggerB1   640                                                                                                                                                                         
+set ReportConfigB2Geran=1 timeToTriggerB2Rsrq -1                                                                                                                                                                       
+set ReportConfigB2Utra=1 timeToTriggerB2Rsrq -1                                                                                                                                                                        
+set ReportConfigSCellA1A2=1 triggerQuantityA1A2 0                                                                                                                                                                      
+set MdtConfiguration=1                                      triggerQuantityA2Mdt 0                                                                                                                                     
+set Eutrancell ulInterferenceManagementActive true                                                                                                                                                                     
+set GeranCellRelation=.* coverageIndicator 1                                                                                                                                                                           
+set EUtranCell.*DD=.*,UeMeasControl=1,ReportConfigB2GeranUlTrig=1 reportIntervalB2 4                                                                                                                                   
+set ReportConfigB2Geran=1 timeToTriggerB2   1280                                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci1$              dlMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci3$              dlMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci4$              dlMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci5$              dlMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci6$              dlMinBitRate      2000                                                                                                                                    
+set QciTable=default,QciProfilePredefined=qci7$              dlMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci8$              dlMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci9$              dlMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci1$              ulMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci3$              ulMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci4$              ulMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci5$              ulMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci6$              ulMinBitRate      300                                                                                                                                     
+set QciTable=default,QciProfilePredefined=qci7$              ulMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci8$              ulMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci9$              ulMinBitRate      0                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci1$              relativePriority  1                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci3$              relativePriority  1                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci4$              relativePriority  1                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci5$              relativePriority  1                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci6$              relativePriority  2                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci7$              relativePriority  1                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci8$              relativePriority  1                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci9$             relativePriority  1                                                                                                                                        
+set LoadBalancingFunction=1                                 lbUeEvaluationTimer 90                                                                                                                                     
+set EUtranCell                      lbTpNonQualFraction 35                                                                                                                                                             
+set EUtranCell                      lbTpRankThreshMin 10                                                                                                                                                               
+                                                                                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci65 dlMinBitRate 2000                                                                                                                                                      
+set QciTable=default,QciProfilePredefined=qci69 dlMinBitRate 2000                                                                                                                                                      
+set QciTable=default,QciProfilePredefined=qci66 dlMinBitRate 2000                                                                                                                                                      
+                                                                                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci65 ulMinBitRate 300                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci69 ulMinBitRate 300                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci66 ulMinBitRate 300                                                                                                                                                       
+                                                                                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci65 relativePriority 2                                                                                                                                                     
+set QciTable=default,QciProfilePredefined=qci69 relativePriority 2                                                                                                                                                     
+set QciTable=default,QciProfilePredefined=qci66 relativePriority 2                                                                                                                                                     
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=qci70 schedulingAlgorithm 4                                                                                                                                                  
+set QciTable=default,QciProfilePredefined=qci65 schedulingAlgorithm 4                                                                                                                                                  
+set QciTable=default,QciProfilePredefined=qci69 schedulingAlgorithm 4                                                                                                                                                  
+set QciTable=default,QciProfilePredefined=qci66 schedulingAlgorithm 4                                                                                                                                                  
+                                                                                                                                                                                                                       
+set CXC4012238 featurestate 1                                                                                                                                                                                          
+                                                                                                                                                                                                                       
+###Feature activation only                                                                                                                                                                                             
+set CXC4012326 featurestate 1                                                                                                                                                                                          
+set CXC4012260 featurestate 1                                                                                                                                                                                          
+set CXC4012374 featurestate 1                                                                                                                                                                                          
+set CXC4012297 featurestate 0                                                                                                                                                                                          
+set CXC4012019 featurestate 1                                                                                                                                                                                          
+                                                                                                                                                                                                                       
+#ASGH Voice Reliability & BLER Target                                                                                                                                                                                  
+set CXC4012199  featurestate 1                                                                                                                                                                                         
+set CXC4012374  featurestate 1                                                                                                                                                                                         
+set ENodeBFunction=1,EUtranCell.*DD= blerTargetConfigEnabled TRUE                                                                                                                                                      
+set ENodeBFunction=1,EUtranCell.*DD= dlBlerTargetEnabled TRUE                                                                                                                                                          
+cr ENodeBFunction=1,SubscriberGroupProfile=1                                                                                                                                                                           
+set ENodeBFunction=1,SubscriberGroupProfile=1 bearerTriggerList qci=1                                                                                                                                                  
+set ENodeBFunction=1,SubscriberGroupProfile=1 cellTriggerList                                                                                                                                                          
+set ENodeBFunction=1,SubscriberGroupProfile=1 ulHarqBlerTarget 3                                                                                                                                                       
+set ENodeBFunction=1,SubscriberGroupProfile=1 dlHarqBlerTarget 5                                                                                                                                                       
+set ENodeBFunction=1,SubscriberGroupProfile=1 ulMcsUpperLimit 12                                                                                                                                                       
+                                                                                                                                                                                                                       
+pr EutrancellFdd=.*D_D                                                                                                                                                                                                 
+if $nr_of_mos = 0                                                                                                                                                                                                      
+set EUtranCellTDD=.*D_D,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePred                                                                          
+efined=qci1,a1a2ThrRsrqQciOffset=0,a1a2ThrRsrpQciOffset=2                                                                                                                                                              
+set EUtranCellTDD=.*D_D,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePre                                                                          
+defined=qci1,a5Thr1RsrpFreqQciOffset=2,a5Thr2RsrpFreqQciOffset=-6,lbQciProfileHandling=1                                                                                                                               
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+pr EutrancellFdd.*F3                                                                                                                                                                                                   
+if $nr_of_mos >= 1                                                                                                                                                                                                     
+set CXC4012015|CXC4011018|CXC4012017|CXC4012026 featurestate 1                                                                                                                                                         
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+cr EnodeBfunction=1,PmFlexCounterFilter=1                                                                                                                                                                              
+set EnodeBfunction=1,PmFlexCounterFilter=1 qciFilterEnabled true                                                                                                                                                       
+set EnodeBFunction=1,PmFlexCounterFilter=1 qciFilterMax 1                                                                                                                                                              
+set EnodeBFunction=1,PmFlexCounterFilter=1 qciFilterMin 0                                                                                                                                                              
+                                                                                                                                                                                                                       
+set Lm=1,FeatureState=CXC4011072 featureState 1                                                                                                                                                                        
+set . ulTrigHoSupport 1                                                                                                                                                                                                
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a1a2UlSearchThreshold 40                                                                                                                                     
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2UlSearch 20                                                                                                                                    
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1UlSearch 480                                                                                                                                  
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2UlSearch 480                                                                                                                                  
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 qciA1A2UlThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePrede                                                                          
+fined=qci1,a1a2UlThrQciOffset=10                                                                                                                                                                                       
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a2UlCriticalThreshold -150                                                                                                                                   
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2UlCritical 150                                                                                                                                   
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2UlCritical 480                                                                                                                                
+set EUtranCellFDD ulTrigActive false                                                                                                                                                                                   
+set EUtranCellTDD ulTrigActive true                                                                                                                                                                                    
+set ENodeBFunction enabledUlTrigMeas true                                                                                                                                                                              
+set EUtranCellTDD=.*,UeMeasControl=1 targetA2UlSearchOffset 20                                                                                                                                                         
+set EUtranCellTDD=.*,UeMeasControl=1 ulSinrOffset 30                                                                                                                                                                   
+set EUtranCellTDD=.*,EUtranFreqRelation=.* interFreqMeasTypeUlSinr 0                                                                                                                                                   
+set . ulTrigSupport 1                                                                                                                                                                                                  
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5UlTrig=1 a5Threshold1Rsrp -44                                                                                                                                       
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5UlTrig=1 a5Threshold2Rsrp -110                                                                                                                                      
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+wait 2                                                                                                                                                                                                                 
+lt all                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+#### Power Saving Feature ####                                                                                                                                                                                         
+                                                                                                                                                                                                                       
+set CXC4011958 featurestate 1                                                                                                                                                                                          
+set CXC4011808 featurestate 1                                                                                                                                                                                          
+set CXC4011803 featurestate 1                                                                                                                                                                                          
+set CXC4011983 featurestate 0                                                                                                                                                                                          
+set CXC4011378 featurestate 1                                                                                                                                                                                          
+                                                                                                                                                                                                                       
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 sleepMode  1                                                                                                                                                              
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 sleepStartTime     18:30                                                                                                                                                  
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 sleepEndTime       00:30                                                                                                                                                  
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 capCellSleepMonitorDurTimer        5                                                                                                                                      
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 capCellDlPrbSleepThreshold 40                                                                                                                                             
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 capCellRrcConnSleepThreshold       90                                                                                                                                     
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 covCellWakeUpMonitorDurTimer       15                                                                                                                                     
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 covCellDlPrbWakeUpThreshold        55                                                                                                                                     
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 covCellRrcConnWakeUpThreshold      100                                                                                                                                    
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 coverageCellDiscovery      TRUE                                                                                                                                           
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 capCellMobReasNotSleepThr  -1                                                                                                                                             
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 capCellSleepProhibitInterval       0                                                                                                                                      
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 sleepProhibitStartTime                                                                                                                                                    
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 isCleanupHitRateTable      TRUE                                                                                                                                           
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 covCellUeLostWakeUpThr     100                                                                                                                                            
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 covCellRrcReestWakeUpThr   100                                                                                                                                            
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 covCellUeCtxtRelMin        200                                                                                                                                            
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 covCellRrcConnEstAttMin    200                                                                                                                                            
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 covCellLatestStatsAdaRatio 60                                                                                                                                             
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 isAllowedMsmOnCovCell      TRUE                                                                                                                                           
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 wakeUpLastHoTime   2                                                                                                                                                      
+set EUtranCellTDD=TN_E.*,CellSleepFunction=1 wakeUpWaitTimer    0                                                                                                                                                      
+                                                                                                                                                                                                                       
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 sleepMode       1                                                                                                                                                      
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 sleepStartTime  18:30                                                                                                                                                  
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 sleepEndTime    00:30                                                                                                                                                  
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 capCellSleepMonitorDurTimer     5                                                                                                                                      
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 capCellDlPrbSleepThreshold      40                                                                                                                                     
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 capCellRrcConnSleepThreshold    90                                                                                                                                     
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellWakeUpMonitorDurTimer    15                                                                                                                                     
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellDlPrbWakeUpThreshold     55                                                                                                                                     
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellRrcConnWakeUpThreshold   100                                                                                                                                    
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 coverageCellDiscovery   TRUE                                                                                                                                           
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 capCellMobReasNotSleepThr       -1                                                                                                                                     
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 capCellSleepProhibitInterval    0                                                                                                                                      
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 sleepProhibitStartTime                                                                                                                                                 
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 isCleanupHitRateTable   TRUE                                                                                                                                           
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellUeLostWakeUpThr  100                                                                                                                                            
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellRrcReestWakeUpThr        100                                                                                                                                    
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellUeCtxtRelMin     200                                                                                                                                            
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellRrcConnEstAttMin 200                                                                                                                                            
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellLatestStatsAdaRatio      60                                                                                                                                     
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 isAllowedMsmOnCovCell   TRUE                                                                                                                                           
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 wakeUpLastHoTime        2                                                                                                                                              
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 wakeUpWaitTimer 0                                                                                                                                                      
+                                                                                                                                                                                                                       
+set EUtranCellFDD=TN_E_F3.*,CellSleepFunction=1 sleepMode       0                                                                                                                                                      
+set EUtranCellFDD=TN_E_F8.*,CellSleepFunction=1 sleepMode       0                                                                                                                                                      
+                                                                                                                                                                                                                       
+set ENodeBFunction=1,CellSleepNodeFunction=1 csmEutranInterFMeasReportDecr      1                                                                                                                                      
+set ENodeBFunction=1,CellSleepNodeFunction=1 csmEutranInterFMeasReportIncr      10                                                                                                                                     
+set ENodeBFunction=1,CellSleepNodeFunction=1 csmEutranInterFMeasReportMax       100                                                                                                                                    
+set ENodeBFunction=1,CellSleepNodeFunction=1 csmEutranInterFMeasReportMin       5                                                                                                                                      
+set ENodeBFunction=1,CellSleepNodeFunction=1 csmMinHitRateForCovCell    50                                                                                                                                             
+                                                                                                                                                                                                                       
+seti ENodeBFunction=1 csmCovDiscoveryCycleTime 1                                                                                                                                                                       
+seti ENodeBFunction=1,CellSleepNodeFunction=1 CsmHitRateEutran0 10                                                                                                                                                     
+seti ENodeBFunction=1,CellSleepNodeFunction=1 csmHitRateEutranFilterCoeff 30                                                                                                                                           
+                                                                                                                                                                                                                       
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=1615 cellSleepCovCellMeasOn false                                                                                                                                         
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=390 cellSleepCovCellMeasOn true                                                                                                                                           
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39294 cellSleepCovCellMeasOn false                                                                                                                                        
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39150 cellSleepCovCellMeasOn false                                                                                                                                        
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3710 cellSleepCovCellMeasOn false                                                                                                                                         
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=1615 cellSleepCovCellMeasOn true                                                                                                                                        
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=390 cellSleepCovCellMeasOn false                                                                                                                                        
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 cellSleepCovCellMeasOn false                                                                                                                                      
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 cellSleepCovCellMeasOn false                                                                                                                                      
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=3710 cellSleepCovCellMeasOn false                                                                                                                                       
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=1615 cellSleepCovCellMeasOn false                                                                                                                                       
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=390 cellSleepCovCellMeasOn false                                                                                                                                        
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=39294 cellSleepCovCellMeasOn false                                                                                                                                      
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=39150 cellSleepCovCellMeasOn false                                                                                                                                      
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=3710 cellSleepCovCellMeasOn false                                                                                                                                       
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=1615 cellSleepCovCellMeasOn false                                                                                                                                       
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=390 cellSleepCovCellMeasOn false                                                                                                                                        
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=39294 cellSleepCovCellMeasOn false                                                                                                                                      
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=39150 cellSleepCovCellMeasOn false                                                                                                                                      
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=3710 cellSleepCovCellMeasOn false                                                                                                                                       
+                                                                                                                                                                                                                       
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=1615 csmUeCapMonitorEnabled false                                                                                                                                         
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=390 csmUeCapMonitorEnabled false                                                                                                                                          
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39294 csmUeCapMonitorEnabled false                                                                                                                                        
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39150 csmUeCapMonitorEnabled false                                                                                                                                        
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3710 csmUeCapMonitorEnabled false                                                                                                                                         
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=1615 csmUeCapMonitorEnabled false                                                                                                                                       
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=390 csmUeCapMonitorEnabled false                                                                                                                                        
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 csmUeCapMonitorEnabled false                                                                                                                                      
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 csmUeCapMonitorEnabled false                                                                                                                                      
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=3710 csmUeCapMonitorEnabled false                                                                                                                                       
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=1615 csmUeCapMonitorEnabled false                                                                                                                                       
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=390 csmUeCapMonitorEnabled false                                                                                                                                        
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=39294 csmUeCapMonitorEnabled false                                                                                                                                      
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=39150 csmUeCapMonitorEnabled false                                                                                                                                      
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=3710 csmUeCapMonitorEnabled false                                                                                                                                       
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=1615 csmUeCapMonitorEnabled false                                                                                                                                       
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=390 csmUeCapMonitorEnabled false                                                                                                                                        
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=39294 csmUeCapMonitorEnabled false                                                                                                                                      
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=39150 csmUeCapMonitorEnabled false                                                                                                                                      
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=3710 csmUeCapMonitorEnabled false                                                                                                                                       
+                                                                                                                                                                                                                       
+set EUtranFreqRelation= csmUeCapMonitorTime 60                                                                                                                                                                         
+                                                                                                                                                                                                                       
+set EUtranCellRelation= sleepModeCovCellCandidate 2                                                                                                                                                                    
+                                                                                                                                                                                                                       
+set UeMeasControl=1  maxNoMeasReportsInact 1                                                                                                                                                                           
+set ENodeBFunction=1 csmMinHighHitThreshold 50                                                                                                                                                                         
+                                                                                                                                                                                                                       
+set EUtranCellTDD=TN_E.*,MimoSleepFunction=1 sleepMode  4                                                                                                                                                              
+set EUtranCellTDD=TN_E.*,MimoSleepFunction=1 sleepStartTime     18:30                                                                                                                                                  
+set EUtranCellTDD=TN_E.*,MimoSleepFunction=1 sleepEndTime       02:30                                                                                                                                                  
+set EUtranCellTDD=TN_E.*,MimoSleepFunction=1 sleepPowerControl  1                                                                                                                                                      
+set EUtranCellTDD=TN_E.*,MimoSleepFunction=1 switchDownMonitorDurTimer  5                                                                                                                                              
+set EUtranCellTDD=TN_E.*,MimoSleepFunction=1 switchUpPrbThreshold       55                                                                                                                                             
+set EUtranCellTDD=TN_E.*,MimoSleepFunction=1 switchDownPrbThreshold     40                                                                                                                                             
+set EUtranCellTDD=TN_E.*,MimoSleepFunction=1 switchDownRrcConnThreshold 50                                                                                                                                             
+set EUtranCellTDD=TN_E.*,MimoSleepFunction=1 switchUpMonitorDurTimer    15                                                                                                                                             
+set EUtranCellTDD=TN_E.*,MimoSleepFunction=1 switchUpRrcConnThreshold   60                                                                                                                                             
+                                                                                                                                                                                                                       
+set EUtranCellFDD=TN_E.*,MimoSleepFunction=1 sleepMode  4                                                                                                                                                              
+set EUtranCellFDD=TN_E.*,MimoSleepFunction=1 sleepStartTime     18:30                                                                                                                                                  
+set EUtranCellFDD=TN_E.*,MimoSleepFunction=1 sleepEndTime       02:30                                                                                                                                                  
+set EUtranCellFDD=TN_E.*,MimoSleepFunction=1 sleepPowerControl  1                                                                                                                                                      
+set EUtranCellFDD=TN_E.*,MimoSleepFunction=1 switchDownMonitorDurTimer  5                                                                                                                                              
+set EUtranCellFDD=TN_E.*,MimoSleepFunction=1 switchUpPrbThreshold       55                                                                                                                                             
+set EUtranCellFDD=TN_E.*,MimoSleepFunction=1 switchDownPrbThreshold     40                                                                                                                                             
+set EUtranCellFDD=TN_E.*,MimoSleepFunction=1 switchDownRrcConnThreshold 50                                                                                                                                             
+set EUtranCellFDD=TN_E.*,MimoSleepFunction=1 switchUpMonitorDurTimer    15                                                                                                                                             
+set EUtranCellFDD=TN_E.*,MimoSleepFunction=1 switchUpRrcConnThreshold   60                                                                                                                                             
+                                                                                                                                                                                                                       
+####                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+set QciTable=default,QciProfilePredefined=default resourceAllocationStrategy 1                                                                                                                                         
+set CXC4011911 featurestate 1                                                                                                                                                                                          
+                                                                                                                                                                                                                       
+### CA Feature Activate ###                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4011973 FeatureState 1                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4011922 FeatureState 1                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4011559 FeatureState 1                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4011476 FeatureState 1                                                                                                                                                                       
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+### ul256qam deactivate ###                                                                                                                                                                                            
+set CXC4012344 featurestate 0                                                                                                                                                                                          
+set . ul256qamEnabled FALSE                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+##New Addition 21 June                                                                                                                                                                                                 
+set EUtranCell outOfCoverageSrTimerPeriodicity 320                                                                                                                                                                     
+set EUtranCell outOfCoverageThreshold 20                                                                                                                                                                               
+set EUtranCell outOfCoverageDepth 1                                                                                                                                                                                    
+set EUtranCell outOfCoverageSparseGrantingBsr 8                                                                                                                                                                        
+set EUtranCellTDD=TN_E_T1_.* enableSinrUplinkClpc 1                                                                                                                                                                    
+#set EUtranCellTDD=TN_E_T1_.* interferenceThresholdSinrClpc -100                                                                                                                                                       
+#set EUtranCellTDD=TN_E_T1_.* rxSinrTargetClpc 20                                                                                                                                                                      
+#set EUtranCellTDD=TN_E_T1_.* ulTxPsdDistrThr 40                                                                                                                                                                       
+set EUtranCellTDD=TN_E_T1_.* ulPsdLoadThresholdSinrClpc 2                                                                                                                                                              
+set ,GeranFreqGroupRelation=1 altCsfbTargetPrio 2                                                                                                                                                                      
+set ,UeMeasControl=1      zzzTemporary13    -2000000000                                                                                                                                                                
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set CXC4011373 featurestate 1                                                                                                                                                                                          
+set EUtranCellFDD=TN_E_F1_.*                      cellCapMinCellSubCap 5000                                                                                                                                            
+set EUtranCellFDD=TN_E_F3_.*                      cellCapMinCellSubCap 1500                                                                                                                                            
+set EUtranCellFDD=TN_E_F8_.*                      cellCapMinCellSubCap 7000                                                                                                                                            
+set EUtranCellTDD=TN_E_T1_.*                      cellCapMinCellSubCap 200                                                                                                                                             
+set EUtranCellTDD=TN_E_T2_.*                      cellCapMinCellSubCap 100                                                                                                                                             
+                                                                                                                                                                                                                       
+set  CXC4012349   featurestate  1                                                                                                                                                                                      
+set LoadBalancingFunction=1                                 lbCycle 5                                                                                                                                                  
+set LoadBalancingFunction=1                                 lbSubCycle 30                                                                                                                                              
+set LoadBalancingFunction=1                                 lbThreshold 5                                                                                                                                              
+                                                                                                                                                                                                                       
+set EUtranCellFDD=TN_E_F8_.*,GeranFreqGroupRelation=1 csFallbackPrio 4                                                                                                                                                 
+                                                                                                                                                                                                                       
+### Cell Range ###                                                                                                                                                                                                     
+mr cellrange_fddcells                                                                                                                                                                                                  
+ma cellrange_fddcells ^eutrancellfdd                                                                                                                                                                                   
+for $mo in cellrange_fddcells                                                                                                                                                                                          
+$mordn = rdn($mo)                                                                                                                                                                                                      
+get $mordn cellrange > $current_cr                                                                                                                                                                                     
+if  $current_cr ~ 15                                                                                                                                                                                                   
+        set $mordn cellrange 6                                                                                                                                                                                         
+fi                                                                                                                                                                                                                     
+done                                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+mr cellrange_tddcells                                                                                                                                                                                                  
+ma cellrange_tddcells ^eutrancelltdd                                                                                                                                                                                   
+for $mo in cellrange_tddcells                                                                                                                                                                                          
+$mordn = rdn($mo)                                                                                                                                                                                                      
+get $mordn cellrange > $current_cr                                                                                                                                                                                     
+if  $current_cr ~ 15                                                                                                                                                                                                   
+set $mordn cellrange 4                                                                                                                                                                                                 
+fi                                                                                                                                                                                                                     
+done                                                                                                                                                                                                                   
+Set PmEventService=1 cellTraceFileSize 30000                                                                                                                                                                           
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 timeToTriggerA3 480                                                                                                                           
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+### CA Feature activate ###                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4011922 FeatureState 1                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4011559 FeatureState 1                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4011476 FeatureState 1                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4011666 FeatureState 1                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4011983 FeatureState 1                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4012123 FeatureState 1                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4012256 FeatureState 1                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4012259 FeatureState 1                                                                                                                                                                       
+lset Lm=1,FeatureState=CXC4012111 FeatureState 1                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set EUtranCell.*=.* sCellHandlingAtVolteCall 1                                                                                                                                                                         
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 caTriggeredRedirectionActive TRUE                                                                                                                                        
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 caTriggeredRedirectionActive TRUE                                                                                                                                        
+# sys Constant 457(Default Value 2000ms) to be reduced to 1850ms:                                                                                                                                                      
+scw 457:1850                                                                                                                                                                                                           
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportDecr 1                                                                                                                                  
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportIncr  10                                                                                                                                
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportMax 100                                                                                                                                 
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportMin 20                                                                                                                                  
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     sCellCandidateLimit 50                                                                                                                                     
+set EUtranCellFDD=.*,EUtranFreqRelation=.* asmSCellDetection 0                                                                                                                                                         
+set EUtranCellTDD=.*,EUtranFreqRelation=.* asmSCellDetection 0                                                                                                                                                         
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 asmSCellDetection 3                                                                                                                                                      
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 asmSCellDetection 3                                                                                                                                                      
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 asmHitRateAddThreshold 15                                                                                                                                                
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 asmHitRateAddThreshold 15                                                                                                                                                
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmHitRateRemoveThreshold 5                                                                                                                                       
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmHitRateRemoveThreshold 5                                                                                                                                       
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 asmHitRateRemoveThreshold 5                                                                                                                                              
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 asmHitRateRemoveThreshold 5                                                                                                                                              
+set CarrierAggregationFunction=1                            dynamicSCellSelectionMethod 3                                                                                                                              
+                                                                                                                                                                                                                       
+lt all                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+pr ENodeBFunction=1,EutrancellTdd.*T                                                                                                                                                                                   
+if $nr_of_mos = 0                                                                                                                                                                                                      
+set CXC4011476|CXC4011559|CXC4011666|CXC4011922|CXC4011983|CXC4012123|CXC4012111 featurestate 0                                                                                                                        
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+##L21.Q2 Massification Parameters                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 caTriggeredRedirectionActive TRUE                                                                                                                                 
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 caTriggeredRedirectionActive TRUE                                                                                                                                 
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmSCellDetection 3                                                                                                                                               
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmSCellDetection 3                                                                                                                                               
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmHitRateAddThreshold 15                                                                                                                                         
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmHitRateAddThreshold 15                                                                                                                                         
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmHitRateRemoveThreshold 5                                                                                                                                       
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmHitRateRemoveThreshold 5                                                                                                                                       
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150, sCellCandidate 2                                                                                                                                                 
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294, sCellCandidate 2                                                                                                                                                 
+                                                                                                                                                                                                                       
+set EUtranCellTDD=.*,EUtranFreqRelation=39150, sCellCandidate 2                                                                                                                                                        
+set EUtranCellTDD=.*,EUtranFreqRelation=39294, sCellCandidate 2                                                                                                                                                        
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set  CXC4012485   featurestate  1                                                                                                                                                                                      
+set  CXC4012356   featurestate  1                                                                                                                                                                                      
+set  CXC4011913   featurestate  0                                                                                                                                                                                      
+set  CXC4011984   featurestate  0                                                                                                                                                                                      
+set  CXC4012505   featurestate  1                                                                                                                                                                                      
+set EUtranCell.*DD=.* dlMaxRetxRrcReleaseThr 8                                                                                                                                                                         
+set EUtranCell.*DD=.* tPollRetxRrcReleaseDl 80                                                                                                                                                                         
+                                                                                                                                                                                                                       
+set ENodeBFunction=1,SubscriberGroupProfile=1 fastACqiReportEnabled true                                                                                                                                               
+set ENodeBFunction=1,SubscriberGroupProfile=1 profilePriority 10                                                                                                                                                       
+set ENodeBFunction=1,SubscriberGroupProfile=1 dlDynBlerTargetMax -1                                                                                                                                                    
+set DynamicBlerTarget=1                                     dlActivitySubscrDelay 1                                                                                                                                    
+set ,EUtranCellRelation= reportDlActivity 1                                                                                                                                                                            
+                                                                                                                                                                                                                       
+rdel ENodeBFunction=1,SubscriberGroupProfile=2                                                                                                                                                                         
+cr ENodeBFunction=1,SubscriberGroupProfile=2                                                                                                                                                                           
+set ENodeBFunction=1,SubscriberGroupProfile=2 bearerTriggerList qci=6                                                                                                                                                  
+set ENodeBFunction=1,SubscriberGroupProfile=2 profilePriority 1                                                                                                                                                        
+set ENodeBFunction=1,SubscriberGroupProfile=2 dlDynBlerTargetMin 10                                                                                                                                                    
+set ENodeBFunction=1,SubscriberGroupProfile=2 dlDynBlerTargetMax 60                                                                                                                                                    
+                                                                                                                                                                                                                       
+cr ENodeBFunction=1,SubscriberGroupProfile=3                                                                                                                                                                           
+set ENodeBFunction=1,SubscriberGroupProfile=3 bearerTriggerList qci=7                                                                                                                                                  
+set ENodeBFunction=1,SubscriberGroupProfile=3 profilePriority 1                                                                                                                                                        
+set ENodeBFunction=1,SubscriberGroupProfile=3 dlDynBlerTargetMin 10                                                                                                                                                    
+set ENodeBFunction=1,SubscriberGroupProfile=3 dlDynBlerTargetMax 60                                                                                                                                                    
+                                                                                                                                                                                                                       
+cr ENodeBFunction=1,SubscriberGroupProfile=4                                                                                                                                                                           
+set ENodeBFunction=1,SubscriberGroupProfile=4 bearerTriggerList qci=8                                                                                                                                                  
+set ENodeBFunction=1,SubscriberGroupProfile=4 profilePriority 1                                                                                                                                                        
+set ENodeBFunction=1,SubscriberGroupProfile=4 dlDynBlerTargetMin 10                                                                                                                                                    
+set ENodeBFunction=1,SubscriberGroupProfile=4 dlDynBlerTargetMax 60                                                                                                                                                    
+                                                                                                                                                                                                                       
+cr ENodeBFunction=1,SubscriberGroupProfile=5                                                                                                                                                                           
+set ENodeBFunction=1,SubscriberGroupProfile=5 bearerTriggerList qci=9                                                                                                                                                  
+set ENodeBFunction=1,SubscriberGroupProfile=5 profilePriority 1                                                                                                                                                        
+set ENodeBFunction=1,SubscriberGroupProfile=5 dlDynBlerTargetMin 10                                                                                                                                                    
+set ENodeBFunction=1,SubscriberGroupProfile=5 dlDynBlerTargetMax 60                                                                                                                                                    
+                                                                                                                                                                                                                       
+set  CXC4012097   featurestate  1                                                                                                                                                                                      
+set  CXC4011714   featurestate  1                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+set CarrierAggregationFunction=1     waitForAdditionalSCellOpportunity 10000                                                                                                                                           
+set CarrierAggregationFunction=1     sCellSelectionMode 0                                                                                                                                                              
+set CarrierAggregationFunction=1     a6TriggerSCellDeconfig FALSE                                                                                                                                                      
+Set EUtranCellTDD=.*,EUtranFreqRelation=39150, sCellCandidate 2                                                                                                                                                        
+Set EUtranCellTDD=.*,EUtranFreqRelation=39294, sCellCandidate 2                                                                                                                                                        
+Set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150, sCellCandidate 2                                                                                                                                                 
+Set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294, sCellCandidate 2                                                                                                                                                 
+                                                                                                                                                                                                                       
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 caFreqPriority 7                                                                                                                                                  
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 caFreqPriority 6                                                                                                                                                  
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=390$ caFreqPriority 5                                                                                                                                                   
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 caFreqPriority 7                                                                                                                                                         
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 caFreqPriority 6                                                                                                                                                         
+set EUtranCellTDD=.*,EUtranFreqRelation=390$ caFreqPriority 5                                                                                                                                                          
+                                                                                                                                                                                                                       
+### Deactivate SRVCC in L18 Layer ###                                                                                                                                                                                  
+set EUtranCellFDD=TN_E_F3.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -140                                                                                                                                
+set EUtranCellFDD=TN_E_F3.*,GeranFreqGroupRelation=1 connectedModeMobilityPrio -1                                                                                                                                      
+set EUtranCellFDD=TN_E_F3.*,GeranFreqGroupRelation=1 voicePrio -1                                                                                                                                                      
+set EUtranCellFDD=TN_E_F3.*,UeMeasControl=1 ueMeasurementsActiveGERAN False                                                                                                                                            
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+#### PRB Mute for L18 20Mhz BW ###                                                                                                                                                                                     
+ma L18bw20 EUtranCellFDD.*F3 dlChannelBandwidth 20000                                                                                                                                                                  
+bl L18bw20                                                                                                                                                                                                             
+                                                                                                                                                                                                                       
+set L18bw20  dlFrequencyAllocationProportion 84                                                                                                                                                                        
+set L18bw20  ulFrequencyAllocationProportion 84                                                                                                                                                                        
+set L18bw20  dlConfigurableFrequencyStart 8                                                                                                                                                                            
+set L18bw20  ulConfigurableFrequencyStart 9                                                                                                                                                                            
+set L18bw20  pucchOverdimensioning 8                                                                                                                                                                                   
+set L18bw20  dlInterferenceManagementActive false                                                                                                                                                                      
+set L18bw20  ulInterferenceManagementActive false                                                                                                                                                                      
+set L18bw20  ulSrsEnable true                                                                                                                                                                                          
+set L18bw20  dlCchAndRefSigBlockActive True                                                                                                                                                                            
+set L18bw20  dlCchAndRefSigBoost True                                                                                                                                                                                  
+set L18bw20  subbandSrsActive True                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+set L18bw20 crsGain           177                                                                                                                                                                                      
+set L18bw20 pdschTypeBGain           1                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+deb L18bw20                                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+mr L18bw20                                                                                                                                                                                                             
+                                                                                                                                                                                                                       
+#22.Q2 Feature Massification                                                                                                                                                                                           
+                                                                                                                                                                                                                       
+set EUtranCellFDD=.* pimDetectionEnabled true                                                                                                                                                                          
+set ENodeBFunction=1 pimAutoDetectionEnabled false                                                                                                                                                                     
+set CXC4011842 featurestate 0                                                                                                                                                                                          
+set SubscriberGroupProfile=1 preschedulingMode 2                                                                                                                                                                       
+set PreschedProfile= preschedulingDataSize 86                                                                                                                                                                          
+set PreschedProfile= preschedulingPeriod 5                                                                                                                                                                             
+set PreschedProfile= preschedulingDuration 200                                                                                                                                                                         
+set PreschedProfile=0 preschedulingSinrThreshold 15                                                                                                                                                                    
+set CXC4012200 featurestate 1                                                                                                                                                                                          
+                                                                                                                                                                                                                       
+set CXC4012563 featurestate 1                                                                                                                                                                                          
+set EUtranCellTDD=.* rxSinrTargetClpc 16                                                                                                                                                                               
+set EUtranCellTDD=.* interferenceThresholdSinrClpc -105                                                                                                                                                                
+set EUtranCellTDD=.* p0ClpcExGoodEnabled true                                                                                                                                                                          
+set EUtranCellTDD=.* p0ClpcExBadEnabled true                                                                                                                                                                           
+set EUtranCellTDD=.* p0ClpcExBadSinrThr -10                                                                                                                                                                            
+set EUtranCellTDD=.* p0ClpcExGoodSinrThr 16                                                                                                                                                                            
+set EUtranCellTDD=.* p0ClpcExGoodSinrOffset64Qam 3                                                                                                                                                                     
+set EUtranCellTDD=.* p0ClpcExGoodSinrOffset256Qam 10                                                                                                                                                                   
+set EUtranCellTDD=.* assumedUePowerMsg3 1000                                                                                                                                                                           
+                                                                                                                                                                                                                       
+set CarrierAggregationFunction CaPCellOnlyInitialSetup TRUE                                                                                                                                                            
+                                                                                                                                                                                                                       
+set ^EUtranCellTDD=.*T.* ductIntPerfTuning ductIntBgNoiseThr=-102,ductIntCharSeqCorrPeakThr=50,ductIntCharSeqPwrDiff=5,ductIntCharSeqPwrThr=-                                                                          
+102,ductIntCharSeqTransThr=10,ductIntRedRecovThr=10,ductIntRedTriggerThr=14,ductIntSlopeDetectPeriod=10,ductIntSlopeDetectRatioThr=50,ductInt                                                                          
+SlopePwrDiffThr=3                                                                                                                                                                                                      
+set ENodeBFunction=1 ductIntFlexibleDetectionEnabled FALSE                                                                                                                                                             
+set ^EUtranCellTDD=.*T.* ductIntCharInfoValue 2                                                                                                                                                                        
+set  ENodeBFunction=1 ductIntCharInfoScheme 2                                                                                                                                                                          
+set EUtranCellTDD=.* ductIntOpMode 3                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+#### 24.Q2 Update ####                                                                                                                                                                                                 
+set Lm=1,FeatureState=CXC4011958$ FeatureState 1                                                                                                                                                                       
+set Lm=1,FeatureState=CXC4010974$ FeatureState 1                                                                                                                                                                       
+set EUtranCellRelation*.* sleepModeCovCellCandidate 2                                                                                                                                                                  
+set CellSleepFunction*.* prbOffloadAdjust 100                                                                                                                                                                          
+set CellSleepFunction*.* rrcOffloadAdjust 100                                                                                                                                                                          
+set Lm=1,FeatureState=CXC4012563$ FeatureState 1                                                                                                                                                                       
+set EUtranCell.*DD=.* pdcchFlexibleBlerEnabled TRUE                                                                                                                                                                    
+set SubscriberGroupProfile*.* pdcchFlexibleBlerMode 2                                                                                                                                                                  
+set EUtranCell.*DD=.* diffPdcchMaxTargetBlerEnabled TRUE                                                                                                                                                               
+set EUtranCell.*DD=.* diffPdcchMaxTargetBlerThres -10                                                                                                                                                                  
+set EUtranCell.*DD=.* pdcchCongestMeasurePeriod 1                                                                                                                                                                      
+set EUtranCell.*DD=.* pdcchMaxTargetBlerHigh 400                                                                                                                                                                       
+set EUtranCell.*DD=.* pdcchMaxTargetBlerLow 200                                                                                                                                                                        
+set EUtranCell.*DD=.* pdcchTargetBler 24                                                                                                                                                                               
+set EUtranCell.*DD=.* pdcchTargetBlerPCell 22                                                                                                                                                                          
+set EUtranCell.*DD=.* optimizedPdcchMaxTargetBler 200                                                                                                                                                                  
+set EUtranCell.*DD=.* optimizedPdcchCceUtilThres 30                                                                                                                                                                    
+set EUtranCell.*DD=.* optimizedPdcchCongestThres 30                                                                                                                                                                    
+set EUtranCell.*DD=.* optimizedPdcchDlPrbThres 100                                                                                                                                                                     
+set EUtranCell.*DD=.* optimizedPdcchUlPrbThres 100                                                                                                                                                                     
+set UePolicyOptimization=1$ zzzTemporary1 1                                                                                                                                                                            
+set UePolicyOptimization=1$ ueCapPrioList 0                                                                                                                                                                            
+set UePolicyOptimization=1$ loadAwareImc TRUE                                                                                                                                                                          
+set UePolicyOptimization=1$ coverageAwareImc TRUE                                                                                                                                                                      
+set UePolicyOptimization=1$ t320 180                                                                                                                                                                                   
+set ENodeBFunction=1$ ChannelQualityMode 1                                                                                                                                                                             
+set Lm=1,FeatureState=CXC4012677$ FeatureState 0                                                                                                                                                                       
+set AnrFunctionNRUeCfg=Base$ anrRsrpThreshold -112                                                                                                                                                                     
+set IntraFreqMCCellProfileUeCfg betterSpCellTriggerQuantity 0                                                                                                                                                          
+set ENodeBFunction=1$ endcOverheatingAssistance TRUE                                                                                                                                                                   
+set ENodeBFunction=1$ overheatingIndProhibitTimer 20                                                                                                                                                                   
+set Lm=1,FeatureState=CXC4012690$ FeatureState 0                                                                                                                                                                       
+set Lm=1,FeatureState=CXC4012677$ FeatureState 0                                                                                                                                                                       
+set EUtranCell.*DD=.* loopingEndcProtectionEnabled TRUE                                                                                                                                                                
+set EUtranCell.*DD=.* loopingEndcBackOffDuration 200                                                                                                                                                                   
+set EUtranCell.*DD=.* loopingEndcShortScgSessTime 3000                                                                                                                                                                 
+set EUtranCell.*DD=.* loopingEndcConsecFailThr 5                                                                                                                                                                       
+set NRCellDU=.* advancedDlSuMimoEnabled TRUE                                                                                                                                                                           
+set Lm=1,FeatureState=CXC4012536$ FeatureState 0                                                                                                                                                                       
+set NRCellDU=.* maxNoOfAdvancedDlMuMimoLayers 8                                                                                                                                                                        
+set Lm=1,FeatureState=CXC4012673$ FeatureState 1                                                                                                                                                                       
+set NRCellDU=.* pZeroNomPuschGrant 1000                                                                                                                                                                                
+set NRCellDU=.* autoSelectedModeOffset 6                                                                                                                                                                               
+set PowerControlUeCfg pZeroNomPuschOffset 0                                                                                                                                                                            
+cr GNBDUFunction=1,UeCC=1,PowerControl=1,PowerControlUeCfg=clpc                                                                                                                                                        
+set GNBDUFunction=1,UeCC=1,PowerControl=1,PowerControlUeCfg=clpc puschPowerControlModeFr1 1                                                                                                                            
+set ENodeBFunction pciConflictReportType 2                                                                                                                                                                             
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1 pciConflictDetectionType 3                                                                                                                                          
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1 endcRachFailThrPerUe 5                                                                                                                                              
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1 maxNoOfUeForPciConflictDetect 5                                                                                                                                     
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1 scgSessTimeForEndcRachFail 2500                                                                                                                                     
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+lbl NRCellDU=.*                                                                                                                                                                                                        
+set Lm=1,FeatureState=CXC4012634$ FeatureState 1                                                                                                                                                                       
+set NRCellDU=.* ssbTimeShiftEnabled TRUE                                                                                                                                                                               
+set NRCellDU=.* tddBorderVersion 0                                                                                                                                                                                     
+ldeb  NRCellDU=.*                                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1 supportNrFreqChange 1                                                                                                                                               
+set EUtranCell.*DD=.* endcSetupUlBsVolThr 5000                                                                                                                                                                         
+set Lm=1,FeatureState=CXC4012638$ FeatureState 1                                                                                                                                                                       
+set UeAdaptiveRlcUeCfg ueAdaptiveRlcRetxMode 0                                                                                                                                                                         
+set Fm=1,FmAlarmModel=1,FmAlarmtype=RadioInterfaceConnectivityDisturbanceAlert isNotified 0                                                                                                                            
+set GNBCUUPFunction=1,CardinalityLimits=1$ maxS1UPath 1800                                                                                                                                                             
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+set Lm=1,FeatureState=CXC4012378$ FeatureState 1                                                                                                                                                                       
+cr GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepTimeGroup=1                                                                                                                                                            
+set NRSectorCarrier=.* massiveMimoSleepEnabled ENABLED                                                                                                                                                                 
+bl NRSectorCarrier=                                                                                                                                                                                                    
+Set NRSectorCarrier=S.* mMimoSleepTimeGroupRef GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepTimeGroup=1                                                                                                                
+deb NRSectorCarrier=                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+cr GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepProfile=1                                                                                                                                                              
+cr GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepTimeGroup=1,MMimoSleepTimeWindow=1                                                                                                                                     
+GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepProfile=1                                                                                                                                                                 
+                                                                                                                                                                                                                       
+set MMimoSleepProfile=1 sleepMode TXMUTE                                                                                                                                                                               
+set MMimoSleepProfile=1 switchDownMonitorDurTimer 60                                                                                                                                                                   
+set MMimoSleepProfile=1 switchDownPrbThreshDl 10                                                                                                                                                                       
+set MMimoSleepProfile=1 switchDownRrcConnThresh 10                                                                                                                                                                     
+set MMimoSleepProfile=1 switchUpMonitorDurTimer 30                                                                                                                                                                     
+set MMimoSleepProfile=1 switchUpPrbThreshDl 20                                                                                                                                                                         
+set MMimoSleepProfile=1 switchUpRrcConnThresh 20                                                                                                                                                                       
+set MMimoSleepTimeWindow dayOfWeek ALL                                                                                                                                                                                 
+set MMimoSleepTimeWindow stopTime 23:30                                                                                                                                                                                
+set MMimoSleepTimeWindow startTime 20:30                                                                                                                                                                               
+set Fm=1,FmAlarmModel=1,FmAlarmtype=RadioInterfaceConnectivityDisturbanceAlert isNotified 0                                                                                                                            
+                                                                                                                                                                                                                       
+set Lm=1,FeatureState=CXC4012563$ FeatureState 1                                                                                                                                                                       
+set Lm=1,FeatureState=CXC4012199$ FeatureState 1                                                                                                                                                                       
+set Lm=1,FeatureState=CXC4011482$ FeatureState 1                                                                                                                                                                       
+set EUtranCell.*DD=.* pdcchFlexibleBlerEnabled TRUE                                                                                                                                                                    
+set SubscriberGroupProfile=.* pdcchFlexibleBlerMode 2                                                                                                                                                                  
+set EUtranCell.*DD=.* pdcchCongestMeasurePeriod 1                                                                                                                                                                      
+set EUtranCell.*DD=.* pdcchTargetBler 24                                                                                                                                                                               
+set EUtranCell.*DD=.* pdcchTargetBlerPCell 22                                                                                                                                                                          
+set EUtranCell.*DD=.* optimizedPdcchMaxTargetBler 200                                                                                                                                                                  
+set EUtranCell.*DD=.* optimizedPdcchDlPrbThres 100                                                                                                                                                                     
+set EUtranCell.*DD=.* optimizedPdcchUlPrbThres 100                                                                                                                                                                     
+set EUtranCell.*DD=.* optimizedPdcchCongestThres 30                                                                                                                                                                    
+set EUtranCell.*DD=.* pdcchCongCtrlParamEnabled TRUE                                                                                                                                                                   
+set CarrierAggregationFunction=1$ sCellPdcchOutLoopMarginCong 100                                                                                                                                                      
+set EUtranCell.*DD=.* pdcchOutLoopInitAdjCong -40                                                                                                                                                                      
+set EUtranCell.*DD=.* pdcchOutLoopInitAdjPCellCong -40                                                                                                                                                                 
+set EUtranCell.*DD=.* pdcchPowerBoostMaxCong 0                                                                                                                                                                         
+set EUtranCell.*DD=.* pdcchTargetBlerAdjStep 5                                                                                                                                                                         
+set Lm=1,FeatureState=CXC4012687$ FeatureState 1                                                                                                                                                                       
+set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1$ ulMaxRetxThresholdLow 16                                                                                                                              
+set ENodeBFunction=1,RadioBearerTable=default,RlcConfiguration=1$ ulRlcBufferCellThresUlMaxRetx 25                                                                                                                     
+set ENodeBFunction=1,RadioBearerTable=default,RlcConfiguration=1$ ulRlcBufferMaxRetxThresHigh 90                                                                                                                       
+set ENodeBFunction=1,RadioBearerTable=default,RlcConfiguration=1$ ulRlcBufferMaxRetxThresLow 80                                                                                                                        
+set Lm=1,FeatureState=CXC4011319$ FeatureState 1                                                                                                                                                                       
+set Lm=1,FeatureState=CXC4010974$ FeatureState 1                                                                                                                                                                       
+set EUtranCell.*DD=.* lbUlHeavyUeDetectEnabled TRUE                                                                                                                                                                    
+set ENodeBFunction=1$ ulHeavyUeDetectTime 500                                                                                                                                                                          
+set ENodeBFunction=1$ ulHeavyUeBsrThresh 400                                                                                                                                                                           
+set ENodeBFunction=1$ ulHeavyUeBsrHyst 100                                                                                                                                                                             
+set Lm=1,FeatureState=CXC4010620$ FeatureState 1                                                                                                                                                                       
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1$ cellAddRsrpThresholdNR -110                                                                                                                                        
+set EUtranCell.*DD=.*.,GUtranFreqRelation=.* cellAddRsrpThrNROverride -1000                                                                                                                                            
+set Lm=1,FeatureState=CXC4012732$ FeatureState 1                                                                                                                                                                       
+set Lm=1,FeatureState=CXC4011482$ FeatureState 1                                                                                                                                                                       
+set EUtranCell.*DD=.* decoupledPdcchLaEnabled TRUE                                                                                                                                                                     
+set EUtranCell.*DD=.* pdcchUlDtxWorseThres 10                                                                                                                                                                          
+set Lm=1,FeatureState=CXC4011422$ FeatureState 1                                                                                                                                                                       
+set ENodeBFunction=1$ rxBranchImbalanceThreshold 80                                                                                                                                                                    
+set ENodeBFunction=1$ antSysMonitoringAlarmHandling TRUE                                                                                                                                                               
+set Lm=1,FeatureState=CXC4012024$ FeatureState 1                                                                                                                                                                       
+                                                                                                                                                                                                                       
+mr L18bw20                                                                                                                                                                                                             
+ma L18bw20 EUtranCellFDD.*F3 dlChannelBandwidth 20000                                                                                                                                                                  
+bl L18bw20                                                                                                                                                                                                             
+set L18bw20 zzzTemporary79 1                                                                                                                                                                                           
+                                                                                                                                                                                                                       
+mr NRssb                                                                                                                                                                                                               
+ma NRssb NRCellDU ssbPowerBoost 0                                                                                                                                                                                      
+set NRssb ssbPowerBoostMMimoSleep 3                                                                                                                                                                                    
+                                                                                                                                                                                                                       
+set Lm=1,FeatureState=CXC4012635 featureState 1                                                                                                                                                                        
+set NRCellDU=.* rimDetectionEnabled TRUE                                                                                                                                                                               
+set NRCellDU=.* rimPdschSlotBlankMode 1                                                                                                                                                                                
+set NRCellDU=.* rimPdschSlotBlankTimer 1260                                                                                                                                                                            
+                                                                                                                                                                                                                       
+run /home/shared/N_PROJECT/ROTN_Scripts/lat_long.txt                                                                                                                                                                   
+                                                                                                                                                                                                                       
+                                                                                                                                                                                            
+confbd-   
+
+
+                                                                                                                        
+confbd+                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+$date = `date +%y%m%d_%H%M`                                                                                                                                                                                            
+cvms Pre_L18_LMS_Config_$date                                                                                                                                                                                          
+                                                                                                                                                                                                                       
+bl EUtranCellFDD=TN_E_F3_                                                                                                                                                                                              
+                                                                                                                                                                                                                       
+wait 8                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+                                                                                                                                       
+                                                                                                                                                                                                                       
+        setm EUtranCellFDD.*_F3 crsGain 177 pdschTypeBGain 1                                                                                                                                                           
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+wait 5                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+###LMS Parameters                                                                                                                                                                                                      
+                                                                                                                                                                                                                       
+##FDD L1800                                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+ma L1800 EUtranCellFDD earfcn 1615                                                                                                                                                                                     
+wait 1                                                                                                                                                                                                                 
+if $nr_of_mos != 0                                                                                                                                                                                                     
+for $mo in L1800                                                                                                                                                                                                       
+$mordn = rdn($mo)                                                                                                                                                                                                      
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrp 20                                                                                                                                            
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrp -112                                                                                                                                           
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=0,a1a2ThrRsrpQciOffset=8                              
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRsrp -140                                                                                                                                           
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrpOffset -20                                                                                                                                        
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100                                                                                                                                       
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrp -112                                                                                                                                                      
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrp -114                                                                                                                                                      
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20                                                                                                                                                            
+set $mordn,EUtranFreqRelation=39150 a5Thr1RsrpFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=39151 a5Thr1RsrpFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=39294 a5Thr1RsrpFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=39295 a5Thr1RsrpFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=390$ a5Thr1RsrpFreqOffset 0                                                                                                                                                              
+set $mordn,EUtranFreqRelation=1615 a5Thr1RsrpFreqOffset 0                                                                                                                                                              
+set $mordn,EUtranFreqRelation=3696 a5Thr1RsrpFreqOffset 0                                                                                                                                                              
+set $mordn,EUtranFreqRelation=39150 a5Thr2RsrpFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=39151 a5Thr2RsrpFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=39294 a5Thr2RsrpFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=39295 a5Thr2RsrpFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=390$ a5Thr2RsrpFreqOffset -2                                                                                                                                                             
+set $mordn,EUtranFreqRelation=1615 a5Thr2RsrpFreqOffset 2                                                                                                                                                              
+set $mordn,EUtranFreqRelation=3696 a5Thr2RsrpFreqOffset 6                                                                                                                                                              
+set $mordn,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling
+=1                                                                                                                                                                                                                     
+set $mordn,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling
+=1                                                                                                                                                                                                                     
+set $mordn,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling
+=1                                                                                                                                                                                                                     
+set $mordn,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling
+=1                                                                                                                                                                                                                     
+set $mordn,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=10,lbQciProfileHandling=
+1                                                                                                                                                                                                                      
+set $mordn,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=3696  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=2,lbQciProfileHandling=1
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -116                                                                                                                                                 
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97                                                                                                                                                 
+set $mordn,EUtranFreqRelation=39150 cellReselectionPriority 6                                                                                                                                                          
+set $mordn,EUtranFreqRelation=39151 cellReselectionPriority 7                                                                                                                                                          
+set $mordn,EUtranFreqRelation=39294 cellReselectionPriority 5                                                                                                                                                          
+set $mordn,EUtranFreqRelation=39295 cellReselectionPriority 7                                                                                                                                                          
+set $mordn,EUtranFreqRelation=390$ cellReselectionPriority 3                                                                                                                                                           
+set $mordn,EUtranFreqRelation=1615 cellReselectionPriority 4                                                                                                                                                           
+set $mordn,EUtranFreqRelation=3696 cellReselectionPriority 2                                                                                                                                                           
+set $mordn,GeranFreqGroupRelation=1         cellReselectionPriority 1                                                                                                                                                  
+set $mordn,EUtranFreqRelation=390$ connectedmodemobilityprio 3                                                                                                                                                         
+set $mordn,EUtranFreqRelation=1615 connectedmodemobilityprio 4                                                                                                                                                         
+set $mordn,EUtranFreqRelation=39150 connectedmodemobilityprio 6                                                                                                                                                        
+set $mordn,EUtranFreqRelation=39151 connectedmodemobilityprio 7                                                                                                                                                        
+set $mordn,EUtranFreqRelation=39294 connectedmodemobilityprio 5                                                                                                                                                        
+set $mordn,EUtranFreqRelation=39295 connectedmodemobilityprio 7                                                                                                                                                        
+set $mordn,EUtranFreqRelation=3696 connectedmodemobilityprio 2                                                                                                                                                         
+set $mordn,GeranFreqGroupRelation=1         connectedModeMobilityPrio -1                                                                                                                                               
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrp 0                                                                                                                                             
+set $mordn,UeMeasControl=1,ReportConfigEUtraBestCell=1 hysteresisA3 10                                                                                                                                                 
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 hysteresisB2 20                                                                                                                                                       
+set $mordn qRxLevMin -124                                                                                                                                                                                              
+set $mordn SystemInformationBlock3 sintrasearch=44                                                                                                                                                                     
+set $mordn SystemInformationBlock3 snonintrasearch=6                                                                                                                                                                   
+set $mordn SystemInformationBlock3 qhyst=4                                                                                                                                                                             
+set $mordn threshServingLow 6                                                                                                                                                                                          
+set $mordn,EUtranFreqRelation=.* qRxLevMin -124                                                                                                                                                                        
+set $mordn,GeranFreqGroupRelation=1         qRxLevMin         -111                                                                                                                                                     
+set $mordn,EUtranFreqRelation=39150 threshXHigh 12                                                                                                                                                                     
+set $mordn,EUtranFreqRelation=39151 threshXHigh 12                                                                                                                                                                     
+set $mordn,EUtranFreqRelation=39294 threshXHigh 12                                                                                                                                                                     
+set $mordn,EUtranFreqRelation=39295 threshXHigh 12                                                                                                                                                                     
+set $mordn,EUtranFreqRelation=390$ threshXLow 14                                                                                                                                                                       
+set $mordn,EUtranFreqRelation=3696 threshXLow 14                                                                                                                                                                       
+set $mordn,GeranFreqGroupRelation=1     threshXLow  16                                                                                                                                                                 
+set $mordn,EUtranFreqRelation=39150 voicePrio -1                                                                                                                                                                       
+set $mordn,EUtranFreqRelation=39151 voicePrio -1                                                                                                                                                                       
+set $mordn,EUtranFreqRelation=39294 voicePrio -1                                                                                                                                                                       
+set $mordn,EUtranFreqRelation=39295 voicePrio -1                                                                                                                                                                       
+set $mordn,EUtranFreqRelation=390$ voicePrio 4                                                                                                                                                                         
+set $mordn,EUtranFreqRelation=1615 voicePrio 5                                                                                                                                                                         
+set $mordn,EUtranFreqRelation=3696 voicePrio 6                                                                                                                                                                         
+set $mordn,GeranFreqGroupRelation=1         voicePrio     1                                                                                                                                                            
+set $mordn,EUtranFreqRelation  interFreqMeasType 0                                                                                                                                                                     
+set $mordn,EUtranFreqRelation=39150         lbA5Thr1RsrpFreqOffset 97                                                                                                                                                  
+set $mordn,EUtranFreqRelation=39294         lbA5Thr1RsrpFreqOffset 97                                                                                                                                                  
+set $mordn,EUtranFreqRelation=390$         lbA5Thr1RsrpFreqOffset 41                                                                                                                                                   
+set $mordn,EUtranFreqRelation=1615         lbA5Thr1RsrpFreqOffset 0                                                                                                                                                    
+set $mordn,EUtranFreqRelation=3696         lbA5Thr1RsrpFreqOffset 0                                                                                                                                                    
+set $mordn,UeMeasControl=1 ueMeasurementsActiveGERAN True                                                                                                                                                              
+done                                                                                                                                                                                                                   
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+#### IFLB Parameters                                                                                                                                                                                                   
+                                                                                                                                                                                                                       
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold1Rsrp  -140                                                                                                                     
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold2Rsrp   -114                                                                                                                    
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 hysteresisA5 10                                                                                                                            
+                                                                                                                                                                                                                       
+                                                                                                                                                                                                                       
+wait 2                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+###LMS Parameter RSRQ                                                                                                                                                                                                  
+                                                                                                                                                                                                                       
+##FDD L1800                                                                                                                                                                                                            
+                                                                                                                                                                                                                       
+ma L1800 EUtranCellFDD earfcn 1615                                                                                                                                                                                     
+wait 1                                                                                                                                                                                                                 
+if $nr_of_mos != 0                                                                                                                                                                                                     
+for $mo in L1800                                                                                                                                                                                                       
+$mordn = rdn($mo)                                                                                                                                                                                                      
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrq 10                                                                                                                                            
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrq -150                                                                                                                                           
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=-40                                                   
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRq -195                                                                                                                                           
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100                                                                                                                                       
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrq 100                                                                                                                                           
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 InhibitA2SearchConfig 0                                                                                                                                                
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1SearchRsrq 1024                                                                                                                                         
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2CriticalRsrq 1024                                                                                                                                       
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2SearchRsrq 1024                                                                                                                                         
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrq -140                                                                                                                                                      
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrq -160                                                                                                                                                      
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20                                                                                                                                                            
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5RsrqOffset 0                                                                                                                                                   
+set $mordn,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5Rsrq 1024                                                                                                                                                   
+set $mordn,EUtranFreqRelation=.* a5Thr1RsrqFreqOffset 0                                                                                                                                                                
+set $mordn,EUtranFreqRelation=39294 a5Thr2RsrqFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=39295 a5Thr2RsrqFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=39150 a5Thr2RsrqFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=39151 a5Thr2RsrqFreqOffset 0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=390$ a5Thr2RsrqFreqOffset  0                                                                                                                                                             
+set $mordn,EUtranFreqRelation=1615 a5Thr2RsrqFreqOffset 0                                                                                                                                                              
+set $mordn,EUtranFreqRelation=3696 a5Thr2RsrqFreqOffset 20                                                                                                                                                             
+set $mordn,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHand
+ling=1                                                                                                                                                                                                                 
+set $mordn,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHand
+ling=1                                                                                                                                                                                                                 
+set $mordn,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHand
+ling=1                                                                                                                                                                                                                 
+set $mordn,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHand
+ling=1                                                                                                                                                                                                                 
+set $mordn,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandl
+ing=1                                                                                                                                                                                                                  
+set $mordn,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandl
+ing=1                                                                                                                                                                                                                  
+set $mordn,EUtranFreqRelation=3696  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-30,a5Thr2RsrqFreqQciOffset=-70,lbQciProfileHandli
+ng=1                                                                                                                                                                                                                   
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrq -195                                                                                                                                                 
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 hysteresisB2 20                                                                                                                                                       
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 hysteresisB2RsrqOffset 100                                                                                                                                            
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97                                                                                                                                                 
+set $mordn,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold2Rsrq -170                                                                                                                                        
+set $mordn,UeMeasControl=1 bothA5RsrpRsrqCheck True                                                                                                                                                                    
+done                                                                                                                                                                                                                   
+else                                                                                                                                                                                                                   
+fi                                                                                                                                                                                                                     
+                                                                                                                                                                                                                       
+### Deactivate SRVCC in L18 Layer ###                                                                                                                                                                                  
+set EUtranCellFDD=TN_E_F3.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -140                                                                                                                                
+set EUtranCellFDD=TN_E_F3.*,GeranFreqGroupRelation=1 connectedModeMobilityPrio -1                                                                                                                                      
+set EUtranCellFDD=TN_E_F3.*,GeranFreqGroupRelation=1 voicePrio -1                                                                                                                                                      
+set EUtranCellFDD=TN_E_F3.*,UeMeasControl=1 ueMeasurementsActiveGERAN False                                                                                                                                            
+                                                                                                                                                                                                                       
+wait 3                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+deb EutrancellFDD=TN_E_F3_                                                                                                                                                                                             
+                                                                                                                                                                                                                       
+lt all                                                                                                                                                                                                                 
+                                                                                                                                                                                                                       
+$date = `date +%y%m%d_%H%M`                                                                                                                                                                                            
+                                                                                                                                                                                           
+                                                                                                                                                                                                                       
+confbd-                                                                                                                                                                                                                
+                                                                                                                                                                                                                       
+                                                                                                                                                                                  
+confbd+
+
+$date = `date +%y%m%d_%H%M`
+
+
+bl EUtranCell.DD=TN
+
+wait 10
+
+
+
+	setm EUtranCellTDD.*_T2 crsGain 0 pdschTypeBGain 0
+	setm EUtranCellTDD.*_T1 crsGain 0 pdschTypeBGain 0
+	setm EUtranCellFDD.*_F1 crsGain 300 pdschTypeBGain 1
+	setm EUtranCellFDD.*_F3 crsGain 177 pdschTypeBGain 1
+	setm EUtranCellFDD.*_F8 crsGain 0 pdschTypeBGain 0
+fi
+
+wait 5
+
+###LMS Parameters
+
+##TDD
+
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrp 20
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrp -112
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=0,a1a2ThrRsrpQciOffset=64
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRsrp -140
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrpOffset -20
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrp -112
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrp -112
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
+set EUtranCellTDD=.*,EUtranFreqRelation=.* a5Thr1RsrpFreqOffset 0
+set EUtranCellTDD=.*,EUtranFreqRelation=390$ a5Thr2RsrpFreqOffset 0
+set EUtranCellTDD=.*,EUtranFreqRelation=1615 a5Thr2RsrpFreqOffset 0
+set EUtranCellTDD=.*,EUtranFreqRelation=3710 a5Thr2RsrpFreqOffset 60
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=64,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=64,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=64,a5Thr2RsrpFreqQciOffset=4,lbQciProfileHandling=1
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=3710  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=-60,lbQciProfileHandling=1
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=64,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation 
+qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=64,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=64,a5Thr2RsrpFreqQciOffset=4,lbQciProfileHandling=1
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=3710  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=-60,lbQciProfileHandling=1
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -140
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97
+set EUtranCellTDD=.*,EUtranFreqRelation=390$ cellReselectionPriority 3
+set EUtranCellTDD=.*,EUtranFreqRelation=1615 cellReselectionPriority 4
+set EUtranCellTDD=.*,EUtranFreqRelation=3710 cellReselectionPriority 2
+set EUtranCellTDD=.*,GeranFreqGroupRelation=1         cellReselectionPriority 1
+set EUtranCellTDD=.*,EUtranFreqRelation=390$ connectedmodemobilityprio 3
+set EUtranCellTDD=.*,EUtranFreqRelation=1615 connectedmodemobilityprio 4
+set EUtranCellTDD=.*,EUtranFreqRelation=3710 connectedmodemobilityprio -1
+set EUtranCellTDD=.*,GeranFreqGroupRelation=1         connectedModeMobilityPrio -1
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrp 0
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 hysteresisA3 10
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigB2Geran=1 hysteresisB2 20
+set EUtranCellTDD=.* qRxLevMin -124
+set EutrancellTDD=.* SystemInformationBlock3 sintrasearch=44
+set EutrancellTDD=.* SystemInformationBlock3 qhyst=4
+set EUtranCellTDD=.*,EUtranFreqRelation=.* qRxLevMin -124
+set EUtranCellTDD=.*,GeranFreqGroupRelation=1         qRxLevMin         -111
+set EUtranCellTDD=.*,EUtranFreqRelation=.* threshXHigh 12
+set EUtranCellTDD=.*,GeranFreqGroupRelation=1     threshXLow  62
+set EUtranCellTDD=.*,EUtranFreqRelation=390$ voicePrio 4
+set EUtranCellTDD=.*,EUtranFreqRelation=1615 voicePrio 5
+set EUtranCellTDD=.*,EUtranFreqRelation=3710 voicePrio 6
+set EUtranCellTDD=.*,GeranFreqGroupRelation=1         voicePrio     -1
+set EUtranCellTDD=.*,EUtranFreqRelation  interFreqMeasType 0
+set EUtranCellTDD=.*,UeMeasControl=1                  ueMeasurementsActiveGERAN false
+
+
+###TDD10M
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39150 a5Thr2RsrpFreqOffset 60
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39151 a5Thr2RsrpFreqOffset 60
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39294 a5Thr2RsrpFreqOffset 0
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39295 a5Thr2RsrpFreqOffset 0
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39150 cellReselectionPriority 6
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39151 cellReselectionPriority 7
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39294 cellReselectionPriority 5
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39295 cellReselectionPriority 7
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39150 connectedmodemobilityprio 6
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39151 connectedmodemobilityprio 7
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39294 connectedmodemobilityprio 5
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39295 connectedmodemobilityprio 7
+set EUtranCellTDD=TN_E_T1_.* SystemInformationBlock3 snonintrasearch=8
+set EUtranCellTDD=TN_E_T1_.* threshServingLow 8
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39150 threshXLow 22
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39151 threshXLow 22
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=390$ threshXLow 14
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=1615 threshXLow 10
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=3710 threshXLow 10
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39150  voicePrio -1
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39151  voicePrio -1
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39294 voicePrio 1
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39295 voicePrio 1
+
+
+###TDD 20M
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39150 a5Thr2RsrpFreqOffset 0
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39151 a5Thr2RsrpFreqOffset 0
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39294 a5Thr2RsrpFreqOffset 60
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39295 a5Thr2RsrpFreqOffset 60
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39150 cellReselectionPriority 6
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39151 cellReselectionPriority 7
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39294 cellReselectionPriority 5
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39295 cellReselectionPriority 7
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39150 connectedmodemobilityprio 6
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39151 connectedmodemobilityprio 7
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39294 connectedmodemobilityprio 5
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39295 connectedmodemobilityprio 7
+set EUtranCellTDD=TN_E_T2_.* SystemInformationBlock3 snonintrasearch=8
+set EUtranCellTDD=TN_E_T2_.* threshServingLow 8
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39294 threshXLow 10
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39295 threshXLow 10
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=390$ threshXLow 14
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=1615 threshXLow 10
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=3710 threshXLow 10
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39150  voicePrio 1
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39151  voicePrio 1
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39294 voicePrio -1
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39295 voicePrio -1
+
+wait 2
+pr Fdd=.*F1
+if $nr_of_mos = 0
+set EUtranCellTDD=.*,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=2,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+fi
+
+wait 2
+
+pr Fdd=.*F1
+if $nr_of_mos > 1
+set EUtranCellTDD=.*,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=64,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+fi
+
+
+##FDD L2100
+
+ma L2100 EUtranCellFDD earfcn 390
+wait 1
+if $nr_of_mos != 0 
+for $mo in L2100
+$mordn = rdn($mo)
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrp 20
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrp -110
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=0,a1a2ThrRsrpQciOffset=4
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRp -140
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrpOffset -20
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrp -110
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrp -116
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
+set $mordn,EUtranFreqRelation=39150 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39151 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39294 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39295 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=390$ a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=1615 a5Thr1RsrpFreqOffset -2
+set $mordn,EUtranFreqRelation=3710 a5Thr1RsrpFreqOffset -2
+set $mordn,EUtranFreqRelation=39150 a5Thr2RsrpFreqOffset 2
+set $mordn,EUtranFreqRelation=39151 a5Thr2RsrpFreqOffset 2
+set $mordn,EUtranFreqRelation=39294 a5Thr2RsrpFreqOffset 2
+set $mordn,EUtranFreqRelation=39295 a5Thr2RsrpFreqOffset 2
+set $mordn,EUtranFreqRelation=390$ a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=1615 a5Thr2RsrpFreqOffset 4
+set $mordn,EUtranFreqRelation=3710 a5Thr2RsrpFreqOffset 8
+set $mordn,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=2,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=2,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=2,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=2,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=6,a5Thr2RsrpFreqQciOffset=4,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=3710  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=4,a5Thr2RsrpFreqQciOffset=-4,lbQciProfileHandling=1
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -140
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97
+set $mordn,EUtranFreqRelation=39150 cellReselectionPriority 6
+set $mordn,EUtranFreqRelation=39151 cellReselectionPriority 7
+set $mordn,EUtranFreqRelation=39294 cellReselectionPriority 5
+set $mordn,EUtranFreqRelation=39295 cellReselectionPriority 6
+set $mordn,EUtranFreqRelation=390$ cellReselectionPriority 3
+set $mordn,EUtranFreqRelation=1615 cellReselectionPriority 4
+set $mordn,EUtranFreqRelation=3710 cellReselectionPriority 2
+set $mordn,GeranFreqGroupRelation=1         cellReselectionPriority 1
+set $mordn,EUtranFreqRelation=390$ connectedmodemobilityprio 3
+set $mordn,EUtranFreqRelation=1615 connectedmodemobilityprio 4
+set $mordn,EUtranFreqRelation=39150 connectedmodemobilityprio 6
+set $mordn,EUtranFreqRelation=39151 connectedmodemobilityprio 7
+set $mordn,EUtranFreqRelation=39294 connectedmodemobilityprio 5
+set $mordn,EUtranFreqRelation=39295 connectedmodemobilityprio 7
+set $mordn,EUtranFreqRelation=3710 connectedmodemobilityprio 2
+set $mordn,GeranFreqGroupRelation=1         connectedModeMobilityPrio -1
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrp 0
+set $mordn,UeMeasControl=1,ReportConfigEUtraBestCell=1 hysteresisA3 10
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 hysteresisB2 20
+set $mordn qRxLevMin -124
+set $mordn SystemInformationBlock3 sintrasearch=44
+set $mordn SystemInformationBlock3 snonintrasearch=8
+set $mordn SystemInformationBlock3 qhyst=4
+set $mordn threshServingLow 8
+set $mordn,EUtranFreqRelation=.* qRxLevMin -124
+set $mordn,GeranFreqGroupRelation=1         qRxLevMin         -111
+set $mordn,EUtranFreqRelation=.* threshXHigh 12
+set $mordn,EUtranFreqRelation=1615 threshXHigh 14
+set $mordn,EUtranFreqRelation=3710 threshXLow 10
+set $mordn,GeranFreqGroupRelation=1     threshXLow  62
+set $mordn,EUtranFreqRelation=39150 voicePrio -1
+set $mordn,EUtranFreqRelation=39151 voicePrio -1
+set $mordn,EUtranFreqRelation=39294 voicePrio -1
+set $mordn,EUtranFreqRelation=39295 voicePrio -1
+set $mordn,EUtranFreqRelation=390$ voicePrio 4
+set $mordn,EUtranFreqRelation=1615 voicePrio 5
+set $mordn,EUtranFreqRelation=3710 voicePrio 6
+set $mordn,GeranFreqGroupRelation=1         voicePrio     -1
+set $mordn,EUtranFreqRelation  interFreqMeasType 0
+set $mordn,UeMeasControl=1                  ueMeasurementsActiveGERAN false
+set $mordn,EUtranFreqRelation=39150         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=39294         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=390$         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=1615         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=3710         lbA5Thr1RsrpFreqOffset 0
+done
+else 
+fi
+
+##FDD L1800
+
+
+
+ma L1800 EUtranCellFDD earfcn 1615
+wait 1
+if $nr_of_mos != 0 
+for $mo in L1800
+$mordn = rdn($mo)
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrp 20
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrp -112
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=0,a1a2ThrRsrpQciOffset=8
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRsrp -140
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrpOffset -20
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrp -112
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrp -114
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
+set $mordn,EUtranFreqRelation=39150 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39151 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39294 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39295 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=390$ a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=1615 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=3710 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39150 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39151 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39294 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39295 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=390$ a5Thr2RsrpFreqOffset -2
+set $mordn,EUtranFreqRelation=1615 a5Thr2RsrpFreqOffset 2
+set $mordn,EUtranFreqRelation=3710 a5Thr2RsrpFreqOffset 6
+set $mordn,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=10,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=3710  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=2,lbQciProfileHandling=1
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -116
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97
+set $mordn,EUtranFreqRelation=39150 cellReselectionPriority 6
+set $mordn,EUtranFreqRelation=39151 cellReselectionPriority 7
+set $mordn,EUtranFreqRelation=39294 cellReselectionPriority 5
+set $mordn,EUtranFreqRelation=39295 cellReselectionPriority 7
+set $mordn,EUtranFreqRelation=390$ cellReselectionPriority 3
+set $mordn,EUtranFreqRelation=1615 cellReselectionPriority 4
+set $mordn,EUtranFreqRelation=3710 cellReselectionPriority 2
+set $mordn,GeranFreqGroupRelation=1         cellReselectionPriority 1
+set $mordn,EUtranFreqRelation=390$ connectedmodemobilityprio 3
+set $mordn,EUtranFreqRelation=1615 connectedmodemobilityprio 4
+set $mordn,EUtranFreqRelation=39150 connectedmodemobilityprio 6
+set $mordn,EUtranFreqRelation=39151 connectedmodemobilityprio 7
+set $mordn,EUtranFreqRelation=39294 connectedmodemobilityprio 5
+set $mordn,EUtranFreqRelation=39295 connectedmodemobilityprio 7
+set $mordn,EUtranFreqRelation=3710 connectedmodemobilityprio 2
+set $mordn,GeranFreqGroupRelation=1         connectedModeMobilityPrio -1
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrp 0
+set $mordn,UeMeasControl=1,ReportConfigEUtraBestCell=1 hysteresisA3 10
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 hysteresisB2 20
+set $mordn qRxLevMin -124
+set $mordn SystemInformationBlock3 sintrasearch=44
+set $mordn SystemInformationBlock3 snonintrasearch=6
+set $mordn SystemInformationBlock3 qhyst=4
+set $mordn threshServingLow 6
+set $mordn,EUtranFreqRelation=.* qRxLevMin -124
+set $mordn,GeranFreqGroupRelation=1         qRxLevMin         -111
+set $mordn,EUtranFreqRelation=39150 threshXHigh 12
+set $mordn,EUtranFreqRelation=39151 threshXHigh 12
+set $mordn,EUtranFreqRelation=39294 threshXHigh 12
+set $mordn,EUtranFreqRelation=39295 threshXHigh 12
+set $mordn,EUtranFreqRelation=390$ threshXLow 14
+set $mordn,EUtranFreqRelation=3710 threshXLow 14
+set $mordn,GeranFreqGroupRelation=1     threshXLow  16
+set $mordn,EUtranFreqRelation=39150 voicePrio -1
+set $mordn,EUtranFreqRelation=39151 voicePrio -1
+set $mordn,EUtranFreqRelation=39294 voicePrio -1
+set $mordn,EUtranFreqRelation=39295 voicePrio -1
+set $mordn,EUtranFreqRelation=390$ voicePrio 4
+set $mordn,EUtranFreqRelation=1615 voicePrio 5
+set $mordn,EUtranFreqRelation=3710 voicePrio 6
+set $mordn,GeranFreqGroupRelation=1         voicePrio     1
+set $mordn,EUtranFreqRelation  interFreqMeasType 0
+set $mordn,EUtranFreqRelation=39150         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=39294         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=390$         lbA5Thr1RsrpFreqOffset 41
+set $mordn,EUtranFreqRelation=1615         lbA5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=3710         lbA5Thr1RsrpFreqOffset 0
+set $mordn,UeMeasControl=1 ueMeasurementsActiveGERAN True
+done
+else 
+fi
+
+ma L900 EUtranCellFDD earfcn 3710
+wait 1
+if $nr_of_mos != 0 
+for $mo in L900
+$mordn = rdn($mo)
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrp 20
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrp -58
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=0,a1a2ThrRsrpQciOffset=-52
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRp -140
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrpOffset -20
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrp -58
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrp -114
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
+set $mordn,EUtranFreqRelation=39150 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39151 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39294 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39295 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=390$ a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=1615 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=3710 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39150 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39151 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39294 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39295 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=390$ a5Thr2RsrpFreqOffset 2
+set $mordn,EUtranFreqRelation=1615 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=3710 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=66,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=6,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=3710  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -140
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97
+set $mordn,EUtranFreqRelation=39150 cellReselectionPriority 6
+set $mordn,EUtranFreqRelation=39151 cellReselectionPriority 7
+set $mordn,EUtranFreqRelation=39294 cellReselectionPriority 5
+set $mordn,EUtranFreqRelation=39295 cellReselectionPriority 7
+set $mordn,EUtranFreqRelation=390$ cellReselectionPriority 3
+set $mordn,EUtranFreqRelation=1615 cellReselectionPriority 4
+set $mordn,EUtranFreqRelation=3710 cellReselectionPriority 2
+set $mordn,GeranFreqGroupRelation=1         cellReselectionPriority 1
+set $mordn,EUtranFreqRelation=390$ connectedmodemobilityprio 3
+set $mordn,EUtranFreqRelation=1615 connectedmodemobilityprio 4
+set $mordn,EUtranFreqRelation=39150 connectedmodemobilityprio 6
+set $mordn,EUtranFreqRelation=39151 connectedmodemobilityprio 7
+set $mordn,EUtranFreqRelation=39294 connectedmodemobilityprio 5
+set $mordn,EUtranFreqRelation=39295 connectedmodemobilityprio 7
+set $mordn,EUtranFreqRelation=3710 connectedmodemobilityprio 2
+set $mordn,GeranFreqGroupRelation=1         connectedModeMobilityPrio -1
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrp 0
+set $mordn,UeMeasControl=1,ReportConfigEUtraBestCell=1 hysteresisA3 10
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 hysteresisB2 20
+set $mordn qRxLevMin -124
+set $mordn SystemInformationBlock3 sintrasearch=44
+set $mordn SystemInformationBlock3 snonintrasearch=0
+set $mordn SystemInformationBlock3 qhyst=4
+set $mordn threshServingLow 0
+set $mordn,EUtranFreqRelation=.* qRxLevMin -124
+set $mordn,GeranFreqGroupRelation=1         qRxLevMin         -111
+set $mordn,EUtranFreqRelation=39150 threshXHigh 10
+set $mordn,EUtranFreqRelation=39151 threshXHigh 10
+set $mordn,EUtranFreqRelation=39294 threshXHigh 10
+set $mordn,EUtranFreqRelation=39295 threshXHigh 10
+set $mordn,EUtranFreqRelation=390$ threshXHigh 10
+set $mordn,EUtranFreqRelation=3710 threshXHigh 10
+set $mordn,EUtranFreqRelation=1615 threshXHigh 10
+set $mordn,GeranFreqGroupRelation=1     threshXLow  62
+set $mordn,EUtranFreqRelation=39150 voicePrio -1
+set $mordn,EUtranFreqRelation=39151 voicePrio -1
+set $mordn,EUtranFreqRelation=39294 voicePrio -1
+set $mordn,EUtranFreqRelation=39295 voicePrio -1
+set $mordn,EUtranFreqRelation=390$ voicePrio -1
+set $mordn,EUtranFreqRelation=1615 voicePrio 5
+set $mordn,EUtranFreqRelation=3710 voicePrio 6
+set $mordn,GeranFreqGroupRelation=1         voicePrio     -1
+set $mordn,EUtranFreqRelation  interFreqMeasType 0
+set $mordn,EUtranFreqRelation=39150         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=39294         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=390$         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=1615         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=3710         lbA5Thr1RsrpFreqOffset 97
+set $mordn,UeMeasControl=1 ueMeasurementsActiveGERAN False
+done
+else 
+fi
+
+#### IFLB Parameters
+
+set EutrancellFDD=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold1Rsrp  -140
+set EutrancellFDD=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold2Rsrp   -114
+set EutrancellTDD=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold1Rsrp  -140
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold2Rsrp   -114
+set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 hysteresisA5 10
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 hysteresisA5 10
+set EutrancellTDD=.*,EUtranFreqRelation=39150         lbA5Thr1RsrpFreqOffset 97
+set EutrancellTDD=TN_E_T1_.*,EUtranFreqRelation=39151         lbA5Thr1RsrpFreqOffset 97
+set EutrancellTDD=.*,EUtranFreqRelation=39294         lbA5Thr1RsrpFreqOffset 97
+set EutrancellTDD=.*,EUtranFreqRelation=1615         lbA5Thr1RsrpFreqOffset 41
+set EutrancellTDD=.*,EUtranFreqRelation=390$         lbA5Thr1RsrpFreqOffset 41
+set EutrancellTDD=.*,EUtranFreqRelation=3710         lbA5Thr1RsrpFreqOffset 0
+
+pr EutrancellFdd=.*D_D
+if $nr_of_mos = 0
+set EUtranCellTDD=.*D_D,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=2,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+fi
+
+wait 2
+
+###LMS Parameter RSRQ
+##TDD
+
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrq 10
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrq -170
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=-20
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRq -195
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrq 100
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 InhibitA2SearchConfig 0
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1SearchRsrq 1024
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2CriticalRsrq 1024
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2SearchRsrq 1024
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrq -160
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrq -160
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1 hysteresisA5RsrqOffset 0
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5Rsrq 1024
+set EUtranCellTDD=.*,EUtranFreqRelation=.* a5Thr1RsrqFreqOffset 0
+set EUtranCellTDD=.*,EUtranFreqRelation=390$ a5Thr2RsrqFreqOffset 20
+set EUtranCellTDD=.*,EUtranFreqRelation=1615 a5Thr2RsrqFreqOffset 50
+set EUtranCellTDD=.*,EUtranFreqRelation=3710 a5Thr2RsrqFreqOffset 120
+set EUtranCellTDD=.*,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set EUtranCellTDD=.*,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set EUtranCellTDD=.*,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set EUtranCellTDD=.*,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set EUtranCellTDD=.*,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-70,lbQciProfileHandling=1
+set EUtranCellTDD=.*,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-100,lbQciProfileHandling=1
+set EUtranCellTDD=.*,EUtranFreqRelation=3710  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-170,lbQciProfileHandling=1
+set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold2Rsrq -170
+set EUtranCellTDD=.*,UeMeasControl=1 bothA5RsrpRsrqCheck True
+
+###TDD10M
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39150 a5Thr2RsrqFreqOffset 120
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39151 a5Thr2RsrqFreqOffset 120
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39294 a5Thr2RsrqFreqOffset 0
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=39295 a5Thr2RsrqFreqOffset 0
+
+
+###TDD 20M
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39150 a5Thr2RsrqFreqOffset 0
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39151 a5Thr2RsrqFreqOffset 0
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39294 a5Thr2RsrqFreqOffset 120
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=39295 a5Thr2RsrqFreqOffset 120
+
+
+##FDD L2100
+
+
+ma L2100 EUtranCellFDD earfcn 390
+wait 1
+if $nr_of_mos != 0 
+for $mo in L2100
+$mordn = rdn($mo)
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrq 10
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrq -170
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=-20
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRq -195
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrq 100
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 InhibitA2SearchConfig 0
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1SearchRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2CriticalRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2SearchRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrq -160
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrq -160
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5RsrqOffset 0
+set $mordn,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5Rsrq 1024
+set $mordn,EUtranFreqRelation=.* a5Thr1RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39294 a5Thr2RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39295 a5Thr2RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39150 a5Thr2RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39151 a5Thr2RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=390$ a5Thr2RsrqFreqOffset  0
+set $mordn,EUtranFreqRelation=1615 a5Thr2RsrqFreqOffset 20
+set $mordn,EUtranFreqRelation=3710 a5Thr2RsrqFreqOffset 20
+set $mordn,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-70,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=3710  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-70,lbQciProfileHandling=1
+set $mordn,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold2Rsrq -170
+set $mordn,UeMeasControl=1 bothA5RsrpRsrqCheck True
+done
+else 
+fi
+
+##FDD L1800
+
+ma L1800 EUtranCellFDD earfcn 1615
+wait 1
+if $nr_of_mos != 0 
+for $mo in L1800
+$mordn = rdn($mo)
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrq 10
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrq -150
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=-40
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRq -195
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrq 100
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 InhibitA2SearchConfig 0
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1SearchRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2CriticalRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2SearchRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrq -140
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrq -160
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5RsrqOffset 0
+set $mordn,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5Rsrq 1024
+set $mordn,EUtranFreqRelation=.* a5Thr1RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39294 a5Thr2RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39295 a5Thr2RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39150 a5Thr2RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39151 a5Thr2RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=390$ a5Thr2RsrqFreqOffset  0
+set $mordn,EUtranFreqRelation=1615 a5Thr2RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=3710 a5Thr2RsrqFreqOffset 20
+set $mordn,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-50,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=3710  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-30,a5Thr2RsrqFreqQciOffset=-70,lbQciProfileHandling=1
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrq -195
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 hysteresisB2 20
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 hysteresisB2RsrqOffset 100
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97
+set $mordn,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold2Rsrq -170
+set $mordn,UeMeasControl=1 bothA5RsrpRsrqCheck True
+done
+else 
+fi
+
+##FDD L900
+ma L900 EUtranCellFDD earfcn 3710
+wait 1
+if $nr_of_mos != 0 
+for $mo in L900
+$mordn = rdn($mo)
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrq 10
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrq -160
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=-30	
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRq -195
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrq 100
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 InhibitA2SearchConfig 0
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1SearchRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2CriticalRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2SearchRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrq -150
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrq -160
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5RsrqOffset 0
+set $mordn,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5Rsrq 1024
+set $mordn,EUtranFreqRelation=.* a5Thr1RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39294 a5Thr2RsrqFreqOffset -50
+set $mordn,EUtranFreqRelation=39295 a5Thr2RsrqFreqOffset -50
+set $mordn,EUtranFreqRelation=39150 a5Thr2RsrqFreqOffset -50
+set $mordn,EUtranFreqRelation=39151 a5Thr2RsrqFreqOffset -50
+set $mordn,EUtranFreqRelation=390$ a5Thr2RsrqFreqOffset  -50
+set $mordn,EUtranFreqRelation=1615 a5Thr2RsrqFreqOffset -50
+set $mordn,EUtranFreqRelation=3710 a5Thr2RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=170,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=170,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=170,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=170,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=170,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=0,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=3710  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=0,lbQciProfileHandling=1
+set $mordn,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold2Rsrq -170
+set $mordn,UeMeasControl=1 bothA5RsrpRsrqCheck True
+done
+else 
+fi
+
+wait 2
+pr EutrancellTdd=.*T1
+$T1 = $nr_of_mos
+pr EutrancellTdd=.*T2
+if $nr_of_mos != 0 && $T1 = 0
+set EUtranCell.DD=TN_E_.*,EUtranFreqRelation=39294 connectedmodemobilityprio 1
+set EUtranCellTDD=TN_E_T2.*,EUtranFreqRelation=39294 lbA5Thr1RsrpFreqOffset 0
+fi
+
+setm EUtranCellFDD.*_F1 crsGain 300 pdschTypeBGain 1
+setm EUtranCellFDD.*_F3 crsGain 177 pdschTypeBGain 1
+setm EUtranCellFDD.*_F8 crsGain 0 pdschTypeBGain 0
+
+### Deactivate SRVCC in L18 Layer ###
+set EUtranCellFDD=TN_E_F3.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -140
+set EUtranCellFDD=TN_E_F3.*,GeranFreqGroupRelation=1 connectedModeMobilityPrio -1
+set EUtranCellFDD=TN_E_F3.*,GeranFreqGroupRelation=1 voicePrio -1
+set EUtranCellFDD=TN_E_F3.*,UeMeasControl=1 ueMeasurementsActiveGERAN False
+
+wait 3
+
+deb EutrancellTDD=
+deb EutrancellFDD=
+
+lt all
+
+
+
+#EUTRANCELLFDD
+
+set EUtranCellFDD=TN_E_F8_.* pdcchOuterLoopUpStep 8
+set EUtranCellFDD=TN_E_F8_.* pdcchOuterLoopUpStepPCell 6
+set EUtranCellFDD=TN_E_F8_.* ttiBundlingAfterHO 1
+set EUtranCellFDD=TN_E_F8_.* ttiBundlingAfterReest 1
+set EUtranCellFDD=TN_E_F8_.* ttiBundlingSwitchThres 150
+set EUtranCellFDD=TN_E_F8_.* ttiBundlingSwitchThresHyst 30
+set EUtranCellFDD=TN_E_F8_.* cellDownlinkCaCapacity 0
+set EUtranCellFDD=TN_E_F8_.* mappingInfo mappingInfoSIB12=7
+set EUtranCellFDD=TN_E_F8_.* mappingInfo mappingInfoSIB4=2
+set EUtranCellFDD=TN_E_F8_.* mappingInfo mappingInfoSIB6=4
+set EUtranCellFDD=TN_E_F8_.*                                 servOrPrioTriggeredErabAction 3
+set EUtranCellFDD=TN_E_F8_.*  dlInternalChannelBandwidth 0
+set EUtranCellFDD=TN_E_F8_.*  ulInternalChannelBandwidth 0
+set EUtranCellFDD=TN_E_F8_.*  beamWeightSet16Tr 0
+set EUtranCellFDD=TN_E_F8_.* adaptiveCfiHoProhibit 0
+set EUtranCellFDD=TN_E_F8_.* enableSinrUplinkClpc 1
+set EUtranCellFDD=TN_E_F8_.* pdcchCovImproveQci1 true
+set EUtranCellFDD=TN_E_F8_.* pdcchOuterLoopUpStepVolte 9
+set EUtranCellFDD=TN_E_F8_.* pdcchTargetBlervolte 4
+set EUtranCellFDD=TN_E_F8_.* allocThrPucchFormat1 50
+set EUtranCellFDD=TN_E_F8_.* allocTimerPucchFormat1 50
+set EUtranCellFDD=TN_E_F8_.* deallocThrPucchFormat1 100
+set EUtranCellFDD=TN_E_F8_.* deallocTimerPucchFormat1 6000
+set EUtranCellFDD=TN_E_F8_.* drxActive true
+set EUtranCellFDD=TN_E_F8_.* dlBlerTargetEnabled 1
+set EUtranCellFDD=TN_E_F8_.*  enableServiceSpecificHARQ true
+set EUtranCellFDD=TN_E_F8_.* pdcchCovImproveDtx true
+set EUtranCellFDD=TN_E_F8_.* pdcchCovImproveSrb false
+set EUtranCellFDD=TN_E_F8_.* pdcchTargetBler 24
+set EUtranCellFDD=TN_E_F8_.* pdcchTargetBlerPCell 22
+set EUtranCellFDD=TN_E_F8_.* pMaxServingCell 1000
+set EUtranCellFDD=TN_E_F8_.* qRxLevMinOffset 1000
+set EUtranCellFDD=TN_E_F8_.* tReorderingAutoConfiguration true
+set EUtranCellFDD=TN_E_F8_.* tTimeAlignmentTimer 0
+set EUtranCellFDD=TN_E_F8_.* ulBlerTargetEnabled true
+set EUtranCellFDD=TN_E_F8_.*  ulHarqVolteBlerTarget 3
+set EUtranCellFDD=TN_E_F8_.* cfraEnable true
+set EUtranCellFDD=TN_E_F8_.* changeNotification changeNotificationSIB15=true
+set EUtranCellFDD=TN_E_F8_.* changeNotification changeNotificationSIB16=true
+set EUtranCellFDD=TN_E_F8_.* changeNotification changeNotificationSIB8=true
+set EUtranCellFDD=TN_E_F8_.* hoOptAdjThresholdAbs 5
+set EUtranCellFDD=TN_E_F8_.* hoOptAdjThresholdPerc 50
+set EUtranCellFDD=TN_E_F8_.* prsPowerBoosting 0
+set EUtranCellFDD=TN_E_F8_.* transmissionMode 4
+set EUtranCellFDD=TN_E_F8_.* ns05FullBandUsersInCellThres 1
+set EUtranCellFDD=TN_E_F8_.* ns05FullBandSchedEnabled false
+set EUtranCellFDD=TN_E_F8_.*  puschNcpChannelEstWindowSize 1
+set EUtranCellFDD=TN_E_F8_.* mobCtrlAtPoorCovActive true
+set EUtranCellFDD=TN_E_F8_.*  servOrPrioTriggeredIFHo 0
+set EUtranCellFDD=TN_E_F8_.*  ul64qamEnabled    true
+set EUtranCellFDD=TN_E_F8_.*  dl256QamStatus    2
+set EUtranCellFDD=TN_E_F8_.*  dl256QamEnabled   true
+set EUtranCellFDD=TN_E_F8_.*  dlFrequencyAllocationProportion 100
+set EUtranCellFDD=TN_E_F8_.*  commonSrPeriodicity 10
+set EUtranCellFDD=TN_E_F8_.* mappingInfo mappingInfoSIB5=3
+set EUtranCellFDD=TN_E_F8_.* changeNotification changeNotificationSIB7=true
+set EUtranCellFDD=TN_E_F8_.* changeNotification changeNotificationSIB2=true
+set EUtranCellFDD=TN_E_F8_.* changeNotification changeNotificationSIB3=true
+set EUtranCellFDD=TN_E_F8_.* changeNotification changeNotificationSIB4=true
+set EUtranCellFDD=TN_E_F8_.* changeNotification changeNotificationSIB1=true
+set EUtranCellFDD=TN_E_F8_.* changeNotification changeNotificationSIB6=true
+set EUtranCellFDD=TN_E_F8_.* changeNotification changeNotificationSIB5=true
+set EUtranCellFDD=TN_E_F8_.* changeNotification changeNotificationSIB13=true
+set EUtranCellFDD=TN_E_F8_.* mappingInfoCe mappingInfoSIB10=0
+set EUtranCellFDD=TN_E_F8_.*  qRxLevMinCe       -140
+set EUtranCellFDD=TN_E_F8_.*  pdcchLaGinrMargin 40
+set EUtranCellFDD=TN_E_F8_.*  acBarringPresence acBarringForMmtelVideoPresence=0
+set EUtranCellFDD=TN_E_F8_.*  acBarringPresence acBarringForMmtelVoicePresence=0
+set EUtranCellFDD=TN_E_F8_.*  acBarringPresence acBarringPriorityMmtelVideo=0
+set EUtranCellFDD=TN_E_F8_.*  acBarringPresence acBarringPriorityMmtelVoice=0
+set EUtranCellFDD=TN_E_F8_.*  acBarringPresence acBarringForMoDataPresence=0
+set EUtranCellFDD=TN_E_F8_.*  noOfEnhAdptReTxCand 0
+set EUtranCellFDD=TN_E_F8_.*  dynUlResourceAllocEnabled false
+set EUtranCellFDD=TN_E_F8_.* systemInformationBlock6 tReselectionUtra=4
+set EUtranCellFDD=TN_E_F8_.* advCellSupAction 2
+set EUtranCellFDD=TN_E_F8_.*  primaryPlmnReserved false
+set EUtranCellFDD=TN_E_F8_.*  harqOffsetDl      3
+set EUtranCellFDD=TN_E_F8_.*  harqOffsetUl      3
+set EUtranCellFDD=TN_E_F8_.*  highSpeedUEActive false
+set EUtranCellFDD=TN_E_F8_.*  initialBufferSizeDefault 86
+set EUtranCellFDD=TN_E_F8_.*  prsTransmisScheme 0
+set EUtranCellFDD=TN_E_F8_.*  puschPwrOffset64qam 0
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock3 tEvaluation=240
+set EUtranCellFDD=TN_E_F8_.*  elcEnabled        false
+set EUtranCellFDD=TN_E_F8_.*  preambleInitialReceivedTargetPower -110
+set EUtranCellFDD=TN_E_F8_.*  acBarringForCsfb acBarringFactor=95
+set EUtranCellFDD=TN_E_F8_.*  acBarringForCsfb acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F8_.*  acBarringForCsfb acBarringTime=64
+set EUtranCellFDD=TN_E_F8_.*  acBarringForEmergency false
+set EUtranCellFDD=TN_E_F8_.*  acBarringForMoData acBarringFactor=95
+set EUtranCellFDD=TN_E_F8_.*  acBarringForMoData acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F8_.*  acBarringForMoData acBarringTime=64
+set EUtranCellFDD=TN_E_F8_.*  acBarringForMoSignalling acBarringFactor=95
+set EUtranCellFDD=TN_E_F8_.*  acBarringForMoSignalling acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F8_.*  acBarringForMoSignalling acBarringTime=64
+set EUtranCellFDD=TN_E_F8_.*  acBarringInfoPresent false
+set EUtranCellFDD=TN_E_F8_.*  acBarringPresence acBarringForCsfbPresence=0
+set EUtranCellFDD=TN_E_F8_.*  acBarringPresence acBarringForMoSignPresence=0
+set EUtranCellFDD=TN_E_F8_.*  acBarringPresence acBarringPriorityCsfb=0
+set EUtranCellFDD=TN_E_F8_.*  acBarringPresence acBarringPriorityMoData=0
+set EUtranCellFDD=TN_E_F8_.*  acBarringPresence acBarringPriorityMoSignaling=0
+set EUtranCellFDD=TN_E_F8_.*  spifhoSetupBearerAtInitialCtxtSetup false
+set EUtranCellFDD=TN_E_F8_.*  srDetectHighThres 70
+set EUtranCellFDD=TN_E_F8_.*  srProcessingLevel 0
+set EUtranCellFDD=TN_E_F8_.*  ssacBarringForMMTELVideo acBarringFactor=95
+set EUtranCellFDD=TN_E_F8_.*  ssacBarringForMMTELVideo acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F8_.*  ssacBarringForMMTELVideo acBarringTime=64
+set EUtranCellFDD=TN_E_F8_.*  ssacBarringForMMTELVoice acBarringFactor=95
+set EUtranCellFDD=TN_E_F8_.*  ssacBarringForMMTELVoice acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F8_.*  ssacBarringForMMTELVoice acBarringTime=64
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock3 nCellChangeHigh=16
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock3 nCellChangeMedium=16
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock3 qHystSfHigh=0
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock3 qHystSfMedium=0
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock3 sIntraSearchQ=0
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock3 sNonIntraSearchv920Active=false
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock3 sIntraSearchv920Active=false
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock3 tHystNormal=240
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock6 tReselectionUtraSfHigh=100
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock6 tReselectionUtraSfMedium=100
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock7 tReselectionGeran=2
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock7 tReselectionGeranSfHigh=100
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock7 tReselectionGeranSfMedium=100
+set EUtranCellFDD=TN_E_F8_.*  tUeBlockingTimer  200
+set EUtranCellFDD=TN_E_F8_.*  ulConfigurableFrequencyStart 0
+set EUtranCellFDD=TN_E_F8_.*  ulFrequencyAllocationProportion 100
+set EUtranCellFDD=TN_E_F8_.*  ulImprovedUeSchedLastEnabled true
+set EUtranCellFDD=TN_E_F8_.*  ulPsdLoadThresholdSinrClpc 2 
+set EUtranCellFDD=TN_E_F8_.*  ulSCellPriority   5
+set EUtranCellFDD=TN_E_F8_.*  ulSchedCtrlForOocUesEnabled true 
+set EUtranCellFDD=TN_E_F8_.*  ulSrsEnable       false
+set EUtranCellFDD=TN_E_F8_.*  ulTrigActive      true
+set EUtranCellFDD=TN_E_F8_.*  ulTxPsdDistrThr   40
+set EUtranCellFDD=TN_E_F8_.*  uncertAltitude    0
+set EUtranCellFDD=TN_E_F8_.*  uncertSemiMajor   0
+set EUtranCellFDD=TN_E_F8_.*  uncertSemiMinor   0
+set EUtranCellFDD=TN_E_F8_.* pdcchCfiMode 5
+
+#EUTRANFREQRELATION
+
+set EUtranCellFDD=TN_E_F8_.*,EUtranFreqRelation= tReselectionEutra 4
+set EUtranFreqRelation tReselectionEutra 4
+set EUtranFreqRelation caTriggeredRedirectionActive false
+set EUtranFreqRelation anrMeasOn true
+set EUtranFreqRelation       qRxLevMinCe       -140
+set EUtranFreqRelation pMax 1000
+set EUtranFreqRelation        tReselectionEutraCe 2
+set EUtranFreqRelation tReselectionEutraSfHigh 100
+set EUtranFreqRelation tReselectionEutraSfMedium 100
+
+set EUtranCellFDD=TN_E_F8_.*,MimoSleepFunction=1              switchUpMonitorDurTimer 5
+
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigCsfbUtra=1 hysteresis        10
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSCellA6=1 triggerQuantityA6 0
+set . ulTrafficDelay -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+set . dlTrafficDelay -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+
+
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1                  filterCoefficientEUtraRsrp 4
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1 ueMeasurementsActiveIF true
+set ENodeBFunction=1,EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1 sMeasure 0
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1                  lowPrioMeasThresh 0 
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1                  maxUtranCellsToMeasure 32 
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1                  allowReleaseQci1 false
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1                  ulSinrOffset 30 
+
+
+
+
+##############
+
+
+
+set EUtranCellFDD=.*,EUtranFreqRelation=.*          allowedPlmnList   mcc=404,mnc=94,mncLength=2
+
+set EUtranCellFDD=TN_E_F8_.* bsrThreshold 100
+set EUtranCellFDD=TN_E_F8_.* noOfUlImprovedUe 2
+
+#TDD
+
+
+set EUtranCellTDD=.*,EUtranFreqRelation=3696 qoffsetfreq 0
+lset EUtranCellTDD=.*,EUtranFreqRelation=3696 mobilityAction 1
+set EUtranCellTDD=.*,EUtranFreqRelation=3696          allowedPlmnList   mcc=404,mnc=94,mncLength=2
+
+
+for $mo in L900
+$mordn = rdn($mo)
+cr $mordn,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1
+done
+
+
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1 maxReportCellsPm 8
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1 reportIntervalPm 5
+
+
+#Common Parameter
+
+set EUtranFreqRelation=39150 allowedmeasbandwidth 100
+set EUtranFreqRelation=39294 allowedmeasbandwidth 50
+set EUtranFreqRelation=390$ allowedmeasbandwidth 50
+set EUtranFreqRelation=1615 allowedmeasbandwidth 75
+set EUtranFreqRelation=3696 allowedmeasbandwidth 25
+set EUtranFreqRelation=39151 allowedmeasbandwidth 100
+set EUtranFreqRelation=39295 allowedmeasbandwidth 50
+
+set EUtranFreqRelation=390$ anrMeasOn true
+set EUtranFreqRelation=39150 anrMeasOn true
+set EUtranFreqRelation=39294 anrMeasOn true
+set EUtranFreqRelation=1615 anrMeasOn true
+set EUtranFreqRelation=3696 anrMeasOn true
+set EUtranFreqRelation=39151 anrMeasOn true
+set EUtranFreqRelation=39295 anrMeasOn true
+
+
+# UL COMP
+
+###### L900 ######
+pr EUtranCellFDD=TN_E_F8
+if $nr_of_mos = 3
+	cr ENodeBFunction=1,UlCompGroup=5
+	ENodeBFunction=1,SectorCarrier=80 ENodeBFunction=1,SectorCarrier=81 ENodeBFunction=1,SectorCarrier=82
+else if $nr_of_mos = 2
+	cr ENodeBFunction=1,UlCompGroup=5
+	ENodeBFunction=1,SectorCarrier=80 ENodeBFunction=1,SectorCarrier=81
+else if $nr_of_mos = 1
+	cr ENodeBFunction=1,UlCompGroup=5
+	ENodeBFunction=1,SectorCarrier=80
+else if $nr_of_mos = 4
+	cr ENodeBFunction=1,UlCompGroup=5
+	ENodeBFunction=1,SectorCarrier=80 ENodeBFunction=1,SectorCarrier=81 ENodeBFunction=1,SectorCarrier=82 ENodeBFunction=1,SectorCarrier=83
+fi
+deb ENodeBFunction=1,UlCompGroup=5
+
+
+set EUtranCellFDD=TN_E_F8_.* noOfPucchSrUsers 420
+set EUtranCellFDD=TN_E_F8_.* noOfPucchCqiUsers 320
+      
+###Paging
+
+set ENodeBFunction=1,Paging=1 maxNoOfPagingRecords                 7
+set ENodeBFunction=1,Paging=1 nB                                   3
+
+set EUtranCellFDD=TN_E_F8_.* zzzTemporary60 1 
+
+## additional Feature
+
+set . eUlFssSwitchThresh 30
+set . noOfEnhAdptReTxCand -1
+
+set . ulPhyProcResTradingEnabled 1
+
+set EUtranCellFDD=TN_E_F8_.* noOfPucchFormat1PrbPairsPerFrameConf 2
+set EUtranCellFDD=TN_E_F8_.* noOfPucchFormat2PrbPairsPerFrameConf 1
+
+
+## Correction
+
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRp -140
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -240
+set EUtranFreqRelation tReselectionEutra 2
+set EUtranCellFDD=TN_E_F8_.* prsPowerBoosting 3
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1 excludeInterFreqAtCritical False
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB2GeranUlTrig=1 b2Threshold2Geran -97
+
+
+##New Addition
+
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigEUtraBadCovPrim=1 a2ThresholdRsrpPrim -140
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1                  filterCoefficientEUtraRsrq 11
+set EUtranCellFDD=TN_E_F8_.* srvccDelayTimer 3000
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1 ueMeasurementsActiveUTRAN False
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigCsfbUtra=1 hysteresis 10
+set EUtranCellFDD=TN_E_F8_.* dlInternalChannelBandwidth 0
+set EUtranCellFDD=TN_E_F8_.* UlInternalChannelBandwidth 0
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSCellA6=1 timeToTriggerA6   40
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock3 sNonIntraSearchP=10
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrq 10
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 hysteresisA1A2Rsrp 10
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigElcA1A2=1 hysteresisA1A2Rsrp 10
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB1Geran=1 hysteresisB1      10
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB1Utra=1 hysteresisB1      10
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigElcA1A2=1 a1a2ThresholdRsrp -134
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 a1a2ThresholdRsrp -126
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 a1a2ThresholdRsrpBidir -140
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 a1a2ThresholdRsrq -165
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThresholdRsrq -195
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSearch=1 a2OuterSearchThrRsrpOffset 0
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSearch=1 a2OuterSearchThrRsrqOffset 0
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1      a3SuspendCsgTimer 0
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigA5=1,ReportConfigA5Anr=1 a5Threshold1RsrqAnrDelta 10
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigA5=1,ReportConfigA5Anr=1 a5Threshold2RsrpAnrDelta 1
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigA5=1,ReportConfigA5Anr=1 a5Threshold2RsrqAnrDelta 10
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB1Geran=1 b1ThresholdGeran  -110
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrq  -195
+set EUtranCellFDD=TN_E_F8_.*  systemInformationBlock3 threshServingLowQ=1000
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1      targetA2UlSearchOffset 20
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigElcA1A2=1 timeToTriggerA1   40
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 timeToTriggerA1   40
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1SearchRsrq 1024
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1UlSearch 480
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigElcA1A2=1 timeToTriggerA2   40
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 timeToTriggerA2   40
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2CriticalRsrq 1024
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2OutSearchRsrq -1
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2SearchRsrq 1024
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5Rsrq 1024
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB1Geran=1 timeToTriggerB1   640
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB1Utra=1 timeToTriggerB1   640
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB2Geran=1 timeToTriggerB2Rsrq -1
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB2Utra=1 timeToTriggerB2Rsrq -1
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 triggerQuantityA1A2 0
+set EUtranCellFDD=TN_E_F8_.* ulInterferenceManagementActive true
+set GeranCellRelation=.* coverageIndicator 1
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB2GeranUlTrig=1 reportIntervalB2 4
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigB2Geran=1 timeToTriggerB2   1280
+
+set EUtranCellFDD=TN_E_F8_.*                      lbTpNonQualFraction 35
+set EUtranCellFDD=TN_E_F8_.*                      lbTpRankThreshMin 10
+
+###ASGH BLER Target
+set CXC4012199 featurestate 1
+set ENodeBFunction=1,EUtranCell blerTargetConfigEnabled TRUE
+set ENodeBFunction=1,EUtranCell dlBlerTargetEnabled TRUE
+cr ENodeBFunction=1,SubscriberGroupProfile=1
+set ENodeBFunction=1,SubscriberGroupProfile=1 bearerTriggerList qci=1
+set ENodeBFunction=1,SubscriberGroupProfile=1 dlHarqBlerTarget 5
+set ENodeBFunction=1,SubscriberGroupProfile=1 ulHarqBlerTarget 3
+
+set . ulTrigHoSupport 1
+set EUtranCellFDD=TN_E_F8_.* ulTrigActive false
+set . ulTrigSupport 1
+
+wait 2
+lt all
+
+#### Power Saving Feature ####
+
+set EUtranCellFDD=TN_E_F8.*,CellSleepFunction=1 sleepMode	0
+
+
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3696 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=3696 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=3696 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=1615 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=390 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=39294 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=39150 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=3696 cellSleepCovCellMeasOn false
+
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3696 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=3696 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=3696 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=1615 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=390 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=39294 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=39150 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation=3696 csmUeCapMonitorEnabled false
+
+set EUtranCellFDD=TN_E_F8.*,EUtranFreqRelation= csmUeCapMonitorTime 60
+
+set EUtranCellFDD=TN_E_F8.*,EUtranCellRelation= sleepModeCovCellCandidate 2
+
+set EUtranCellFDD=TN_E_F8.*,UeMeasControl=1  maxNoMeasReportsInact 1
+
+set EUtranCellFDD=TN_E_F8_.*,MimoSleepFunction=1 sleepMode	4
+set EUtranCellFDD=TN_E_F8_.*,MimoSleepFunction=1 sleepStartTime	18:30
+set EUtranCellFDD=TN_E_F8_.*,MimoSleepFunction=1 sleepEndTime	02:30
+set EUtranCellFDD=TN_E_F8_.*,MimoSleepFunction=1 sleepPowerControl	1
+set EUtranCellFDD=TN_E_F8_.*,MimoSleepFunction=1 switchDownMonitorDurTimer	5
+set EUtranCellFDD=TN_E_F8_.*,MimoSleepFunction=1 switchUpPrbThreshold	55
+set EUtranCellFDD=TN_E_F8_.*,MimoSleepFunction=1 switchDownPrbThreshold	40
+set EUtranCellFDD=TN_E_F8_.*,MimoSleepFunction=1 switchDownRrcConnThreshold	50
+set EUtranCellFDD=TN_E_F8_.*,MimoSleepFunction=1 switchUpMonitorDurTimer	15
+set EUtranCellFDD=TN_E_F8_.*,MimoSleepFunction=1 switchUpRrcConnThreshold	60
+
+
+### ul256qam deactivate ###
+set CXC4012344 featurestate 0
+set EUtranCellFDD=TN_E_F8_.* ul256qamEnabled FALSE
+
+##New Addition 21 June
+set EUtranCellFDD=TN_E_F8_.* outOfCoverageSrTimerPeriodicity 320
+set EUtranCellFDD=TN_E_F8_.* outOfCoverageThreshold 20
+set EUtranCellFDD=TN_E_F8_.* outOfCoverageDepth 1
+set EUtranCellFDD=TN_E_F8_.* outOfCoverageSparseGrantingBsr 8
+
+set ,GeranFreqGroupRelation=1 altCsfbTargetPrio 2
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1      zzzTemporary13    -2000000000
+
+set CXC4012199  featurestate 1
+set CXC4012374  featurestate 1
+cr ENodeBFunction=1,SubscriberGroupProfile=2
+set ENodeBFunction=1,SubscriberGroupProfile=2 bearerTriggerList qci=1
+set ENodeBFunction=1,SubscriberGroupProfile=2 cellTriggerList 80 81 82 83
+set ENodeBFunction=1,SubscriberGroupProfile=2 ulHarqBlerTarget 3
+set ENodeBFunction=1,SubscriberGroupProfile=2 dlHarqBlerTarget 5
+set ENodeBFunction=1,SubscriberGroupProfile=2 ulMcsUpperLimit 12
+
+set CXC4011373 featurestate 1
+set EUtranCellFDD=TN_E_F1_.*                      cellCapMinCellSubCap 5000
+set EUtranCellFDD=TN_E_F3_.*                      cellCapMinCellSubCap 1500
+set EUtranCellFDD=TN_E_F8_.*                      cellCapMinCellSubCap 7000
+set EUtranCellTDD=TN_E_T1_.*                      cellCapMinCellSubCap 200
+set EUtranCellTDD=TN_E_T2_.*                      cellCapMinCellSubCap 100
+
+set  CXC4012349   featurestate  1
+set LoadBalancingFunction=1                                 lbCycle 5
+set LoadBalancingFunction=1                                 lbSubCycle 30
+set LoadBalancingFunction=1                                 lbThreshold 5
+
+set EUtranCellFDD=TN_E_F8_.*,GeranFreqGroupRelation=1 csFallbackPrio 4
+
+set EUtranCellFDD=TN_E_F8_.* cellRange 6
+set EUtranCellFDD=TN_E_F8_.* alpha 8
+set EUtranCellFDD=TN_E_F8_.* pzeronominalPusch -83
+set EUtranCellFDD=TN_E_F8_.* pzeronominalPucch -110
+Set PmEventService=1                                        cellTraceFileSize 30000
+set EUtranCellFDD=TN_E_F8_.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 timeToTriggerA3 480
+
+### CA Feature activate ###
+
+lset Lm=1,FeatureState=CXC4011922 FeatureState 1
+lset Lm=1,FeatureState=CXC4011559 FeatureState 1
+lset Lm=1,FeatureState=CXC4011476 FeatureState 1
+lset Lm=1,FeatureState=CXC4011666 FeatureState 1
+lset Lm=1,FeatureState=CXC4011983 FeatureState 1
+lset Lm=1,FeatureState=CXC4012123 FeatureState 1
+lset Lm=1,FeatureState=CXC4012256 FeatureState 1
+lset Lm=1,FeatureState=CXC4012259 FeatureState 1
+lset Lm=1,FeatureState=CXC4012111 FeatureState 1
+
+set EUtranCell.*=.* sCellHandlingAtVolteCall 1
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 caTriggeredRedirectionActive TRUE
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 caTriggeredRedirectionActive TRUE
+# sys Constant 457(Default Value 2000ms) to be reduced to 1850ms:
+scw 457:1850
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportDecr 1
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportIncr  10
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportMax 100
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportMin 20
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     sCellCandidateLimit 50
+set EUtranCellFDD=.*,EUtranFreqRelation=.* asmSCellDetection 0
+set EUtranCellTDD=.*,EUtranFreqRelation=.* asmSCellDetection 0
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 asmSCellDetection 3
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 asmSCellDetection 3
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 asmHitRateAddThreshold 15
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 asmHitRateAddThreshold 15
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmHitRateRemoveThreshold 5
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmHitRateRemoveThreshold 5
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 asmHitRateRemoveThreshold 5
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 asmHitRateRemoveThreshold 5
+set CarrierAggregationFunction=1                            dynamicSCellSelectionMethod 3
+
+lt all
+
+$date = `date +%y%m%d_%H%M`
+cvms Post_L900_GPL_$date
+confbd-
+
+
+confbd+
+
+$date = `date +%y%m%d_%H%M`
+
+
+bl EUtranCellFDD=TN_E_F8_
+
+wait 8
+
+
+	setm EUtranCellFDD.*_F8 crsGain 0 pdschTypeBGain 0
+
+
+###LMS Parameters
+
+##TDD
+
+set EUtranCellTDD=.*,EUtranFreqRelation=3696 a5Thr1RsrpFreqOffset 0
+set EUtranCellTDD=.*,EUtranFreqRelation=3696 a5Thr2RsrpFreqOffset 60
+set EUtranCellTDD=.*,EUtranFreqRelation=3696  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=-60,lbQciProfileHandling=1
+set EUtranCellTDD=.*,EUtranFreqRelation=3696 cellReselectionPriority 2
+set EUtranCellTDD=.*,EUtranFreqRelation=3696 connectedmodemobilityprio -1
+set EUtranCellTDD=.*,EUtranFreqRelation=3696 voicePrio 6
+set EutrancellTDD=.*,EUtranFreqRelation=3696         lbA5Thr1RsrpFreqOffset 0
+set EUtranCellTDD=TN_E_T1_.*,EUtranFreqRelation=3696 threshXLow 10
+set EUtranCellTDD=TN_E_T2_.*,EUtranFreqRelation=3696 threshXLow 10
+
+
+##FDD L2100
+
+ma L2100 EUtranCellFDD earfcn 390
+wait 1
+if $nr_of_mos != 0 
+for $mo in L2100
+$mordn = rdn($mo)
+set $mordn,EUtranFreqRelation=3696 a5Thr1RsrpFreqOffset -2
+set $mordn,EUtranFreqRelation=3696 a5Thr2RsrpFreqOffset 8
+set $mordn,EUtranFreqRelation=3696  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=4,a5Thr2RsrpFreqQciOffset=-4,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=3696 cellReselectionPriority 2
+set $mordn,EUtranFreqRelation=3696 connectedmodemobilityprio 2
+set $mordn,EUtranFreqRelation=3696 threshXLow 10
+set $mordn,EUtranFreqRelation=3696 voicePrio 6
+set $mordn,EUtranFreqRelation=3696         lbA5Thr1RsrpFreqOffset 0
+done
+else 
+fi
+
+##FDD L1800
+
+ma L1800 EUtranCellFDD earfcn 1615
+wait 1
+if $nr_of_mos != 0 
+for $mo in L1800
+$mordn = rdn($mo)
+
+set $mordn,EUtranFreqRelation=3696 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=3696 a5Thr2RsrpFreqOffset 6
+set $mordn,EUtranFreqRelation=3696  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=8,a5Thr2RsrpFreqQciOffset=2,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=3696 cellReselectionPriority 2
+set $mordn,EUtranFreqRelation=3696 connectedmodemobilityprio 2
+set $mordn,EUtranFreqRelation=3696 threshXLow 14
+set $mordn,EUtranFreqRelation=3696 voicePrio 6
+set $mordn,EUtranFreqRelation=3696         lbA5Thr1RsrpFreqOffset 0
+done
+else 
+fi
+
+ma L900 EUtranCellFDD earfcn 3696
+wait 1
+if $nr_of_mos != 0 
+for $mo in L900
+$mordn = rdn($mo)
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrp 20
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrp -58
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=0,a1a2ThrRsrpQciOffset=-52
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRp -140
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrpOffset -20
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrp -58
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrp -114
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
+set $mordn,EUtranFreqRelation=39150 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39151 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39294 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39295 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=390$ a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=1615 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=3696 a5Thr1RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39150 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39151 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39294 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39295 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=390$ a5Thr2RsrpFreqOffset 2
+set $mordn,EUtranFreqRelation=1615 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=3696 a5Thr2RsrpFreqOffset 0
+set $mordn,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=68,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=66,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=6,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=3696  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-52,a5Thr2RsrpFreqQciOffset=0,lbQciProfileHandling=1
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -140
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97
+set $mordn,EUtranFreqRelation=39150 cellReselectionPriority 6
+set $mordn,EUtranFreqRelation=39151 cellReselectionPriority 7
+set $mordn,EUtranFreqRelation=39294 cellReselectionPriority 5
+set $mordn,EUtranFreqRelation=39295 cellReselectionPriority 7
+set $mordn,EUtranFreqRelation=390$ cellReselectionPriority 3
+set $mordn,EUtranFreqRelation=1615 cellReselectionPriority 4
+set $mordn,EUtranFreqRelation=3696 cellReselectionPriority 2
+set $mordn,GeranFreqGroupRelation=1         cellReselectionPriority 1
+set $mordn,EUtranFreqRelation=390$ connectedmodemobilityprio 3
+set $mordn,EUtranFreqRelation=1615 connectedmodemobilityprio 4
+set $mordn,EUtranFreqRelation=39150 connectedmodemobilityprio 6
+set $mordn,EUtranFreqRelation=39151 connectedmodemobilityprio 7
+set $mordn,EUtranFreqRelation=39294 connectedmodemobilityprio 5
+set $mordn,EUtranFreqRelation=39295 connectedmodemobilityprio 7
+set $mordn,EUtranFreqRelation=3696 connectedmodemobilityprio 2
+set $mordn,GeranFreqGroupRelation=1         connectedModeMobilityPrio -1
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrp 0
+set $mordn,UeMeasControl=1,ReportConfigEUtraBestCell=1 hysteresisA3 10
+set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 hysteresisB2 20
+set $mordn qRxLevMin -124
+set $mordn SystemInformationBlock3 sintrasearch=44
+set $mordn SystemInformationBlock3 snonintrasearch=0
+set $mordn SystemInformationBlock3 qhyst=4
+set $mordn threshServingLow 0
+set $mordn,EUtranFreqRelation=.* qRxLevMin -124
+set $mordn,GeranFreqGroupRelation=1         qRxLevMin         -111
+set $mordn,EUtranFreqRelation=39150 threshXHigh 10
+set $mordn,EUtranFreqRelation=39151 threshXHigh 10
+set $mordn,EUtranFreqRelation=39294 threshXHigh 10
+set $mordn,EUtranFreqRelation=39295 threshXHigh 10
+set $mordn,EUtranFreqRelation=390$ threshXHigh 10
+set $mordn,EUtranFreqRelation=3696 threshXHigh 10
+set $mordn,EUtranFreqRelation=1615 threshXHigh 10
+set $mordn,GeranFreqGroupRelation=1     threshXLow  62
+set $mordn,EUtranFreqRelation=39150 voicePrio -1
+set $mordn,EUtranFreqRelation=39151 voicePrio -1
+set $mordn,EUtranFreqRelation=39294 voicePrio -1
+set $mordn,EUtranFreqRelation=39295 voicePrio -1
+set $mordn,EUtranFreqRelation=390$ voicePrio -1
+set $mordn,EUtranFreqRelation=1615 voicePrio 5
+set $mordn,EUtranFreqRelation=3696 voicePrio 6
+set $mordn,GeranFreqGroupRelation=1         voicePrio     -1
+set $mordn,EUtranFreqRelation  interFreqMeasType 0
+set $mordn,EUtranFreqRelation=39150         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=39294         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=390$         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=1615         lbA5Thr1RsrpFreqOffset 97
+set $mordn,EUtranFreqRelation=3696         lbA5Thr1RsrpFreqOffset 97
+set $mordn,UeMeasControl=1 ueMeasurementsActiveGERAN False
+done
+else 
+fi
+
+wait 2
+
+###LMS Parameter RSRQ
+##TDD
+
+set EUtranCellTDD=.*,EUtranFreqRelation=3696 a5Thr1RsrqFreqOffset 0
+set EUtranCellTDD=.*,EUtranFreqRelation=3696 a5Thr2RsrqFreqOffset 120
+set EUtranCellTDD=.*,EUtranFreqRelation=3696  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-170,lbQciProfileHandling=1
+
+
+##FDD L2100
+
+ma L2100 EUtranCellFDD earfcn 390
+wait 1
+if $nr_of_mos != 0 
+for $mo in L2100
+$mordn = rdn($mo)
+set $mordn,EUtranFreqRelation=3696 a5Thr1RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=3696 a5Thr2RsrqFreqOffset 20
+set $mordn,EUtranFreqRelation=3696  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=-70,lbQciProfileHandling=1
+done
+else 
+fi
+
+##FDD L1800
+
+ma L1800 EUtranCellFDD earfcn 1615
+wait 1
+if $nr_of_mos != 0 
+for $mo in L1800
+$mordn = rdn($mo)
+set $mordn,EUtranFreqRelation=3696 a5Thr1RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=3696 a5Thr2RsrqFreqOffset 20
+set $mordn,EUtranFreqRelation=3696  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-30,a5Thr2RsrqFreqQciOffset=-70,lbQciProfileHandling=1
+
+done
+else 
+fi
+
+##FDD L900
+ma L900 EUtranCellFDD earfcn 3696
+wait 1
+if $nr_of_mos != 0 
+for $mo in L900
+$mordn = rdn($mo)
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrq 10
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrq -160
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=-30	
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRq -195
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrq 100
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 InhibitA2SearchConfig 0
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1SearchRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2CriticalRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2SearchRsrq 1024
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrq -150
+set $mordn,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrq -160
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
+set $mordn,UeMeasControl=1,ReportConfigA5=1 hysteresisA5RsrqOffset 0
+set $mordn,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5Rsrq 1024
+set $mordn,EUtranFreqRelation=.* a5Thr1RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39294 a5Thr2RsrqFreqOffset -50
+set $mordn,EUtranFreqRelation=39295 a5Thr2RsrqFreqOffset -50
+set $mordn,EUtranFreqRelation=39150 a5Thr2RsrqFreqOffset -50
+set $mordn,EUtranFreqRelation=39151 a5Thr2RsrqFreqOffset -50
+set $mordn,EUtranFreqRelation=390$ a5Thr2RsrqFreqOffset  -50
+set $mordn,EUtranFreqRelation=1615 a5Thr2RsrqFreqOffset -50
+set $mordn,EUtranFreqRelation=3696 a5Thr2RsrqFreqOffset 0
+set $mordn,EUtranFreqRelation=39150  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=170,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39151  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=170,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39294  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=170,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=39295  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=170,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=170,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=1615  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=0,lbQciProfileHandling=1
+set $mordn,EUtranFreqRelation=3696  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrqFreqQciOffset=-240,a5Thr2RsrqFreqQciOffset=0,lbQciProfileHandling=1
+set $mordn,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold2Rsrq -170
+set $mordn,UeMeasControl=1 bothA5RsrpRsrqCheck True
+done
+else 
+fi
+
+pr Fdd=.*F8
+if $nr_of_mos > 1
+set EUtranCellFDD.*_F3.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -140
+set EUtranCellFDD.*_F3.*,GeranFreqGroupRelation=1         voicePrio     -1
+set EUtranCellFDD.*_F3.*,UeMeasControl=1 ueMeasurementsActiveGERAN False
+fi
+
+deb EutrancellFDD=TN_E_F8_.*
+
+lt all
+
+$date = `date +%y%m%d_%H%M`
+
+
+confbd-
 
 lt all
 rbs
 rbs
 confbd+
-gs+
 
 $date = `date +%y%m%d_%H%M`
-cvms GPL_UpdatedLP_$date
 
-rdel =38950
-rdel =39250
-rdel =10807
-rdel =10782
-rdel =539
 
-###########
-unset all
 
-$Par[1] = L2100
-$Par[2] = TDD20
-$Par[3] = L1800
-$Par[4] = L900
-$Par[5] = TDD10
-$Par[6] = TDD30
-$Par[7] = TDD40
+wait 2
 
-mr L2100
-mr TDD20
-mr L1800
-mr L900
-mr TDD10
-mr TDD30
-mr TDD40
-
-ma L2100 EUtranCellFDD earfcn 515
-ma TDD20 EUtranCellTDD earfcn 39150
-ma L1800 EUtranCellFDD earfcn 1576
-ma L900 EUtranCellFDD earfcn 3601
-ma TDD10 EUtranCellTDD earfcn 39151
-ma TDD30 EUtranCellTDD earfcn 39348
-ma TDD40 EUtranCellTDD earfcn 39349
-
-############################ FREQ Creation###########
+lt all
 
 cr ENodeBFunction=1,GeraNetwork=1
 
 cr ENodeBFunction=1,GeraNetwork=1,GeranFreqGroup=1
 1 #frequencyGroupId
 
-cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39150
-39150
-0
-cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=3601
-3601
-0
-cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=1576
-1576
-0
-cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=515
-515
-0
-cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39151
-39151
-0
-
-cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39348
-39348
-0
-
-cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39349
-39349
-0
-
-func Gran_rahul
+func Gran_freq
 cr ENodeBFunction=1,GeraNetwork=1,GeranFrequency=$t
 $t
 0
 set ENodeBFunction=1,GeraNetwork=1,GeranFrequency=$t geranFreqGroupRef ENodeBFunction=1,GeraNetwork=1,GeranFreqGroup=1
-endfunc
+endfunc 
 
-for $t = 1 to 6
-Gran_rahul
+for $t = 669 to 680
+Gran_freq
 done
 
+for $t = 757 to 768
+Gran_freq
+done
 
-crn ENodeBFunction=1,GeraNetwork=1,GeranFrequency=30
-arfcnValueGeranDl 30
-bandIndicator 0
-geranFreqGroupRef ENodeBFunction=1,GeraNetwork=1,GeranFreqGroup=1
-userLabel
-end
+lt all
+
+wait 3
+
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39150
+39150
+0
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39294
+39294
+0
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=390
+390
+0
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=1615 
+1615
+0
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=3696 
+3696
+0
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39151 
+39151
+0
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39295 
+39295
+0
+
+
+
+#### Alpha & Pusch ####
+set EUtranCellFDD=TN_E_F3_.* pZeroNominalPusch -67
+set EUtranCellFDD=TN_E_F3_.* pZeroNominalPucch -110
+set EUtranCellFDD=TN_E_F3_.* alpha 7
+
+#EnodeBFunction
+
+set ENodeBFunction alignTtiBundWUlTrigSinr 1
+set ENodeBFunction=1 dscpLabel 46
+set ENodeBFunction=1 gtpuErrorIndicationDscp 46
+set ENodeBFunction rrcConnReestActive 1
+set ENodeBFunction=1 tRelocOverall 20
+set ENodeBFunction=1 tS1HoCancelTimer 3
+set ENodeBFunction=1                                        enabledUlTrigMeas false
+set ENodeBFunction=1                                        zzzTemporary52    1  
+set ENodeBFunction=1                                        zzzTemporary55    -2000000000
+set ENodeBFunction=1                                        csfbMeasFromIdleMode 1
+set ENodeBFunction=1 s1GtpuEchoDscp 46
+set ENodeBFunction=1 x2GtpuEchoDscp 46
+set ENodeBFunction=1                                        x2SetupTwoWayRelations true
+set ENodeBFunction=1                                        dnsLookupOnTai 1
+set ENodeBFunction=1                                        zzzTemporary13    -2000000000
+set ENodeBFunction=1                                        caAwareMfbiIntraCellHo false
+set ENodeBFunction=1                                        mfbiSupportPolicy false
+set ENodeBFunction=1                                        s1HODirDataPathAvail True
+set ENodeBFunction=1                                        timePhaseMaxDeviationIeNbCa 30
+set ENodeBFunction=1                                        s1GtpuEchoEnable 0
+set ENodeBFunction=1                                        checkEmergencySoftLock false
+set ENodeBFunction=1                                        combCellSectorSelectThreshRx 300
+set ENodeBFunction=1                                        combCellSectorSelectThreshTx 300    
+set ENodeBFunction=1                                        licConnectedUsersPercentileConf 90  
+set ENodeBFunction=1                                        tddVoipDrxProfileId -1
+set ENodeBFunction=1                                        timePhaseMaxDeviation 100
+set ENodeBFunction=1                                        timePhaseMaxDeviationEdrx 10
+set ENodeBFunction=1                                        timePhaseMaxDeviationMbms 50
+set ENodeBFunction=1                                        timePhaseMaxDeviationOtdoa 9
+set ENodeBFunction=1                                        timePhaseMaxDeviationSib16 100
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd 15
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd1 15
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd2 15
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd3 15
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd4 15
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd5 15
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd6 15
+set ENodeBFunction=1                                        timePhaseMaxDeviationTdd7 15
+set ENodeBFunction=1                                        timePhaseMaxDevIeNBUlComp 30 
+set ENodeBFunction=1                                        ulMaxWaitingTimeGlobal 0  
+set ENodeBFunction=1                                        ulSchedulerDynamicBWAllocationEnabled true  
+set ENodeBFunction=1                                        useBandPrioritiesInSCellEval false 
+set EUtranCellFDD=TN_E_F3_.*                                  useBandPrioritiesInSib1 false
+set ENodeBFunction=1                                        x2GtpuEchoEnable  0
+set ENodeBFunction=1                                        x2IpAddrViaS1Active true 
+set ENodeBFunction=1                                        x2retryTimerMaxAuto 1440 
+set ENodeBFunction=1                                        forcedSiTunnelingActive false
+
+#EUTRANCELLFDD
+
+set EUtranCellFDD=TN_E_F3_.* pdcchOuterLoopUpStep 8
+set EUtranCellFDD=TN_E_F3_.* pdcchOuterLoopUpStepPCell 6
+set EUtranCellFDD=TN_E_F3_.* ttiBundlingAfterHO 1
+set EUtranCellFDD=TN_E_F3_.* ttiBundlingAfterReest 1
+set EUtranCellFDD=TN_E_F3_.* ttiBundlingSwitchThres 150
+set EUtranCellFDD=TN_E_F3_.* ttiBundlingSwitchThresHyst 30
+set EUtranCellFDD=TN_E_F3_.* cellDownlinkCaCapacity 0
+set EUtranCellFDD=TN_E_F3_.* mappingInfo mappingInfoSIB12=7
+set EUtranCellFDD=TN_E_F3_.* mappingInfo mappingInfoSIB4=2
+set EUtranCellFDD=TN_E_F3_.* mappingInfo mappingInfoSIB6=4
+set EUtranCellFDD=TN_E_F3_.*                                 servOrPrioTriggeredErabAction 3
+set EUtranCellFDD=TN_E_F3_.*  dlInternalChannelBandwidth 0
+set EUtranCellFDD=TN_E_F3_.*  ulInternalChannelBandwidth 0
+set EUtranCellFDD=TN_E_F3_.*  beamWeightSet16Tr 0
+set EUtranCellFDD=TN_E_F3_.* adaptiveCfiHoProhibit 0
+set EUtranCellFDD=TN_E_F3_.* enableSinrUplinkClpc 1
+set EUtranCellFDD=TN_E_F3_.* pdcchCovImproveQci1 true
+set EUtranCellFDD=TN_E_F3_.* pdcchOuterLoopUpStepVolte 9
+set EUtranCellFDD=TN_E_F3_.* pdcchTargetBlervolte 4
+set EUtranCellFDD=TN_E_F3_.* allocThrPucchFormat1 50
+set EUtranCellFDD=TN_E_F3_.* allocTimerPucchFormat1 50
+set EUtranCellFDD=TN_E_F3_.* deallocThrPucchFormat1 100
+set EUtranCellFDD=TN_E_F3_.* deallocTimerPucchFormat1 6000
+set EUtranCellFDD=TN_E_F3_.* drxActive true
+set EUtranCellFDD=TN_E_F3_.* dlBlerTargetEnabled 1
+set EUtranCellFDD=TN_E_F3_.*  enableServiceSpecificHARQ true
+set EUtranCellFDD=TN_E_F3_.* pdcchCovImproveDtx true
+set EUtranCellFDD=TN_E_F3_.* pdcchCovImproveSrb false
+set EUtranCellFDD=TN_E_F3_.* pdcchTargetBler 24
+set EUtranCellFDD=TN_E_F3_.* pdcchTargetBlerPCell 22
+set EUtranCellFDD=TN_E_F3_.* pMaxServingCell 1000
+set EUtranCellFDD=TN_E_F3_.* qRxLevMinOffset 1000
+set EUtranCellFDD=TN_E_F3_.* tReorderingAutoConfiguration true
+set EUtranCellFDD=TN_E_F3_.* tTimeAlignmentTimer 0
+set EUtranCellFDD=TN_E_F3_.* ulBlerTargetEnabled true
+set EUtranCellFDD=TN_E_F3_.*  ulHarqVolteBlerTarget 3
+set EUtranCellFDD=TN_E_F3_.* cfraEnable true
+set EUtranCellFDD=TN_E_F3_.* changeNotification changeNotificationSIB15=true
+set EUtranCellFDD=TN_E_F3_.* changeNotification changeNotificationSIB16=true
+set EUtranCellFDD=TN_E_F3_.* changeNotification changeNotificationSIB8=true
+set EUtranCellFDD=TN_E_F3_.* hoOptAdjThresholdAbs 5
+set EUtranCellFDD=TN_E_F3_.* hoOptAdjThresholdPerc 50
+set EUtranCellFDD=TN_E_F3_.* prsPowerBoosting 0
+set EUtranCellFDD=TN_E_F3_.* transmissionMode 4
+set EUtranCellFDD=TN_E_F3_.* ns05FullBandUsersInCellThres 1
+set EUtranCellFDD=TN_E_F3_.* ns05FullBandSchedEnabled false
+set EUtranCellFDD=TN_E_F3_.*  puschNcpChannelEstWindowSize 1
+set EUtranCellFDD=TN_E_F3_.* mobCtrlAtPoorCovActive true
+set EUtranCellFDD=TN_E_F3_.*  servOrPrioTriggeredIFHo 0
+set EUtranCellFDD=TN_E_F3_.*  ul64qamEnabled    true
+set EUtranCellFDD=TN_E_F3_.*  dl256QamStatus    2
+set EUtranCellFDD=TN_E_F3_.*  dl256QamEnabled   true
+set EUtranCellFDD=TN_E_F3_.*  dlFrequencyAllocationProportion 100
+set EUtranCellFDD=TN_E_F3_.*  commonSrPeriodicity 10
+set EUtranCellFDD=TN_E_F3_.* mappingInfo mappingInfoSIB5=3
+set EUtranCellFDD=TN_E_F3_.* changeNotification changeNotificationSIB7=true
+set EUtranCellFDD=TN_E_F3_.* changeNotification changeNotificationSIB2=true
+set EUtranCellFDD=TN_E_F3_.* changeNotification changeNotificationSIB3=true
+set EUtranCellFDD=TN_E_F3_.* changeNotification changeNotificationSIB4=true
+set EUtranCellFDD=TN_E_F3_.* changeNotification changeNotificationSIB1=true
+set EUtranCellFDD=TN_E_F3_.* changeNotification changeNotificationSIB6=true
+set EUtranCellFDD=TN_E_F3_.* changeNotification changeNotificationSIB5=true
+set EUtranCellFDD=TN_E_F3_.* changeNotification changeNotificationSIB13=true
+set EUtranCellFDD=TN_E_F3_.* mappingInfoCe mappingInfoSIB10=0
+set EUtranCellFDD=TN_E_F3_.*  qRxLevMinCe       -140
+set EUtranCellFDD=TN_E_F3_.*  pdcchLaGinrMargin 40
+set EUtranCellFDD=TN_E_F3_.*  acBarringPresence acBarringForMmtelVideoPresence=0
+set EUtranCellFDD=TN_E_F3_.*  acBarringPresence acBarringForMmtelVoicePresence=0
+set EUtranCellFDD=TN_E_F3_.*  acBarringPresence acBarringPriorityMmtelVideo=0
+set EUtranCellFDD=TN_E_F3_.*  acBarringPresence acBarringPriorityMmtelVoice=0
+set EUtranCellFDD=TN_E_F3_.*  acBarringPresence acBarringForMoDataPresence=0
+set EUtranCellFDD=TN_E_F3_.*  noOfEnhAdptReTxCand 0
+set EUtranCellFDD=TN_E_F3_.*  dynUlResourceAllocEnabled false
+set EUtranCellFDD=TN_E_F3_.* systemInformationBlock6 tReselectionUtra=4
+set EUtranCellFDD=TN_E_F3_.* advCellSupAction 2
+set EUtranCellFDD=TN_E_F3_.*  primaryPlmnReserved false
+set EUtranCellFDD=TN_E_F3_.*  harqOffsetDl      3
+set EUtranCellFDD=TN_E_F3_.*  harqOffsetUl      3
+set EUtranCellFDD=TN_E_F3_.*  highSpeedUEActive false
+set EUtranCellFDD=TN_E_F3_.*  initialBufferSizeDefault 86
+set EUtranCellFDD=TN_E_F3_.*  prsTransmisScheme 0
+set EUtranCellFDD=TN_E_F3_.*  puschPwrOffset64qam 0
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock3 tEvaluation=240
+set EUtranCellFDD=TN_E_F3_.*  elcEnabled        false
+set EUtranCellFDD=TN_E_F3_.*  preambleInitialReceivedTargetPower -110
+set EUtranCellFDD=TN_E_F3_.*  acBarringForCsfb acBarringFactor=95
+set EUtranCellFDD=TN_E_F3_.*  acBarringForCsfb acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F3_.*  acBarringForCsfb acBarringTime=64
+set EUtranCellFDD=TN_E_F3_.*  acBarringForEmergency false
+set EUtranCellFDD=TN_E_F3_.*  acBarringForMoData acBarringFactor=95
+set EUtranCellFDD=TN_E_F3_.*  acBarringForMoData acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F3_.*  acBarringForMoData acBarringTime=64
+set EUtranCellFDD=TN_E_F3_.*  acBarringForMoSignalling acBarringFactor=95
+set EUtranCellFDD=TN_E_F3_.*  acBarringForMoSignalling acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F3_.*  acBarringForMoSignalling acBarringTime=64
+set EUtranCellFDD=TN_E_F3_.*  acBarringInfoPresent false
+set EUtranCellFDD=TN_E_F3_.*  acBarringPresence acBarringForCsfbPresence=0
+set EUtranCellFDD=TN_E_F3_.*  acBarringPresence acBarringForMoSignPresence=0
+set EUtranCellFDD=TN_E_F3_.*  acBarringPresence acBarringPriorityCsfb=0
+set EUtranCellFDD=TN_E_F3_.*  acBarringPresence acBarringPriorityMoData=0
+set EUtranCellFDD=TN_E_F3_.*  acBarringPresence acBarringPriorityMoSignaling=0
+set EUtranCellFDD=TN_E_F3_.*  spifhoSetupBearerAtInitialCtxtSetup false
+set EUtranCellFDD=TN_E_F3_.*  srDetectHighThres 70
+set EUtranCellFDD=TN_E_F3_.*  srProcessingLevel 0
+set EUtranCellFDD=TN_E_F3_.*  ssacBarringForMMTELVideo acBarringFactor=95
+set EUtranCellFDD=TN_E_F3_.*  ssacBarringForMMTELVideo acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F3_.*  ssacBarringForMMTELVideo acBarringTime=64
+set EUtranCellFDD=TN_E_F3_.*  ssacBarringForMMTELVoice acBarringFactor=95
+set EUtranCellFDD=TN_E_F3_.*  ssacBarringForMMTELVoice acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F3_.*  ssacBarringForMMTELVoice acBarringTime=64
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock3 nCellChangeHigh=16
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock3 nCellChangeMedium=16
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock3 qHystSfHigh=0
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock3 qHystSfMedium=0
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock3 sIntraSearchQ=0
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock3 sNonIntraSearchv920Active=false
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock3 sIntraSearchv920Active=false
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock3 tHystNormal=240
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock6 tReselectionUtraSfHigh=100
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock6 tReselectionUtraSfMedium=100
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock7 tReselectionGeran=2
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock7 tReselectionGeranSfHigh=100
+set EUtranCellFDD=TN_E_F3_.*  systemInformationBlock7 tReselectionGeranSfMedium=100
+
+set EUtranCellFDD=TN_E_F3_.*  tUeBlockingTimer  200
+set EUtranCellFDD=TN_E_F3_.*  ulConfigurableFrequencyStart 0
+set EUtranCellFDD=TN_E_F3_.*  ulFrequencyAllocationProportion 100
+set EUtranCellFDD=TN_E_F3_.*  ulImprovedUeSchedLastEnabled true
+set EUtranCellFDD=TN_E_F3_.*  ulPsdLoadThresholdSinrClpc 2 
+set EUtranCellFDD=TN_E_F3_.*  ulSCellPriority   5
+set EUtranCellFDD=TN_E_F3_.*  ulSchedCtrlForOocUesEnabled true 
+set EUtranCellFDD=TN_E_F3_.*  ulSrsEnable       false
+set EUtranCellFDD=TN_E_F3_.*  ulTrigActive      true
+set EUtranCellFDD=TN_E_F3_.*  ulTxPsdDistrThr   40
+set EUtranCellFDD=TN_E_F3_.*  uncertAltitude    0
+set EUtranCellFDD=TN_E_F3_.*  uncertSemiMajor   0
+set EUtranCellFDD=TN_E_F3_.*  uncertSemiMinor   0
+set EUtranCellFDD=TN_E_F3_.* pdcchCfiMode 5
+
+#EUTRANFREQRELATION
+
+set EUtranFreqRelation tReselectionEutra 4
+set EUtranFreqRelation caTriggeredRedirectionActive false
+set EUtranFreqRelation anrMeasOn true
+set EUtranFreqRelation       qRxLevMinCe       -140
+set EUtranFreqRelation pMax 1000
+set EUtranFreqRelation        tReselectionEutraCe 2
+set EUtranFreqRelation tReselectionEutraSfHigh 100
+set EUtranFreqRelation tReselectionEutraSfMedium 100
+set LoadBalancingFunction=1                txPwrForOverlaidCellDetect 370
+set RadioBearerTable=default,MACConfiguration=1 ulMaxHARQTx 5
+set RadioBearerTable=default,MACConfiguration=1 dlMaxHARQTx 4
+set RadioBearerTable=default,MACConfiguration=1 ulTtiBundlingMaxHARQTx 7
+set EUtranCellFDD=TN_E_F3_.*,MimoSleepFunction=1              switchUpMonitorDurTimer 5
+set Paging=1                                                pagingDiscardTimerDrxNb 3
+set Paging=1                                                maxNoOfPagingRecordsNb 3 
+set Paging=1                                                noOfDefPagCyclPrim 8
+
+#QciProfilePredefined
+
+set ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1 tReorderingUl 50
+set RadioBearerTable=default,SignalingRadioBearer=1 tReorderingUl 35
+set QciTable=default,QciProfilePredefined=QCI1 absPrioOverride 0
+set QciTable=default,QciProfilePredefined=QCI2 absPrioOverride 0
+set QciTable=default,QciProfilePredefined=QCI5 absPrioOverride 1
+
+set QciTable=default,QciProfilePredefined=QCI1 aqmMode 2
+set QciTable=default,QciProfilePredefined=QCI2 aqmMode 2
+set QciTable=default,QciProfilePredefined=QCI5 aqmMode 0
+
+set QciProfilePredefined=qci1 counterActiveMode 0
+set QciProfilePredefined=qci2 counterActiveMode 0
+set QciProfilePredefined=qci5 counterActiveMode 0
+set QciProfilePredefined=qci6 counterActiveMode 0
+set QciProfilePredefined=qci8 counterActiveMode 0
+set QciProfilePredefined=qci9 counterActiveMode 0
+
+set QciTable=default,QciProfilePredefined=qci6 dataFwdPerQciEnabled true
+set QciTable=default,QciProfilePredefined=qci8 dataFwdPerQciEnabled true
+set QciTable=default,QciProfilePredefined=qci9 dataFwdPerQciEnabled true
+set QciTable=default,QciProfilePredefined=qci7 dataFwdPerQciEnabled true
+set QciTable=default,QciProfilePredefined=QCI1 dataFwdPerQciEnabled 1
+set QciTable=default,QciProfilePredefined=QCI2 dataFwdPerQciEnabled 1
+set QciTable=default,QciProfilePredefined=QCI5 dataFwdPerQciEnabled 1
+set QciTable=default,QciProfilePredefined=qci1 harqPriority 1
+set QciTable=default,QciProfilePredefined=qci1 dlMaxHARQTxQci 7
+set QciTable=default,QciProfilePredefined=qci1 ulMaxHARQTxQci 7
+set ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci2 dlMinBitRate 384
+set ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci2 ulMinBitRate 384
+set QciTable=default,QciProfilePredefined=QCI1 dlResourceAllocationStrategy 1
+set QciTable=default,QciProfilePredefined=QCI2 dlResourceAllocationStrategy 1
+set QciTable=default,QciProfilePredefined=QCI5 dlResourceAllocationStrategy 0
+set QciTable=default,QciProfilePredefined=qci1 drxPriority 99
+set QciTable=default,QciProfilePredefined=qci2 drxPriority 100
+set QciTable=default,QciProfilePredefined=qci5 drxPriority 1
+lset QciTable=default,QciProfilePredefined=qci1 drxProfileRef DrxProfile=1
+lset QciTable=default,QciProfilePredefined=qci2 drxProfileRef DrxProfile=2
+lset QciTable=default,QciProfilePredefined=qci5 drxProfileRef DrxProfile=0
+set QciTable=default,QciProfilePredefined=QCI1 dscp 34
+set QciTable=default,QciProfilePredefined=QCI2 dscp 34
+set QciTable=default,QciProfilePredefined=QCI5 dscp 46
+set QciTable=default,QciProfilePredefined=qci1 harqPriority 1
+set QciTable=default,QciProfilePredefined=QCI1 inactivityTimerOffset 30
+set QciTable=default,QciProfilePredefined=QCI2 inactivityTimerOffset 30
+set QciTable=default,QciProfilePredefined=QCI5 inactivityTimerOffset 0
+set QciProfilePredefined=qci6 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3
+set QciProfilePredefined=qci7 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3
+set QciProfilePredefined=qci8 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3
+set QciProfilePredefined=qci9 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3
+set QciProfilePredefined=qci1 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=1
+set QciProfilePredefined=qci2 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=2
+set QciProfilePredefined=qci5 logicalChannelGroupRef QciTable=default,LogicalChannelGroup=1
+set QciTable=default,QciProfilePredefined=QCI1 Pdb 80
+set QciTable=default,QciProfilePredefined=QCI2 Pdb 150
+set QciTable=default,QciProfilePredefined=QCI5 Pdb 100
+set QciTable=default,QciProfilePredefined=QCI1 PdbOffset 100
+set QciTable=default,QciProfilePredefined=QCI2 PdbOffset 50
+set QciTable=default,QciProfilePredefined=QCI5 PdbOffset 0
+set QciTable=default,QciProfilePredefined=QCI1 pdcpSNLength 12
+set QciTable=default,QciProfilePredefined=QCI2 pdcpSNLength 12
+set QciTable=default,QciProfilePredefined=QCI5 pdcpSNLength 12
+set QciTable=default,QciProfilePredefined=QCI1 Priority 1
+set QciTable=default,QciProfilePredefined=QCI2 Priority 4
+set QciTable=default,QciProfilePredefined=QCI5 Priority 2
+set QciTable=default,QciProfilePredefined=QCI1 resourcetype 1
+set QciTable=default,QciProfilePredefined=QCI2 resourcetype 1
+set QciTable=default,QciProfilePredefined=QCI5 resourcetype 0
+set QciTable=default,QciProfilePredefined=QCI1 rlcMode 1
+set QciTable=default,QciProfilePredefined=QCI2 rlcMode 1
+set QciTable=default,QciProfilePredefined=QCI5 rlcMode 0
+set QciTable=default,QciProfilePredefined=QCI1 rlcSNLength 10
+set QciTable=default,QciProfilePredefined=QCI2 rlcSNLength 10
+set QciTable=default,QciProfilePredefined=QCI5 rlcSNLength 10
+set QciTable=default,QciProfilePredefined=QCI1 rlfPriority 10
+set QciTable=default,QciProfilePredefined=QCI1 rohcEnabled 1
+set QciTable=default,QciProfilePredefined=QCI2 rohcEnabled 0
+set QciTable=default,QciProfilePredefined=QCI5 rohcEnabled 0
+set QciTable=default,QciProfilePredefined=QCI1 schedulingAlgorithm 6
+set QciTable=default,QciProfilePredefined=QCI2 schedulingAlgorithm 3
+set QciTable=default,QciProfilePredefined=QCI5 schedulingAlgorithm 0
+set QciTable=default,QciProfilePredefined=QCI1 serviceType 1
+set QciTable=default,QciProfilePredefined=QCI2 serviceType 0
+set QciTable=default,QciProfilePredefined=QCI5 serviceType 2
+set QciTable=default,QciProfilePredefined=qci1 tReorderingDl 120
+set QciTable=default,QciProfilePredefined=QCI6 dscp 26
+set QciTable=default,QciProfilePredefined=QCI7 dscp 26
+set QciTable=default,QciProfilePredefined=QCI8 dscp 26
+set QciTable=default,QciProfilePredefined=QCI9 dscp 26
+set QciTable=default,QciProfilePredefined=QCI6 schedulingAlgorithm 3
+set QciTable=default,QciProfilePredefined=QCI7 schedulingAlgorithm 3
+set QciTable=default,QciProfilePredefined=QCI8 schedulingAlgorithm 3
+set QciTable=default,QciProfilePredefined=QCI9 schedulingAlgorithm 3
+set QciTable=default,QciProfilePredefined=QCI6 absPrioOverride 0
+set QciTable=default,QciProfilePredefined=QCI7 absPrioOverride 0
+set QciTable=default,QciProfilePredefined=QCI8 absPrioOverride 0
+set QciTable=default,QciProfilePredefined=QCI9 absPrioOverride 0
+
+
+set Rcs=1 rlcDlDeliveryFailureAction 2
+set Rcs=1 tInactivityTimer 10
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigCsfbUtra=1 hysteresis        10
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigSCellA6=1 triggerQuantityA6 0
+set . ulTrafficDelay -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+set . dlTrafficDelay -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+set RlfProfile=1$ t301 1000
+set RlfProfile=1$ t310 500
+set RlfProfile=1$ t311 5000 
+set ENodeBFunction=1,RlfProfile n310 10
+set ENodeBFunction=1,RlfProfile n311 1
+set ENodeBFunction=1,Rrc=1 t311 5000
+set ENodeBFunction=1,Rrc=1 tRrcConnReest 2
+set ENodeBFunction=1,Rrc=1 tWaitForRrcConnReest 9
+set ENodeBFunction=1,Rrc=1 t301 1000
+set ENodeBFunction=1,Rrc=1 t304 2000
+
+
+#QOS
+
+set Transport=1,SctpProfile=1 heartbeatInterval 2000
+set SecurityHandling=1                                      cipheringAlgoPrio 1 2 0 
+set RadioBearerTable=default,SignalingRadioBearer=1 tPollRetransmitDl 80
+set RadioBearerTable=default,SignalingRadioBearer=1 tPollRetransmitUl 80
+cr ENodeBFunction=1,TimerProfile=0
+6	
+8
+3
+10
+set ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1 timerProfileRef ENodeBFunction=1,TimerProfile=0
+set TimerProfile=0                                          tWaitForRrcConnReest 6
+set TimerProfile=0                                          tRrcConnectionReconfiguration 12
+set TimerProfile=0                                          tRrcConnReest 3
+set TimerProfile=0                                          tRelocOverall 20
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1                  filterCoefficientEUtraRsrp 4
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1 ueMeasurementsActiveIF true
+set ENodeBFunction=1                                        zzzTemporary13    -2000000000
+set ENodeBFunction=1,EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1 sMeasure 0
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1                  lowPrioMeasThresh 0 
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1                  maxUtranCellsToMeasure 32 
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1                  allowReleaseQci1 false
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1                  ulSinrOffset 30 
+
+
+
+####IFLB
+
+
+set LoadBalancingFunction=1 lbCeiling 500
+set LoadBalancingFunction=1 lbThreshold 20
+set LoadBalancingFunction=1 lbHitRateEUtranAddThreshold 5
+set LoadBalancingFunction=1 lbHitRateEUtranMeasUeIntensity 10
+set LoadBalancingFunction=1 lbHitRateEUtranMeasUeThreshold 10
+set LoadBalancingFunction=1 lbHitRateEUtranRemoveThreshold 2
+set LoadBalancingFunction=1 lbMeasScalingLimit 30
+set LoadBalancingFunction=1 lbRateOffsetCoefficient 320
+set LoadBalancingFunction=1 lbRateOffsetLoadThreshold 1500
+set QciTable=default,QciProfilePredefined=qci1              qciSubscriptionQuanta 60
+set QciTable=default,QciProfilePredefined=qci2              qciSubscriptionQuanta 384
+set QciTable=default,QciProfilePredefined=qci5              qciSubscriptionQuanta 1
+set QciTable=default,QciProfilePredefined=qci6              qciSubscriptionQuanta 200
+set QciTable=default,QciProfilePredefined=qci7              qciSubscriptionQuanta 200
+set QciTable=default,QciProfilePredefined=qci8              qciSubscriptionQuanta 200
+set QciTable=default,QciProfilePredefined=qci9              qciSubscriptionQuanta 200
+set AutoCellCapEstFunction=1 useEstimatedCellCap true
+
+
+##############
+ma L1800 EUtranCellFDD earfcn 1615
+wait 1
+if $nr_of_mos != 0 
+for $mo in L1800
+$mordn = rdn($mo)
+set $mordn cellSubscriptionCapacity 18000
+done
+else 
+fi
+
+############
+
+set EUtranFreqRelation=.* lbBnrPolicy 2
+set EUtranCellFDD=TN_E_F3_.* cellCapMaxCellSubCap 60000
+set EUtranCellFDD=TN_E_F3_.* cellCapMinCellSubCap 1500
+set EUtranCellFDD=TN_E_F3_.* cellCapMinMaxWriProt true
+set  CXC4011373   featurestate  1
+set  CXC4011370   featurestate  1
+set  CXC4011698   featurestate  1
+
+
+set EUtranCellFDD=TN_E_F3_.* dlInterferenceManagementActive TRUE
+set EUtranCellFDD=TN_E_F3_.* noOfChannelSelectionsets 4
+set EUtranCellFDD=TN_E_F3_.* channelSelectionsetSize 2
+set EUtranCellFDD=TN_E_F3_.* advCellSupSensitivity 25
+set EUtranCellFDD=TN_E_F3_.* covTriggerdBlindHoAllowed 0
+set EUtranCellFDD=TN_E_F3_.* qRxLevMinOffset 1000
+set EUtranCellFDD=TN_E_F3_.* qQualMin -34
+set EUtranCellFDD=TN_E_F3_.* qQualMinOffset 0
+set EUtranCellFDD=TN_E_F3_.*,EUtranFreqRelation=.* qoffsetfreq 0
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5 480
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigA5=1 triggerquantitya5 0
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 a3offset 30
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 timeToTriggerA3 320
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 triggerQuantityA3 0
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigB2Utra=1 triggerQuantityB2 0
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1Search 480
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2Search 480
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2Critical 480
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1 excludeInterFreqAtCritical true
+set EUtranCellFDD=TN_E_F3_.* pdcchOuterLoopInitialAdjVolte -46
+set EUtranCellFDD=TN_E_F3_.* pdcchOuterLoopInitialAdj -70
+set EUtranCellFDD=TN_E_F3_.* pdcchOuterLoopInitialAdjPCell -70
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigSearch=1 inhibitA2SearchConfig 1
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1 ueMeasurementsActive 1
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1                  a5B2MobilityTimer 0
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1         bothA5RsrpRsrqCheck False
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1                  inhibitB2RsrqConfig true
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2OutSearch  40 
+set EUtranCellFDD=TN_E_F3_.* SystemInformationBlock3 snonintrasearchQ=0
+set EUtranCellFDD=TN_E_F3_.* SystemInformationBlock3 sintrasearchp=44
+lset EUtranCellFDD=TN_E_F3_.*,EUtranFreqRelation=.* mobilityAction 1
+set EUtranCellFDD=TN_E_F3_.* mappingInfo mappingInfoSIB3=1
+set EUtranCellFDD=TN_E_F3_.* mappingInfo mappingInfoSIB5=3
+set EUtranCellFDD=TN_E_F3_.* mappingInfo mappingInfoSIB7=5
+set EUtranCellFDD=TN_E_F3_.* mappingInfo mappingInfoSIB12=7
+set EUtranCellFDD=TN_E_F3_.* mappingInfo mappingInfoSIB4=2
+set EUtranCellFDD=TN_E_F3_.* mappingInfo mappingInfoSIB6=4
+
+set EUtranCellFDD=TN_E_F3_.*      lbEUtranAcceptOffloadThreshold  10
+set EUtranCellFDD=TN_E_F3_.*       lbEUtranTriggerOffloadThreshold 30
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 hysteresisA1A2RsrpBidirectional 10
+
+set EUtranCellFDD=TN_E_F3_.*,EUtranFreqRelation=.*          allowedPlmnList   mcc=404,mnc=94,mncLength=2
+
+set EUtranCellFDD=TN_E_F3_.* bsrThreshold 100
+set EUtranCellFDD=TN_E_F3_.* noOfUlImprovedUe 2
+
+for $mo in L1800
+$mordn = rdn($mo)
+cr $mordn,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1
+done
+
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1 maxReportCellsPm 8
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1 reportIntervalPm 5
+
+set .  timeAndPhaseSynchAlignment True
+set .  timeAndPhaseSynchCritical False
+
+#Common Parameter
+
+set EUtranFreqRelation=39150 allowedmeasbandwidth 100
+set EUtranFreqRelation=39294 allowedmeasbandwidth 50
+set EUtranFreqRelation=390$ allowedmeasbandwidth 50
+set EUtranFreqRelation=1615 allowedmeasbandwidth 75
+
+set EUtranFreqRelation=39151 allowedmeasbandwidth 100
+set EUtranFreqRelation=39295 allowedmeasbandwidth 50
+
+set EUtranFreqRelation=390$ anrMeasOn true
+set EUtranFreqRelation=39150 anrMeasOn true
+set EUtranFreqRelation=39294 anrMeasOn true
+set EUtranFreqRelation=1615 anrMeasOn true
+
+set EUtranFreqRelation=39151 anrMeasOn true
+set EUtranFreqRelation=39295 anrMeasOn true
+
+set . maxTimeEventBasedPciConf 30
+set . measuringEcgiWithAgActive false
+set AnrFunction=1 probCellDetectLowHoSuccThres 10
+
+set QciTable=default,QciProfilePredefined=qci1 rlfProfileRef RlfProfile=1
+set QciTable=default,QciProfilePredefined=QCI6 ResourceAllocationStrategy 1
+set QciTable=default,QciProfilePredefined=QCI8 ResourceAllocationStrategy 1
+set QciTable=default,QciProfilePredefined=QCI9 ResourceAllocationStrategy 1
+set QciTable=default,QciProfilePredefined=QCI6 dlResourceAllocationStrategy 1
+set QciTable=default,QciProfilePredefined=QCI8 dlResourceAllocationStrategy 1
+set QciTable=default,QciProfilePredefined=QCI9 dlResourceAllocationStrategy 1
+set QciTable=default,QciProfilePredefined=qci5              tReorderingUl 60
+set QciTable=default,QciProfilePredefined=qci6             tReorderingUl 60
+set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 dlMaxRetxThreshold 16
+set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 ulMaxRetxThreshold 16
+set Rrc=1 t300 2000
+set Rrc=1 t320 30
+set QciTable=default,QciProfilePredefined=qci1 rlfProfileRef RlfProfile=1
+set RlfProfile=1$ n310 10
+set RlfProfile=1$ n311 1
+set RlfProfile=1$ t301 1000
+set RlfProfile=1$ t310 500
+set RlfProfile=1$ t311 5000
+set RlfProfile=0$ n310 20
+set RlfProfile=0$ n311 1
+set RlfProfile=0$ t301 2000
+set RlfProfile=0$ t310 2000
+set RlfProfile=0$ t311 10000
+
+#CA
+set LoadBalancingFunction=1 lbDiffCaOffset 300
+set CarrierAggregationFunction caRateAdjustCoeff 5
+set CarrierAggregationFunction waitForCaOpportunity 2000
+set CarrierAggregationFunction sCellScheduleSinrThres -50
+set CarrierAggregationFunction sCellActDeactDataThres 20
+set CarrierAggregationFunction sCellActDeactDataThresHyst 20
+set CarrierAggregationFunction sCellDeactProhibitTimer 50
+set CarrierAggregationFunction causagelimit 200
+set CarrierAggregationFunction sCellActProhibitTimer 10
+set CarrierAggregationFunction caPreemptionThreshold 50
+set CarrierAggregationFunction sCellSelectionMode 0
+set LoadBalancingFunction lbCaThreshold 2000
+set LoadBalancingFunction lbCaCapHysteresis 20
+set CarrierAggregationFunction pdcchEnhancedLaForVolte False
+
+#GERAN
+
+set GeranFreqGroupRelation=1         csFallbackPrio    4
+set GeranFreqGroupRelation=1         csFallbackPrioEC    4
+set AnrFunction=1,AnrFunctionGeran=1 anrStateGsm 1
+set GeranFreqGroup qRxLevMin -111
+set GeranFreqGroup pmaxgeran 1000
+set GeranFreqGroup Qoffsetfreq 0
+set GeranFreqGroup nccpermitted 11111111
+set GeranFreqGroup anrMeasOn TRUE
+set GeranFreqGroup mobilityAction 1
+set GeranFreqGroup mobilityActionCsfb 1
+set GeranFreqGroup userLabel SIB7
+set CXC4011664 featurestate 0
+set CXC4011346 featurestate 1
+set CXC4012240 featurestate 1
+set CXC4010618 featurestate 1
+
+# UL COMP
+
+###### L1800 ######
+pr EUtranCellFDD=TN_E_F3
+if $nr_of_mos = 3
+	cr ENodeBFunction=1,UlCompGroup=4
+	ENodeBFunction=1,SectorCarrier=20 ENodeBFunction=1,SectorCarrier=21 ENodeBFunction=1,SectorCarrier=22
+else if $nr_of_mos = 2
+	cr ENodeBFunction=1,UlCompGroup=4
+	ENodeBFunction=1,SectorCarrier=20 ENodeBFunction=1,SectorCarrier=21
+else if $nr_of_mos = 1
+	cr ENodeBFunction=1,UlCompGroup=4
+	ENodeBFunction=1,SectorCarrier=20
+else if $nr_of_mos = 4
+	cr ENodeBFunction=1,UlCompGroup=4
+	ENodeBFunction=1,SectorCarrier=20 ENodeBFunction=1,SectorCarrier=21 ENodeBFunction=1,SectorCarrier=22 ENodeBFunction=1,SectorCarrier=23
+fi
+deb ENodeBFunction=1,UlCompGroup=4
+
+#RIM
+
+set CXC4010973 featurestate 1
+set ENodeBFunction=1                                        forcedSiTunnelingActive false
+set CXC4010956 featurestate 1
+
+set EUtranCellFDD=TN_E_F3_.* noOfPucchSrUsers 420
+set EUtranCellFDD=TN_E_F3_.* noOfPucchCqiUsers 320
+       
+
+###Paging
+
+
+set ENodeBFunction=1,Paging=1 maxNoOfPagingRecords                 7
+set ENodeBFunction=1,Paging=1 nB                                   3
+
+####
+
+### Additional Parameters
+
+lset UeMeasControl PrioOffsetPerQci qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,offsetPerQciPrio=7
+
+set . zzzTemporary60 1 
+
+lt all
+rbs
+rbs
+confbd+
+
 
 
 lt all
 
-################## Frequency Relation##########
+cr ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=390
+390
+0
+
+unset all
+
+$Par[1] = L2100
+
+mr L2100
+
+ma L2100 EUtranCellFDD earfcn 390
 
 func Gran_Rel
 for $mo in $Par[$i]
@@ -1647,2031 +5002,1436 @@ for $mo in $Par[$i]
 done
 endfunc
 
-func EURel_39150
-for $mo in $Par[$i]
- $mordn = rdn($mo)
- pr $mordn,EUtranFreqRelation=39150
- if $nr_of_mos = 0
-  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=39150 
-  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39150
-  7
- fi 
+
+
+
+get ENodeBFunction=1,EUtranCellFDD=TN_ eUtranCellFDDId > $temp
+l echo $temp > $temp.txt
+$nodename = `$gawk  '{ print substr ($NR,12,6) }' $temp.txt
+                   
+### Fixed Parameter
+
+#### Alpha & Pusch ####
+set EUtranCellFDD=TN_E_F1_.* pzeronominalPusch -67
+set EUtranCellFDD=TN_E_F1_.* alpha 7
+set EUtranCellFDD=TN_E_F1_.* pZeroNominalPucch -110
+
+set EUtranCellFDD=TN_E_F1_.*                                  useBandPrioritiesInSib1 false
+
+#EUTRANCELLFDD
+
+set EUtranCellFDD=TN_E_F1_.* pdcchOuterLoopUpStep 8
+set EUtranCellFDD=TN_E_F1_.* pdcchOuterLoopUpStepPCell 6
+set EUtranCellFDD=TN_E_F1_.* ttiBundlingAfterHO 1
+set EUtranCellFDD=TN_E_F1_.* ttiBundlingAfterReest 1
+set EUtranCellFDD=TN_E_F1_.* ttiBundlingSwitchThres 150
+set EUtranCellFDD=TN_E_F1_.* ttiBundlingSwitchThresHyst 30
+set EUtranCellFDD=TN_E_F1_.* cellDownlinkCaCapacity 0
+set EUtranCellFDD=TN_E_F1_.* mappingInfo mappingInfoSIB12=7
+set EUtranCellFDD=TN_E_F1_.* mappingInfo mappingInfoSIB4=2
+set EUtranCellFDD=TN_E_F1_.* mappingInfo mappingInfoSIB6=4
+set EUtranCellFDD=TN_E_F1_.*                                 servOrPrioTriggeredErabAction 3
+set EUtranCellFDD=TN_E_F1_.*  dlInternalChannelBandwidth 0
+set EUtranCellFDD=TN_E_F1_.*  ulInternalChannelBandwidth 0
+set EUtranCellFDD=TN_E_F1_.*  beamWeightSet16Tr 0
+set EUtranCellFDD=TN_E_F1_.* adaptiveCfiHoProhibit 0
+set EUtranCellFDD=TN_E_F1_.* enableSinrUplinkClpc 1
+set EUtranCellFDD=TN_E_F1_.* pdcchCovImproveQci1 true
+set EUtranCellFDD=TN_E_F1_.* pdcchOuterLoopUpStepVolte 9
+set EUtranCellFDD=TN_E_F1_.* pdcchTargetBlervolte 4
+set EUtranCellFDD=TN_E_F1_.* allocThrPucchFormat1 50
+set EUtranCellFDD=TN_E_F1_.* allocTimerPucchFormat1 50
+set EUtranCellFDD=TN_E_F1_.* deallocThrPucchFormat1 100
+set EUtranCellFDD=TN_E_F1_.* deallocTimerPucchFormat1 6000
+set EUtranCellFDD=TN_E_F1_.* drxActive true
+set EUtranCellFDD=TN_E_F1_.* dlBlerTargetEnabled 1
+set EUtranCellFDD=TN_E_F1_.* enableServiceSpecificHARQ true
+set EUtranCellFDD=TN_E_F1_.* pdcchCovImproveDtx true
+set EUtranCellFDD=TN_E_F1_.* pdcchCovImproveSrb false
+set EUtranCellFDD=TN_E_F1_.* pdcchTargetBler 24
+set EUtranCellFDD=TN_E_F1_.* pdcchTargetBlerPCell 22
+set EUtranCellFDD=TN_E_F1_.* pMaxServingCell 1000
+set EUtranCellFDD=TN_E_F1_.* qRxLevMinOffset 1000
+set EUtranCellFDD=TN_E_F1_.* tReorderingAutoConfiguration true
+set EUtranCellFDD=TN_E_F1_.* tTimeAlignmentTimer 0
+set EUtranCellFDD=TN_E_F1_.* ulBlerTargetEnabled true
+set EUtranCellFDD=TN_E_F1_.*  ulHarqVolteBlerTarget 3
+set EUtranCellTDD=TN_E_F1_.*  ulHarqVolteBlerTarget 3
+set EUtranCellFDD=TN_E_F1_.* cfraEnable true
+set EUtranCellFDD=TN_E_F1_.* changeNotification changeNotificationSIB15=true
+set EUtranCellFDD=TN_E_F1_.* changeNotification changeNotificationSIB16=true
+set EUtranCellFDD=TN_E_F1_.* changeNotification changeNotificationSIB8=true
+set EUtranCellFDD=TN_E_F1_.* hoOptAdjThresholdAbs 5
+set EUtranCellFDD=TN_E_F1_.* hoOptAdjThresholdPerc 50
+set EUtranCellFDD=TN_E_F1_.* prsPowerBoosting 0
+set EUtranCellFDD=TN_E_F1_.* transmissionMode 4
+set EUtranCellFDD=TN_E_F1_.* ns05FullBandUsersInCellThres 1
+set EUtranCellFDD=TN_E_F1_.* ns05FullBandSchedEnabled false
+set EUtranCellFDD=TN_E_F1_.*  puschNcpChannelEstWindowSize 1
+set EUtranCellFDD=TN_E_F1_.* mobCtrlAtPoorCovActive true
+set EUtranCellFDD=TN_E_F1_.*  servOrPrioTriggeredIFHo 0
+set EUtranCellFDD=TN_E_F1_.*  ul64qamEnabled    true
+set EUtranCellFDD=TN_E_F1_.*  dl256QamStatus    2
+set EUtranCellFDD=TN_E_F1_.*  dl256QamEnabled   true
+set EUtranCellFDD=TN_E_F1_.*  dlFrequencyAllocationProportion 100
+set EUtranCellFDD=TN_E_F1_.*  commonSrPeriodicity 10
+set EUtranCellFDD=TN_E_F1_.* mappingInfo mappingInfoSIB5=3
+set EUtranCellFDD=TN_E_F1_.* changeNotification changeNotificationSIB7=true
+set EUtranCellFDD=TN_E_F1_.* changeNotification changeNotificationSIB2=true
+set EUtranCellFDD=TN_E_F1_.* changeNotification changeNotificationSIB3=true
+set EUtranCellFDD=TN_E_F1_.* changeNotification changeNotificationSIB4=true
+set EUtranCellFDD=TN_E_F1_.* changeNotification changeNotificationSIB1=true
+set EUtranCellFDD=TN_E_F1_.* changeNotification changeNotificationSIB6=true
+set EUtranCellFDD=TN_E_F1_.* changeNotification changeNotificationSIB5=true
+set EUtranCellFDD=TN_E_F1_.* changeNotification changeNotificationSIB13=true
+set EUtranCellFDD=TN_E_F1_.* mappingInfoCe mappingInfoSIB10=0
+set EUtranCellFDD=TN_E_F1_.*  qRxLevMinCe       -140
+set EUtranCellFDD=TN_E_F1_.*  pdcchLaGinrMargin 40
+set EUtranCellFDD=TN_E_F1_.*  acBarringPresence acBarringForMmtelVideoPresence=0
+set EUtranCellFDD=TN_E_F1_.*  acBarringPresence acBarringForMmtelVoicePresence=0
+set EUtranCellFDD=TN_E_F1_.*  acBarringPresence acBarringPriorityMmtelVideo=0
+set EUtranCellFDD=TN_E_F1_.*  acBarringPresence acBarringPriorityMmtelVoice=0
+set EUtranCellFDD=TN_E_F1_.*  acBarringPresence acBarringForMoDataPresence=0
+set EUtranCellFDD=TN_E_F1_.*  noOfEnhAdptReTxCand 0
+set EUtranCellFDD=TN_E_F1_.*  dynUlResourceAllocEnabled false
+set EUtranCellFDD=TN_E_F1_.* systemInformationBlock6 tReselectionUtra=4
+set EUtranCellFDD=TN_E_F1_.* advCellSupAction 2
+set EUtranCellFDD=TN_E_F1_.*  primaryPlmnReserved false
+set EUtranCellFDD=TN_E_F1_.*  harqOffsetDl      3
+set EUtranCellFDD=TN_E_F1_.*  harqOffsetUl      3
+set EUtranCellFDD=TN_E_F1_.*  highSpeedUEActive false
+set EUtranCellFDD=TN_E_F1_.*  initialBufferSizeDefault 86
+set EUtranCellFDD=TN_E_F1_.*  prsTransmisScheme 0
+set EUtranCellFDD=TN_E_F1_.*  puschPwrOffset64qam 0
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock3 tEvaluation=240
+set EUtranCellFDD=TN_E_F1_.*  elcEnabled        false
+set EUtranCellFDD=TN_E_F1_.*  preambleInitialReceivedTargetPower -110
+set EUtranCellFDD=TN_E_F1_.*  acBarringForCsfb acBarringFactor=95
+set EUtranCellFDD=TN_E_F1_.*  acBarringForCsfb acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F1_.*  acBarringForCsfb acBarringTime=64
+set EUtranCellFDD=TN_E_F1_.*  acBarringForEmergency false
+set EUtranCellFDD=TN_E_F1_.*  acBarringForMoData acBarringFactor=95
+set EUtranCellFDD=TN_E_F1_.*  acBarringForMoData acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F1_.*  acBarringForMoData acBarringTime=64
+set EUtranCellFDD=TN_E_F1_.*  acBarringForMoSignalling acBarringFactor=95
+set EUtranCellFDD=TN_E_F1_.*  acBarringForMoSignalling acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F1_.*  acBarringForMoSignalling acBarringTime=64
+set EUtranCellFDD=TN_E_F1_.*  acBarringInfoPresent false
+set EUtranCellFDD=TN_E_F1_.*  acBarringPresence acBarringForCsfbPresence=0
+set EUtranCellFDD=TN_E_F1_.*  acBarringPresence acBarringForMoSignPresence=0
+set EUtranCellFDD=TN_E_F1_.*  acBarringPresence acBarringPriorityCsfb=0
+set EUtranCellFDD=TN_E_F1_.*  acBarringPresence acBarringPriorityMoData=0
+set EUtranCellFDD=TN_E_F1_.*  acBarringPresence acBarringPriorityMoSignaling=0
+set EUtranCellFDD=TN_E_F1_.*  spifhoSetupBearerAtInitialCtxtSetup false
+set EUtranCellFDD=TN_E_F1_.*  srDetectHighThres 70
+set EUtranCellFDD=TN_E_F1_.*  srProcessingLevel 0
+set EUtranCellFDD=TN_E_F1_.*  ssacBarringForMMTELVideo acBarringFactor=95
+set EUtranCellFDD=TN_E_F1_.*  ssacBarringForMMTELVideo acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F1_.*  ssacBarringForMMTELVideo acBarringTime=64
+set EUtranCellFDD=TN_E_F1_.*  ssacBarringForMMTELVoice acBarringFactor=95
+set EUtranCellFDD=TN_E_F1_.*  ssacBarringForMMTELVoice acBarringForSpecialAC=false false false false false
+set EUtranCellFDD=TN_E_F1_.*  ssacBarringForMMTELVoice acBarringTime=64
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock3 nCellChangeHigh=16
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock3 nCellChangeMedium=16
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock3 qHystSfHigh=0
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock3 qHystSfMedium=0
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock3 sIntraSearchQ=0
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock3 sNonIntraSearchv920Active=false
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock3 sIntraSearchv920Active=false
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock3 tHystNormal=240
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock6 tReselectionUtraSfHigh=100
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock6 tReselectionUtraSfMedium=100
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock7 tReselectionGeran=2
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock7 tReselectionGeranSfHigh=100
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock7 tReselectionGeranSfMedium=100
+set EUtranCellFDD=TN_E_F1_.*  tUeBlockingTimer  200
+set EUtranCellFDD=TN_E_F1_.*  ulConfigurableFrequencyStart 0
+set EUtranCellFDD=TN_E_F1_.*  ulFrequencyAllocationProportion 100
+set EUtranCellFDD=TN_E_F1_.*  ulImprovedUeSchedLastEnabled true
+set EUtranCellFDD=TN_E_F1_.*  ulPsdLoadThresholdSinrClpc 2 
+set EUtranCellFDD=TN_E_F1_.*  ulSCellPriority   5
+set EUtranCellFDD=TN_E_F1_.*  ulSchedCtrlForOocUesEnabled true 
+set EUtranCellFDD=TN_E_F1_.*  ulSrsEnable       false
+set EUtranCellFDD=TN_E_F1_.*  ulTrigActive      true
+set EUtranCellFDD=TN_E_F1_.*  ulTxPsdDistrThr   40
+set EUtranCellFDD=TN_E_F1_.*  uncertAltitude    0
+set EUtranCellFDD=TN_E_F1_.*  uncertSemiMajor   0
+set EUtranCellFDD=TN_E_F1_.*  uncertSemiMinor   0
+set EUtranCellFDD=TN_E_F1_.* pdcchCfiMode 5
+
+#EUTRANFREQRELATION
+
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation tReselectionEutra 4
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation caTriggeredRedirectionActive false
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation anrMeasOn true
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation       qRxLevMinCe       -140
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation pMax 1000
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation        tReselectionEutraCe 2
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation tReselectionEutraSfHigh 100
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation tReselectionEutraSfMedium 100
+set EUtranCellFDD=TN_E_F1_.*,MimoSleepFunction=1              switchUpMonitorDurTimer 5
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigCsfbUtra=1 hysteresis        10
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSCellA6=1 triggerQuantityA6 0
+set . ulTrafficDelay -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+set . dlTrafficDelay -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1                  filterCoefficientEUtraRsrp 4
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1 ueMeasurementsActiveIF true
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1                  lowPrioMeasThresh 0 
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1                  maxUtranCellsToMeasure 32 
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1                  allowReleaseQci1 false
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1                  ulSinrOffset 30
+
+
+##############
+
+ma L2100 EUtranCellFDD earfcn 390
+wait 1
+if $nr_of_mos != 0 
+for $mo in L2100
+$mordn = rdn($mo)
+set $mordn cellSubscriptionCapacity 12000
 done
-endfunc
+else 
+fi
 
-func EURel_39151
-for $mo in $Par[$i]
- $mordn = rdn($mo)
- pr $mordn,EUtranFreqRelation=39151
- if $nr_of_mos = 0
-  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=39151
-  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39151
-  6
- fi 
-done
-endfunc
+############
 
-func EURel_39348
-for $mo in $Par[$i]
- $mordn = rdn($mo)
- pr $mordn,EUtranFreqRelation=39348
- if $nr_of_mos = 0
-  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=39348
-  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39348
-  7
- fi 
-done
-endfunc
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=.* lbBnrPolicy 2
+set EUtranCellFDD=TN_E_F1_.* cellCapMaxCellSubCap 60000
+set EUtranCellFDD=TN_E_F1_.* cellCapMinCellSubCap 1500
+set EUtranCellFDD=TN_E_F1_.* cellCapMinMaxWriProt true
+set EutrancellFDD=TN_E_F1_.* dlInterferenceManagementActive TRUE
+set EutrancellFDD=TN_E_F1_.* noOfChannelSelectionsets 4
+set EutrancellFDD=TN_E_F1_.* channelSelectionsetSize 2
+set EutrancellFDD=TN_E_F1_.* advCellSupSensitivity 25
+set EutrancellFDD=TN_E_F1_.* covTriggerdBlindHoAllowed 0
+set EutrancellFDD=TN_E_F1_.* qRxLevMinOffset 1000
+set EutrancellFDD=TN_E_F1_.* qQualMin -34
+set EutrancellFDD=TN_E_F1_.* qQualMinOffset 0
+set EutrancellFDD=TN_E_F1_.*,EUtranFreqRelation=.* qoffsetfreq 0
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5 480
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigA5=1 triggerquantitya5 0
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 a3offset 30
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 timeToTriggerA3 480
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 triggerQuantityA3 0
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB2Utra=1 triggerQuantityB2 0
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1Search 480
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2Search 480
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2Critical 480
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1 excludeInterFreqAtCritical true
+set EutrancellFDD=TN_E_F1_.* pdcchOuterLoopInitialAdjVolte -46
+set EutrancellFDD=TN_E_F1_.* pdcchOuterLoopInitialAdj -70
+set EutrancellFDD=TN_E_F1_.* pdcchOuterLoopInitialAdjPCell -70
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 inhibitA2SearchConfig 1
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1 ueMeasurementsActive 1
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1                  a5B2MobilityTimer 0
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1         bothA5RsrpRsrqCheck False
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1                  inhibitB2RsrqConfig true
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2OutSearch  40 
+set EutrancellFDD=TN_E_F1_.* SystemInformationBlock3 snonintrasearchQ=0
+set EutrancellFDD=TN_E_F1_.* SystemInformationBlock3 sintrasearchp=44
+lset EutrancellFDD=TN_E_F1_.*,EUtranFreqRelation=.* mobilityAction 1
+set EutrancellFDD=TN_E_F1_.* mappingInfo mappingInfoSIB3=1
+set EutrancellFDD=TN_E_F1_.* mappingInfo mappingInfoSIB5=3
+set EutrancellFDD=TN_E_F1_.* mappingInfo mappingInfoSIB7=5
+set EutrancellFDD=TN_E_F1_.* mappingInfo mappingInfoSIB12=7
+set EutrancellFDD=TN_E_F1_.* mappingInfo mappingInfoSIB4=2
+set EutrancellFDD=TN_E_F1_.* mappingInfo mappingInfoSIB6=4
+set EutrancellFDD=TN_E_F1_.*      lbEUtranAcceptOffloadThreshold  10
+set EutrancellFDD=TN_E_F1_.*       lbEUtranTriggerOffloadThreshold 30
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 hysteresisA1A2RsrpBidirectional 10
+set EutrancellFDD=TN_E_F1_.*,EUtranFreqRelation=.*          allowedPlmnList   mcc=404,mnc=94,mncLength=2
+set EutrancellFDD=TN_E_F1_.* bsrThreshold 100
+set EutrancellFDD=TN_E_F1_.* noOfUlImprovedUe 2
 
-func EURel_39349
-for $mo in $Par[$i]
- $mordn = rdn($mo)
- pr $mordn,EUtranFreqRelation=39349
- if $nr_of_mos = 0
-  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=39349
-  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=39349
-  6
- fi 
-done
-endfunc
-
-func EURel_515
-for $mo in $Par[$i]
- $mordn = rdn($mo)
- pr $mordn,EUtranFreqRelation=515
- if $nr_of_mos = 0
-  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=515 
-  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=515
-  5
- fi 
-done
-endfunc
-
-func EURel_1576
-for $mo in $Par[$i]
- $mordn = rdn($mo)
- pr $mordn,EUtranFreqRelation=1576
- if $nr_of_mos = 0
-  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=1576
-  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=1576
-  4
- fi 
-done
-endfunc
-
-func EURel_3601
-for $mo in $Par[$i]
- $mordn = rdn($mo)
- pr $mordn,EUtranFreqRelation=3601
- if $nr_of_mos = 0
-  cr ENodeBFunction=1,$mordn,EUtranFreqRelation=3601
-  ENodeBFunction=1,EUtraNetwork=1,EUtranFrequency=3601
-  3
- fi 
-done
-endfunc
-
- 
-for $i = 1 to 7
-EURel_39150
-EURel_39151
-EURel_39348
-EURel_39349
-EURel_515
-EURel_1576
-EURel_3601
-Gran_Rel
+#
+for $mo in L2100
+$mordn = rdn($mo)
+cr $mordn,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1
 done
 
-
-
-crn ENodeBFunction=1,GeraNetwork=1,GeranFrequency=30
-arfcnValueGeranDl 30
-bandIndicator 0
-geranFreqGroupRef ENodeBFunction=1,GeraNetwork=1,GeranFreqGroup=1
-userLabel
-end
-
-
-######################
-
-##########################GNSS MO##############
-
-cr Transport=1,Synchronization=1,TimeSyncIO=1,GnssInfo=1
-########################################
-
-
-############################ Node Level Parameters #######################
-
-########### ENodeBFunction ##################
-
-set ENodeBFunction=1 alignTtiBundWUlTrigSinr 1
-set ENodeBFunction=1 dscpLabel 46
-set ENodeBFunction=1 rrcConnReestActive 1
-set ENodeBFunction=1 tRelocOverall 20
-set ENodeBFunction=1 tS1HoCancelTimer 3
-set ENodeBFunction=1 enabledUlTrigMeas true
-set ENodeBFunction=1 zzzTemporary52 1
-set ENodeBFunction=1 x2GtpuEchoDscp 46
-set ENodeBFunction=1 s1GtpuEchoDscp 46
-set ENodeBFunction=1 x2SetupTwoWayRelations true
-set ENodeBFunction=1 csfbMeasFromIdleMode true
-set ENodeBFunction=1 dnsLookupOnTai 1
-set ENodeBFunction=1 zzzTemporary13 -2000000000
-set ENodeBFunction=1 caAwareMfbiIntraCellHo false
-set ENodeBFunction=1 mfbiSupportPolicy false
-set ENodeBFunction=1 s1HODirDataPathAvail true
-set ENodeBFunction=1 gtpuErrorIndicationDscp 46
-set ENodeBFunction=1 timePhaseMaxDeviationIeNbCa 30
-set ENodeBFunction=1 s1GtpuEchoEnable  0
-set ENodeBFunction=1 checkEmergencySoftLock false
-set ENodeBFunction=1 combCellSectorSelectThreshRx 300
-set ENodeBFunction=1 combCellSectorSelectThreshTx 300
-set ENodeBFunction=1 licConnectedUsersPercentileConf 90
-set ENodeBFunction=1 tddVoipDrxProfileId -1
-set ENodeBFunction=1 timePhaseMaxDeviation 100
-set ENodeBFunction=1 timePhaseMaxDeviationEdrx 10
-set ENodeBFunction=1 timePhaseMaxDeviationMbms 50
-set ENodeBFunction=1 timePhaseMaxDeviationOtdoa 9
-set ENodeBFunction=1 timePhaseMaxDeviationSib16 100
-set ENodeBFunction=1 timePhaseMaxDeviationTdd 15
-set ENodeBFunction=1 timePhaseMaxDeviationTdd1 15
-set ENodeBFunction=1 timePhaseMaxDeviationTdd2 15
-set ENodeBFunction=1 timePhaseMaxDeviationTdd3 15
-set ENodeBFunction=1 timePhaseMaxDeviationTdd4 15
-set ENodeBFunction=1 timePhaseMaxDeviationTdd5 15
-set ENodeBFunction=1 timePhaseMaxDeviationTdd6 15
-set ENodeBFunction=1 timePhaseMaxDeviationTdd7 15
-set ENodeBFunction=1 timePhaseMaxDevIeNBUlComp 30
-set ENodeBFunction=1 ulMaxWaitingTimeGlobal 0
-set ENodeBFunction=1 ulSchedulerDynamicBWAllocationEnabled true
-set ENodeBFunction=1 useBandPrioritiesInSCellEval false
-set ENodeBFunction=1 x2GtpuEchoEnable  0
-set ENodeBFunction=1 x2IpAddrViaS1Active true
-set ENodeBFunction=1 x2retryTimerMaxAuto 1440
-set ENodeBFunction=1 timeAndPhaseSynchAlignment true
-set ENodeBFunction=1 timeAndPhaseSynchCritical false
-set ENodeBFunction=1,SecurityHandling=1 securityHandlingId 1
-set ENodeBFunction=1 csmMinHighHitThreshold 50
-set ENodeBFunction=1,RadioBearerTable=default,MACConfiguration=1$ ulMaxHARQTx 5
-set ENodeBFunction=1,AdmissionControl=1$ dlAdmDifferentiationThr 750
-set ENodeBFunction=1,AdmissionControl=1$ ulAdmDifferentiationThr 750
-set ENodeBFunction=1$ enabledUlTrigMeas true
-set ENodeBFunction=1$ s1HODirDataPathAvail true
-set AutoCellCapEstFunction=1$ useEstimatedCellCap true
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionGeran=1$ anrStateGsm 1
-
-################  QciProfilePredefined ########################
-
-set QciTable=default,QciProfilePredefined=QCI1$ absPrioOverride 0
-set QciTable=default,QciProfilePredefined=QCI2$ absPrioOverride 0
-set QciTable=default,QciProfilePredefined=QCI5$ absPrioOverride 1
-set QciTable=default,QciProfilePredefined=QCI1$ aqmMode 2
-set QciTable=default,QciProfilePredefined=QCI2$ aqmMode 2
-set QciTable=default,QciProfilePredefined=QCI5$ aqmMode 0
-set QciTable=default,QciProfilePredefined=qci6$ counterActiveMode false
-set QciTable=default,QciProfilePredefined=qci8$ counterActiveMode false
-set QciTable=default,QciProfilePredefined=qci9$ counterActiveMode false
-set QciTable=default,QciProfilePredefined=qci2$ counterActiveMode false
-set QciTable=default,QciProfilePredefined=qci5$ counterActiveMode false
-set QciTable=default,QciProfilePredefined=qci6$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci8$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci9$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci7$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=QCI1$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=QCI2$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=QCI5$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci1$ dlMaxHARQTxQci 7
-set QciTable=default,QciProfilePredefined=QCI2$ dlMinBitRate 384
-set QciTable=default,QciProfilePredefined=QCI1$ dlResourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=QCI2$ dlResourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=QCI5$ dlResourceAllocationStrategy 0
-set QciTable=default,QciProfilePredefined=QCI6$ dlResourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=QCI8$ dlResourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=QCI9$ dlResourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci1$ drxPriority 99
-set QciTable=default,QciProfilePredefined=qci2$ drxPriority 100
-set QciTable=default,QciProfilePredefined=qci3$ drxPriority 0
-set QciTable=default,QciProfilePredefined=qci5$ drxPriority 1
-set QciTable=default,QciProfilePredefined=qci1$ drxProfileRef DrxProfile=1
-set QciTable=default,QciProfilePredefined=qci2$ drxProfileRef DrxProfile=2
-set QciTable=default,QciProfilePredefined=qci5$ drxProfileRef DrxProfile=0
-set QciTable=default,QciProfilePredefined=QCI6$ dscp 32
-set QciTable=default,QciProfilePredefined=QCI7$ dscp 40
-set QciTable=default,QciProfilePredefined=QCI8$ dscp 30
-set QciTable=default,QciProfilePredefined=QCI9$ dscp 26
-set QciTable=default,QciProfilePredefined=QCI1$ dscp 34
-set QciTable=default,QciProfilePredefined=QCI2$ dscp 34
-set QciTable=default,QciProfilePredefined=QCI5$ dscp 46
-set QciTable=default,QciProfilePredefined=qci1$ harqPriority 1
-set QciTable=default,QciProfilePredefined=QCI1$ inactivityTimerOffset 30
-set QciTable=default,QciProfilePredefined=QCI2$ inactivityTimerOffset 30
-set QciTable=default,QciProfilePredefined=QCI5$ inactivityTimerOffset 0
-set QciTable=default,QciProfilePredefined=qci1$ logicalChannelGroupRef QciTable=default,LogicalChannelGroup=1
-set QciTable=default,QciProfilePredefined=qci2$ logicalChannelGroupRef QciTable=default,LogicalChannelGroup=2
-set QciTable=default,QciProfilePredefined=qci5$ logicalChannelGroupRef QciTable=default,LogicalChannelGroup=1
-set QciTable=default,QciProfilePredefined=qci6$ logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3
-set QciTable=default,QciProfilePredefined=qci7$ logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3
-set QciTable=default,QciProfilePredefined=qci8$ logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3
-set QciTable=default,QciProfilePredefined=qci9$ logicalChannelGroupRef QciTable=default,LogicalChannelGroup=3
-set QciTable=default,QciProfilePredefined=QCI1$ Pdb 80
-set QciTable=default,QciProfilePredefined=QCI2$ Pdb 150
-set QciTable=default,QciProfilePredefined=QCI5$ Pdb 100
-set QciTable=default,QciProfilePredefined=QCI1$ PdbOffset 100
-set QciTable=default,QciProfilePredefined=QCI2$ PdbOffset 50
-set QciTable=default,QciProfilePredefined=QCI5$ PdbOffset 0
-set QciTable=default,QciProfilePredefined=QCI1$ pdcpSNLength 12
-set QciTable=default,QciProfilePredefined=QCI2$ pdcpSNLength 12
-set QciTable=default,QciProfilePredefined=QCI5$ pdcpSNLength 12
-set QciTable=default,QciProfilePredefined=QCI1$ Priority 1
-set QciTable=default,QciProfilePredefined=QCI2$ Priority 4
-set QciTable=default,QciProfilePredefined=QCI5$ Priority 2
-set QciTable=default,QciProfilePredefined=qci1$ resourceType 1
-set QciTable=default,QciProfilePredefined=qci2$ resourceType 1
-set QciTable=default,QciProfilePredefined=qci5$ resourceType 0
-set QciTable=default,QciProfilePredefined=QCI1$ rlcMode 1
-set QciTable=default,QciProfilePredefined=QCI2$ rlcMode 1
-set QciTable=default,QciProfilePredefined=QCI5$ rlcMode 0
-set QciTable=default,QciProfilePredefined=QCI1$ rlcSNLength 10
-set QciTable=default,QciProfilePredefined=QCI2$ rlcSNLength 10
-set QciTable=default,QciProfilePredefined=QCI5$ rlcSNLength 10
-set QciTable=default,QciProfilePredefined=QCI1$ rlfPriority 10
-set QciTable=default,QciProfilePredefined=QCI1$ rohcEnabled TRUE
-set QciTable=default,QciProfilePredefined=QCI2$ rohcEnabled FALSE
-set QciTable=default,QciProfilePredefined=QCI5$ rohcEnabled FALSE
-set QciTable=default,QciProfilePredefined=QCI1$ schedulingAlgorithm 6
-set QciTable=default,QciProfilePredefined=QCI2$ schedulingAlgorithm 3
-set QciTable=default,QciProfilePredefined=QCI5$ schedulingAlgorithm 0
-set QciTable=default,QciProfilePredefined=QCI6$ schedulingAlgorithm 4
-set QciTable=default,QciProfilePredefined=QCI7$ schedulingAlgorithm 4
-set QciTable=default,QciProfilePredefined=QCI8$ schedulingAlgorithm 4
-set QciTable=default,QciProfilePredefined=QCI9$ schedulingAlgorithm 4
-set QciTable=default,QciProfilePredefined=QCI1$ serviceType 1
-set QciTable=default,QciProfilePredefined=QCI2$ serviceType 0
-set QciTable=default,QciProfilePredefined=QCI5$ serviceType 2
-set QciTable=default,QciProfilePredefined=qci1$ tReorderingDl 120
-set QciTable=default,QciProfilePredefined=qci1$ ulMaxHARQTxQci 7
-set QciTable=default,QciProfilePredefined=QCI2$ UlMinBitRate 384
-set QciTable=default,QciProfilePredefined=qci1$ tReorderingUl 50
-set RadioBearerTable=default,SignalingRadioBearer=1 tReorderingUl 35
-set QciTable=default,QciProfilePredefined=qci6$ dscp$ 32
-set QciTable=default,QciProfilePredefined=qci7$ dscp$ 26
-set QciTable=default,QciProfilePredefined=qci8$ dscp$ 26
-set QciTable=default,QciProfilePredefined=qci9$ dscp$ 26
-set QciTable=default,QciProfilePredefined=QCI6$ absPrioOverride 0
-set QciTable=default,QciProfilePredefined=QCI7$ absPrioOverride 0
-set QciTable=default,QciProfilePredefined=QCI8$ absPrioOverride 0
-set QciTable=default,QciProfilePredefined=QCI9$ absPrioOverride 0
-set QciTable=default,QciProfilePredefined=QCI6$ schedulingAlgorithm 4
-set QciTable=default,QciProfilePredefined=QCI7$ schedulingAlgorithm 4
-set QciTable=default,QciProfilePredefined=QCI8$ schedulingAlgorithm 4
-set QciTable=default,QciProfilePredefined=QCI9$ schedulingAlgorithm 4
-set QciTable=default,QciProfilePredefined=qci1$ qciSubscriptionQuanta 60
-set QciTable=default,QciProfilePredefined=qci2$ qciSubscriptionQuanta 384
-set QciTable=default,QciProfilePredefined=qci5$ qciSubscriptionQuanta 1
-set QciTable=default,QciProfilePredefined=qci6$ qciSubscriptionQuanta 200
-set QciTable=default,QciProfilePredefined=qci7$ qciSubscriptionQuanta 200
-set QciTable=default,QciProfilePredefined=qci8$ qciSubscriptionQuanta 200
-set QciTable=default,QciProfilePredefined=qci9$ qciSubscriptionQuanta 200
-set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a1ThresholdRsrpPrimOffset=14
-set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a2ThresholdRsrpPrimOffset=2
-set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a5Threshold1RsrpOffset=2
-set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a5Threshold2RsrpOffset=2
-set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams b2Threshold1RsrpUtraOffset=2
-set QciTable=default,QciProfilePredefined=qci6$ resourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci7$ resourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci8$ resourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci9$ resourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=default bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci1    bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci2    bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci3    bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci4    bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci5    bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci6    bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci65   bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci66   bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci69   bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci7    bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci70   bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci8    bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci9    bitRateRecommendationEnabled true
-set QciTable=default,QciProfilePredefined=qci1$ qciSubscriptionQuanta 60
-set QciTable=default,QciProfilePredefined=qci2$ qciSubscriptionQuanta 384
-set QciTable=default,QciProfilePredefined=qci6$ qciSubscriptionQuanta 200
-set QciTable=default,QciProfilePredefined=qci7$ qciSubscriptionQuanta 200
-set QciTable=default,QciProfilePredefined=qci8$ qciSubscriptionQuanta 200
-set QciTable=default,QciProfilePredefined=qci9$ qciSubscriptionQuanta 200
-set QciTable=default,QciProfilePredefined=default$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci1$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci2$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci3$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci4$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci5$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci6$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci7$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci8$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci9$ dataFwdPerQciEnabled true
-set QciTable=default,QciProfilePredefined=qci1$ dlResourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci2$ dlResourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci1$ schedulingAlgorithm 6
-set QciTable=default,QciProfilePredefined=qci2$ schedulingAlgorithm 3
-set QciTable=default,QciProfilePredefined=qci6$ schedulingAlgorithm 4
-set QciTable=default,QciProfilePredefined=qci8$ schedulingAlgorithm 4
-set QciTable=default,QciProfilePredefined=qci9$ schedulingAlgorithm 4
-set QciTable=default,QciProfilePredefined=qci1$ serviceType 1
-set QciTable=default,QciProfilePredefined=qci1$ drxPriority 99
-set QciTable=default,QciProfilePredefined=qci1$ dscp 34
-set QciTable=default,QciProfilePredefined=qci1$ inactivityTimerOffset 30
-set QciTable=default,QciProfilePredefined=qci1$ pdb 80
-set QciTable=default,QciProfilePredefined=qci1$ pdbOffset 100
-set QciTable=default,QciProfilePredefined=qci1$ priority 1
-set QciTable=default,QciProfilePredefined=qci1$ rlcMode 1
-set QciTable=default,QciProfilePredefined=qci1$ rlfPriority 10
-set QciTable=default,QciProfilePredefined=qci1$ rohcEnabled true
-set QciTable=default,QciProfilePredefined=qci1$ tReorderingDl 120
-set QciTable=default,QciProfilePredefined=qci1$ tReorderingUl 50
-set QciTable=default,QciProfilePredefined=qci2$ dlMinBitRate 384
-set QciTable=default,QciProfilePredefined=qci2$ drxPriority 100
-set QciTable=default,QciProfilePredefined=qci2$ dscp 34
-set QciTable=default,QciProfilePredefined=qci2$ inactivityTimerOffset 30
-set QciTable=default,QciProfilePredefined=qci2$ pdbOffset 50
-set QciTable=default,QciProfilePredefined=qci2$ rlcMode 1
-set QciTable=default,QciProfilePredefined=qci2$ ulMinBitRate 384
-set QciTable=default,QciProfilePredefined=qci5$ drxPriority 1
-set QciTable=default,QciProfilePredefined=qci5$ dscp 46
-set QciTable=default,QciProfilePredefined=qci5$ priority 2
-set QciTable=default,QciProfilePredefined=qci1$ resourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci2$ resourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci3$ resourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci4$ resourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci5$ resourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci6$ resourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci7$ resourceAllocationStrategy 1
-set QciTable=default,QciProfilePredefined=qci3$ schedulingAlgorithm 0
-set QciTable=default,QciProfilePredefined=qci4$ schedulingAlgorithm 0
-
-
-################ SCTP ####################
-
-set Transport=1,SctpProfile=1 assocMaxRtx 20
-set Transport=1,SctpProfile=1 heartbeatInterval 2000
-set Transport=1,SctpProfile=1 initRto 2000
-set Transport=1,SctpProfile=1 maxRto 4000
-set Transport=1,SctpProfile=1 maxInStreams 2
-set Transport=1,SctpProfile=1 maxInitRt 5
-set Transport=1,SctpProfile=1 maxOutStreams 2
-set Transport=1,SctpProfile=1 transmitBufferSize 64
-set Transport=1,SctpProfile=1 minRto 1000
-set Transport=1,SctpProfile=1 pathMaxRtx 10
-set Transport=1,SctpProfile=1 hbMaxBurst 1
-set Transport=1,SctpProfile=1 maxSctpPduSize 1480
-
-##########  DRX Profile ##############
-
-lset ENodeBFunction=1,DrxProfile=1$ drxInactivityTimer 6
-lset ENodeBFunction=1,DrxProfile=2$ drxInactivityTimer 6
-lset ENodeBFunction=1,DrxProfile=0$ drxInactivityTimer 14
-lset ENodeBFunction=1,DrxProfile=1$ drxRetransmissionTimer 2
-lset ENodeBFunction=1,DrxProfile=2$ drxRetransmissionTimer 1
-lset ENodeBFunction=1,DrxProfile=0$ drxRetransmissionTimer 4
-lset ENodeBFunction=1,DrxProfile=1$ longDrxCycle 3
-lset ENodeBFunction=1,DrxProfile=2$ longDrxCycle 3
-lset ENodeBFunction=1,DrxProfile=0$ longDrxCycle 9
-lset ENodeBFunction=1,DrxProfile=1$ longDrxCycleonly 3
-lset ENodeBFunction=1,DrxProfile=2$ longDrxCycleonly 3
-lset ENodeBFunction=1,DrxProfile=0$ longDrxCycleonly 9
-lset ENodeBFunction=1,DrxProfile=1$ onDurationTimer 7
-lset ENodeBFunction=1,DrxProfile=2$ onDurationTimer 6
-lset ENodeBFunction=1,DrxProfile=0$ onDurationTimer 7
-lset ENodeBFunction=1,DrxProfile=1$ shortDrxCycle 7
-lset ENodeBFunction=1,DrxProfile=2$ shortDrxCycle 7
-lset ENodeBFunction=1,DrxProfile=0$ shortDrxCycle 9
-lset ENodeBFunction=1,DrxProfile=1$ shortDrxCycleTimer 0
-lset ENodeBFunction=1,DrxProfile=2$ shortDrxCycleTimer 0
-lset ENodeBFunction=1,DrxProfile=0$ shortDrxCycleTimer 1
-lset ENodeBFunction=1,DrxProfile=1$ drxState 1
-set AnrPciConflictDrxProfile=1 anrPciConflictDrxInactivityTimer 8
-set AnrPciConflictDrxProfile=1 anrPciConflictOnDurationTimer 4
-set ENodeBFunction=1,DrxProfile=0$ drxInactivityTimer 14
-set ENodeBFunction=1,DrxProfile=1$ drxInactivityTimer 6
-set ENodeBFunction=1,DrxProfile=2$ drxInactivityTimer 6
-set ENodeBFunction=1,DrxProfile=0$ drxRetransmissionTimer 4
-set ENodeBFunction=1,DrxProfile=1$ drxRetransmissionTimer 2
-set ENodeBFunction=1,DrxProfile=1$ drxState 0
-set ENodeBFunction=1,DrxProfile=1$ longDrxCycle 3
-set ENodeBFunction=1,DrxProfile=2$ longDrxCycle 3
-set ENodeBFunction=1,DrxProfile=0$ longDrxCycleOnly 9
-set ENodeBFunction=1,DrxProfile=1$ longDrxCycleOnly 3
-set ENodeBFunction=1,DrxProfile=2$ longDrxCycleOnly 3
-set ENodeBFunction=1,DrxProfile=2$ onDurationTimer 6
-set ENodeBFunction=1,DrxProfile=0$ shortDrxCycle 9
-set ENodeBFunction=1,DrxProfile=0$ shortDrxCycleTimer 1
-set ENodeBFunction=1,DrxProfile=1$ shortDrxCycleTimer 0
-set ENodeBFunction=1,DrxProfile=2$ shortDrxCycleTimer 0
-
-
-###########  CarrierAggregationFunction ###################
-
-set CarrierAggregationFunction=1 dynamicSCellSelectionMethod 2
-set CarrierAggregationFunction=1 selectionPolicyUlWeighting 50
-set CarrierAggregationFunction=1 fourLayerMimoPreferred false
-set CarrierAggregationFunction=1 enhancedSelectionOfMimoAndCa false
-set CarrierAggregationFunction=1 waitForAdditionalSCellOpportunity 10000
-set CarrierAggregationFunction=1 sCellActProhibitTimer 10
-set CarrierAggregationFunction=1 waitForBlindSelSCellRepLessTtt 600
-set CarrierAggregationFunction=1 laaSCellDeactProhibitTimer 200
-
-
-##################   ANR Function ##################
-
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 anrInterFreqState 1
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 anrIntraFreqState 1
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 hoAllowedEutranPolicy true
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 x2SetupPolicy true
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 anrUesEUtraIntraFMax 0
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 anrUesEUtraIntraFMin 0
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 anrUesThreshInterFMax 0
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 anrUesThreshInterFMin 0
-set ENodeBFunction=1,AnrFunction=1 maxNoPciReportsEvent 30
-set ENodeBFunction=1,AnrFunction=1 removeNenbTime 3
-set ENodeBFunction=1,AnrFunction=1 removeNrelTime 3
-set ENodeBFunction=1,AnrFunction=1 probCellDetectMedHoSuccThres 50
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionGeran=1 anrStateGsm 1
-set ENodeBFunction=1,AnrFunction=1 plmnWhiteListEnabled true
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 cellAddRsrpThresholdEutran -1240
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1 anrStateUtran 1
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1 hoAllowedUtranPolicy true
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 lbCellOffloadCapacityPolicy 30000
-set ENodeBFunction=1,AnrFunction=1 plmnWhiteListEnabled false
-set AutoCellCapEstFunction=1 useEstimatedCellCap true
-set ENodeBFunction=1,AnrFunction=1$ removeNcellTime 3
-set ENodeBFunction=1,AnrFunction=1$ removeNrelTime 3
-set ENodeBFunction=1,AnrFunction=1$ removeNenbTime 3
-set ENodeBFunction=1,AnrFunction=1$ cellRelHoAttRateThreshold 15
-set ENodeBFunction=1,AnrFunction=1$ problematicCellPolicy 1
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1$ anrStateUtran 1
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1$ cellAddRsrpThresholdEutran -1240
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1$ anrInterFreqState 1
-set ENodeBFunction=1,AnrFunction=1$ maxNoPciReportsEvent 30
-set ENodeBFunction=1,AnrFunction=1$ probCellDetectLowHoSuccTime 4
-set ENodeBFunction=1,AnrFunction=1$ probCellDetectMedHoSuccTime 2
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1$ lbCellOffloadCapacityPolicy 30000
-
-
-######## Timer Profile ####################
-
-set QciTable=default,QciProfilePredefined=qci1 rlfProfileRef RlfProfile=1
-set RlfProfile=1$ n310 10
-set RlfProfile=1$ n311 1
-set RlfProfile=1$ t301 1000
-set RlfProfile=1$ t310 500
-set RlfProfile=1$ t311 5000
-set RadioBearerTable=default,SignalingRadioBearer=1 tReorderingUl 35
-set Rrc=1 t311 5000
-set Rrc=1 tRrcConnReest 2
-set Rrc=1 tWaitForRrcConnReest 9
-cr ENodeBFunction=1,TimerProfile=0
-6
-8
-3
-10
-set ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1 timerProfileRef ENodeBFunction=1,TimerProfile=0
-seti . tRrcConnectionSetup 10
-set Rrc=1 t301 1000
-set Rrc=1 t304 2000
-set Rrc=1 t311 5000
-set Rrc=1  tRrcConnectionReconfiguration 10
-set Rcs=1 rlcDlDeliveryFailureAction 2
-set Rcs=1 tInactivityTimer  10
-set TimerProfile=0 tRelocOverall 20
-set TimerProfile=0  tWaitForRrcConnReest 6
-set TimerProfile=0  tRrcConnectionReconfiguration 8
-set TimerProfile=0  tRrcConnReest 3
-set RlfProfile=0$ n310 10
-set RlfProfile=1$ n310 10
-set RlfProfile=10$ n310 10
-set RlfProfile=11$ n310 10
-set RlfProfile=12$ n310 10
-set RlfProfile=13$ n310 10
-set RlfProfile=14$ n310 10
-set RlfProfile=15$ n310 10
-set RlfProfile=16$ n310 10
-set RlfProfile=17$ n310 10
-set RlfProfile=18$ n310 10
-set RlfProfile=19$ n310 10
-set RlfProfile=2$ n310 10
-set RlfProfile=20$ n310 10
-set RlfProfile=21$ n310 10
-set RlfProfile=22$ n310 10
-set RlfProfile=3$ n310 10
-set RlfProfile=4$ n310 10
-set RlfProfile=5$ n310 10
-set RlfProfile=6$ n310 10
-set RlfProfile=7$ n310 10
-set RlfProfile=8$ n310 10
-set RlfProfile=9$ n310 10
-set RlfProfile=0$ t301 1000
-set RlfProfile=0$ t310 500
-set RlfProfile=1$ t311 5000
-set ENodeBFunction=1,Rrc=1$ t301 1000
-set ENodeBFunction=1,Rrc=1$ t311 5000
-set ENodeBFunction=1,Rrc=1$ t304 2000
-set ENodeBFunction=1,Rrc=1$ tRrcConnectionReconfiguration 10
-set Rcs=1$ rlcDlDeliveryFailureAction 2
-set ENodeBFunction=1$ tRelocOverall 20
-set ENodeBFunction=1$ zzzTemporary52 1
-set ENodeBFunction=1,Rrc=1$ tRrcConnReest 2
-set ENodeBFunction=1,Rrc=1$ tWaitForRrcConnReest 9
-set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1$ dlMaxRetxThreshold 16
-set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1$ ulMaxRetxThreshold 16
-set ENodeBFunction=1,RadioBearerTable=default,SignalingRadioBearer=1$ dlMaxRetxThreshold 16
-set ENodeBFunction=1,RadioBearerTable=default,SignalingRadioBearer=1$ ulMaxRetxThreshold 16
-set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1$ tPollRetransmitUl 60
-set RlfProfile=1$ t310 500
-set RlfProfile=1$ t301 1000
-set RlfProfile=5$ t301 1000
-
-################   AdmissionControl #########################
-
-set AdmissionControl=1 admNrRbDifferentiationThr 750
-set AdmissionControl=1 admNrRrcDifferentiationThr 750
-set AdmissionControl=1 arpBasedPreEmptionState 0
-set AdmissionControl=1 ulAdmOverloadThr  950
-set AdmissionControl=1 ulTransNwBandwidth 2000
-set AdmissionControl=1 paArpOverride 7
-set PmEventService=1 cellTraceFileSize 20000
-set AdmissionControl dlAdmDifferentiationThr 750
-set AdmissionControl ulAdmDifferentiationThr 750
-
-
-################  MdtConfiguration  ######################
-
-set MdtConfiguration=1 a2ThresholdRsrpMdt -140
-set MdtConfiguration=1 a2ThresholdRsrqMdt -195
-set MdtConfiguration=1 timeToTriggerA2Mdt 640
-set MdtConfiguration=1 triggerQuantityA2Mdt 0
-
-############### MACConfiguration ######################
-
-set ENodeBFunction=1,RadioBearerTable=default,MACConfiguration=1 ulMaxHARQTx 5
-set ENodeBFunction=1,RadioBearerTable=default,MACConfiguration=1 ulTtiBundlingMaxHARQTx 7
-set ENodeBFunction=1,RadioBearerTable=default,MACConfiguration=1 dlMaxHARQTx 4
-
-################# Signaling-DataRadioBearer-paging  ######################
-
-set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 tPollRetransmitDl 80
-set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 tPollRetransmitUl 60
-set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 dlMaxRetxThreshold 16
-set ENodeBFunction=1,RadioBearerTable=default,SignalingRadioBearer=1 tPollRetransmitUl 80
-set ENodeBFunction=1,RadioBearerTable=default,SignalingRadioBearer=1 tPollRetransmitDl 80
-set ENodeBFunction=1,RadioBearerTable=default,SignalingRadioBearer=1 dlMaxRetxThreshold 16
-set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 ulMaxRetxThreshold 16
-set ENodeBFunction=1,RadioBearerTable=default,SignalingRadioBearer=1 ulMaxRetxThreshold 16
-set ENodeBFunction=1,Paging=1 pagingDiscardTimerDrxNb 3
-set ENodeBFunction=1,Paging=1 maxNoOfPagingRecordsNb 3
-set ENodeBFunction=1,Paging=1 noOfDefPagCyclPrim 8
-
-################  Load Balancing Function #################
-
-set LoadBalancingFunction=1 lbRateOffsetCoefficient 320
-set LoadBalancingFunction=1 lbRateOffsetLoadThreshold 1000
-set LoadBalancingFunction=1 lbCeiling 500
-set LoadBalancingFunction=1 lbCaThreshold 2000
-set LoadBalancingFunction=1 lbThreshold 40
-set LoadBalancingFunction=1 lbHitRateEUtranAddThreshold 5
-set LoadBalancingFunction=1 lbHitRateEUtranMeasUeIntensity 10
-set LoadBalancingFunction=1 lbHitRateEUtranMeasUeThreshold 10
-set LoadBalancingFunction=1 lbHitRateEUtranRemoveThreshold 2
-set LoadBalancingFunction=1 lbMeasScalingLimit 30
-set LoadBalancingFunction=1$ lbThreshold 20
-set LoadBalancingFunction=1$ lbCeiling 500
-
-
-################  Common Cell Parameters TDD + FDD    ###########################
-
-set EUtranCell.*=.* allocThrPucchFormat1 50
-set EUtranCell.*=.* allocTimerPucchFormat1 50
-set EUtranCell.*=.* deallocThrPucchFormat1 100
-set EUtranCell.*=.* deallocTimerPucchFormat1 6000
-set EUtranCell.*=.* dlBlerTargetEnabled true
-set EUtranCell.*=.* drxActive true
-set EUtranCell.*=.* enableServiceSpecificHARQ true
-set EUtranCell.*=.* pdcchCovImproveDtx true
-set EUtranCell.*=.* pdcchCovImproveSrb false
-set EUtranCell.*=.* pdcchTargetBler 24
-set EUtranCell.*=.* pdcchTargetBlerPCell 22
-set EUtranCell.*=.* pMaxServingCell 1000
-set EUtranCell.*=.* tReorderingAutoConfiguration true
-set EUtranCell.*=.* tTimeAlignmentTimer 0
-set EUtranCell.*=.* ulBlerTargetEnabled true
-set EUtranCell.*=.* ulHarqVolteBlerTarget 3
-set EUtranCell.*=.* adaptiveCfiHoProhibit 0
-set EUtranCell.*=.* enableSinrUplinkClpc true
-set EUtranCell.*=.* pdcchCovImproveQci1 true
-set EUtranCell.*=.* pdcchOuterLoopUpStepVolte 9
-set EUtranCell.*=.* pdcchTargetBlerVolte 4
-set EUtranCell.*=.* alpha 8
-set EUtranCell.*=.* pZeroNominalPucch -110
-set EUtranCell.*=.* cfraEnable true
-set EUtranCell.*=.* changeNotification changeNotificationSIB15=true
-set EUtranCell.*=.* changeNotification changeNotificationSIB16=true
-set EUtranCell.*=.* changeNotification changeNotificationSIB7=true
-set EUtranCell.*=.* changeNotification changeNotificationSIB2=true
-set EUtranCell.*=.* changeNotification changeNotificationSIB3=true
-set EUtranCell.*=.* changeNotification changeNotificationSIB4=true
-set EUtranCell.*=.* changeNotification changeNotificationSIB1=true
-set EUtranCell.*=.* changeNotification changeNotificationSIB6=true
-set EUtranCell.*=.* changeNotification changeNotificationSIB5=true
-set EUtranCell.*=.* changeNotification changeNotificationSIB13=true
-set EUtranCell.*=.* changeNotification changeNotificationSIB8=true
-set EUtranCell.*=.* mappingInfoCe mappingInfoSIB10=0
-set EUtranCell.*=.* hoOptAdjThresholdAbs 5
-set EUtranCell.*=.* hoOptAdjThresholdPerc 50
-set EUtranCell.*=.* pdcchCfiMode 5
-set EUtranCell.*=.* transmissionMode  4
-set EUtranCell.*=.* ns05FullBandUsersInCellThres 1
-set EUtranCell.*=.* puschNcpChannelEstWindowSize 1
-set EUtranCell.*=.* mobCtrlAtPoorCovActive true
-set EUtranCell.*=.* servOrPrioTriggeredIFHo 0
-set EUtranCell.*=.* ul64qamEnabled true
-set EUtranCell.*=.* dl256QamStatus 2
-set EUtranCell.*=.* dl256QamEnabled true
-set EUtranCell.*=.* qRxLevMinCe -140
-set EUtranCell.*=.* pdcchLaGinrMargin 40
-set EUtranCell.*=.* acBarringPresence acBarringForMmtelVideoPresence=0
-set EUtranCell.*=.* acBarringPresence acBarringForMmtelVoicePresence=0
-set EUtranCell.*=.* acBarringPresence acBarringPriorityMmtelVideo=0
-set EUtranCell.*=.* acBarringPresence acBarringPriorityMmtelVoice=0
-set EUtranCell.*=.* acBarringPresence acBarringForMoDataPresence=0
-set EUtranCell.*=.* noOfEnhAdptReTxCand -1
-set EUtranCell.*=.* dynUlResourceAllocEnabled true
-set EUtranCell.*=.* systemInformationBlock6 tReselectionUtra=4
-set EUtranCell.*=.* systemInformationBlock6 tReselectionUtraSfHigh=100
-set EUtranCell.*=.* systemInformationBlock6 tReselectionUtraSfMedium=100
-set EUtranCell.*=.* advCellSupAction  2
-set EUtranCell.*=.* primaryPlmnReserved false
-set EUtranCell.*=.* harqOffsetDl 3
-set EUtranCell.*=.* harqOffsetUl 3
-set EUtranCell.*=.* highSpeedUEActive false
-set EUtranCell.*=.* initialBufferSizeDefault 86
-set EUtranCell.*=.* prsTransmisScheme 0
-set EUtranCell.*=.*  puschPwrOffset64qam 0
-set EUtranCell.*=.* systemInformationBlock3 tEvaluation=240
-set EUtranCell.*=.* cellRange 15
-set EUtranCell.*=.* elcEnabled false
-set EUtranCell.*=.* preambleInitialReceivedTargetPower -110
-set EUtranCell.*=.* acBarringForCsfb acBarringFactor=95
-set EUtranCell.*=.* acBarringForCsfb acBarringForSpecialAC=false false false false false
-set EUtranCell.*=.* acBarringForCsfb acBarringTime=64
-set EUtranCell.*=.* acBarringForEmergency false
-set EUtranCell.*=.* acBarringForMoData acBarringFactor=95
-set EUtranCell.*=.* acBarringForMoData acBarringForSpecialAC=false false false false false
-set EUtranCell.*=.* acBarringForMoData acBarringTime=64
-set EUtranCell.*=.* acBarringForMoSignalling acBarringFactor=95
-set EUtranCell.*=.* acBarringForMoSignalling acBarringForSpecialAC=false false false false false
-set EUtranCell.*=.* acBarringForMoSignalling acBarringTime=64
-set EUtranCell.*=.* acBarringInfoPresent false
-set EUtranCell.*=.* acBarringPresence acBarringForCsfbPresence=0
-set EUtranCell.*=.* acBarringPresence acBarringForMoSignPresence=0
-set EUtranCell.*=.* acBarringPresence acBarringPriorityCsfb=0
-set EUtranCell.*=.* acBarringPresence acBarringPriorityMoData=0
-set EUtranCell.*=.* acBarringPresence acBarringPriorityMoSignaling=0
-set EUtranCell.*=.* spifhoSetupBearerAtInitialCtxtSetup false
-set EUtranCell.*=.* srDetectHighThres 70
-set EUtranCell.*=.* srProcessingLevel 0
-set EUtranCell.*=.* ssacBarringForMMTELVideo acBarringFactor=95
-set EUtranCell.*=.* ssacBarringForMMTELVideo acBarringForSpecialAC=false false false false false
-set EUtranCell.*=.* ssacBarringForMMTELVideo acBarringTime=64
-set EUtranCell.*=.* ssacBarringForMMTELVoice acBarringFactor=95
-set EUtranCell.*=.* ssacBarringForMMTELVoice acBarringForSpecialAC=false false false false false
-set EUtranCell.*=.* ssacBarringForMMTELVoice acBarringTime=64
-set EUtranCell.*=.* systemInformationBlock3 tEvaluation=240
-set EUtranCell.*=.* systemInformationBlock3 nCellChangeHigh=16
-set EUtranCell.*=.* systemInformationBlock3 nCellChangeMedium=16
-set EUtranCell.*=.* systemInformationBlock3 qHystSfHigh=0
-set EUtranCell.*=.* systemInformationBlock3 qHystSfMedium=0
-set EUtranCell.*=.* systemInformationBlock3 sIntraSearchQ=0
-set EUtranCell.*=.* systemInformationBlock3 sNonIntraSearchv920Active=false
-set EUtranCell.*=.* systemInformationBlock3 sIntraSearchv920Active=false
-set EUtranCell.*=.* systemInformationBlock3 threshServingLowQ=1000
-set EUtranCell.*=.* systemInformationBlock3 tHystNormal=240
-set EUtranCell.*=.* systemInformationBlock7 tReselectionGeran=2
-set EUtranCell.*=.* systemInformationBlock7 tReselectionGeranSfHigh=100
-set EUtranCell.*=.* systemInformationBlock7 ReselectionGeranSfMedium=100
-set EUtranCell.*=.* tUeBlockingTimer 200
-set EUtranCell.*=.* ulImprovedUeSchedLastEnabled true
-set EUtranCell.*=.* ulSCellPriority 5
-set EUtranCell.*=.* ulSchedCtrlForOocUesEnabled true
-set EUtranCell.*=.* ulSrsEnable False
-set EUtranCell.*=.* ulTxPsdDistrThr 40
-set EUtranCell.*=.* uncertAltitude 0
-set EUtranCell.*=.* uncertSemiMajor 0
-set EUtranCell.*=.* uncertSemiMinor 0
-set EUtranCell.*=.* covTriggerdBlindHoAllowed false
-set EUtranCell.*=.* qQualMin -34
-set EUtranCell.*=.* qRxLevMin -124
-set EUtranCell.*=.* srvccDelayTimer 3000
-set EUtranCell.*=.* dlInterferenceManagementActive true
-set EUtranCell.*=.* ulInterferenceManagementActive true
-set EUtranCell.*=.* dlFrequencyAllocationProportion 100
-set EUtranCell.*=.* ulConfigurableFrequencyStart 0
-set EUtranCell.*=.* ulFrequencyAllocationProportion 100
-set EUtranCell.*=.* outOfCoverageSparseGrantingBsr 8
-set EUtranCell.*=.* eUlFssSwitchThresh 30
-set EUtranCell.*=.* pdcchPowerBoostMax 2
-set EUtranCell.*=.* dlMaxRetxRrcReleaseThr 8
-set EUtranCell.*=.* sCellHandlingAtVolteCall 1
-
-
-################  Common Cell Parameters FDD Technology   ###########################
-
-set EUtranCellFDD=.* pdcchOuterLoopUpStep 8
-set EUtranCellFDD=.* pdcchOuterLoopUpStepPCell 6
-set EUtranCellFDD=.* ttiBundlingAfterHo 1
-set EUtranCellFDD=.* ttiBundlingAfterReest 1
-set EUtranCellFDD=.* ttiBundlingSwitchThres 150
-set EUtranCellFDD=.* ttiBundlingSwitchThresHyst 30
-set EUtranCellFDD=.* cellDownlinkCaCapacity 0
-set EUtranCellFDD=.* mappingInfo mappingInfoSIB12=7
-set EUtranCellFDD=.* mappingInfo mappingInfoSIB6$=4
-set EUtranCellFDD=.* mappingInfo mappingInfoSIB4$=2
-set EUtranCellFDD=.* mappingInfo mappingInfoSIB5=3
-set EUtranCellFDD=.* servOrPrioTriggeredErabAction 3
-set EUtranCellFDD=.* dlInternalChannelBandwidth 0
-set EUtranCellFDD=.* ulInternalChannelBandwidth 0
-set EUtranCellFDD=.* commonSrPeriodicity 10
-set EUtranCellFDD=.* lbEUtranTriggerOffloadThreshold 30
-set EUtranCellFDD=.* changeNotification changeNotificationSIB1=true
-set EUtranCellFDD=.* changeNotification changeNotificationSIB2=true
-set EUtranCellFDD=.* changeNotification changeNotificationSIB3=true
-set EUtranCellFDD=.* changeNotification changeNotificationSIB4=true
-set EUtranCellFDD=.* changeNotification changeNotificationSIB5=true
-set EUtranCellFDD=.* changeNotification changeNotificationSIB6=true
-set EUtranCellFDD=.* changeNotification changeNotificationSIB7=true
-set EUtranCellFDD=.* changeNotification changeNotificationSIB13=true
-set EUtranCellFDD=.* changeNotification changeNotificationSIB15=true
-set EUtranCellFDD=.* changeNotification changeNotificationSIB16=true
-set EUtranCellFDD=.* changeNotification changeNotificationSIB8=true
-set EUtranCellFDD=RJ_E_F8.* pZeroNominalPusch -83
-set EUtranCellFDD=RJ_E_F3.* pZeroNominalPusch -83
-set EUtranCellFDD=RJ_E_F1.* pZeroNominalPusch -86
-set EUtranCellFDD=RJ_E_F8.* crsGain 300
-set EUtranCellFDD=RJ_E_F3.* crsGain 0
-set EUtranCellFDD=RJ_E_F1.* crsGain 300
-set EUtranCellFDD=.* ulTrigActive false
-set EUtranCellFDD=RJ_E_F3.* pdschTypeBGain 0
-set EUtranCellFDD=.* lbEUtranAcceptOffloadThreshold 10
-set EUtranCellFDD=.* systemInformationBlock3 sNonIntraSearch=0
-set EUtranCellFDD=.* systemInformationBlock3 sNonIntraSearchP=10
-
-
-
-
-################  Common Cell Parameters TDD Technology   ###########################
-
-set EUtranCellTDD=.* hoOptStatTime 24
-set EUtranCellTDD=.* channelBandwidth 20000
-set EUtranCellTDD=.* dlMaxMuMimoLayers 0
-set EUtranCellTDD=.* ulMaxMuMimoLayers 0
-set EUtranCellTDD=.* subframeAssignment 2
-set EUtranCellTDD=.* timePhaseMaxDeviationTDDIndex 0
-set EUtranCellTDD=.* commonSrPeriodicity 20
-set EUtranCellTDD=.* mappingInfo mappingInfoSIB7=5
-set EUtranCellTDD=.* pZeroNominalPusch -86
-set EUtranCellTDD=.* crsGain 0
-set EUtranCellTDD=.* pdschTypeBGain 0
-set EUtranCellTDD=.* ulTrigActive true
-set EUtranCellTDD=.* cellRange 10
-set EUtranCellTDD=.* outOfCoverageSparseGrantingBsr 8
-set EUtranCellTDD=.* interferenceThresholdSinrClpc -100
-set EUtranCellTDD=.* rxSinrTargetClpc 20
-set EUtranCellTDD=.* lbEUtranAcceptOffloadThreshold 50
-set EUtranCellTDD=.* systemInformationBlock3 sNonIntraSearch=12
-set EUtranCellTDD=.* systemInformationBlock3 sNonIntraSearchQ=0
-set EUtranCellTDD=.*,UeMeasControl=1$ inhibitB2RsrqConfig true
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1$ hysteresisA2CriticalRsrp 0
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1,ReportConfigEUtraBestCellAnr=1$ a3offsetAnrDelta 3
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1$ timeToTriggerA5 480
-set EUtranCellTDD=.* alpha 8
-set EUtranCellTDD=.* cellCapMaxCellSubCap 60000
-set EUtranCellTDD=.* cellCapMinCellSubCap 2000
-set EUtranCellTDD=.* drxActive true
-set EUtranCellTDD=.* pdcchLaGinrMargin 40
-set EUtranCellTDD=.* pdcchOuterLoopUpStepVolte 9
-set EUtranCellTDD=.* pdcchPowerBoostMax 0
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1$ timeToTriggerA1Search 480
-set EUtranCellTDD=.* ulBlerTargetEnabled true
-set EUtranCellTDD=.* enableServiceSpecificHARQ true
-set EUtranCellTDD=.* tReorderingAutoConfiguration true
-set EUtranCellTDD=.* srvccDelayTimer 3000
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigB2Geran=1$ b2Threshold2Geran -110
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigB2Utra=1$ hysteresisB2 20
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigB2Utra=1$ timeToTriggerB2 1280
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1$ timeToTriggerA3 480
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1,ReportConfigEUtraBestCellAnr=1$ timeToTriggerA3 480
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigEUtraIFBestCell=1$ timeToTriggerA3 480
-set EUtranCellTDD=.*,UeMeasControl=1$ ueMeasurementsActive true
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1$ timeToTriggerA2Search 480
-set EUtranCellTDD=.* advCellSupAction 2
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigB2Geran=1$ timeToTriggerB2 1280
-set EUtranCellTDD=.* dlBlerTargetEnabled true
-set EUtranCellTDD=.* pdcchCovImproveDtx true
-set EUtranCellTDD=.* ulHarqVolteBlerTarget 3
-set EUtranCellTDD=.* ns05FullBandUsersInCellThres 1
-set EUtranCellTDD=.* puschNcpChannelEstWindowSize 1
-set EUtranCellTDD=.* noOfEnhAdptReTxCand -1
-set EUtranCellTDD=.* dynUlResourceAllocEnabled true
-set EUtranCellTDD=.* acBarringInfoPresent false
-set EUtranCellTDD=.* outOfCoverageSparseGrantingBsr 8
-set EUtranCellTDD=.* eUlFssSwitchThresh 30
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1$ a5Threshold1Rsrp -140
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1$ a5Threshold1Rsrq -195
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1$ a5Threshold1Rsrq -195
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1$ a5Threshold2Rsrp -112
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5EndcHo=1$ a5Threshold2Rsrq -195
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigB1GUtra=1$ b1ThresholdRsrq -435
-set EUtranCellTDD=.* crsGain 0
-set EUtranCellTDD=.* cellSubscriptionCapacity 20000
-set EUtranCellTDD=.* pdschTypeBGain 0
-set EUtranCellTDD=.* pZeroNominalPusch -86
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1$ a1a2SearchThresholdRsrp -114
-set EUtranCellTDD=.* pdcchTargetBlerVolte 4
-set EUtranCellTDD=.*,UeMeasControl=1$ excludeInterFreqAtCritical true
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigA5=1$ hysteresisA5 20
-set EUtranCellTDD=.* enableSinrUplinkClpc true
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1$ timeToTriggerA1UlSearch 480
-set EUtranCellTDD=.* systemInformationBlock6 tReselectionUtra=4
-set EUtranCellTDD=.* systemInformationBlock3 sIntraSearchQ=0,sNonIntraSearchQ=0
-set EUtranCellTDD=.* changeNotification changeNotificationSIB15=true,changeNotificationSIB16=true
-
-
-###############  Relation Parameters #################
-
-set EUtranCell.*=.*,EUtranFreqRelation=.* tReselectionEutra 2
-set EUtranCell.*=.*,EUtranFreqRelation=.* anrMeasOn true
-set EUtranCell.*=.*,GeranFreqGroupRelation=1 anrMeasOn true
-set EUtranCell.*=.*,EUtranFreqRelation=.*,EUtranCellRelation=.* isHoAllowed true
-set EUtranCell.*=.*,GeranFreqGroupRelation=1 anrMeasOn true
-set EUtranCell.*=.*,GeranFreqGroupRelation=1 qRxLevMin -111
-set EUtranCell.*=.*,EUtranFreqRelation=.* qRxLevMinCe -140
-set EUtranCell.*=.*,EUtranFreqRelation=.* pMax 1000
-set EUtranCell.*=.*,EUtranFreqRelation=.* tReselectionEutraSfHigh 100
-set EUtranCell.*=.*,EUtranFreqRelation=.* tReselectionEutraSfMedium 100
-set EUtranCell.*=.*,EUtranFreqRelation=.* qRxLevMin -124
-set EUtranCell.*=.*,EUtranFreqRelation=.* mobilityAction 1
-set EUtranCell.*=.*,EUtranFreqRelation=.* lbBnrAllowed true
-set EUtranCell.*=.*,EUtranFreqRelation=.* lbBnrPolicy 2
-set EUtranCell.*=.* altCsfbTargetPrio 2
-set EUtranCell.*=.* altCsfbTargetPrioEC 2
-set EUtranCell.*=.* mobilityActionCsfb 1
-set EUtranCell.*=.* mobilityAction 1
-set EUtranCell.*=.*,EUtranFreqRelation=39150 allowedMeasBandwidth 100
-set EUtranCell.*=.*,EUtranFreqRelation=39348 allowedMeasBandwidth 100
-set EUtranCell.*=.*,EUtranFreqRelation=515 allowedMeasBandwidth 75
-set EUtranCell.*=.*,EUtranFreqRelation=1576 allowedMeasBandwidth 50
-set EUtranCell.*=.*,EUtranFreqRelation=3601 allowedmeasbandwidth 25
-
-########################  threshXHigh & threshXLow ####################
-
-
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39150 threshXHigh 14
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=515     threshXHigh 14
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39150 threshXHigh 14
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39348 threshXHigh 14
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39348 threshXHigh 14
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=1576     threshXHigh 8
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39150 threshXHigh 14
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=515     threshXHigh 14
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39348 threshXHigh 14
-
-
-set EUtranCellTDD=.*,GeranFreqGroupRelation=1 threshXLow 62
-set EUtranCellFDD=.*,GeranFreqGroupRelation=1 threshXLow 62
-
-set EUtranCellFDD=RJ_E_F3.*,eutranfreqrelation=3584 threshxlow 12
-set EUtranCellFDD=RJ_E_F1.*,eutranfreqrelation=1576 threshxlow 12
-set EUtranCellFDD=RJ_E_F1.*,eutranfreqrelation=3584 threshxlow 62
-set EUtranCellTDD=.*,eutranfreqrelation=1576 threshxlow 16
-set EUtranCellTDD=.*,eutranfreqrelation=3601 threshxlow 62
-set EUtranCellFDD=RJ_E_F3.*,eutranfreqrelation=3601 threshxlow 12
-set EUtranCellFDD=RJ_E_F1.*,eutranfreqrelation=3601 threshxlow 62
-
-
-
-##################### UeMeasControl=1 ##############################
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigCsfbUtra=1 hysteresis 10
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigCsfbGeran=1 hysteresis 10
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSCellA6=1 triggerQuantityA6 0
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThresholdRsrp -140
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrp 0
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 hysteresisA3 10
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB2Utra=1 hysteresisB2 20
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1Search 480
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1SearchRsrq 1024
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2Critical 480
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2CriticalRsrq 1024
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2Search 480
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2SearchRsrq 1024
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 timeToTriggerA3 480
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5 480
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5Rsrq 1024
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB2Geran=1 timeToTriggerB2 1280
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 triggerQuantityA3 0
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigA5=1 triggerQuantityA5 0
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSCellA6=1 timeToTriggerA6 40
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigElcA1A2=1 hysteresisA1A2Rsrp 10
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB1Geran=1 hysteresisB1 10
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB1Utra=1 hysteresisB1 10
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigElcA1A2=1 timeToTriggerA1 40
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSCellA1A2=1 timeToTriggerA1 40
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1UlSearch 480
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSCellA1A2=1 timeToTriggerA2 40
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigElcA1A2=1 timeToTriggerA2 40
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2OutSearchRsrq -1
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB1Geran=1 timeToTriggerB1   640
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB2Geran=1 timeToTriggerB2Rsrq -1
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB2Utra=1 timeToTriggerB2Rsrq -1
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 hysteresisA5 10
-set EUtranCell.*=.*,ReportConfigSearch=1 a2CriticalThrQci1RsrpOffset -20
-set EUtranCell.*=.*,UeMeasControl=1 filterCoefficientEUtraRsrp 4
-set EUtranCell.*=.*,UeMeasControl=1 ueMeasurementsActiveIF true
-set EUtranCell.*=.*,UeMeasControl=1 zzzTemporary13    -2000000000
-set EUtranCell.*=.*,UeMeasControl=1 sMeasure 0
-set EUtranCell.*=.*,UeMeasControl=1 lowPrioMeasThresh 0
-set EUtranCell.*=.*,UeMeasControl=1 maxUtranCellsToMeasure 32
-set EUtranCell.*=.*,UeMeasControl=1 allowReleaseQci1 false
-set EUtranCell.*=.*,UeMeasControl=1 ulSinrOffset 30
-set EUtranCell.*=.*,UeMeasControl=1 ueMeasurementsActive true
-set EUtranCell.*=.*,UeMeasControl=1 a5B2MobilityTimer 0
-set EUtranCellFDD=.*,UeMeasControl=1 ueMeasurementsActiveGERAN true
-set EUtranCellTDD=.*,UeMeasControl=1 ueMeasurementsActiveGERAN False
-set EUtranCell.*=.*,UeMeasControl=1 excludeInterFreqAtCritical false
-set EUtranCell.*=.*,UeMeasControl=1 a3SuspendCsgTimer 0
-set EUtranCell.*=.*,UeMeasControl=1 ueMeasurementsActiveUTRAN true
-set EUtranCellTDD=.*,UeMeasControl=1 excludeInterFreqAtCritical true
-set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2UlCritical 480
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2UlCritical 480
-set EUtranCellFDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2UlSearch 480
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2UlSearch 480
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigA5=1  hysteresisA5RsrqOffset 150
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -102
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB2Utra=1 b2Threshold1Rsrp  -119
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSCellA1A2=1 hysteresisA1A2RsrpBidirectional 10
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -100
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 a1a2UlSearchThreshold 60
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2UlCritical 150
-set EUtranCell.*=.*,UeMeasControl=1 csfbHoTargetSearchTimer 1200
-set EUtranCell.*=.*,UeMeasControl=1      bothA5RsrpRsrqCheck false
-set EUtranCell.*=.*,UeMeasControl=1      inhibitB2RsrqConfig true
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB2Geran=1 timeToTriggerB2Rsrq -1
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp  -140
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB1Geran=1 b1ThresholdGeran  -110
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB2GeranUlTrig=1 reportIntervalB2 4
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB2Geran=1 hysteresisB2 20
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrq -195
-
-
-
-######################  AnrFunction=1 ############################
-
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1  cellAddEcNoThresholdUtranDelta -10
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionEUtran=1 cellAddRsrpThresholdEutran -1240
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1  cellAddRscpThresholdUtranDelta -1
-set ENodeBFunction=1,AnrFunction=1 cellRelHoAttRateThreshold 15
-set ENodeBFunction=1,AnrFunction=1 probCellDetectLowHoSuccTime 4
-set ENodeBFunction=1,AnrFunction=1 probCellDetectMedHoSuccTime 2
-set ENodeBFunction=1,AnrFunction=1 problematicCellPolicy 1
-set ENodeBFunction=1,AnrFunction=1,AnrFunctionGeran=1 problematicCellPolicy 0
-set ENodeBFunction=1,AnrFunction=1 removeNcellTime 3
-set ENodeBFunction=1,AnrFunction=1 zzzTemporary13    -2000000000
-
-
-
-
-
-
-######## TWAMP setting #######################
-
-
-get Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW1,NextHop= address$ > $UP-Nexthop
-
-
-
-
-crn Transport=1,Router=LTEUP,TwampResponder=1
-ipAddress Router=LTEUP,InterfaceIPv4=TN_A_UP,AddressIPv4=TN_A_UP
-udpPort 4001
-userLabel
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=TWAMP
-dst 10.61.96.208/28
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=TWAMP,NextHop=1
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-get Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW1,NextHop= address$ > $UP-Nexthop
-
-crn Transport=1,Router=LTEUP,TwampResponder=1
-ipAddress Router=LTEUP,InterfaceIPv4=TN_C_UP,AddressIPv4=TN_C_UP
-udpPort 4001
-userLabel
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=TWAMP
-dst 10.61.96.208/28
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=TWAMP,NextHop=1
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-get Router=LTEUP,RouteTableIPv4Static=2,Dst=SGW1,NextHop= address$ > $UP-Nexthop
-
-crn Transport=1,Router=LTEUP,TwampResponder=1
-ipAddress Router=LTEUP,InterfaceIPv4=TN_E_UP,AddressIPv4=TN_E_UP
-udpPort 4001
-userLabel
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=TWAMP
-dst 10.61.96.208/28
-end
-
-crn Transport=1,Router=LTEUP,RouteTableIPv4Static=2,Dst=TWAMP,NextHop=1
-address $UP-Nexthop
-adminDistance 1
-bfdMonitoring true
-discard false
-reference
-end
-
-######## QOS setting #######################################
-
-set ENodeBFunction=1 dscpLabel 46
-set ENodeBFunction=1 gtpuErrorIndicationDscp 46
-set ENodeBFunction=1 interEnbCaTunnelDscp 26
-set ENodeBFunction=1 interEnbUlCompTunnelDscp 26
-set ENodeBFunction=1 s1GtpuEchoDscp 46
-set ENodeBFunction=1 x2GtpuEchoDscp 46
-set ENodeBFunction=1 X2GtpuEchoDscp 46
-
-cr Transport=1,QosProfiles=1,DscpPcpMap=1
-
-set QciTable=default,QciProfilePredefined=qci1 dscp 34
-set QciTable=default,QciProfilePredefined=qci2 dscp 34
-set QciTable=default,QciProfilePredefined=qci3 dscp 26
-set QciTable=default,QciProfilePredefined=qci4 dscp 26
-set QciTable=default,QciProfilePredefined=qci5 dscp 46
-set QciTable=default,QciProfilePredefined=qci6 dscp 26
-set QciTable=default,QciProfilePredefined=qci7 dscp 26
-set QciTable=default,QciProfilePredefined=qci8 dscp 26
-set QciTable=default,QciProfilePredefined=qci9 dscp 26
-
-set SysM=1,OamTrafficClass=1 dscp 28
-
-set EthernetPort=TN_E egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set EthernetPort= egressQosMarking  QosProfiles=1,DscpPcpMap=1
-
-set SctpProfile= dscp 46
-set Ntp=1,NtpFrequencySync= dscp 34
-
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1 maxReportCellsPm 8
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigEUtraIntraFreqPm=1 reportIntervalPm 5
+
+#Common Parameter
+
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=39150 allowedmeasbandwidth 100
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=39294 allowedmeasbandwidth 50
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=390$ allowedmeasbandwidth 50
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=1615 allowedmeasbandwidth 75
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=3696 allowedmeasbandwidth 25
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=39151 allowedmeasbandwidth 100
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=39295 allowedmeasbandwidth 50
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=390$ anrMeasOn true
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=39150 anrMeasOn true
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=39294 anrMeasOn true
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=1615 anrMeasOn true
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=39151 anrMeasOn true
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=39295 anrMeasOn true
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=3696 anrMeasOn true
+
+#GERAN
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroupRelation=1         csFallbackPrio    4
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroupRelation=1         csFallbackPrioEC    4
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroup qRxLevMin -111
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroup pmaxgeran 1000
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroup Qoffsetfreq 0
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroup nccpermitted 11111111
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroup anrMeasOn TRUE
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroup mobilityAction 1
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroup mobilityActionCsfb 1
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroup userLabel SIB7
+
+# UL COMP
+
+###### L2100 ######
+pr EUtranCellFDD=TN_E_F1
+if $nr_of_mos = 3
+	cr ENodeBFunction=1,UlCompGroup=1
+	ENodeBFunction=1,SectorCarrier=60 ENodeBFunction=1,SectorCarrier=61 ENodeBFunction=1,SectorCarrier=62
+else if $nr_of_mos = 2
+	cr ENodeBFunction=1,UlCompGroup=1
+	ENodeBFunction=1,SectorCarrier=60 ENodeBFunction=1,SectorCarrier=61
+else if $nr_of_mos = 1
+	cr ENodeBFunction=1,UlCompGroup=1
+	ENodeBFunction=1,SectorCarrier=60
+else if $nr_of_mos = 4
+	cr ENodeBFunction=1,UlCompGroup=1
+	ENodeBFunction=1,SectorCarrier=60 ENodeBFunction=1,SectorCarrier=61 ENodeBFunction=1,SectorCarrier=62 ENodeBFunction=1,SectorCarrier=63
+fi
+deb ENodeBFunction=1,UlCompGroup=1
+
+set EutrancellFDD=TN_E_F1_.* noOfPucchSrUsers 420
+set EutrancellFDD=TN_E_F1_.* noOfPucchCqiUsers 320
+set EUtranCellFDD=TN_E_F1_.* zzzTemporary60 1 
+set EUtranCellFDD=TN_E_F1_.* eUlFssSwitchThresh 30
+set EUtranCellFDD=TN_E_F1_.* noOfEnhAdptReTxCand -1
+set EUtranCellFDD=TN_E_F1_.* noOfPucchFormat1PrbPairsPerFrameConf 3
+set EUtranCellFDD=TN_E_F1_.* noOfPucchFormat2PrbPairsPerFrameConf 1    
+
+## Correction
+
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRp -140
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -240
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation tReselectionEutra 2
+set EUtranCellFDD=TN_E_F1_.* prsPowerBoosting 3
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1 excludeInterFreqAtCritical False
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB2GeranUlTrig=1 b2Threshold2Geran -97
+
+
+##New Addition
+
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigEUtraBadCovPrim=1 a2ThresholdRsrpPrim -140
+set EutrancellFDD=TN_E_F1_.*,UeMeasControl=1                  filterCoefficientEUtraRsrq 11
+set SectorCarrier radioTransmitPerfMode 2
+set EutrancellFDD=TN_E_F1_.* srvccDelayTimer 3000
+
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1 ueMeasurementsActiveUTRAN False
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigCsfbUtra=1 hysteresis 10
+set EUtranCellFDD=TN_E_F1_.* dlInternalChannelBandwidth 0
+set EUtranCellFDD=TN_E_F1_.* UlInternalChannelBandwidth 0
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSCellA6=1 timeToTriggerA6   40
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock3 sNonIntraSearchP=10
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrq 10
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 hysteresisA1A2Rsrp 10
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigElcA1A2=1 hysteresisA1A2Rsrp 10
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB1Geran=1 hysteresisB1      10
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB1Utra=1 hysteresisB1      10
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigElcA1A2=1 a1a2ThresholdRsrp -134
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 a1a2ThresholdRsrp -126
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 a1a2ThresholdRsrpBidir -140
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 a1a2ThresholdRsrq -165
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThresholdRsrq -195
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 a2OuterSearchThrRsrpOffset 0
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 a2OuterSearchThrRsrqOffset 0
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1      a3SuspendCsgTimer 0
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigA5=1,ReportConfigA5Anr=1 a5Threshold1RsrqAnrDelta 10
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigA5=1,ReportConfigA5Anr=1 a5Threshold2RsrpAnrDelta 1
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigA5=1,ReportConfigA5Anr=1 a5Threshold2RsrqAnrDelta 10
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB1Geran=1 b1ThresholdGeran  -110
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrq  -195
+set EUtranCellFDD=TN_E_F1_.*  systemInformationBlock3 threshServingLowQ=1000
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1      targetA2UlSearchOffset 20
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigElcA1A2=1 timeToTriggerA1   40
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 timeToTriggerA1   40
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1SearchRsrq 1024
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA1UlSearch 480
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigElcA1A2=1 timeToTriggerA2   40
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 timeToTriggerA2   40
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2CriticalRsrq 1024
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2OutSearchRsrq -1
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSearch=1 timeToTriggerA2SearchRsrq 1024
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigA5=1 timeToTriggerA5Rsrq 1024
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB1Geran=1 timeToTriggerB1   640
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB1Utra=1 timeToTriggerB1   640
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB2Geran=1 timeToTriggerB2Rsrq -1
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB2Utra=1 timeToTriggerB2Rsrq -1
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigSCellA1A2=1 triggerQuantityA1A2 0
+set EUtranCellFDD=TN_E_F1_.* ulInterferenceManagementActive true
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroupRelation=1,GeranCellRelation=.* coverageIndicator 1
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB2GeranUlTrig=1 reportIntervalB2 4
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1,ReportConfigB2Geran=1 timeToTriggerB2   1280
+set EUtranCellFDD=TN_E_F1_.*                      lbTpNonQualFraction 35
+set EUtranCellFDD=TN_E_F1_.*                      lbTpRankThreshMin 10
+set . ulTrigHoSupport 1
+set EUtranCellFDD=TN_E_F1_.* ulTrigActive false
+set . ulTrigSupport 1
+wait 2
+
+#ASGH Voice Reliability & BLER Target
+set CXC4012199  featurestate 1
+set CXC4012374  featurestate 1
+set ENodeBFunction=1,EUtranCell.*DD= blerTargetConfigEnabled TRUE
+set ENodeBFunction=1,EUtranCell.*DD= dlBlerTargetEnabled TRUE
+cr ENodeBFunction=1,SubscriberGroupProfile=1
+set ENodeBFunction=1,SubscriberGroupProfile=1 bearerTriggerList qci=1
+set ENodeBFunction=1,SubscriberGroupProfile=1 cellTriggerList 
+set ENodeBFunction=1,SubscriberGroupProfile=1 ulHarqBlerTarget 3
+set ENodeBFunction=1,SubscriberGroupProfile=1 dlHarqBlerTarget 5
+set ENodeBFunction=1,SubscriberGroupProfile=1 ulMcsUpperLimit 12
+
+
+#### Power Saving Feature ####
+
+
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 sleepMode	1
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 sleepStartTime	18:30
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 sleepEndTime	00:30
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 capCellSleepMonitorDurTimer	5
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 capCellDlPrbSleepThreshold	40
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 capCellRrcConnSleepThreshold	90
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellWakeUpMonitorDurTimer	15
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellDlPrbWakeUpThreshold	55
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellRrcConnWakeUpThreshold	100
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 coverageCellDiscovery	TRUE
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 capCellMobReasNotSleepThr	-1
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 capCellSleepProhibitInterval	0
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 sleepProhibitStartTime	
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 isCleanupHitRateTable	TRUE
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellUeLostWakeUpThr	100
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellRrcReestWakeUpThr	100
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellUeCtxtRelMin	200
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellRrcConnEstAttMin	200
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 covCellLatestStatsAdaRatio	60
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 isAllowedMsmOnCovCell	TRUE
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 wakeUpLastHoTime	2
+set EUtranCellFDD=TN_E_F1.*,CellSleepFunction=1 wakeUpWaitTimer	0
+
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=1615 cellSleepCovCellMeasOn true
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=390 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=3696 cellSleepCovCellMeasOn false
+
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=1615 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=390 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=3696 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation= csmUeCapMonitorTime 60
+set EUtranCellFDD=TN_E_F1.*,EUtranCellRelation= sleepModeCovCellCandidate 2
+set EUtranCellFDD=TN_E_F1.*,UeMeasControl=1  maxNoMeasReportsInact 1
+
+set EUtranCellFDD=TN_E_F1.*,MimoSleepFunction=1 sleepMode	4
+set EUtranCellFDD=TN_E_F1.*,MimoSleepFunction=1 sleepStartTime	18:30
+set EUtranCellFDD=TN_E_F1.*,MimoSleepFunction=1 sleepEndTime	02:30
+set EUtranCellFDD=TN_E_F1.*,MimoSleepFunction=1 sleepPowerControl	1
+set EUtranCellFDD=TN_E_F1.*,MimoSleepFunction=1 switchDownMonitorDurTimer	5
+set EUtranCellFDD=TN_E_F1.*,MimoSleepFunction=1 switchUpPrbThreshold	55
+set EUtranCellFDD=TN_E_F1.*,MimoSleepFunction=1 switchDownPrbThreshold	40
+set EUtranCellFDD=TN_E_F1.*,MimoSleepFunction=1 switchDownRrcConnThreshold	50
+set EUtranCellFDD=TN_E_F1.*,MimoSleepFunction=1 switchUpMonitorDurTimer	15
+set EUtranCellFDD=TN_E_F1.*,MimoSleepFunction=1 switchUpRrcConnThreshold	60
+
+### CA Feature Activate ###
+
+lset Lm=1,FeatureState=CXC4011973 FeatureState 1
+lset Lm=1,FeatureState=CXC4011922 FeatureState 1
+lset Lm=1,FeatureState=CXC4011559 FeatureState 1
+lset Lm=1,FeatureState=CXC4011476 FeatureState 1
+
+
+### ul256qam deactivate ###
+set CXC4012344 featurestate 0
+set . ul256qamEnabled FALSE
+
+##New Addition 21 June
+
+set EUtranCellFDD=TN_E_F1_.* outOfCoverageSrTimerPeriodicity 320
+set EUtranCellFDD=TN_E_F1_.* outOfCoverageThreshold 20
+set EUtranCellFDD=TN_E_F1_.* outOfCoverageDepth 1
+set EUtranCellFDD=TN_E_F1_.* outOfCoverageSparseGrantingBsr 8
+set EUtranCellFDD=TN_E_F1_.*,GeranFreqGroupRelation=1 altCsfbTargetPrio 2
+set EUtranCellFDD=TN_E_F1_.*,UeMeasControl=1      zzzTemporary13    -2000000000
+set EUtranCellFDD=TN_E_F1_.* cellrange 6
+set EUtranCellFDD=TN_E_F1_.* sCellHandlingAtVolteCall 1
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=.* asmSCellDetection 0
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=39150 asmHitRateRemoveThreshold 5
+set EUtranCellFDD=TN_E_F1_.*,EUtranFreqRelation=39294 asmHitRateRemoveThreshold 5
+set EUtranCellFDD=TN_E_F1_.*                      cellCapMinCellSubCap 5000
+
+
+### CA Feature activate ###
+
+lset Lm=1,FeatureState=CXC4011922 FeatureState 1
+lset Lm=1,FeatureState=CXC4011559 FeatureState 1
+lset Lm=1,FeatureState=CXC4011476 FeatureState 1
+lset Lm=1,FeatureState=CXC4011666 FeatureState 1
+lset Lm=1,FeatureState=CXC4011983 FeatureState 1
+lset Lm=1,FeatureState=CXC4012123 FeatureState 1
+lset Lm=1,FeatureState=CXC4012256 FeatureState 1
+lset Lm=1,FeatureState=CXC4012259 FeatureState 1
+lset Lm=1,FeatureState=CXC4012111 FeatureState 1
+
+set EUtranCellFDD=TN_E_F1_.* sCellHandlingAtVolteCall 1
+# sys Constant 457(Default Value 2000ms) to be reduced to 1850ms:
+scw 457:1850
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportDecr 1
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportIncr  10
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportMax 100
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportMin 20
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     sCellCandidateLimit 50
+set EutrancellFDD=TN_E_F1_.*,EUtranFreqRelation=.* asmSCellDetection 0
+set EUtranCellTDD=.*,EUtranFreqRelation=.* asmSCellDetection 0
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 asmSCellDetection 3
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 asmSCellDetection 3
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 asmHitRateAddThreshold 15
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 asmHitRateAddThreshold 15
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmHitRateRemoveThreshold 5
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmHitRateRemoveThreshold 5
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 asmHitRateRemoveThreshold 5
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 asmHitRateRemoveThreshold 5
+set CarrierAggregationFunction=1                            dynamicSCellSelectionMethod 3
 
 lt all
 
+pr ENodeBFunction=1,EutrancellTdd.*T
+if $nr_of_mos = 0
+set CXC4011476|CXC4011559|CXC4011666|CXC4011922|CXC4011983|CXC4012123|CXC4012111 featurestate 0
+fi
 
-set QosProfiles=1,DscpPcpMap=1  pcp0
-set QosProfiles=1,DscpPcpMap=1  pcp1
-set QosProfiles=1,DscpPcpMap=1  pcp2 
-set QosProfiles=1,DscpPcpMap=1  pcp3
-set QosProfiles=1,DscpPcpMap=1  pcp4
-set QosProfiles=1,DscpPcpMap=1  pcp5
-set QosProfiles=1,DscpPcpMap=1  pcp6
-set QosProfiles=1,DscpPcpMap=1  pcp7
+##L21.Q2 Massification Parameters
 
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 caTriggeredRedirectionActive TRUE
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 caTriggeredRedirectionActive TRUE
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmSCellDetection 3
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmSCellDetection 3
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmHitRateAddThreshold 15
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmHitRateAddThreshold 15
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmHitRateRemoveThreshold 5
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmHitRateRemoveThreshold 5
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150, sCellCandidate 2
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294, sCellCandidate 2
 
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp0 0 1 2 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31 33 35 36 37 38 39 41 43 45 47  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
+set EUtranCellTDD=.*,EUtranFreqRelation=39150, sCellCandidate 2
+set EUtranCellTDD=.*,EUtranFreqRelation=39294, sCellCandidate 2
 
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp2 22 24 26
+set  CXC4012485   featurestate  1
+set  CXC4012356   featurestate  1
+set  CXC4011913   featurestate  0
+set  CXC4011984   featurestate  0
+set  CXC4012505   featurestate  1
+set EUtranCellFDD=TN_E_F1.* dlMaxRetxRrcReleaseThr 8
+set EUtranCellFDD=TN_E_F1.* tPollRetxRrcReleaseDl 80
 
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp3 6 8 10 30 32
+set ENodeBFunction=1,SubscriberGroupProfile=1 fastACqiReportEnabled true
+set ENodeBFunction=1,SubscriberGroupProfile=1 profilePriority 10
+set ENodeBFunction=1,SubscriberGroupProfile=1 dlDynBlerTargetMax -1
+set DynamicBlerTarget=1                                     dlActivitySubscrDelay 1
+set ,EUtranCellRelation= reportDlActivity 1
 
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp4 12 14 40
+rdel ENodeBFunction=1,SubscriberGroupProfile=2
+cr ENodeBFunction=1,SubscriberGroupProfile=2
+set ENodeBFunction=1,SubscriberGroupProfile=2 bearerTriggerList qci=6
+set ENodeBFunction=1,SubscriberGroupProfile=2 profilePriority 1
+set ENodeBFunction=1,SubscriberGroupProfile=2 dlDynBlerTargetMin 10
+set ENodeBFunction=1,SubscriberGroupProfile=2 dlDynBlerTargetMax 60
 
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp5 28
+cr ENodeBFunction=1,SubscriberGroupProfile=3
+set ENodeBFunction=1,SubscriberGroupProfile=3 bearerTriggerList qci=7
+set ENodeBFunction=1,SubscriberGroupProfile=3 profilePriority 1
+set ENodeBFunction=1,SubscriberGroupProfile=3 dlDynBlerTargetMin 10
+set ENodeBFunction=1,SubscriberGroupProfile=3 dlDynBlerTargetMax 60
 
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp6 16 18 34 42 44
+cr ENodeBFunction=1,SubscriberGroupProfile=4
+set ENodeBFunction=1,SubscriberGroupProfile=4 bearerTriggerList qci=8
+set ENodeBFunction=1,SubscriberGroupProfile=4 profilePriority 1
+set ENodeBFunction=1,SubscriberGroupProfile=4 dlDynBlerTargetMin 10
+set ENodeBFunction=1,SubscriberGroupProfile=4 dlDynBlerTargetMax 60
 
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp7 46
+cr ENodeBFunction=1,SubscriberGroupProfile=5
+set ENodeBFunction=1,SubscriberGroupProfile=5 bearerTriggerList qci=9
+set ENodeBFunction=1,SubscriberGroupProfile=5 profilePriority 1
+set ENodeBFunction=1,SubscriberGroupProfile=5 dlDynBlerTargetMin 10
+set ENodeBFunction=1,SubscriberGroupProfile=5 dlDynBlerTargetMax 60
 
-set Router=OAM,DnsClient=1 dscp 28
+set  CXC4012097   featurestate  1
+set  CXC4011714   featurestate  1
 
-et Router=.*,InterfaceIPv4= egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set Router=.*,InterfaceIPv4= ingressQosMarking QosProfiles=1,DscpPcpMap=1
-set Router=LTECP,InterfaceIPv4=TN_E_CP  egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set Router=LTEUP,InterfaceIPv4=TN_E_UP  egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set Router=OAM,InterfaceIPv4=TN_E_OAM   egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set Router=OAM,InterfaceIPv4=TN_E_ABIS  egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set Router=OAM,InterfaceIPv4=TN_E_IUB   egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=     egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=TN_E_CP    egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=TN_E_OAM   egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=TN_E_UP    egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=TN_E_IUB   egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=TN_E_ABIS  egressQosMarking  QosProfiles=1,DscpPcpMap=1
+set CarrierAggregationFunction=1     waitForAdditionalSCellOpportunity 10000
+set CarrierAggregationFunction=1     sCellSelectionMode 2
+set CarrierAggregationFunction=1     a6TriggerSCellDeconfig FALSE
 
-
-
-
-######## QOS setting #######################################
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 caFreqPriority 7
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 caFreqPriority 6
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=390$ caFreqPriority 5
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 caFreqPriority 7
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 caFreqPriority 6
+set EUtranCellTDD=.*,EUtranFreqRelation=390$ caFreqPriority 5
 
 $date = `date +%y%m%d_%H%M`
-cvms BEFORE_Baseline-twamp_$date
+cvms Post_GPL_L2100Delta_$date
+confbd-
 
-set ENodeBFunction=1 dscpLabel 46
-set ENodeBFunction=1 gtpuErrorIndicationDscp 46
-set ENodeBFunction=1 interEnbCaTunnelDscp 26
-set ENodeBFunction=1 interEnbUlCompTunnelDscp 26
-set ENodeBFunction=1 s1GtpuEchoDscp 46
-set ENodeBFunction=1 x2GtpuEchoDscp 46
-set ENodeBFunction=1 X2GtpuEchoDscp 46
-
-cr Transport=1,QosProfiles=1,DscpPcpMap=1
-
-set QciTable=default,QciProfilePredefined=qci1 dscp 34
-set QciTable=default,QciProfilePredefined=qci2 dscp 34
-set QciTable=default,QciProfilePredefined=qci3 dscp 26
-set QciTable=default,QciProfilePredefined=qci4 dscp 26
-set QciTable=default,QciProfilePredefined=qci5 dscp 46
-set QciTable=default,QciProfilePredefined=qci6 dscp 26
-set QciTable=default,QciProfilePredefined=qci7 dscp 26
-set QciTable=default,QciProfilePredefined=qci8 dscp 26
-set QciTable=default,QciProfilePredefined=qci9 dscp 26
-
-set SysM=1,OamTrafficClass=1 dscp 28
-
-set EthernetPort=TN_A egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set EthernetPort=TN_E egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set EthernetPort=TN_C egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set EthernetPort= egressQosMarking  QosProfiles=1,DscpPcpMap=1
-
-set SctpProfile= dscp 46
-set Ntp=1,NtpFrequencySync= dscp 34
-
-
-lt all
-
-
-set QosProfiles=1,DscpPcpMap=1  pcp0
-set QosProfiles=1,DscpPcpMap=1  pcp1
-set QosProfiles=1,DscpPcpMap=1  pcp2 
-set QosProfiles=1,DscpPcpMap=1  pcp3
-set QosProfiles=1,DscpPcpMap=1  pcp4
-set QosProfiles=1,DscpPcpMap=1  pcp5
-set QosProfiles=1,DscpPcpMap=1  pcp6
-set QosProfiles=1,DscpPcpMap=1  pcp7
-
-
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp0 0 1 2 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31 33 35 36 37 38 39 41 43 45 47  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp2 22 24 26
-
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp3 6 8 10 30 32
-
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp4 12 14 40
-
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp5 28
-
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp6 16 18 34 42 44
-
-set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp7 46
-
-set Router=OAM,DnsClient=1 dscp 28
-
-set Router=.*,InterfaceIPv4= egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set Router=.*,InterfaceIPv4= ingressQosMarking QosProfiles=1,DscpPcpMap=1
-set Router=LTECP,InterfaceIPv4=TN_A_CP  egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set Router=LTEUP,InterfaceIPv4=TN_A_UP  egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set Router=OAM,InterfaceIPv4=TN_A_OAM   egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set Router=OAM,InterfaceIPv4=TN_A_ABIS  egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set Router=OAM,InterfaceIPv4=TN_A_IUB   egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=     egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=TN_A_CP    egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=TN_A_OAM   egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=TN_A_UP    egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=TN_A_IUB   egressQosMarking  QosProfiles=1,DscpPcpMap=1
-set VlanPort=TN_A_ABIS  egressQosMarking  QosProfiles=1,DscpPcpMap=1
 
 ##Features_GPL
 
-set CXC4011713 featurestate 0
-set CXC4012238 featurestate 1
-set CXC4012097 featurestate 1
-set CXC4011368 featurestate 0
-set CXC4012036 featurestate 1
-set CXC4010512 featurestate 0
-set CXC4010955 featurestate 0
-set CXC4010973 featurestate 1
-set CXC4011055 featurestate 0
-set CXC4011246 featurestate 0
-set CXC4011346 featurestate 1
-set CXC4011478 featurestate 0
-set cxc4011554 featurestate 0
-set CXC4011663 featurestate 0
-set CXC4011664 featurestate 0
-set CXC4011736 featurestate 0
-set CXC4011810 featurestate 0
-set cxc4011911 featurestate 0
-set cxc4011966 featurestate 0
-set CXC4011983 featurestate 1
-set CXC4011714 featurestate 0
-set CXC4010319 featurestate 1
-set CXC4010320 featurestate 1
-set CXC4010609 featurestate 1
-set CXC4010613 featurestate 1
-set CXC4010616 featurestate 1
-set CXC4010618 featurestate 1
-set CXC4010620 featurestate 1
-set CXC4010717 featurestate 1
-set CXC4010723 featurestate 1
-set CXC4010770 featurestate 1
-set CXC4010841 featurestate 1
-set CXC4010856 featurestate 1
-set CXC4010912 featurestate 1
-set CXC4010956 featurestate 1
-set CXC4010959 featurestate 1
-set CXC4010961 featurestate 1
-set CXC4010962 featurestate 1
-set CXC4010967 featurestate 1
-set CXC4010974 featurestate 1
-set CXC4010980 featurestate 1
-set CXC4010990 featurestate 1
-set CXC4011011 featurestate 1
-set CXC4011033 featurestate 1
-set CXC4011034 featurestate 1
-set CXC4011050 featurestate 1
-set CXC4011057 featurestate 1
-set CXC4011059 featurestate 1
-set CXC4011060 featurestate 1
-set CXC4011061 featurestate 1
-set CXC4011062 featurestate 1
-set CXC4011064 featurestate 1
-set CXC4011074 featurestate 1
-set CXC4011075 featurestate 1
-set CXC4011157 featurestate 1
-set CXC4011183 featurestate 1
-set CXC4011245 featurestate 1
-set CXC4011247 featurestate 1
-set CXC4011251 featurestate 1
-set CXC4011252 featurestate 1
-set CXC4011253 featurestate 1
-set CXC4011255 featurestate 1
-set CXC4011258 featurestate 1
-set CXC4011319 featurestate 1
-set CXC4011327 featurestate 1
-set CXC4011345 featurestate 1
-set CXC4011366 featurestate 1
-set CXC4011370 featurestate 1
-set CXC4011372 featurestate 1
-set CXC4011373 featurestate 1
-set CXC4011376 featurestate 1
-set CXC4011378 featurestate 1
-set CXC4011422 featurestate 1
-set CXC4011443 featurestate 1
-set CXC4011444 featurestate 1
-set CXC4011477 featurestate 1
-set CXC4011479 featurestate 1
-set CXC4011481 featurestate 1
-set CXC4011482 featurestate 1
-set CXC4011485 featurestate 1
-set CXC4011515 featurestate 1
-set CXC4011698 featurestate 1
-set CXC4011711 featurestate 1
-set CXC4011715 featurestate 1
-set CXC4011813 featurestate 1
-set CXC4011815 featurestate 1
-set CXC4011910 featurestate 1
-set CXC4011913 featurestate 0
-set CXC4011914 featurestate 1
-set CXC4011918 featurestate 1
-set CXC4011940 featurestate 1
-set CXC4011941 featurestate 1
-set CXC4011969 featurestate 1
-set CXC4012003 featurestate 1
-set CXC4012018 featurestate 1
-set CXC4012070 featurestate 1
-set CXC4012089 featurestate 1
-set CXC4011559 featurestate 1
-set CXC4011922 featurestate 1
-set CXC4011946 featurestate 1
-set CXC4012129 featurestate 1
-set CXC4012240 featurestate 1
-set CXC4011072 featurestate 1
-set CXC4011974 featurestate 1
+set  CXC4011368   featurestate  0 
+set  CXC4010512   featurestate  0
+set  CXC4010955   featurestate  0
+set  CXC4010973   featurestate  1
+set  CXC4011055   featurestate  0
+set  CXC4011246   featurestate  0
+set  CXC4011346   featurestate  1
+set  CXC4011478   featurestate  0
+set  cxc4011554   featurestate  0
+set  CXC4011663   featurestate  0
+set  CXC4011664   featurestate  0
+set  CXC4011736   featurestate  0
+set  CXC4011810   featurestate  0
+set  cxc4011911   featurestate  0
+set  cxc4011966   featurestate  0
+set  CXC4011983   featurestate  0
+set  CXC4011714   featurestate  0
+set  CXC4010319   featurestate  1
+set  CXC4010320   featurestate  1
+set  CXC4010609   featurestate  1
+set  CXC4010613   featurestate  1
+set  CXC4010616   featurestate  1
+set  CXC4010618   featurestate  1
+set  CXC4010620   featurestate  1
+set  CXC4010717   featurestate  1
+set  CXC4010723   featurestate  1
+set  CXC4010770   featurestate  1
+set  CXC4010841   featurestate  1
+set  CXC4010856   featurestate  1
+set  CXC4010912   featurestate  1
+set  CXC4010956   featurestate  1
+set  CXC4010959   featurestate  1
+set  CXC4010961   featurestate  1
+set  CXC4010962   featurestate  1
+set  CXC4010967   featurestate  1
+set  CXC4010974   featurestate  1
+set  CXC4010980   featurestate  1
+set  CXC4010990   featurestate  1
+set  CXC4011011   featurestate  1
+set  CXC4011033   featurestate  1
+set  CXC4011034   featurestate  1
+set  CXC4011050   featurestate  1
+set  CXC4011057   featurestate  1
+set  CXC4011059   featurestate  1
+set  CXC4011060   featurestate  1
+set  CXC4011061   featurestate  1
+set  CXC4011062   featurestate  1
+set  CXC4011064   featurestate  1
+set  CXC4011074   featurestate  1
+set  CXC4011075   featurestate  1
+set  CXC4011157   featurestate  1
+set  CXC4011183   featurestate  1
+set  CXC4011245   featurestate  1
+set  CXC4011247   featurestate  1
+set  CXC4011251   featurestate  1
+set  CXC4011252   featurestate  1
+set  CXC4011253   featurestate  1
+set  CXC4011255   featurestate  1
+set  CXC4011258   featurestate  1
+set  CXC4011319   featurestate  1
+set  CXC4011327   featurestate  1
+set  CXC4011345   featurestate  1
+set  CXC4011366   featurestate  1
+set  CXC4011370   featurestate  1
+set  CXC4011372   featurestate  1
+set  CXC4011373   featurestate  1
+set  CXC4011376   featurestate  1
+set  CXC4011378   featurestate  1
+set  CXC4011422   featurestate  1
+set  CXC4011443   featurestate  1
+set  CXC4011444   featurestate  1
+set  CXC4011477   featurestate  1
+set  CXC4011479   featurestate  1
+set  CXC4011481   featurestate  1
+set  CXC4011482   featurestate  1
+set  CXC4011485   featurestate  1
+set  CXC4011515   featurestate  1
+set  CXC4011698   featurestate  1
+set  CXC4011711   featurestate  1
+set  CXC4011715   featurestate  1
+set  CXC4011813   featurestate  1
+set  CXC4011815   featurestate  1
+set  CXC4011910   featurestate  1
+set  CXC4011913   featurestate  1
+set  CXC4011914   featurestate  1
+set  CXC4011918   featurestate  1
+set  CXC4011940   featurestate  1
+set  CXC4011941   featurestate  1
+set  CXC4011955   featurestate  1
+set  CXC4011969   featurestate  1
+set  CXC4012003   featurestate  1
+set  CXC4012018   featurestate  1
+set  CXC4012070   featurestate  1
+set  CXC4012089   featurestate  1
+set  CXC4011476   featurestate  1
+set  CXC4011559   featurestate  1
+set  CXC4011922   featurestate  1
+set  CXC4011946   featurestate  1
+set  CXC4012129   featurestate  1
+set  CXC4012240   featurestate  1
+set  CXC4011072   featurestate  0
+set  CXC4011974	  featurestate  1 	
 
-##20Q2 Features-
+## old Features_GPL
+
+set  CXC4011667   featurestate  1
+set  CXC4011056   featurestate  1
+set  CXC4010949   featurestate  1
+set  CXC4010963   featurestate  1
+set  CXC4010964   featurestate  1
+set  CXC4011063   featurestate  1
+set  CXC4011067   featurestate  1
+set  CXC4011068   featurestate  1
+set  CXC4011069   featurestate  1
+set  CXC4011163   featurestate  1
+set  CXC4011256   featurestate  1
+set  CXC4011317   featurestate  1
+set  CXC4011356   featurestate  1
+set  CXC4011427   featurestate  1
+set  CXC4011512   featurestate  1
+set  CXC4011618   featurestate  1
+set  CXC4011699   featurestate  1
+set  CXC4011707   featurestate  1
+set  CXC4011710   featurestate  1
+set  CXC4011716   featurestate  1
+set  CXC4011804   featurestate  1
+set  CXC4011807   featurestate  1
+set  CXC4011809   featurestate  1
+set  CXC4011811   featurestate  1
+set  CXC4011814   featurestate  1
+set  CXC4011817   featurestate  1
+set  CXC4011820   featurestate  1
+set  CXC4011917   featurestate  1
+set  CXC4011930   featurestate  1
+set  CXC4011933   featurestate  1
+set  CXC4011803   featurestate  1
+set  CXC4011937   featurestate  1
+set  CXC4011938   featurestate  1
+set  CXC4011939   featurestate  1
+set  CXC4011942   featurestate  1
+set  CXC4011951   featurestate  1
+set  CXC4011958   featurestate  0
+set  CXC4011967   featurestate  1
+set  CXC4011973   featurestate  1
+set  CXC4011975   featurestate  1
+set  CXC4011982   featurestate  1
+set  CXC4011991   featurestate  1
+set  CXC4012022   featurestate  1
+set  CXC4040004   featurestate  1
+set  CXC4040005   featurestate  1
+set  CXC4040006   featurestate  1
+set  CXC4040008   featurestate  1
+set  CXC4040009   featurestate  1
+set  CXC4040010   featurestate  1
+set  CXC4040013   featurestate  1
+set  CXC4040014   featurestate  1
+set  CXC4011155   featurestate  1
+set  CXC4012261   featurestate  1
+
+
+
+
+## 20Q2Features
+
+set CXC4012271 featurestate 1
+Set CXC4012297 featurestate 1
+
+## additional Feature
+
+set CXC4012344 featurestate 1
+set . ul256qamEnabled TRUE
+
+set CXC4012370 featurestate 0
+set QciTable=default,QciProfilePredefined=qci6              rohcForUlDataEnabled              FALSE
+set QciTable=default,QciProfilePredefined=qci7              rohcForUlDataEnabled              FALSE
+set QciTable=default,QciProfilePredefined=qci8              rohcForUlDataEnabled              FALSE
+set QciTable=default,QciProfilePredefined=qci9              rohcForUlDataEnabled              FALSE
 
 set CXC4012316 featurestate 1
-set CXC4012271 featurestate 1
-set CXC4012260 featurestate 1
-set CXC4012374 featurestate 1
-set CXC4012344 featurestate 0
-set CXC4012370 featurestate 0
-set CXC4012326 featurestate 1
-set CXC4012349 featurestate 1
-set CXC4012261 featurestate 1
+set . eUlFssSwitchThresh 30
+set . noOfEnhAdptReTxCand -1
+set QciTable=default,QciProfilePredefined=qci6              resourceAllocationStrategy              1
+set QciTable=default,QciProfilePredefined=qci7              resourceAllocationStrategy              1
+set QciTable=default,QciProfilePredefined=qci8              resourceAllocationStrategy              1
+set QciTable=default,QciProfilePredefined=qci9              resourceAllocationStrategy              1
 
 
-#FORTDDSITEONLY4x4Quad
-
-set CXC4011667 featurestate 1
-set CXC4011056 featurestate 1
-
-#OLD Running Features
-
-set CXC4010949 featurestate 1
-set CXC4010963 featurestate 1
-set CXC4010964 featurestate 1
-set CXC4011063 featurestate 1
-set CXC4011065 featurestate 1
-set CXC4011067 featurestate 1
-set CXC4011068 featurestate 1
-set CXC4011069 featurestate 1
-set CXC4011155 featurestate 1
-set CXC4011163 featurestate 1
-set CXC4011256 featurestate 1
-set CXC4011317 featurestate 1
-set CXC4011356 featurestate 1
-set CXC4011427 featurestate 1
-set CXC4011512 featurestate 1
-set CXC4011557 featurestate 1
-set CXC4011618 featurestate 1
-set CXC4011666 featurestate 1
-set CXC4011699 featurestate 1
-set CXC4011707 featurestate 1
-set CXC4011710 featurestate 1
-set CXC4011716 featurestate 1
-set CXC4011803 featurestate 1
-set CXC4011804 featurestate 1
-set CXC4011807 featurestate 1
-set CXC4011808 featurestate 1
-set CXC4011809 featurestate 1
-set CXC4011811 featurestate 1
-set CXC4011814 featurestate 1
-set CXC4011817 featurestate 1
-set CXC4011820 featurestate 1
-set CXC4011917 featurestate 1
-set CXC4011930 featurestate 1
-set CXC4011933 featurestate 1
-set CXC4011937 featurestate 1
-set CXC4011938 featurestate 1
-set CXC4011939 featurestate 1
-set CXC4011942 featurestate 1
-set CXC4011951 featurestate 1
-set CXC4011958 featurestate 1
-set CXC4011967 featurestate 1
-set CXC4011973 featurestate 1
-set CXC4011975 featurestate 1
-set CXC4011982 featurestate 1
-set CXC4011991 featurestate 1
-set CXC4012022 featurestate 1
-set CXC4040004 featurestate 1
-set CXC4040005 featurestate 1
-set CXC4040006 featurestate 1
-set CXC4040008 featurestate 1
-set CXC4040009 featurestate 1
-set CXC4040010 featurestate 1
-set CXC4040013 featurestate 1
-set CXC4040014 featurestate 1
-set CXC4012259 featurestate 1
-set CXC4011664 featurestate 0
-set CXC4011663 featurestate 0
-set CXC4010956 featurestate 1
-
-set CXC4011823 featurestate  1
-
-##Basic Intelligence
-
-set CXC4012218 featurestate 1
-
-###############  PRB Muting Scripts 1800 Layer only #####################
-
-set EUtranCellFDD=RJ_E_F3.* dlFrequencyAllocationProportion 94
-set EUtranCellFDD=RJ_E_F8.* dlFrequencyAllocationProportion 80
-set EUtranCellFDD=RJ_E_F3.* ulFrequencyAllocationProportion 94
-set EUtranCellFDD=RJ_E_F8.* ulFrequencyAllocationProportion 80
-set EUtranCellFDD=RJ_E_F3.* dlConfigurableFrequencyStart 7
-set EUtranCellFDD=RJ_E_F8.* dlConfigurableFrequencyStart 10
-set EUtranCellFDD=RJ_E_F3.* ulConfigurableFrequencyStart 7
-set EUtranCellFDD=RJ_E_F8.* ulConfigurableFrequencyStart 10
-set EUtranCellFDD=RJ_E_F3.* dlInterferenceManagementActive false
-set EUtranCellFDD=RJ_E_F8.* dlInterferenceManagementActive false
-set EUtranCellFDD=RJ_E_F3.* ulInterferenceManagementActive false
-set EUtranCellFDD=RJ_E_F8.* ulInterferenceManagementActive false
-set EUtranCellFDD=RJ_E_F3.* ulSrsEnable       true
-set EUtranCellFDD=RJ_E_F8.* ulSrsEnable       true
-set EUtranCellFDD=RJ_E_F3.* pucchOverdimensioning 5
-set EUtranCellFDD=RJ_E_F8.* pucchOverdimensioning 4
-set EUtranCellFDD=RJ_E_F3.* dlCchAndRefSigBlockActive true
-set EUtranCellFDD=RJ_E_F8.* dlCchAndRefSigBlockActive true
-set EUtranCellFDD=RJ_E_F3.* dlCchAndRefSigBoost true
-set EUtranCellFDD=RJ_E_F8.* dlCchAndRefSigBoost true
-
-Set Lm=1,FeatureState=CXC4011255 featureState 1
-Set Lm=1,FeatureState=CXC4011074 featureState 1
-Set Lm=1,FeatureState=CXC4010980 featureState 1
-
-###############  GERAN CSFB/SRVCC Parameter ################
-
-set GeranFreqGroupRelation=1 csFallbackPrio 4
-set GeranFreqGroupRelation=1 csFallbackPrioEC 4
-set AnrFunction=1,AnrFunctionGeran=1 anrStateGsm 1
-set GeranFreqGroup pmaxgeran 1000
-set GeranFreqGroup Qoffsetfreq 0
-set GeranFreqGroup nccpermitted 11111111
-set GeranFreqGroup anrMeasOn TRUE
-set GeranFreqGroup mobilityAction 1
-set GeranFreqGroup mobilityActionCsfb 1
-set GeranFreqGroup userLabel SIB7
-set CXC4011664 featurestate 0
-set CXC4011346 featurestate 1
-set CXC4012240 featurestate 1
-set CXC4010618 featurestate 1
-
-
-##################  Power Savings Features ###########################
-
----------------  Mimo Sleep Function All Layers -------------
-
-set EUtranCell.*=.*,MimoSleepFunction=1 sleepMode 4
-set EUtranCell.*=.*,MimoSleepFunction=1 sleepStartTime 18:30
-set EUtranCell.*=.*,MimoSleepFunction=1 sleepEndTime 02:30
-set EUtranCell.*=.*,MimoSleepFunction=1 sleepPowerControl 1
-set EUtranCell.*=.*,MimoSleepFunction=1 switchDownMonitorDurTimer 5
-set EUtranCell.*=.*,MimoSleepFunction=1 switchDownPrbThreshold 40
-set EUtranCell.*=.*,MimoSleepFunction=1 switchDownRrcConnThreshold 50
-set EUtranCell.*=.*,MimoSleepFunction=1 switchUpMonitorDurTimer 15
-set EUtranCell.*=.*,MimoSleepFunction=1 switchUpPrbThreshold 55
-set EUtranCell.*=.*,MimoSleepFunction=1 switchUpRrcConnThreshold 60
-
-_______________ Cell Sleep Function ___________________________
-
-#################### 2100  ############################
-
-set EUtranCellFDD=LW.*,CellSleepFunction=1 sleepMode 1
-set EUtranCellFDD=LW.*,CellSleepFunction=1 sleepStartTime 18:30
-set EUtranCellFDD=LW.*,CellSleepFunction=1 sleepEndTime 00:30
-set EUtranCellFDD=LW.*,CellSleepFunction=1 capCellSleepMonitorDurTimer 5
-set EUtranCellFDD=LW.*,CellSleepFunction=1 capCellDlPrbSleepThreshold 40
-set EUtranCellFDD=LW.*,CellSleepFunction=1 capCellRrcConnSleepThreshold 90
-set EUtranCellFDD=LW.*,CellSleepFunction=1 covCellWakeUpMonitorDurTimer 5
-set EUtranCellFDD=LW.*,CellSleepFunction=1 covCellDlPrbWakeUpThreshold 55
-set EUtranCellFDD=LW.*,CellSleepFunction=1 covCellRrcConnWakeUpThreshold 15
-set EUtranCellFDD=LW.*,CellSleepFunction=1 coverageCellDiscovery true
-set EUtranCellTDD=LW.*,CellSleepFunction=1 capCellSleepProhibitInterval 0
-set EUtranCellFDD=LW.*,CellSleepFunction=1 isAllowedMsmOnCovCell true
-
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 sleepMode 1
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 sleepStartTime 18:30
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 sleepEndTime 00:30
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 capCellSleepMonitorDurTimer 5
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 capCellDlPrbSleepThreshold 40
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 capCellRrcConnSleepThreshold 90
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 covCellWakeUpMonitorDurTimer 5
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 covCellDlPrbWakeUpThreshold 55
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 covCellRrcConnWakeUpThreshold 15
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 coverageCellDiscovery true
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 capCellSleepProhibitInterval 0
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1 isAllowedMsmOnCovCell true
-
-
-
-
-#################### TDD  ############################
-
-set EUtranCellTDD=.*,CellSleepFunction=1 sleepMode 1
-set EUtranCellTDD=.*,CellSleepFunction=1             sleepStartTime 18:30
-set EUtranCellFDD=LW.*,CellSleepFunction=1              sleepStartTime 18:30
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1              sleepStartTime 18:30
-set EUtranCellTDD=.*,CellSleepFunction=1              sleepEndTime      02:30
-set EUtranCellFDD=LW.*,CellSleepFunction=1              sleepEndTime      02:30
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1              sleepEndTime      02:30
-set EUtranCellFDD=LW.*,CellSleepFunction=1              capCellSleepMonitorDurTimer 5
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1              capCellSleepMonitorDurTimer 5
-set EUtranCellTDD=.*,CellSleepFunction=1              capCellSleepMonitorDurTimer 5
-set EUtranCellTDD=.*,CellSleepFunction=1              capCellDlPrbSleepThreshold 40
-set EUtranCellFDD=LW.*,CellSleepFunction=1              capCellDlPrbSleepThreshold 40
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1              capCellDlPrbSleepThreshold 40
-set EUtranCellTDD=.*,CellSleepFunction=1              capCellRrcConnSleepThreshold 90
-set EUtranCellFDD=LW.*,CellSleepFunction=1              capCellRrcConnSleepThreshold 90
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1              capCellRrcConnSleepThreshold 90
-set EUtranCellTDD=.*,CellSleepFunction=1              covCellWakeUpMonitorDurTimer 15
-set EUtranCellFDD=LW.*,CellSleepFunction=1              covCellWakeUpMonitorDurTimer 15
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1              covCellWakeUpMonitorDurTimer 15
-set EUtranCellTDD=.*,CellSleepFunction=1              covCellDlPrbWakeUpThreshold 55
-set EUtranCellFDD=LW.*,CellSleepFunction=1              covCellDlPrbWakeUpThreshold 55
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1              covCellDlPrbWakeUpThreshold 55
-set EUtranCellTDD=.*,CellSleepFunction=1              covCellRrcConnWakeUpThreshold 100
-set EUtranCellFDD=LW.*,CellSleepFunction=1              covCellRrcConnWakeUpThreshold 100
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1              covCellRrcConnWakeUpThreshold 100
-set EUtranCellFDD=LW.*,CellSleepFunction=1              coverageCellDiscovery true
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1              coverageCellDiscovery true
-set EUtranCellTDD=.*,CellSleepFunction=1              coverageCellDiscovery true
-set EUtranCellTDD=.*,CellSleepFunction=1              capCellSleepProhibitInterval 0
-set EUtranCellFDD=LW.*,CellSleepFunction=1              capCellSleepProhibitInterval 0
-set EUtranCellFDD=RJ_E_F1.*,CellSleepFunction=1              capCellSleepProhibitInterval 0
-
-----------------  cellSleepCovCellMeasOn ---------------------------
-
-set EUtranCellTDD=.* EUtranFreqRelation=1576  cellSleepCovCellMeasOn true
-set EUtranCellTDD=.* EUtranFreqRelation=3601  cellSleepCovCellMeasOn true
-set EUtranCellTDD=.* EUtranFreqRelation=39150 cellSleepCovCellMeasOn false
-set EUtranCellTDD=.* EUtranFreqRelation=39348 cellSleepCovCellMeasOn false
-set EUtranCellTDD=.* EUtranFreqRelation=515   cellSleepCovCellMeasOn true
-
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=1576  cellSleepCovCellMeasOn false
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=3601  cellSleepCovCellMeasOn false
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39150 cellSleepCovCellMeasOn false
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39348 cellSleepCovCellMeasOn false
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=515   cellSleepCovCellMeasOn false
-
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=1576  cellSleepCovCellMeasOn false
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=3601  cellSleepCovCellMeasOn true
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39150 cellSleepCovCellMeasOn false
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39348 cellSleepCovCellMeasOn false
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=515   cellSleepCovCellMeasOn false
-
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=1576  cellSleepCovCellMeasOn true
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=3601  cellSleepCovCellMeasOn true
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39150 cellSleepCovCellMeasOn false
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39348 cellSleepCovCellMeasOn false
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=515   cellSleepCovCellMeasOn false
-
-
-###############  AMS & CA Scripts ############################
-
-
-set SystemFunctions=1,Lm=1,FeatureState=CXC4011476 featureState 1
-set SystemFunctions=1,Lm=1,FeatureState=CXC4011922 featureState 1
-set SystemFunctions=1,Lm=1,FeatureState=CXC4011666 featureState 1
-set SystemFunctions=1,Lm=1,FeatureState=CXC4011559 featureState 1
-set SystemFunctions=1,Lm=1,FeatureState=CXC4012259 featureState 1
-set SystemFunctions=1,Lm=1,FeatureState=CXC4012123 featureState 1
-set Licensing=1,OptionalFeatureLicense=CarrierAggregation$  featureState  1
-set Licensing=1,OptionalFeatureLicense=CarrierAggregationFddTdd$  featureState  1
-set Licensing=1,OptionalFeatureLicense=CarrierAggregationAwareIFLB$  featureState  1
-set Licensing=1,OptionalFeatureLicense=DynamicScellSelection$  featureState  1
-set Licensing=1,OptionalFeatureLicense=VoLTEOptimizedCA$  featureState  1
-set▒FeatureState=CXC4012123▒featureState▒1
-set Licensing=1,OptionalFeatureLicense=AutomaticSCellManagement$  featureState  1
-set SystemFunctions=1,Lm=1,FeatureState=CXC4011983 featureState 1
-set Licensing=1,OptionalFeatureLicense=InterENBCarrierAggregation$  featureState  1
-set EUtranCell.*=.* sCellHandlingAtVolteCall 1
-set EUtranCell.*=.*,EUtranFreqRelation=.*,EUtranCellRelation=.* sCellCandidate    2
-
-set CXC4011958|CXC4011808|CXC4011803|CXC4011378 FeatureState 1
-
-set EUtranCellFDD=RJ_E_F3_.*,EUtranFreqRelation=39150 asmSCellDetection 3
-set EUtranCellFDD=RJ_E_F3_.*,EUtranFreqRelation=39348 asmSCellDetection 3
-
-set EUtranCellTDD=RJ_E_T1_.*,EUtranFreqRelation=39151 asmSCellDetection 3
-set EUtranCellTDD=RJ_E_T1_.*,EUtranFreqRelation=39150 asmSCellDetection 3
-set EUtranCellTDD=RJ_E_T2_.*,EUtranFreqRelation=39150 asmSCellDetection 3
-set EUtranCellTDD=RJ_E_T2_.*,EUtranFreqRelation=39151 asmSCellDetection 3
-
-set EUtranCellTDD=RJ_E_T1_.*,EUtranFreqRelation=515 asmSCellDetection 0
-set EUtranCellTDD=RJ_E_T2_.*,EUtranFreqRelation=515 asmSCellDetection 0
-set EUtranCellTDD=RJ_E_T1_.*,EUtranFreqRelation=3601 asmSCellDetection 0
-set EUtranCellTDD=RJ_E_T2_.*,EUtranFreqRelation=3601 asmSCellDetection 0
-set EUtranCellTDD=RJ_E_T1_.*,EUtranFreqRelation=1576 asmSCellDetection 0
-set EUtranCellTDD=RJ_E_T2_.*,EUtranFreqRelation=1576 asmSCellDetection 0
-
-set EUtranCellFDD=RJ_E_F3_.*,EUtranFreqRelation=515 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F3_.*,EUtranFreqRelation=3601 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F3_.*,EUtranFreqRelation=1576 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F3_.*,EUtranFreqRelation=39151 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F3_.*,EUtranFreqRelation=39147 asmSCellDetection 0
-
-set EUtranCellFDD=RJ_E_F1_.*,EUtranFreqRelation=515 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F1_.*,EUtranFreqRelation=3601 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F1_.*,EUtranFreqRelation=1576 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F1_.*,EUtranFreqRelation=39151 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F1_.*,EUtranFreqRelation=39147 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F1_.*,EUtranFreqRelation=39150 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F1_.*,EUtranFreqRelation=39148 asmSCellDetection 0
-
-set EUtranCellFDD=RJ_E_F8_.*,EUtranFreqRelation=515 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F8_.*,EUtranFreqRelation=3601 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F8_.*,EUtranFreqRelation=1576 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F8_.*,EUtranFreqRelation=39151 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F8_.*,EUtranFreqRelation=39147 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F8_.*,EUtranFreqRelation=39150 asmSCellDetection 0
-set EUtranCellFDD=RJ_E_F8_.*,EUtranFreqRelation=39148 asmSCellDetection 0
-
-set EUtranCellFDD=RJ_E_F3_.*,EUtranFreqRelation=39150  caTriggeredRedirectionActive true
-set EUtranCellFDD=RJ_E_F3_.*,EUtranFreqRelation=39348  caTriggeredRedirectionActive true
-
-set EUtranCell.*=.*,GeranFreqGroupRelation=1 connectedModeMobilityPrio -1
-set EUtranCellTDD=.*,GeranFreqGroupRelation=1 voicePrio -1
-set EUtranCellFDD=.*,GeranFreqGroupRelation=1 voicePrio -1
-set EUtranCellTDD=.* cellSubscriptionCapacity 20000
-
-
-#######################  22.Q2 Feature Massification #######################
-
-
-##############  LTE PIM Detection in Baseband #################
-
-set EUtranCellFDD=.* pimDetectionEnabled true
-set ENodeBFunction=1 pimAutoDetectionEnabled false
-set CXC4010955|CXC4011368|CXC4011842 featurestate 0
-set PreschedProfile=.* preschedulingDataSize 86
-set PreschedProfile=.* preschedulingPeriod 5
-set PreschedProfile=.* preschedulingDuration 200
-set PreschedProfile=0 preschedulingSinrThreshold 15
-
-##############  ASGH based Pre-Scheduling  ###################
-
-set SubscriberGroupProfile=1 preschedulingMode 2
-set CXC4012200|CXC4011715 featureState 1
-
-############# Differential Uplink Power Contr ####################
-
-set EUtranCellTDD=.* enableSinrUplinkClpc true
-set EUtranCellTDD=.* rxSinrTargetClpc 16
-set EUtranCellTDD=.* interferenceThresholdSinrClpc -105
-set EUtranCellTDD=.* ulPsdLoadThresholdSinrClpc 2
-set EUtranCellTDD=.* ulTxPsdDistrThr 40
-set EUtranCellTDD=.* p0ClpcExGoodEnabled true
-set EUtranCellTDD=.* p0ClpcExBadEnabled true
-set EUtranCellTDD=.* p0ClpcExBadSinrThr -10
-set EUtranCellTDD=.* p0ClpcExGoodSinrThr 16
-set EUtranCellTDD=.* p0ClpcExGoodSinrOffset64Qam 3
-set EUtranCellTDD=.* p0ClpcExGoodSinrOffset256Qam 10
-set EUtranCellTDD=.* assumedUePowerMsg3 1000
-set CXC4012089 featureState 1
-
-############### Increase number of GTP-U connec ######################
-
-set CXC4012022 featureState 1
-set ENodeBFunction=1 s1GtpuEchoEnable 1
-
-################  Atmospheric Duct Int Reduction  #########################
-
-set EUtranCellTDD=.* subframeAssignment 2
-set EUtranCellTDD=.* specialSubframePattern 7
-set EUtranCellTDD=.* ductIntOpMode 3
-set EUtranCellTDD=.* ductIntPerfTuning ductIntBgNoiseThr=-105
-set EUtranCellTDD=.* ductIntPerfTuning ductIntCharSeqCorrPeakThr=50
-set EUtranCellTDD=.* ductIntPerfTuning ductIntCharSeqPwrDiff=5
-set EUtranCellTDD=.* ductIntPerfTuning ductIntRedTriggerThr=14
-set EUtranCellTDD=.* ductIntPerfTuning ductIntRedRecovThr=10
-set EUtranCellTDD=.* ductIntPerfTuning ductIntCharSeqPwrThr=-105
-set EUtranCellTDD=.* ductIntPerfTuning ductIntSlopePwrDiffThr=3
-set EUtranCellTDD=.* ductIntPerfTuning ductIntSlopeDetectPeriod=10
-set EUtranCellTDD=.* ductIntPerfTuning ductIntSlopeDetectRatioThr=50
-set EUtranCellTDD=.* ductIntPerfTuning ductIntCharSeqTransThr=10
-set ENodeBFunction=1 ductIntCharInfoScheme 0
-set ENodeBFunction=1 ductIntFlexibleDetectionEnabled false
-set CXC4012256 featureState 1
-
-################# Dyn SCell Selection for CA ###########
-
-
-set SctpProfile=1 pathMaxRtx 4
-set SctpProfile=Node_Internal_F1 pathMaxRtx 4
-set SctpProfile=1 assocMaxRtx 8
-set SctpProfile=Node_Internal_F1 assocMaxRtx 8
-set SctpProfile=1 initRto 2000
-set SctpProfile=Node_Internal_F1 initRto 2000
-set SctpProfile=1 maxRto 4000
-set SctpProfile=Node_Internal_F1 maxRto 4000
-set SctpProfile=1 minRto 1000
-set SctpProfile=Node_Internal_F1 minRto 1000
-
-###############
-
+### QOS ###
 
 lt all
+
+set ENodeBFunction=1                                        dscpLabel                       46
+set ENodeBFunction=1                                        gtpuErrorIndicationDscp         46
+set ENodeBFunction=1                                        interEnbCaTunnelDscp            26
+set ENodeBFunction=1                                        interEnbUlCompTunnelDscp        26
+set ENodeBFunction=1                                        s1GtpuEchoDscp                  46
+set ENodeBFunction=1                                        x2GtpuEchoDscp                  46
+
+
+cr Transport=1,QosProfiles=1,DscpPcpMap=1
+
+set QciTable=default,QciProfilePredefined=qci1              dscp              34
+set QciTable=default,QciProfilePredefined=qci2              dscp              34
+set QciTable=default,QciProfilePredefined=qci3              dscp              26
+set QciTable=default,QciProfilePredefined=qci4              dscp              26
+
+set QciTable=default,QciProfilePredefined=qci5              dscp              46
+set QciTable=default,QciProfilePredefined=qci6              dscp              26
+set QciTable=default,QciProfilePredefined=qci7              dscp              26
+set QciTable=default,QciProfilePredefined=qci8              dscp              26
+
+set QciTable=default,QciProfilePredefined=qci9              dscp              26
+
+set SysM=1,OamTrafficClass=1 dscp 28
+
+set EthernetPort=TN_C                                       egressQosMarking  QosProfiles=1,DscpPcpMap=1
+
+set SctpProfile= dscp 46
+set Ntp=1,NtpFrequencySync= dscp 46
+
+lt all
+
+set QosProfiles=1,DscpPcpMap=1  pcp0
+set QosProfiles=1,DscpPcpMap=1  pcp1
+set QosProfiles=1,DscpPcpMap=1  pcp2
+set QosProfiles=1,DscpPcpMap=1  pcp3
+set QosProfiles=1,DscpPcpMap=1  pcp4
+set QosProfiles=1,DscpPcpMap=1  pcp5
+set QosProfiles=1,DscpPcpMap=1  pcp6
+set QosProfiles=1,DscpPcpMap=1  pcp7
+
+
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp0 0 1 2 3 4 5 6 7 8 9 10 11 19 20 21 27 29 30 31 32 33 35 36 37 38 39 40 41 42 43 44 45 47  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
+
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp3 12 13 14 15 16 17 18
+
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp4 22 23 24 25 26 
+
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp5 28
+
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp6 34
+
+set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp7 46
+
+
+set Router=OAM,DnsClient=1 dscp 28
+
+set Router=LTECP,InterfaceIPv4=TN_C_CP                      egressQosMarking  QosProfiles=1,DscpPcpMap=1
+set Router=LTEUP,InterfaceIPv4=TN_C_UP                      egressQosMarking  QosProfiles=1,DscpPcpMap=1
+set Router=OAM,InterfaceIPv4=TN_C_OAM                       egressQosMarking  QosProfiles=1,DscpPcpMap=1
+set Router=OAM,InterfaceIPv6=TN_C_OAM                       egressQosMarking  QosProfiles=1,DscpPcpMap=1
+
+set VlanPort=                                               egressQosMarking  QosProfiles=1,DscpPcpMap=1
+set VlanPort=TN_C_CP                                        egressQosMarking  QosProfiles=1,DscpPcpMap=1
+set VlanPort=TN_C_OAM                                       egressQosMarking  QosProfiles=1,DscpPcpMap=1
+set VlanPort=TN_C_UP                                        egressQosMarking  QosProfiles=1,DscpPcpMap=1
+set VlanPort=TN_.*                                          egressQosMarking  QosProfiles=1,DscpPcpMap=1
+
+#### SCTP ####
+
+lt all
+
+set Transport=1,SctpProfile=1 alphaIndex 3
+set Transport=1,SctpProfile=1 assocMaxRtx 20
+set Transport=1,SctpProfile=1 betaIndex 2
+set Transport=1,SctpProfile=1 bundlingActivated TRUE
+set Transport=1,SctpProfile=1 bundlingAdaptiveActivated TRUE
+set Transport=1,SctpProfile=1 bundlingTimer 0
+set Transport=1,SctpProfile=1 cookieLife 60
+set Transport=1,SctpProfile=1 dscp 46
+set Transport=1,SctpProfile=1 minRto 1000
+set Transport=1,SctpProfile=1 hbMaxBurst 1
+set Transport=1,SctpProfile=1 heartbeatActivated TRUE
+set Transport=1,SctpProfile=1 heartbeatInterval 2000
+set Transport=1,SctpProfile=1 incCookieLife 30
+set Transport=1,SctpProfile=1 initARWnd 16384
+set Transport=1,SctpProfile=1 initRto 2000
+set Transport=1,SctpProfile=1 initialHeartbeatInterval 500
+set Transport=1,SctpProfile=1 maxActivateThr 65535
+set Transport=1,SctpProfile=1 maxBurst 4
+set Transport=1,SctpProfile=1 maxInStreams 2
+set Transport=1,SctpProfile=1 maxInitRt 5
+set Transport=1,SctpProfile=1 maxOutStreams 2
+set Transport=1,SctpProfile=1 maxRto 4000
+set Transport=1,SctpProfile=1 maxSctpPduSize 1480
+set Transport=1,SctpProfile=1 maxShutdownRt 5
+set Transport=1,SctpProfile=1 minActivateThr 1
+set Transport=1,SctpProfile=1 noSwitchback TRUE
+set Transport=1,SctpProfile=1 pathMaxRtx 10
+set Transport=1,SctpProfile=1 primaryPathAvoidance TRUE
+set Transport=1,SctpProfile=1 primaryPathMaxRtx 0
+set Transport=1,SctpProfile=1 sackTimer 100
+set Transport=1,SctpProfile=1 thrTransmitBuffer 48
+set Transport=1,SctpProfile=1 thrTransmitBufferCongCeased 85
+set Transport=1,SctpProfile=1 transmitBufferSize 64
+set Transport=1,SctpProfile=1 userLabel SCTP
+
+cr Transport=1,Router=LTEUP,TwampResponder=1
+Transport=1,Router=LTEUP,InterfaceIPv4=TN_C_UP,AddressIPv4=TN_C_UP
+4001
+set Transport=1,Router=LTEUP,TwampResponder=1 userLabel TWAMP1
+
+
+
+set Fm=1 heartbeatInterval 100
+
+/cm/sysconread
+/cm/sysconwrite 1225 50
+/cm/sysconwrite 1566 33
+/cm/sysconwrite 1627 3
+/cm/sysconwrite 153 128
+/cm/sysconwrite 278 1
+/cm/sysconwrite 296 200
+/cm/sysconwrite 1738 230
+/cm/sysconwrite 2959 1
+/cm/sysconwrite L4885  1
+/cm/sysconread
+
+set ENodeBFunction=1 measuringEcgiWithAgActive true
+set ENodeBFunction=1,AnrFunction=1 pciConflictDetectionEcgiMeas         false
+set ENodeBFunction=1,AnrFunction=1 pciConflictMobilityEcgiMeas          false
+set ENodeBFunction=1,AnrFunction=1 problematicCellPolicy 1
+set ENodeBFunction=1,AnrFunction=1 probCellDetectMedHoSuccThres         98
+set ENodeBFunction=1,AnrFunction=1 probCellDetectMedHoSuccTime          1
+set ENodeBFunction=1,AnrFunction=1 probCellDetectLowHoSuccThres         80
+set ENodeBFunction=1,AnrFunction=1 probCellDetectLowHoSuccTime          2
+
+set ENodeBFunction=1,Rrc=1 tRrcConnectionReconfiguration 10
+
+set CXC4011955 featurestate 0
+set . ulPhyProcResTradingEnabled 1
+
+set EUtranCellFDD=TN_E_F3_.* noOfPucchFormat1PrbPairsPerFrameConf 4
+set EUtranCellFDD=TN_E_F3_.* noOfPucchFormat2PrbPairsPerFrameConf 1
+
+
+## Correction
+
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigSearch=1 a2criticalthresholdRSRp -140
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThrQci1RsrqOffset -240
+set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 dlMaxRetxThreshold 16
+set ENodeBFunction=1,RadioBearerTable=default,SignalingRadioBearer=1 dlMaxRetxThreshold 16
+set EUtranFreqRelation tReselectionEutra 2
+set TimerProfile=0                                          tRrcConnectionReconfiguration 8
+set ENodeBFunction=1,RadioBearerTable=default,DataRadioBearer=1 ulMaxRetxThreshold 16
+set ENodeBFunction=1,RadioBearerTable=default,SignalingRadioBearer=1 ulMaxRetxThreshold 16
+set EUtranCellFDD=TN_E_F3_.* prsPowerBoosting 3
+set QciTable=default,QciProfilePredefined=QCI6$ schedulingAlgorithm 4
+set QciTable=default,QciProfilePredefined=QCI7$ schedulingAlgorithm 4
+set QciTable=default,QciProfilePredefined=QCI8$ schedulingAlgorithm 4
+set QciTable=default,QciProfilePredefined=QCI9$ schedulingAlgorithm 4
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1 anrStateUtran 0
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1 hoAllowedUtranPolicy 0
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1 excludeInterFreqAtCritical False
+set CarrierAggregationFunction=1                            selectionPolicyUlWeighting 50
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -97
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigB2GeranUlTrig=1 b2Threshold2Geran -97
+set QciTable=default,QciProfilePredefined=qci1$              resourceAllocationStrategy              1
+set QciTable=default,QciProfilePredefined=qci2$              resourceAllocationStrategy              1
+set QciTable=default,QciProfilePredefined=qci3$              resourceAllocationStrategy              1
+set QciTable=default,QciProfilePredefined=qci4$              resourceAllocationStrategy              1
+set QciTable=default,QciProfilePredefined=qci5$              resourceAllocationStrategy              1
+
+
+##New Addition
+
+set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a1ThresholdRsrpPrimOffset=2
+set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a2ThresholdRsrpPrimOffset=2
+set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a5Threshold1RsrpOffset=2
+set QciTable=default,QciProfilePredefined=qci1 measReportConfigParams a5Threshold2RsrpOffset=2
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigEUtraBadCovPrim=1 a2ThresholdRsrpPrim -140
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1                  filterCoefficientEUtraRsrq 11
+set AnrFunction=1,AnrFunctionEUtran=1                       lbCellOffloadCapacityPolicy  30000
+set SectorCarrier radioTransmitPerfMode 2
+set EUtranCellFDD=TN_E_F3_.* srvccDelayTimer 3000
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1 ueMeasurementsActiveUTRAN False
+
+seti ENodeBFunction=1,Rrc=1        tRrcConnectionSetup  10
+set ReportConfigCsfbUtra=1 hysteresis 10
+set EUtranCellFDD=TN_E_F3_.* dlInternalChannelBandwidth 0
+set EUtranCellFDD=TN_E_F3_.* UlInternalChannelBandwidth 0
+set ReportConfigSCellA6=1 timeToTriggerA6   40
+set EUtranCellFDD=TN_E_F3_.* systemInformationBlock3 sNonIntraSearchP=10
+set AnrFunction=1 plmnWhiteListEnabled false
+set ReportConfigSearch=1 hysteresisA2CriticalRsrq 10
+set ReportConfigSCellA1A2=1 hysteresisA1A2Rsrp 10
+set ReportConfigElcA1A2=1 hysteresisA1A2Rsrp 10
+set ReportConfigB1Geran=1 hysteresisB1      10
+set ReportConfigB1Utra=1 hysteresisB1      10
+set ReportConfigElcA1A2=1 a1a2ThresholdRsrp -134
+set ReportConfigSCellA1A2=1 a1a2ThresholdRsrp -126
+set ReportConfigSCellA1A2=1 a1a2ThresholdRsrpBidir -140
+set ReportConfigSCellA1A2=1 a1a2ThresholdRsrq -165
+set ReportConfigSearch=1 a2CriticalThresholdRsrq -195
+set ReportConfigSearch=1 a2OuterSearchThrRsrpOffset 0
+set ReportConfigSearch=1 a2OuterSearchThrRsrqOffset 0
+set MdtConfiguration=1                                      a2ThresholdRsrpMdt -140
+set MdtConfiguration=1                                      a2ThresholdRsrqMdt -195
+set UeMeasControl=1      a3SuspendCsgTimer 0
+set ReportConfigA5Anr=1 a5Threshold1RsrqAnrDelta 10
+set ReportConfigA5Anr=1 a5Threshold2RsrpAnrDelta 1
+set ReportConfigA5Anr=1 a5Threshold2RsrqAnrDelta 10
+set ReportConfigB1Geran=1 b1ThresholdGeran  -110
+set ReportConfigB2Geran=1 b2Threshold1Rsrq  -195
+set EUtranCellFDD=TN_E_F3_.* systemInformationBlock3 threshServingLowQ=1000
+set UeMeasControl=1      targetA2UlSearchOffset 20
+set ReportConfigElcA1A2=1 timeToTriggerA1   40
+set ReportConfigSCellA1A2=1 timeToTriggerA1   40
+set ReportConfigSearch=1 timeToTriggerA1SearchRsrq 1024
+set ReportConfigSearch=1 timeToTriggerA1UlSearch 480
+set ReportConfigElcA1A2=1 timeToTriggerA2   40
+set ReportConfigSCellA1A2=1 timeToTriggerA2   40
+set ReportConfigSearch=1 timeToTriggerA2CriticalRsrq 1024
+set MdtConfiguration=1                                      timeToTriggerA2Mdt 640
+set ReportConfigSearch=1 timeToTriggerA2OutSearchRsrq -1
+set ReportConfigSearch=1 timeToTriggerA2SearchRsrq 1024
+set ReportConfigA5=1 timeToTriggerA5Rsrq 1024
+set ReportConfigB1Geran=1 timeToTriggerB1   640
+set ReportConfigB1Utra=1 timeToTriggerB1   640
+set ReportConfigB2Geran=1 timeToTriggerB2Rsrq -1
+set ReportConfigB2Utra=1 timeToTriggerB2Rsrq -1
+set ReportConfigSCellA1A2=1 triggerQuantityA1A2 0
+set MdtConfiguration=1                                      triggerQuantityA2Mdt 0
+set EUtranCellFDD=TN_E_F3_.* ulInterferenceManagementActive true
+set GeranCellRelation=.* coverageIndicator 1
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigB2GeranUlTrig=1 reportIntervalB2 4
+set ReportConfigB2Geran=1 timeToTriggerB2   1280
+set QciTable=default,QciProfilePredefined=qci1$              dlMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci3$              dlMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci4$              dlMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci5$              dlMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci6$              dlMinBitRate      2000
+set QciTable=default,QciProfilePredefined=qci7$              dlMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci8$              dlMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci9$              dlMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci1$              ulMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci3$              ulMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci4$              ulMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci5$              ulMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci6$              ulMinBitRate      300
+set QciTable=default,QciProfilePredefined=qci7$              ulMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci8$              ulMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci9$              ulMinBitRate      0
+set QciTable=default,QciProfilePredefined=qci1$              relativePriority  1
+set QciTable=default,QciProfilePredefined=qci3$              relativePriority  1
+set QciTable=default,QciProfilePredefined=qci4$              relativePriority  1
+set QciTable=default,QciProfilePredefined=qci5$              relativePriority  1
+set QciTable=default,QciProfilePredefined=qci6$              relativePriority  2
+set QciTable=default,QciProfilePredefined=qci7$              relativePriority  1
+set QciTable=default,QciProfilePredefined=qci8$              relativePriority  1
+set QciTable=default,QciProfilePredefined=qci9$             relativePriority  1
+set LoadBalancingFunction=1                                 lbUeEvaluationTimer 90
+set EUtranCellFDD=TN_E_F3_.*                     lbTpNonQualFraction 35
+set EUtranCellFDD=TN_E_F3_.*                     lbTpRankThreshMin 10
+
+set QciTable=default,QciProfilePredefined=qci65 dlMinBitRate 2000
+set QciTable=default,QciProfilePredefined=qci69 dlMinBitRate 2000
+set QciTable=default,QciProfilePredefined=qci66 dlMinBitRate 2000
+
+set QciTable=default,QciProfilePredefined=qci65 ulMinBitRate 300
+set QciTable=default,QciProfilePredefined=qci69 ulMinBitRate 300
+set QciTable=default,QciProfilePredefined=qci66 ulMinBitRate 300
+
+set QciTable=default,QciProfilePredefined=qci65 relativePriority 2
+set QciTable=default,QciProfilePredefined=qci69 relativePriority 2
+set QciTable=default,QciProfilePredefined=qci66 relativePriority 2
+
+
+set QciTable=default,QciProfilePredefined=qci70 schedulingAlgorithm 4
+set QciTable=default,QciProfilePredefined=qci65 schedulingAlgorithm 4
+set QciTable=default,QciProfilePredefined=qci69 schedulingAlgorithm 4
+set QciTable=default,QciProfilePredefined=qci66 schedulingAlgorithm 4
+
+set CXC4012238 featurestate 1
+
+###Feature activation only
+set CXC4012326 featurestate 1
+set CXC4012260 featurestate 1
+set CXC4012374 featurestate 1
+set CXC4012297 featurestate 0
+set CXC4012019 featurestate 1
+
+#ASGH Voice Reliability & BLER Target
+set CXC4012199  featurestate 1
+set CXC4012374  featurestate 1
+set ENodeBFunction=1,EUtranCell.*DD= blerTargetConfigEnabled TRUE
+set ENodeBFunction=1,EUtranCell.*DD= dlBlerTargetEnabled TRUE
+cr ENodeBFunction=1,SubscriberGroupProfile=1
+set ENodeBFunction=1,SubscriberGroupProfile=1 bearerTriggerList qci=1
+set ENodeBFunction=1,SubscriberGroupProfile=1 cellTriggerList 
+set ENodeBFunction=1,SubscriberGroupProfile=1 ulHarqBlerTarget 3
+set ENodeBFunction=1,SubscriberGroupProfile=1 dlHarqBlerTarget 5
+set ENodeBFunction=1,SubscriberGroupProfile=1 ulMcsUpperLimit 12
+
+pr EUtranCellFDD=TN_E_F3_.*D_D
+if $nr_of_mos = 0
+set EUtranCellTDD=.*D_D,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=0,a1a2ThrRsrpQciOffset=2
+set EUtranCellTDD=.*D_D,EUtranFreqRelation=390$  EUtranFreqToQciProfileRelation qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=2,a5Thr2RsrpFreqQciOffset=-6,lbQciProfileHandling=1
+fi
+
+pr EutrancellFdd.*F3
+if $nr_of_mos >= 1
+set CXC4012015|CXC4011018|CXC4012017|CXC4012026 featurestate 1
+fi
+
+cr EnodeBfunction=1,PmFlexCounterFilter=1
+set EnodeBfunction=1,PmFlexCounterFilter=1 qciFilterEnabled true
+set EnodeBFunction=1,PmFlexCounterFilter=1 qciFilterMax 1
+set EnodeBFunction=1,PmFlexCounterFilter=1 qciFilterMin 0
+
+set Lm=1,FeatureState=CXC4011072 featureState 1
+set . ulTrigHoSupport 1
+set EUtranCellFDD ulTrigActive false
+set EUtranCellTDD ulTrigActive true
+set ENodeBFunction enabledUlTrigMeas true
+set . ulTrigSupport 1
+
+
+wait 2
+lt all
+
+#### Power Saving Feature ####
+
+set CXC4011958 featurestate 1
+set CXC4011808 featurestate 1
+set CXC4011803 featurestate 1
+set CXC4011983 featurestate 0
+set CXC4011378 featurestate 1
+
+
+set EUtranCellFDD=TN_E_F3.*,CellSleepFunction=1 sleepMode	0
+set EUtranCellFDD=TN_E_F8.*,CellSleepFunction=1 sleepMode	0
+
+set ENodeBFunction=1,CellSleepNodeFunction=1 csmEutranInterFMeasReportDecr	1
+set ENodeBFunction=1,CellSleepNodeFunction=1 csmEutranInterFMeasReportIncr	10
+set ENodeBFunction=1,CellSleepNodeFunction=1 csmEutranInterFMeasReportMax	100
+set ENodeBFunction=1,CellSleepNodeFunction=1 csmEutranInterFMeasReportMin	5
+set ENodeBFunction=1,CellSleepNodeFunction=1 csmMinHitRateForCovCell	50
+
+seti ENodeBFunction=1 csmCovDiscoveryCycleTime 1
+seti ENodeBFunction=1,CellSleepNodeFunction=1 CsmHitRateEutran0 10
+seti ENodeBFunction=1,CellSleepNodeFunction=1 csmHitRateEutranFilterCoeff 30
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=1615 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=390 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=39294 cellSleepCovCellMeasOn false
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=39150 cellSleepCovCellMeasOn false
+
+
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=1615 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=390 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=39294 csmUeCapMonitorEnabled false
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=39150 csmUeCapMonitorEnabled false
+
+set EUtranFreqRelation= csmUeCapMonitorTime 60
+
+set EUtranCellRelation= sleepModeCovCellCandidate 2
+
+set UeMeasControl=1  maxNoMeasReportsInact 1
+set ENodeBFunction=1 csmMinHighHitThreshold 50
+
+
+set EUtranCellFDD=TN_E_F3_.*,MimoSleepFunction=1 sleepMode	4
+set EUtranCellFDD=TN_E_F3_.*,MimoSleepFunction=1 sleepStartTime	18:30
+set EUtranCellFDD=TN_E_F3_.*,MimoSleepFunction=1 sleepEndTime	02:30
+set EUtranCellFDD=TN_E_F3_.*,MimoSleepFunction=1 sleepPowerControl	1
+set EUtranCellFDD=TN_E_F3_.*,MimoSleepFunction=1 switchDownMonitorDurTimer	5
+set EUtranCellFDD=TN_E_F3_.*,MimoSleepFunction=1 switchUpPrbThreshold	55
+set EUtranCellFDD=TN_E_F3_.*,MimoSleepFunction=1 switchDownPrbThreshold	40
+set EUtranCellFDD=TN_E_F3_.*,MimoSleepFunction=1 switchDownRrcConnThreshold	50
+set EUtranCellFDD=TN_E_F3_.*,MimoSleepFunction=1 switchUpMonitorDurTimer	15
+set EUtranCellFDD=TN_E_F3_.*,MimoSleepFunction=1 switchUpRrcConnThreshold	60
+
+####
+
+set QciTable=default,QciProfilePredefined=default resourceAllocationStrategy 1
+set CXC4011911 featurestate 1
+
+### CA Feature Activate ###
+
+lset Lm=1,FeatureState=CXC4011973 FeatureState 1
+lset Lm=1,FeatureState=CXC4011922 FeatureState 1
+lset Lm=1,FeatureState=CXC4011559 FeatureState 1
+lset Lm=1,FeatureState=CXC4011476 FeatureState 1
+
+
+### ul256qam deactivate ###
+set CXC4012344 featurestate 0
+set . ul256qamEnabled FALSE
+
+##New Addition 21 June
+set EUtranCellFDD=TN_E_F3_.* outOfCoverageSrTimerPeriodicity 320
+set EUtranCellFDD=TN_E_F3_.* outOfCoverageThreshold 20
+set EUtranCellFDD=TN_E_F3_.* outOfCoverageDepth 1
+set EUtranCellFDD=TN_E_F3_.* outOfCoverageSparseGrantingBsr 8
+set ,GeranFreqGroupRelation=1 altCsfbTargetPrio 2
+set ,UeMeasControl=1      zzzTemporary13    -2000000000
+
+
+set CXC4011373 featurestate 1
+set EUtranCellFDD=TN_E_F3_.*                      cellCapMinCellSubCap 1500
+
+set  CXC4012349   featurestate  1
+set LoadBalancingFunction=1                                 lbCycle 5
+set LoadBalancingFunction=1                                 lbSubCycle 30
+set LoadBalancingFunction=1                                 lbThreshold 5
+
+set EUtranCellFDD=TN_E_F8_.*,GeranFreqGroupRelation=1 csFallbackPrio 4
+
+### Cell Range ###
+mr cellrange_fddcells
+ma cellrange_fddcells ^eutrancellfdd
+for $mo in cellrange_fddcells
+$mordn = rdn($mo)
+get $mordn cellrange > $current_cr
+if  $current_cr ~ 15
+	set $mordn cellrange 6
+fi 
+done
+
+mr cellrange_tddcells
+ma cellrange_tddcells ^eutrancelltdd
+for $mo in cellrange_tddcells
+$mordn = rdn($mo)
+get $mordn cellrange > $current_cr
+if  $current_cr ~ 15
+set $mordn cellrange 4
+fi 
+done
+Set PmEventService=1 cellTraceFileSize 30000
+set EUtranCellFDD=TN_E_F3_.*,UeMeasControl=1,ReportConfigEUtraBestCell=1 timeToTriggerA3 480
+
+### CA Feature activate ###
+
+lset Lm=1,FeatureState=CXC4011922 FeatureState 1
+lset Lm=1,FeatureState=CXC4011559 FeatureState 1
+lset Lm=1,FeatureState=CXC4011476 FeatureState 1
+lset Lm=1,FeatureState=CXC4011666 FeatureState 1
+lset Lm=1,FeatureState=CXC4011983 FeatureState 1
+lset Lm=1,FeatureState=CXC4012123 FeatureState 1
+lset Lm=1,FeatureState=CXC4012256 FeatureState 1
+lset Lm=1,FeatureState=CXC4012259 FeatureState 1
+lset Lm=1,FeatureState=CXC4012111 FeatureState 1
+
+set EUtranCellFDD=TN_E_F3_.* sCellHandlingAtVolteCall 1
+# sys Constant 457(Default Value 2000ms) to be reduced to 1850ms:
+scw 457:1850
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportDecr 1
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportIncr  10
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportMax 100
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     asmInterFMeasReportMin 20
+set CarrierAggregationFunction=1,AutoSCellMgmFunction=1     sCellCandidateLimit 50
+set EUtranCellFDD=TN_E_F3_.*,EUtranFreqRelation=.* asmSCellDetection 0
+
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=39150 asmHitRateRemoveThreshold 5
+set EUtranCellFDD=TN_E_F3.*,EUtranFreqRelation=39294 asmHitRateRemoveThreshold 5
+set CarrierAggregationFunction=1                            dynamicSCellSelectionMethod 3
+
+##L21.Q2 Massification Parameters
+
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 caTriggeredRedirectionActive TRUE
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 caTriggeredRedirectionActive TRUE
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmSCellDetection 3
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmSCellDetection 3
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmHitRateAddThreshold 15
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmHitRateAddThreshold 15
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 asmHitRateRemoveThreshold 5
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 asmHitRateRemoveThreshold 5
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150, sCellCandidate 2
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294, sCellCandidate 2
+
+set EUtranCellTDD=.*,EUtranFreqRelation=39150, sCellCandidate 2
+set EUtranCellTDD=.*,EUtranFreqRelation=39294, sCellCandidate 2
+
+
+set  CXC4012485   featurestate  1
+set  CXC4012356   featurestate  1
+set  CXC4011913   featurestate  0
+set  CXC4011984   featurestate  0
+set  CXC4012505   featurestate  1
+set EUtranCell.*DD=.* dlMaxRetxRrcReleaseThr 8
+set EUtranCell.*DD=.* tPollRetxRrcReleaseDl 80
+
+set ENodeBFunction=1,SubscriberGroupProfile=1 fastACqiReportEnabled true
+set ENodeBFunction=1,SubscriberGroupProfile=1 profilePriority 10
+set ENodeBFunction=1,SubscriberGroupProfile=1 dlDynBlerTargetMax -1
+set DynamicBlerTarget=1                                     dlActivitySubscrDelay 1
+set ,EUtranCellRelation= reportDlActivity 1
+
+rdel ENodeBFunction=1,SubscriberGroupProfile=2
+cr ENodeBFunction=1,SubscriberGroupProfile=2
+set ENodeBFunction=1,SubscriberGroupProfile=2 bearerTriggerList qci=6
+set ENodeBFunction=1,SubscriberGroupProfile=2 profilePriority 1
+set ENodeBFunction=1,SubscriberGroupProfile=2 dlDynBlerTargetMin 10
+set ENodeBFunction=1,SubscriberGroupProfile=2 dlDynBlerTargetMax 60
+
+cr ENodeBFunction=1,SubscriberGroupProfile=3
+set ENodeBFunction=1,SubscriberGroupProfile=3 bearerTriggerList qci=7
+set ENodeBFunction=1,SubscriberGroupProfile=3 profilePriority 1
+set ENodeBFunction=1,SubscriberGroupProfile=3 dlDynBlerTargetMin 10
+set ENodeBFunction=1,SubscriberGroupProfile=3 dlDynBlerTargetMax 60
+
+cr ENodeBFunction=1,SubscriberGroupProfile=4
+set ENodeBFunction=1,SubscriberGroupProfile=4 bearerTriggerList qci=8
+set ENodeBFunction=1,SubscriberGroupProfile=4 profilePriority 1
+set ENodeBFunction=1,SubscriberGroupProfile=4 dlDynBlerTargetMin 10
+set ENodeBFunction=1,SubscriberGroupProfile=4 dlDynBlerTargetMax 60
+
+cr ENodeBFunction=1,SubscriberGroupProfile=5
+set ENodeBFunction=1,SubscriberGroupProfile=5 bearerTriggerList qci=9
+set ENodeBFunction=1,SubscriberGroupProfile=5 profilePriority 1
+set ENodeBFunction=1,SubscriberGroupProfile=5 dlDynBlerTargetMin 10
+set ENodeBFunction=1,SubscriberGroupProfile=5 dlDynBlerTargetMax 60
+
+set  CXC4012097   featurestate  1
+set  CXC4011714   featurestate  1
+
+set CarrierAggregationFunction=1     waitForAdditionalSCellOpportunity 10000
+set CarrierAggregationFunction=1     sCellSelectionMode 2
+set CarrierAggregationFunction=1     a6TriggerSCellDeconfig FALSE
+Set EUtranCellTDD=.*,EUtranFreqRelation=39150, sCellCandidate 2
+Set EUtranCellTDD=.*,EUtranFreqRelation=39294, sCellCandidate 2
+Set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150, sCellCandidate 2
+Set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294, sCellCandidate 2
+
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39150 caFreqPriority 7
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=39294 caFreqPriority 6
+set EUtranCellFDD=TN_E_F1.*,EUtranFreqRelation=390$ caFreqPriority 5
+set EUtranCellTDD=.*,EUtranFreqRelation=39150 caFreqPriority 7
+set EUtranCellTDD=.*,EUtranFreqRelation=39294 caFreqPriority 6
+set EUtranCellTDD=.*,EUtranFreqRelation=390$ caFreqPriority 5
+
+### Deactivate SRVCC in L18 Layer ###
+set EUtranCellFDD=TN_E_F3.*,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -140
+set EUtranCellFDD=TN_E_F3.*,GeranFreqGroupRelation=1 connectedModeMobilityPrio -1
+set EUtranCellFDD=TN_E_F3.*,GeranFreqGroupRelation=1 voicePrio -1
+set EUtranCellFDD=TN_E_F3.*,UeMeasControl=1 ueMeasurementsActiveGERAN False
+
+confb+
 gs+
-confbd+
-st cell
-
-### LMS WITHOUT LAYER FLIP  ####
-
-set EUtranCell.*=.*,EUtranFreqRelation=39150 cellReselectionPriority 6
-set EUtranCell.*=.*,EUtranFreqRelation=39348 cellReselectionPriority 6
-set EUtranCell.*=.*,EUtranFreqRelation=515 cellReselectionPriority 4
-set EUtranCell.*=.*,EUtranFreqRelation=3601 cellReselectionPriority 2
-set EUtranCell.*=.*,EUtranFreqRelation=1576cellReselectionPriority 3
-set EUtranCell.*=.*,GeranFreqGroupRelation=1 cellReselectionPriority 1
-
-set EUtranCell.*=.*,EUtranFreqRelation=39150 connectedModeMobilityPrio 6
-set EUtranCell.*=.*,EUtranFreqRelation=39348 connectedModeMobilityPrio 6
-set EUtranCell.*=.*,EUtranFreqRelation=515 connectedModeMobilityPrio 4
-set EUtranCell.*=.*,EUtranFreqRelation=1576 connectedModeMobilityPrio 3
-set EUtranCellFDD=.*,EUtranFreqRelation=3601 connectedModeMobilityPrio -1
-set EUtranCellTDD=.*,EUtranFreqRelation=3601 connectedModeMobilityPrio -1
-set EUtranCell.*=.*,GeranFreqGroupRelation=1 connectedModeMobilityPrio -1
-
-
-set EUtranCellFDD=RJ_E_F8.*,GeranFreqGroupRelation=1 voicePrio -1
-set EUtranCellFDD=RJ_E_F1.*,GeranFreqGroupRelation=1 voicePrio -1
-set EUtranCellFDD=RJ_E_F3.*,GeranFreqGroupRelation=1 voicePrio -1
-set EUtranCellTDD=.*,GeranFreqGroupRelation=1 voicePrio -1
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=1576 voicePrio 3
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=3601 voicePrio 6
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39150 voicePrio -1
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39348 voicePrio -1
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=515 voicePrio 4
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=1576 voicePrio 4
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=3601 voicePrio 6
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39150 voicePrio -1
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39348 voicePrio -1
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=515 voicePrio -1
-set EUtranCellTDD=RJ_E_T2.*,EUtranFreqRelation=1576 voicePrio 3
-set EUtranCellTDD=RJ_E_T2.*,EUtranFreqRelation=3601 voicePrio 4
-set EUtranCellTDD=RJ_E_T2.*,EUtranFreqRelation=39150 voicePrio -1
-set EUtranCellTDD=RJ_E_T2.*,EUtranFreqRelation=39348 voicePrio -1
-set EUtranCellTDD=RJ_E_T2.*,EUtranFreqRelation=515 voicePrio 6
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=1576 voicePrio 4
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=3601 voicePrio 6
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39150 voicePrio -1
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39348 voicePrio -1
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=515 voicePrio -1
-set EUtranCellTDD=RJ_E_T1.*,EUtranFreqRelation=1576 voicePrio 3
-set EUtranCellTDD=RJ_E_T1.*,EUtranFreqRelation=3601 voicePrio 4
-set EUtranCellTDD=RJ_E_T1.*,EUtranFreqRelation=39150 voicePrio -1
-set EUtranCellTDD=RJ_E_T1.*,EUtranFreqRelation=39348 voicePrio -1
-set EUtranCellTDD=RJ_E_T1.*,EUtranFreqRelation=515 voicePrio 6
-set EUtranCellFDD=.*,GeranFreqGroupRelation=1 voicePrio -1
-
-
-
-### common ###
-
-set EUtranCell.*=.*,EUtranFreqRelation=.* interFreqMeasType 0
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrp 20
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA1A2SearchRsrq 10
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigA5=1 hysteresisA5 20
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigA5=1 hysteresisA5RsrqOffset 0
-set EUtranCell.*=.*,EUtranFreqRelation=.* lbA5Thr1RsrpFreqOffset 97
-set EUtranCell.*=.*,EUtranFreqRelation=3601 lbA5Thr1RsrpFreqOffset 0
-set EUtranCell.*=.*,EUtranFreqRelation=.* qOffsetFreq 0
-set EUtranCellTDD=RJ_E_T1.*,EUtranFreqRelation=39348 qOffsetFreq -3
-set EUtranCellTDD=RJ_E_T2.*,EUtranFreqRelation=39150 qOffsetFreq -3
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThresholdRsrp -140
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrp 0
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 a2CriticalThresholdRsrq -195
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 hysteresisA5  10
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold2Rsrp -111
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold1Rsrp -140
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigEUtraInterFreqLb=1 a5Threshold2Rsrq  -170
-set EUtranCell.*=.*,UeMeasControl=1 bothA5RsrpRsrqCheck true
-set EUtranCell.*=.*,UeMeasControl=1,ReportConfigSearch=1 hysteresisA2CriticalRsrq 100
-
-### RSRP ###
-
-set EUtranCellFDD=RJ_E_F1.*,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrp -114
-set EUtranCellFDD=RJ_E_F3.*,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrp -110
-set EUtranCellFDD=RJ_E_F8.*,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrp -48
-set EUtranCellTDD=RJ_E_T.*,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrp -112
-
-set EUtranCellFDD=RJ_E_F1.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrp  -110
-set EUtranCellFDD=RJ_E_F3.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrp  -114
-set EUtranCellFDD=RJ_E_F8.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrp  -114
-set EUtranCellTDD=RJ_E_T.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrp  -112
-
-set EUtranCellFDD=RJ_E_F1.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrp  -114
-set EUtranCellFDD=RJ_E_F3.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrp  -114
-set EUtranCellFDD=RJ_E_F8.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrp  -114
-set EUtranCellTDD=RJ_E_T.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrp  -112
-
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=1576 a5Thr1RsrpFreqOffset 0
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=3601 a5Thr1RsrpFreqOffset 0
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39150 a5Thr1RsrpFreqOffset 0
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39348 a5Thr1RsrpFreqOffset 0
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=515 a5Thr1RsrpFreqOffset 0
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=3601 a5Thr1RsrpFreqOffset 0
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39150 a5Thr1RsrpFreqOffset 0
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39348 a5Thr1RsrpFreqOffset 0
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=1576 a5Thr1RsrpFreqOffset 66
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=515 a5Thr1RsrpFreqOffset 66
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39150 a5Thr1RsrpFreqOffset 66
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39348 a5Thr1RsrpFreqOffset 66
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=1576 a5Thr1RsrpFreqOffset 0
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=515 a5Thr1RsrpFreqOffset 0
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=3601 a5Thr1RsrpFreqOffset 0
-set EUtranCellTDD=RJ_E_T1.*,EUtranFreqRelation=39348 a5Thr1RsrpFreqOffset 0
-set EUtranCellTDD=RJ_E_T2.*,EUtranFreqRelation=39150 a5Thr1RsrpFreqOffset 0
-
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=1576 a5Thr2RsrpFreqOffset 2
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=3601 a5Thr2RsrpFreqOffset 66
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39150 a5Thr2RsrpFreqOffset 4
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39348 a5Thr2RsrpFreqOffset 4
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=515 a5Thr2RsrpFreqOffset 2
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=3601 a5Thr2RsrpFreqOffset 0
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39150 a5Thr2RsrpFreqOffset 4
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39348 a5Thr2RsrpFreqOffset 4
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=515 a5Thr2RsrpFreqOffset 2
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=1576 a5Thr2RsrpFreqOffset 0
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39150 a5Thr2RsrpFreqOffset 2
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39348 a5Thr2RsrpFreqOffset 2
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=515 a5Thr2RsrpFreqOffset 0
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=1576 a5Thr2RsrpFreqOffset -2
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=3601 a5Thr2RsrpFreqOffset 66
-set EUtranCellTDD=RJ_E_T1.*,EUtranFreqRelation=39348 a5Thr2RsrpFreqOffset 0
-set EUtranCellTDD=RJ_E_T2.*,EUtranFreqRelation=39150 a5Thr2RsrpFreqOffset 0
-
-### RSRQ ###
-
-set EUtranCellFDD=RJ_E_F1.*,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrq -170
-set EUtranCellFDD=RJ_E_F3.*,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrq -160
-set EUtranCellFDD=RJ_E_F8.*,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrq -150
-set EUtranCellTDD=RJ_E_T.*,UeMeasControl=1,ReportConfigSearch=1 a1a2SearchThresholdRsrq -160
-
-set EUtranCellFDD=RJ_E_F1.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrq  -160
-set EUtranCellFDD=RJ_E_F3.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrq  -160
-set EUtranCellFDD=RJ_E_F8.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrq  -160
-set EUtranCellTDD=RJ_E_T.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold1Rsrq  -150
-
-set EUtranCellFDD=RJ_E_F1.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrq  -180
-set EUtranCellFDD=RJ_E_F3.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrq  -180
-set EUtranCellFDD=RJ_E_F8.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrq  -180
-set EUtranCellTDD=RJ_E_T.*,UeMeasControl=1,ReportConfigA5=1 a5Threshold2Rsrq  -180
-
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=1576 a5Thr1RsrqFreqOffset 0
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=3601 a5Thr1RsrqFreqOffset 0
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39150 a5Thr1RsrqFreqOffset 0
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39348 a5Thr1RsrqFreqOffset 0
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=3601 a5Thr1RsrqFreqOffset 0
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=515 a5Thr1RsrqFreqOffset 10
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39150 a5Thr1RsrqFreqOffset 10
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39348 a5Thr1RsrqFreqOffset 10
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=1576 a5Thr1RsrqFreqOffset 20
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=515 a5Thr1RsrqFreqOffset 20
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39150 a5Thr1RsrqFreqOffset 20
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39348 a5Thr1RsrqFreqOffset 20
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=1576 a5Thr1RsrqFreqOffset 0
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=3601 a5Thr1RsrqFreqOffset -10
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=515 a5Thr1RsrqFreqOffset 0
-set EUtranCellTDD=RJ_E_T2.*,EUtranFreqRelation=39150 a5Thr1RsrqFreqOffset -10
-set EUtranCellTDD=RJ_E_T1.*,EUtranFreqRelation=39348 a5Thr1RsrqFreqOffset -10
-
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=1576 a5Thr2RsrqFreqOffset 20
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=3601 a5Thr2RsrqFreqOffset 140
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39150 a5Thr2RsrqFreqOffset 10
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39348 a5Thr2RsrqFreqOffset 10
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=515 a5Thr2RsrqFreqOffset 10
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=3601 a5Thr2RsrqFreqOffset 40
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39150 a5Thr2RsrqFreqOffset 10
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39348 a5Thr2RsrqFreqOffset 10
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=1576 a5Thr2RsrqFreqOffset 20
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=515 a5Thr2RsrqFreqOffset 20
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39150 a5Thr2RsrqFreqOffset 10
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39348 a5Thr2RsrqFreqOffset 10
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=1576 a5Thr2RsrqFreqOffset 20
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=3584 a5Thr2RsrqFreqOffset 130
-set EUtranCellTDD=RJ_E_T.*,EUtranFreqRelation=515 a5Thr2RsrqFreqOffset 20
-set EUtranCellTDD=RJ_E_T2.*,EUtranFreqRelation=39348 a5Thr2RsrqFreqOffset 10
-set EUtranCellTDD=RJ_E_T1.*,EUtranFreqRelation=39348 a5Thr2RsrqFreqOffset 10
-
-############ IFLB ############
-
-set CXC4011373 FeatureState 1
-set CXC4011370 FeatureState 1
-set EUtranCellTDD=.* cellSubscriptionCapacity 20000
-set EUtranCellFDD=RJ_E_F3.* cellCapMinCellSubCap 2000
-set EUtranCellFDD=RJ_E_F8.* cellCapMinCellSubCap 2000
-set EUtranCellFDD=RJ_E_F1.* cellCapMinCellSubCap 2000
-set EUtranCellTDD=RJ_E_T.* cellCapMinCellSubCap 500
-set EUtranCell.*=.* cellCapMaxCellSubCap 60000
-set EUtranCell.*=.* cellCapMinMaxWriProt true
-set EUtranCell.*=.*,EUtranFreqRelation=.*,EUtranCellRelation=40470-.*-.* loadBalancing     1
-set EUtranCell.*=.*,EUtranFreqRelation=3601,EUtranCellRelation=40470-.*-.* loadBalancing     0
-
-set EUtranCell.*=.*,GeranFreqGroupRelation=1 connectedModeMobilityPrio -1
-
-set EUtranCellTDD=.*,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=-130,a1a2ThrRsrpQciOffset=50
-set EUtranCellTDD=.*,EUtranFreqRelation=1576 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=54,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=-50,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellTDD=.*,EUtranFreqRelation=3601 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=64,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=-50,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellTDD=.*,EUtranFreqRelation=515 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=54,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=-50,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellTDD=.*,EUtranFreqRelation=39150 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=240,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellTDD=.*,EUtranFreqRelation=39348 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=240,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-
-set EUtranCellFDD=RJ_E_F1.*,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=-130,a1a2ThrRsrpQciOffset=10
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=1576 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=10,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=-50,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=3601 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=10,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=-50,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=515 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=0,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39150 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=240,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F1.*,EUtranFreqRelation=39348 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=240,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-
-set EUtranCellFDD=RJ_E_F3.*,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=-130,a1a2ThrRsrpQciOffset=20
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=1576 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=0,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=3601 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=20,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=-50,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=515 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=-50,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39150 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=240,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F3.*,EUtranFreqRelation=39348 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=240,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-
-set EUtranCellFDD=RJ_E_F8.*,UeMeasControl=1,ReportConfigSearch=1 qciA1A2ThrOffsets qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a1a2ThrRsrqQciOffset=-130,a1a2ThrRsrpQciOffset=64
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=1576 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=-66,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=-130,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=3601 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=0,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=515 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=240,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39150 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=240,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set EUtranCellFDD=RJ_E_F8.*,EUtranFreqRelation=39348 EUtranFreqToQciProfileRelation lbQciProfileHandling=1,qciProfileRef=ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci1,a5Thr1RsrpFreqQciOffset=0,a5Thr1RsrqFreqQciOffset=0,a5Thr2RsrpFreqQciOffset=3,a5Thr2RsrqFreqQciOffset=240,atoThresh1QciProfileHandling=0,atoThresh2QciProfileHandling=0,lbA5Threshold2RsrpOffset=0,lbA5Threshold2RsrqOffset=0,timeToTriggerA3=-1,timeToTriggerA3Rsrq=-1
-set SctpProfile=1 pathMaxRtx 4
-set SctpProfile=Node_Internal_F1 pathMaxRtx 4
-set SctpProfile=1 assocMaxRtx 8
-set SctpProfile=Node_Internal_F1 assocMaxRtx 8
-set SctpProfile=1 initRto 2000
-set SctpProfile=Node_Internal_F1 initRto 2000
-set SctpProfile=1 maxRto 4000
-set SctpProfile=Node_Internal_F1 maxRto 4000
-set SctpProfile=1 minRto 1000
-set SctpProfile=Node_Internal_F1 minRto 1000
-
-
-###################################
-
-
-set EUtranCell.*=.*,EUtranFreqRelation=39150 connectedModeMobilityPrio 6
-set EUtranCell.*=.*,EUtranFreqRelation=39348 connectedModeMobilityPrio 6
-set EUtranCell.*=.*,EUtranFreqRelation=39151 connectedModeMobilityPrio 6
-set EUtranCell.*=.*,EUtranFreqRelation=39349 connectedModeMobilityPrio 6
-set EUtranCell.*=.*,EUtranFreqRelation=515 connectedModeMobilityPrio 4
-set EUtranCell.*=.*,EUtranFreqRelation=1576 connectedModeMobilityPrio 3
-set EUtranCell.*=.*,EUtranFreqRelation=3601 connectedModeMobilityPrio 2
-set EUtranCell.*=.*,EUtranFreqRelation=39150 cellreselectionPriority 6
-set EUtranCell.*=.*,EUtranFreqRelation=39348 cellreselectionPriority 6
-set EUtranCell.*=.*,EUtranFreqRelation=39151 cellreselectionPriority 6
-set EUtranCell.*=.*,EUtranFreqRelation=39349 cellreselectionPriority 6
-set EUtranCell.*=.*,EUtranFreqRelation=515 cellreselectionPriority 4
-set EUtranCell.*=.*,EUtranFreqRelation=1576 cellreselectionPriority 3
-set EUtranCell.*=.*,EUtranFreqRelation=3601 cellreselectionPriority 2
-set EUtranCell.*=.*,EUtranFreqRelation=39348 voicePrio -1
-set EUtranCell.*=.*,EUtranFreqRelation=39349 voicePrio -1
-set EUtranCell.*=.*,EUtranFreqRelation=39150 voicePrio -1
-set EUtranCell.*=.*,EUtranFreqRelation=39151 voicePrio -1
-
-cvms pre_dotparameter
-
-set Lm=1,FeatureState=CXC4011060$ featureState 1
-set Lm=1,FeatureState=CXC4011062$ featureState 0
-set ENodeBFunction=1,AdmissionControl=1$ dlAdmDifferentiationThr 950
-set ENodeBFunction=1,AdmissionControl=0$ ulAdmDifferentiationThr 950
-set ENodeBFunction=1,AdmissionControl=1                     paArpOverride     2
-set ENodeBFunction=1,AdmissionControl=1                     paArpOverrideHpa  2
-
-
-cvms post_dotparameter
-
-
-set CXC4011958 featureState 1
-set CXC4011808 featureState 1
-set CXC4011803 featureState 1
-set CXC4011983 featureState 0
-set CXC4011378 featureState 1
-
-set CXC4012017 featureState 1
-set CXC4012015 featureState 1
-set CXC4012026 featureState 1
-set CXC4011018 featureState 1
+set ENodeBFunction=1 s1GtpuEchoEnable  1
+set ENodeBFunction=1 x2GtpuEchoEnable 0
+lt all
 
 
 confb+
-set SectorCarrier=1  configuredMaxTxPower 80000
-set SectorCarrier=2  configuredMaxTxPower 80000
-set SectorCarrier=3  configuredMaxTxPower 80000
-set SectorCarrier=21  configuredMaxTxPower 40000
-set SectorCarrier=22  configuredMaxTxPower 40000
-set SectorCarrier=23  configuredMaxTxPower 40000
-set SectorCarrier=31  configuredMaxTxPower 80000
-set SectorCarrier=32  configuredMaxTxPower 80000
-set SectorCarrier=33  configuredMaxTxPower 80000
-set SectorCarrier=11  configuredMaxTxPower 80000
-set SectorCarrier=12  configuredMaxTxPower 80000
-set SectorCarrier=13  configuredMaxTxPower 80000
+gs+
 
-set . vswrSupervisionSensitivity 100
-set . vswrSupervisionActive true
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=1615 voicePrio         5                                                                                                                 
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=3710 voicePrio         6                                                                                                                 
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=390 voicePrio         4                                                                                                                  
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39150 voicePrio         -1                                                                                                               
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39151 voicePrio         -1                                                                                                               
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39294 voicePrio         -1                                                                                                               
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39295 voicePrio         -1                                                                                                               
+set EUtranCellFDD=TN_E_.*,GeranFreqGroupRelation=1 voicePrio         -1   
 
-$date = `date +%y%m%d_%H%M`
-cvms Baseline_Updated_$date
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=1615 voicePrio         5                                                                                                                 
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3710 voicePrio         6                                                                                                                 
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=390 voicePrio         4                                                                                                                  
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39150 voicePrio         1                                                                                                                
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39151 voicePrio         -1                                                                                                               
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39294 voicePrio         -1                                                                                                               
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39295 voicePrio         -1                                                                                                               
+set EUtranCellTDD=TN_E_.*,GeranFreqGroupRelation=1 voicePrio         -1 
 
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=1615 cellReselectionPriority 4                                                                                                           
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=3710 cellReselectionPriority 2                                                                                                           
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=390 cellReselectionPriority 3                                                                                                            
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39150 cellReselectionPriority 6                                                                                                          
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39151 cellReselectionPriority 7                                                                                                          
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39294 cellReselectionPriority 5                                                                                                          
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39295 cellReselectionPriority 7                                                                                                          
+set EUtranCellFDD=TN_E_.*,GeranFreqGroupRelation=1 cellReselectionPriority 1                                                                                                          
+set EUtranCellFDD=TN_E_.*,GUtranFreqRelation=629952 cellReselectionPriority 0                                                                                                         
+set EUtranCellFDD=TN_E_.*,GUtranFreqRelation=629952 cellReselectionSubPriority 0 
+
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3710 cellReselectionPriority 2                                                                                                           
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=390 cellReselectionPriority 3                                                                                                            
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39150 cellReselectionPriority 6                                                                                                          
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39151 cellReselectionPriority 7                                                                                                          
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39294 cellReselectionPriority 5                                                                                                          
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39295 cellReselectionPriority 7                                                                                                          
+set EUtranCellTDD=TN_E_.*,GeranFreqGroupRelation=1 cellReselectionPriority 1                                                                                                          
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 cellReselectionPriority 0                                                                                                         
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 cellReselectionSubPriority 0            
+
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=1615 endcAwareIdleModePriority 2                                                                                                         
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=3710 endcAwareIdleModePriority 3                                                                                                         
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=390 endcAwareIdleModePriority 6                                                                                                          
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39150 endcAwareIdleModePriority 5                                                                                                        
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39151 endcAwareIdleModePriority 7                                                                                                        
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39294 endcAwareIdleModePriority 4                                                                                                        
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39295 endcAwareIdleModePriority 7   
+
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=1615 endcAwareIdleModePriority 2                                                                                                         
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3710 endcAwareIdleModePriority 3                                                                                                         
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=390 endcAwareIdleModePriority 6                                                                                                          
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39150 endcAwareIdleModePriority 5                                                                                                        
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39151 endcAwareIdleModePriority 7                                                                                                        
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39294 endcAwareIdleModePriority 4                                                                                                        
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39295 endcAwareIdleModePriority 7  
+
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=1615 endcHoFreqPriority 6                                                                                                                
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=3710 endcHoFreqPriority 5                                                                                                                
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=390 endcHoFreqPriority 7                                                                                                                 
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39150 endcHoFreqPriority -1                                                                                                              
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39151 endcHoFreqPriority -1                                                                                                              
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39294 endcHoFreqPriority -1                                                                                                              
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39295 endcHoFreqPriority -1  
+
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=1615 endcHoFreqPriority 6                                                                                                                
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3710 endcHoFreqPriority 5                                                                                                                
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=390 endcHoFreqPriority 7                                                                                                                 
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39150 endcHoFreqPriority -1                                                                                                              
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39151 endcHoFreqPriority -1                                                                                                              
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39294 endcHoFreqPriority -1                                                                                                              
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39295 endcHoFreqPriority -1   
+
+set EUtranCellFDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellFDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellFDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5 
+
+set EUtranCellFDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellFDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellFDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                                                
+
+wait 2                                                                                                                                                                                                                 
+rdel EUtranFrequency=3696                                                                                                                                                                                              
+wait 2                                                                                                                                                                                                                 
+rdel EUtranFreqRelation=3696  
+cvms post_common_GPL+LMS_APX 
 confbd-
-gs-
+
 
 """
 
@@ -4546,6 +7306,10 @@ rbs
 
 confb+
 
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionGeran=1       anrStateGsm       1                                                                       
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1          anrStateNR        1 
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionUtran=1       anrStateUtran     0
+
 crn NodeSupport=1,ServiceDiscovery=1
 localAddress Transport=1,Router=LTE_NR,InterfaceIPv6=NR,AddressIPv6=NR_S1U_OAM
 nodeCredential
@@ -5186,7 +7950,7 @@ rbs
 rbs                                                                                                                                                                                                                    
 confbd+                                                                                                                                                                                                                
 $date = `date +%y%m%d_%H%M`                                                                                                                                                                                            
-cvms Pre_GPL_NR_R_PA_19_$date                                                                                                                                                                                          
+ $Pre_GPL_NR_R_PA_19_$date                                                                                                                                                                                          
                                                                                                                                                                                                                        
 lbl NRCellDU=.*                                                                                                                                                                                                        
 lbl NRSectorCarrier=                                                                                                                                                                                                   
@@ -5378,11 +8142,11 @@ get NRCellCU=.*_B nRCellCUId$ > $nrcellcu_B
 get NRCellCU=.*_C nRCellCUId$ > $nrcellcu_C                                                                                                                                                                            
                                                                                                                                                                                                                        
 cr GNBCUCPFunction=1,NRCellCU=$nrcellcu_A,NRFreqRelation=629952                                                                                                                                                        
-NRNetwork=1,NRFrequency=629952-30-20-0-1                                                                                                                                                                               
+NRNetwork=1,NRFrequency=629952-30                                                                                                                                                                               
 cr GNBCUCPFunction=1,NRCellCU=$nrcellcu_B,NRFreqRelation=629952                                                                                                                                                        
-NRNetwork=1,NRFrequency=629952-30-20-0-1                                                                                                                                                                               
+NRNetwork=1,NRFrequency=629952-30                                                                                                                                                                               
 cr GNBCUCPFunction=1,NRCellCU=$nrcellcu_C,NRFreqRelation=629952                                                                                                                                                        
-NRNetwork=1,NRFrequency=629952-30-20-0-1                                                                                                                                                                               
+NRNetwork=1,NRFrequency=629952-30                                                                                                                                                                               
                                                                                                                                                                                                                        
 set GNBCUCPFunction=1,NRCellCU=.*,NRFreqRelation=629952 cellReselectionPriority 7                                                                                                                                      
 set GNBCUCPFunction=1,NRCellCU=.*,NRFreqRelation=629952 anrMeasOn true                                                                                                                                                 
@@ -5405,7 +8169,7 @@ set GNBCUUPFunction=1          dcDlPdcpInitialScgRate 100
 set NRCellDU=.* tddSpecialSlotPattern 3                                                                                                                                                                                
 set NRCellDU=.* tddUlDlPattern 1                                                                                                                                                                                       
 set NRCellDU=.* rachPreambleFormat 0                                                                                                                                                                                   
-set NRCellDU=.* cellRange 5000                                                                                                                                                                                         
+set NRCellDU=.* cellRange 15000                                                                                                                                                                                         
 set NRCellDU=.* csiRsShiftingPrimary 1                                                                                                                                                                                 
 set NRCellDU=.* csiRsShiftingSecondary 1                                                                                                                                                                               
 set NRCellDU=.* dl256QamEnabled true                                                                                                                                                                                   
@@ -5650,7 +8414,33 @@ set Transport=1,QosProfiles=1,DscpPcpMap=1 pcp7 20,46
                                                                                                                                                                                                                        
 set GNBDUFunction=1,UeCC=1,DrxProfile=Default,DrxProfileUeCfg=Base drxEnabled true                                                                                                                                     
                                                                                                                                                                                                                        
-### GTP-U Supervision                                                                                                                                                                                                  
+### GTP-U Supervision  
+confb+
+gs+
+
+cr GNBCUUPFunction=1,GtpuSupervision=1
+
+gs+
+
+crn GNBCUUPFunction=1,GtpuSupervision=1,GtpuSupervisionProfile=X2
+endpointResourceRef
+gtpuEchoDscp 32
+gtpuEchoEnabled true
+interfaceList 7
+userLabel
+end
+
+crn GNBCUUPFunction=1,GtpuSupervision=1,GtpuSupervisionProfile=S1
+endpointResourceRef
+gtpuEchoDscp 32
+gtpuEchoEnabled true
+interfaceList 5
+userLabel
+end
+
+set ENodeBFunction=1 s1GtpuEchoEnable  1
+set ENodeBFunction=1 x2GtpuEchoEnable 0
+gs-                                                                                                                                                                                                
                                                                                                                                                                                                                        
 set GtpuSupervision=1,GtpuSupervisionProfile=S1 gtpuEchoEnabled true                                                                                                                                                   
 y                                                                                                                                                                                                                      
@@ -5807,7 +8597,39 @@ set MMimoSleepProfile=1 switchUpRrcConnThresh 20
 set MMimoSleepTimeWindow dayOfWeek ALL                                                                                                                                                                                 
 set MMimoSleepTimeWindow stopTime 23:30                                                                                                                                                                                
 set MMimoSleepTimeWindow startTime 20:30                                                                                                                                                                               
-set Fm=1,FmAlarmModel=1,FmAlarmtype=RadioInterfaceConnectivityDisturbanceAlert isNotified 0                                                                                                                            
+set Fm=1,FmAlarmModel=1,FmAlarmtype=RadioInterfaceConnectivityDisturbanceAlert isNotified 0 
+
+## BOCS SCRIPT
+set NRCellCU.*,DESManagementFunction=1 desSwitch False
+set NRCellCU=.*,DESManagementFunction=1 esNotAllowedTimePeriod starttime=00:29,endtime=18:31
+set NRCellCU=.*,DESManagementFunction=1 intraRatEsActivationOriginalCellLoadParameters threshold=15,timeDuration=900
+set NRCellCU.*,DESManagementFunction=1 requiredWakeUpTime 360
+set NRCellCU.*,DESManagementFunction=1 periodicEsDuration 0
+set NRCellCU.*,DESManagementFunction=1 desSwitch True
+
+## M MIMO MUTE SCRIPT
+confbd+
+bl NR
+set SystemFunctions=1,Lm=1,FeatureState=CXC4012378 featureState 1
+cr GNBDUFunction=1,MassiveMimoSleep=1
+cr GNBDUFunction=1,MassiveMimoSleep=1,MMimoSleepTimeGroup=1,MMimoSleepTimeWindow=2
+MassiveMimoSleep=1,MMimoSleepProfile=1
+set MassiveMimoSleep=1,MMimoSleepTimeGroup=1,MMimoSleepTimeWindow=1 startTime         17:30
+set MassiveMimoSleep=1,MMimoSleepTimeGroup=1,MMimoSleepTimeWindow=1 stopTime         23:59
+set MassiveMimoSleep=1,MMimoSleepTimeGroup=1,MMimoSleepTimeWindow=2 startTime         00:10
+set MassiveMimoSleep=1,MMimoSleepTimeGroup=1,MMimoSleepTimeWindow=2 stopTime         13:29
+set . mMimoSleepTimeGroupRef MassiveMimoSleep=1,MMimoSleepTimeGroup=1
+set MassiveMimoSleep=1,MMimoSleepTimeGroup=1,MMimoSleepTimeWindow=2 mMimoSleepProfileRef MassiveMimoSleep=1,MMimoSleepProfile=1
+set . massiveMimoSleepEnabled 1
+set MassiveMimoSleep=1,MMimoSleepProfile=.* sleepMode  0
+set MassiveMimoSleep=1,MMimoSleepProfile=.* switchDownMonitorDurTimer 60
+set MassiveMimoSleep=1,MMimoSleepProfile=.* switchUpPrbThreshDl 40
+set MassiveMimoSleep=1,MMimoSleepProfile=.* switchDownPrbThreshDl 30
+set MassiveMimoSleep=1,MMimoSleepProfile=.*  switchUpRrcConnThresh 50
+set MassiveMimoSleep=1,MMimoSleepProfile=.*  switchDownRrcConnThresh 30
+set MassiveMimoSleep=1,MMimoSleepProfile=.*  switchUpMonitorDurTimer 30
+set MassiveMimoSleep=1,MMimoSleepProfile=.*  switchUpPrbThreshDl 40
+set MassiveMimoSleep=1,MMimoSleepTimeGroup=1,MMimoSleepTimeWindow=.* dayOfWeek 0                                                                                                                           
                                                                                                                                                                                                                        
 set Lm=1,FeatureState=CXC4012563$ FeatureState 1                                                                                                                                                                       
 set Lm=1,FeatureState=CXC4012199$ FeatureState 1                                                                                                                                                                       
@@ -5869,7 +8691,7 @@ ldeb  NRCellDU=.*
                                                                                                                                                                                                                        
                                                                                                                                                                                                                        
 $date = `date +%y%m%d_%H%M`                                                                                                                                                                                            
-cvms Post_GPL_NR_R_PA_19_$date                                                                                                                                                                                         
+$ Post_GPL_NR_R_PA_19_$date                                                                                                                                                                                         
                                                                                                                                                                                                                        
 ////////5G NSA LMS//////////////
 
@@ -5922,7 +8744,7 @@ confb-
 
 lt all
 Confb+
-cvms Pre_Qos_Map
+$Pre_Qos_Map
 
 set QciTable=default,QciProfilePredefined=qci6$              dscp              32
 set QciTable=default,QciProfilePredefined=qci7$              dscp              40
@@ -5959,9 +8781,114 @@ set ENodeBFunction=1              interEnbUlCompTunnelDscp 26
 set ENodeBFunction=1              x2GtpuEchoDscp 46
 set SctpProfile=1  dscp 46
 
-cvms Post_Qos_Map
+confb+
+gs+
+set ENodeBFunction=1 s1GtpuEchoEnable  1
+set ENodeBFunction=1 x2GtpuEchoEnable 0
 
-Confb-
+
+
+confb+
+gs+
+
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=1615 voicePrio         5                                                                                                                 
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=3710 voicePrio         6                                                                                                                 
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=390 voicePrio         4                                                                                                                  
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39150 voicePrio         -1                                                                                                               
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39151 voicePrio         -1                                                                                                               
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39294 voicePrio         -1                                                                                                               
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39295 voicePrio         -1                                                                                                               
+set EUtranCellFDD=TN_E_.*,GeranFreqGroupRelation=1 voicePrio         -1   
+
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=1615 voicePrio         5                                                                                                                 
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3710 voicePrio         6                                                                                                                 
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=390 voicePrio         4                                                                                                                  
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39150 voicePrio         1                                                                                                                
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39151 voicePrio         -1                                                                                                               
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39294 voicePrio         -1                                                                                                               
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39295 voicePrio         -1                                                                                                               
+set EUtranCellTDD=TN_E_.*,GeranFreqGroupRelation=1 voicePrio         -1 
+
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=1615 cellReselectionPriority 4                                                                                                           
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=3710 cellReselectionPriority 2                                                                                                           
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=390 cellReselectionPriority 3                                                                                                            
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39150 cellReselectionPriority 6                                                                                                          
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39151 cellReselectionPriority 7                                                                                                          
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39294 cellReselectionPriority 5                                                                                                          
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39295 cellReselectionPriority 7                                                                                                          
+set EUtranCellFDD=TN_E_.*,GeranFreqGroupRelation=1 cellReselectionPriority 1                                                                                                          
+set EUtranCellFDD=TN_E_.*,GUtranFreqRelation=629952 cellReselectionPriority 0                                                                                                         
+set EUtranCellFDD=TN_E_.*,GUtranFreqRelation=629952 cellReselectionSubPriority 0 
+
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3710 cellReselectionPriority 2                                                                                                           
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=390 cellReselectionPriority 3                                                                                                            
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39150 cellReselectionPriority 6                                                                                                          
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39151 cellReselectionPriority 7                                                                                                          
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39294 cellReselectionPriority 5                                                                                                          
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39295 cellReselectionPriority 7                                                                                                          
+set EUtranCellTDD=TN_E_.*,GeranFreqGroupRelation=1 cellReselectionPriority 1                                                                                                          
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 cellReselectionPriority 0                                                                                                         
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 cellReselectionSubPriority 0            
+
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=1615 endcAwareIdleModePriority 2                                                                                                         
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=3710 endcAwareIdleModePriority 3                                                                                                         
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=390 endcAwareIdleModePriority 6                                                                                                          
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39150 endcAwareIdleModePriority 5                                                                                                        
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39151 endcAwareIdleModePriority 7                                                                                                        
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39294 endcAwareIdleModePriority 4                                                                                                        
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39295 endcAwareIdleModePriority 7   
+
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=1615 endcAwareIdleModePriority 2                                                                                                         
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3710 endcAwareIdleModePriority 3                                                                                                         
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=390 endcAwareIdleModePriority 6                                                                                                          
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39150 endcAwareIdleModePriority 5                                                                                                        
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39151 endcAwareIdleModePriority 7                                                                                                        
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39294 endcAwareIdleModePriority 4                                                                                                        
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39295 endcAwareIdleModePriority 7  
+
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=1615 endcHoFreqPriority 6                                                                                                                
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=3710 endcHoFreqPriority 5                                                                                                                
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=390 endcHoFreqPriority 7                                                                                                                 
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39150 endcHoFreqPriority -1                                                                                                              
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39151 endcHoFreqPriority -1                                                                                                              
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39294 endcHoFreqPriority -1                                                                                                              
+set EUtranCellFDD=TN_E_.*,EUtranFreqRelation=39295 endcHoFreqPriority -1  
+
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=1615 endcHoFreqPriority 6                                                                                                                
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=3710 endcHoFreqPriority 5                                                                                                                
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=390 endcHoFreqPriority 7                                                                                                                 
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39150 endcHoFreqPriority -1                                                                                                              
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39151 endcHoFreqPriority -1                                                                                                              
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39294 endcHoFreqPriority -1                                                                                                              
+set EUtranCellTDD=TN_E_.*,EUtranFreqRelation=39295 endcHoFreqPriority -1   
+
+set EUtranCellFDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellFDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellFDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5                                                                                                                 
+set EUtranCellTDD=TN_E_.*                      endcSetupDlPktVolThr 5 
+
+set EUtranCellFDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellFDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellFDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7                                                                                                              
+set EUtranCellTDD=TN_E_.*,GUtranFreqRelation=629952 endcB1MeasPriority 7 
+                                                                                                                               
+wait 2                                                                                                                                                                                                                 
+rdel EUtranFrequency=3696                                                                                                                                                                                              
+wait 2                                                                                                                                                                                                                 
+rdel EUtranFreqRelation=3696
+cvms Post_5G_GPL
+gs-  
+Confb- 
 
                                                                                                                                                                            
 """

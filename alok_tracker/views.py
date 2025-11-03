@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from alok_tracker.models import *  # noqa: F403
@@ -382,13 +383,15 @@ def download_tracker_data_view(request):
 ############################################################# DASHBOARD ##########################################################################
 
 @api_view(['GET', 'POST'])
-def daily_dashboard_file(request):
+def daily_dashboard_view(request):
     circle = request.data.get('circle')
     site_tagging = request.data.get('site_tagging')
     relocation_method = request.data.get('relocation_method')
     new_toco_name = request.data.get('new_toco_name')
     start_date = request.data.get('from_date')
     end_date = request.data.get('to_date')
+    
+    print(start_date, " ", end_date)
    
     all_unique_circles = list(
         AlokTrackerModel.objects.exclude(circle__isnull=True)
@@ -430,7 +433,7 @@ def daily_dashboard_file(request):
     
     start_date = dtime.strptime(start_date, "%Y-%m-%d").date() if start_date else None
     end_date = dtime.strptime(end_date, "%Y-%m-%d").date() if end_date else None
- 
+
     try:
         ############################################################## 🔹 Dynamic filters #########################################################
         filters = {}
@@ -442,22 +445,22 @@ def daily_dashboard_file(request):
             filters['relocation_method'] = relocation_method
         if new_toco_name != 'ALL':
             filters['new_toco_name'] = new_toco_name
- 
+
         ############################################################## 🔹 Fetch data ###############################################################
         obj = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
         df = pd.DataFrame(obj.values())
- 
+
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
- 
+
         ############################################################### 🔹 Convert all date columns to datetime ####################################
         for col in df.columns:
             if "Date" in col:
                 df[col] = pd.to_datetime(df[col], format="%d-%b-%y", errors="coerce")
- 
+
         ################################################################### 🔹 Determine start_date and end_date for 26 → 25 cycle #####################
         today = dtime.today().date()
- 
+
         if not start_date or not end_date:
             if today.day >= 26:
                 start_date = today.replace(day=25)
@@ -471,19 +474,19 @@ def daily_dashboard_file(request):
                 else:
                     start_date = today.replace(month=today.month - 1, day=25)
                 end_date = today.replace(day=25)
- 
+
         ############################################################## 🔹 Generate date range and formatted column headers ###########################
         
-        date_range = pd.date_range(start=start_date, end=min(end_date, today)).date
- 
+        date_range = pd.date_range(start=start_date, end=min(end_date, today - timedelta(days=1))).date
+
         formatted_dates = [d.strftime("%d-%b-%y") for d in date_range]
         result_columns = ["Milestone Track/Site Count", "CF"] + formatted_dates
         result = pd.DataFrame(columns=result_columns)
- 
+
         ###################################################### 🔹 Milestone list #############################################################
         milestones = [
-            "RFAI Date",
             "Allocation Date",
+            "RFAI Date",
             "RFAI Survey Date",
             "RFAI Survey Done Date",
             "MO Punch Date",
@@ -504,6 +507,8 @@ def daily_dashboard_file(request):
             "Site ONAIR Date",
             "I-Deploy ONAIR Date",
         ]
+        
+        unique_data.update(**{"Milestone": milestones})
  
         # #####################################################🔹 Loop through milestones and count per date ######################################
  
@@ -518,15 +523,12 @@ def daily_dashboard_file(request):
             )
  
             if milestone_df_format not in df.columns:
-                continue  # skip if milestone column not in df
+                continue
  
-            # 🧹 Clean conversion to datetime (ignore time)
             df[milestone_df_format] = pd.to_datetime(df[milestone_df_format], errors="coerce").dt.date
  
-            # Valid dates only
             valid_dates = df[milestone_df_format].dropna()
- 
-            # Skip empty milestones gracefully
+
             if valid_dates.empty:
                 row = {"Milestone Track/Site Count": milestone, "CF": "-", **{d.strftime("%d-%b-%y"): "-" for d in date_range}}
                 result.loc[len(result)] = row
@@ -537,9 +539,9 @@ def daily_dashboard_file(request):
             cumulative = cf_count
             row = {"Milestone Track/Site Count": milestone, "CF": cf_count}
             for date in date_range:
-                if(date >= today):
-                    row[date.strftime("%d-%b-%y")] = 0
-                    continue
+                # if(date >= today):
+                #     row[date.strftime("%d-%b-%y")] = 0
+                #     continue
                 count = (valid_dates == date).sum()
                 cumulative += count
                 row[date.strftime("%d-%b-%y")] = cumulative
@@ -547,34 +549,56 @@ def daily_dashboard_file(request):
             result.loc[len(result)] = row
  
         ######################################################## 🔹 Convert and format ##############################################
-        result = result.astype(str).reset_index(drop=True)
+        # result = result.astype(str).reset_index(drop=True)
  
         result.columns = [
             col.strftime("%d-%b-%y") if isinstance(col, (dtime,)) or hasattr(col, "strftime") else col
             for col in result.columns
         ]
  
-        print(result.columns)
- 
+        # print(result.columns)
+        # for date in formatted_dates:
+        #     result[date] = result[date].astype(int)
         ############################################# 🔹 Arrange columns #####################################
         result = result[["Milestone Track/Site Count", "CF"] + formatted_dates]
         
         last_col = formatted_dates[-1]
-        result[last_col] = pd.to_numeric(result[last_col], errors='coerce')
-
-        # ✅ Compute difference with next row (current - next)
-        result['Gap'] = result[last_col].diff(-1)
-
-        # ✅ Optional: convert to int and replace NaN with blank
-        result['Gap'] = result['Gap'].fillna('-').astype(str)
+        dash_mask = result[last_col] == '-'
         
-        result['Milestone Track/Site Count'] = result['Milestone Track/Site Count'].apply(lambda col: col.replace(" Date", "") if " Date" in col else col)
+        # 2️⃣ Convert to numeric where possible
+        result[last_col] = pd.to_numeric(result[last_col], errors='coerce')
+        
+        # 3️⃣ Compute difference (previous - current)
+        result['Gap'] = -result[last_col].diff()
+        
+        nan_mask = result['Gap'].isna()
+        
+        result[last_col] = result[last_col].fillna(0).astype(int)
+        result['Gap'] = result['Gap'].fillna(0).astype(int)
+        
+        result.loc[dash_mask, last_col] = '-'
+        result.loc[nan_mask, 'Gap'] = '-'
+        
+        result['Gap'] = result['Gap'].astype(str)
+ 
+        
+        result = result.astype(str).reset_index(drop=True)
+        
+        # result['Milestone Track/Site Count'] = result['Milestone Track/Site Count'].apply(lambda col: col.replace(" Date", "") if " Date" in col else col)
+        
+        print(result.columns)
         
         ############################################################################################################################
         new_result = result.copy()
         
         for i, date in enumerate(formatted_dates, start=1):
             new_result.rename(columns={date : f'date_{i}'}, inplace=True)
+            # new_result[f"date_{i}"] = new_result[f"date_{i}"].astype(str)
+        
+        print(new_result)
+        
+        print(new_result.dtypes)
+        
         
         result_json = new_result.to_dict(orient="records")
         json_data = json.dumps(result_json)
@@ -814,18 +838,16 @@ def weekly_monthly_dashboard_view(request):
  
             data.append(row)
  
-        # 🧮 6. Build final DataFrame
+
         result = pd.DataFrame(data)
  
-        # 🧹 7. Fill NaNs with 0 and convert numeric columns to int
         for col in result.columns:
             if col != "Milestone Track/Site Count":
                 result[col] = result[col].astype(str)
  
-        # ✅ Final tidy DataFrame
         result = result.reset_index(drop=True)
         print(2)
-        result['Milestone Track/Site Count'] = result['Milestone Track/Site Count'].apply(lambda col: col.replace(" Date", "") if " Date" in col else col)
+        # result['Milestone Track/Site Count'] = result['Milestone Track/Site Count'].apply(lambda col: col.replace(" Date", "") if " Date" in col else col)
  
         new_data = result.copy()
         months_columns = [col for col in new_data.columns.to_list()[2:] if " W" not in col]
@@ -887,7 +909,8 @@ def gap_view(request):
     relocation_method = relocation_method or 'ALL'
     new_toco_name = new_toco_name or 'ALL'
     last_date = dtime.strptime(last_date, "%Y-%m-%d").date() if last_date else None
-    
+    milestone1 = milestone1.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
+    milestone2 = milestone2.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
     try:
         
         today = dtime.today().date()
@@ -923,10 +946,15 @@ def gap_view(request):
         obj2 = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
         df2 = pd.DataFrame(obj2.values())
         
-        df1['key'] = df1['circle'].astype(str) + "_" + df1['site'].astype(str)
-        df2['key'] = df2['circle'].astype(str) + "_" + df2['site'].astype(str)
+        df1['key'] = df1['circle'].astype(str) + "_" + df1['new_site_id'].astype(str)
+        df2['key'] = df2['circle'].astype(str) + "_" + df2['new_site_id'].astype(str)
 
-        df = df1[~df1['key'].isin(df2['key'])].drop(columns=['key'])
+        # df = df1[~df1['key'].isin(df2['key'])].drop(columns=['key'])
+        if len(df1) > len(df2):  
+            df = df1[~df1['key'].isin(df2['key'])].drop(columns=['key'])
+        else:
+            df = df2[~df2['key'].isin(df1['key'])].drop(columns=['key'])
+ 
         
         for col in df.columns:
             if col != 'last_updated_date':
@@ -972,6 +1000,10 @@ def gap_view(request):
             os.path.join(settings.MEDIA_URL, relative_path).replace('\\', '/')
         )
         
-        return Response({'message': 'request processed successfully !!!', "download_link": download_url}, status=200)
+        json_dict_data = df.to_dict(orient="records")
+        json_val = json.dumps(json_dict_data)
+        
+        
+        return Response({'message': 'request processed successfully !!!', "data": json_val,"download_link": download_url}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)

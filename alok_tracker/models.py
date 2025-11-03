@@ -56,7 +56,7 @@ class AlokTrackerModel(models.Model):
     last_updated_by = models.CharField(max_length=255,null=True, blank=True)
 
     class Meta:
-        db_table = "alok_model"
+        db_table = "relocation_site_project_tracker"
         unique_together = ('circle', 'new_site_id')
 
     def __str__(self):

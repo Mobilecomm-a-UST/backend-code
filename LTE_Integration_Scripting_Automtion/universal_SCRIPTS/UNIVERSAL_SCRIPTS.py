@@ -233,7 +233,7 @@ RRU_5G_CREATION = """
                                                                                                                                                     
 """
 
-##################################################### UNIVERSAL RRU CONFIGRATION FOR RRU2219,RRU4412_RRU4418_RRU4427_RRU4471,RRU6626, RRU8863 #######################################################################
+##################################################### UNIVERSAL RRU CONFIGRATION FOR RRU2219,RRU4412_RRU4418_RRU4427_4428_RRU4471,RRU6626, RRU8863 #######################################################################
 RRU_2219_B0_B1_B3_2X2 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
@@ -479,7 +479,7 @@ RRU_2219_B0_B1_B3_2X2 = """
 """
 
 
-RRU_4412_4418_4427_4471_4X4 = """
+RRU_4412_4418_4427_4428_4471_4X4 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
@@ -3167,4 +3167,248 @@ ABIS_Site_Basic_script = """
   <close-session></close-session>                                                                                                                            
 </rpc>                                                                                                                                                       
 ]]>]]>  
+"""
+
+RRU_2279_B1_B3_2X2 = """
+<?xml version="1.0" encoding="UTF-8"?>
+<hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <capabilities>
+    <capability>urn:ietf:params:netconf:base:1.0</capability>
+  </capabilities>
+</hello>
+]]>]]>
+<rpc message-id="sectorEquipmentFunctionId={sectorEquipmentFunctionId}" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <edit-config>
+    <target>
+      <running />
+    </target>
+    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+      <ManagedElement xmlns="urn:com:ericsson:ecim:ComTop">
+        <managedElementId>{eNodeBName}</managedElementId>
+		<userLabel>{eNodeBName}</userLabel>
+        <Equipment xmlns="urn:com:ericsson:ecim:ReqEquipment">
+          <equipmentId>1</equipmentId>
+		  <FieldReplaceableUnit xmlns="urn:com:ericsson:ecim:ReqFieldReplaceableUnit">
+            <fieldReplaceableUnitId>RRU-{Radio_UnitId}</fieldReplaceableUnitId>
+			<administrativeState>UNLOCKED</administrativeState>
+			<isSharedWithExternalMe>false</isSharedWithExternalMe>			
+            <RfPort xmlns="urn:com:ericsson:ecim:ReqRfPort">
+              <rfPortId>A</rfPortId>
+              <vswrSupervisionActive>true</vswrSupervisionActive>
+              <vswrSupervisionSensitivity>100</vswrSupervisionSensitivity>
+              <administrativeState>UNLOCKED</administrativeState>
+              <antennaSupervisionActive>false</antennaSupervisionActive>
+            </RfPort>
+            <RfPort xmlns="urn:com:ericsson:ecim:ReqRfPort">
+              <rfPortId>B</rfPortId>
+              <vswrSupervisionActive>true</vswrSupervisionActive>
+              <vswrSupervisionSensitivity>100</vswrSupervisionSensitivity>
+              <administrativeState>UNLOCKED</administrativeState>
+              <antennaSupervisionActive>false</antennaSupervisionActive>
+            </RfPort>
+            <RfPort xmlns="urn:com:ericsson:ecim:ReqRfPort">
+              <rfPortId>R</rfPortId>
+              <vswrSupervisionActive>false</vswrSupervisionActive>
+              <vswrSupervisionSensitivity>-1</vswrSupervisionSensitivity>
+              <administrativeState>UNLOCKED</administrativeState>
+              <antennaSupervisionActive>false</antennaSupervisionActive>
+            </RfPort>			
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>DATA_1</riPortId>
+            </RiPort>
+            <RiPort xmlns="urn:com:ericsson:ecim:ReqRiPort">
+              <riPortId>DATA_2</riPortId>
+            </RiPort>
+          </FieldReplaceableUnit>
+        </Equipment>
+		
+        <Equipment xmlns="urn:com:ericsson:ecim:ReqEquipment">
+          <equipmentId>1</equipmentId>
+          <AntennaUnitGroup xmlns="urn:com:ericsson:ecim:ReqAntennaSystem">
+            <antennaUnitGroupId>{Radio_UnitId}</antennaUnitGroupId>
+          </AntennaUnitGroup>		  
+        </Equipment>
+		<Equipment xmlns="urn:com:ericsson:ecim:ReqEquipment">
+          <equipmentId>1</equipmentId>
+          <AntennaUnitGroup xmlns="urn:com:ericsson:ecim:ReqAntennaSystem">
+            <antennaUnitGroupId>{Radio_UnitId}</antennaUnitGroupId>
+			<AntennaUnit>
+              <antennaUnitId>1</antennaUnitId>
+              <mechanicalAntennaTilt>0</mechanicalAntennaTilt>
+			  <AntennaSubunit>
+                <antennaSubunitId>1</antennaSubunitId>  
+                <maxTotalTilt>250</maxTotalTilt>
+                <minTotalTilt>-250</minTotalTilt>				
+				<AuPort>
+                  <auPortId>1</auPortId>
+                </AuPort>
+				<AuPort>
+                  <auPortId>2</auPortId>
+                </AuPort>				
+			  </AntennaSubunit>
+            </AntennaUnit>
+          </AntennaUnitGroup>
+        </Equipment>		
+		<Equipment xmlns="urn:com:ericsson:ecim:ReqEquipment">
+          <equipmentId>1</equipmentId>
+          <AntennaUnitGroup xmlns="urn:com:ericsson:ecim:ReqAntennaSystem">
+            <antennaUnitGroupId>{Radio_UnitId}</antennaUnitGroupId>
+            <RfBranch>
+              <rfBranchId>1</rfBranchId>
+              <auPortRef>ManagedElement={eNodeBName},Equipment=1,AntennaUnitGroup={Radio_UnitId},AntennaUnit=1,AntennaSubunit=1,AuPort=1</auPortRef>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <rfPortRef>ManagedElement={eNodeBName},Equipment=1,FieldReplaceableUnit=RRU-{Radio_UnitId},RfPort=A</rfPortRef>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+            </RfBranch>	
+            <RfBranch>
+              <rfBranchId>2</rfBranchId>
+              <auPortRef>ManagedElement={eNodeBName},Equipment=1,AntennaUnitGroup={Radio_UnitId},AntennaUnit=1,AntennaSubunit=1,AuPort=2</auPortRef>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlAttenuation>0</dlAttenuation>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <dlTrafficDelay>-1</dlTrafficDelay>
+              <rfPortRef>ManagedElement={eNodeBName},Equipment=1,FieldReplaceableUnit=RRU-{Radio_UnitId},RfPort=B</rfPortRef>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulAttenuation>0</ulAttenuation>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+              <ulTrafficDelay>-1</ulTrafficDelay>
+            </RfBranch>			
+          </AntennaUnitGroup>
+		</Equipment>
+        <Equipment xmlns="urn:com:ericsson:ecim:ReqEquipment">
+          <equipmentId>1</equipmentId>		  
+          <RiLink xmlns="urn:com:ericsson:ecim:ReqRiLink">
+            <riLinkId>{Radio_UnitId}</riLinkId>
+            <riPortRef1>ManagedElement={eNodeBName},Equipment=1,FieldReplaceableUnit={fieldReplaceableUnitId},RiPort={RiPort_BB}</riPortRef1>
+            <riPortRef2>ManagedElement={eNodeBName},Equipment=1,FieldReplaceableUnit=RRU-{Radio_UnitId},RiPort={RiPort_Radio}</riPortRef2>
+          </RiLink>
+		</Equipment>
+        <NodeSupport xmlns="urn:com:ericsson:ecim:RmeSupport">
+          <nodeSupportId>1</nodeSupportId>		  
+          <SectorEquipmentFunction xmlns="urn:com:ericsson:ecim:RmeSectorEquipmentFunction">
+            <sectorEquipmentFunctionId>{sectorEquipmentFunctionId}</sectorEquipmentFunctionId>
+            <administrativeState>LOCKED</administrativeState>
+				<rfBranchRef>ManagedElement={eNodeBName},Equipment=1,AntennaUnitGroup={Radio_UnitId},RfBranch=1</rfBranchRef>
+				<rfBranchRef>ManagedElement={eNodeBName},Equipment=1,AntennaUnitGroup={Radio_UnitId},RfBranch=2</rfBranchRef>
+          </SectorEquipmentFunction>  
+        </NodeSupport>
+	  </ManagedElement>
+    </config>
+  </edit-config>
+</rpc>
+]]>]]>
+<rpc message-id="Closing" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <close-session></close-session>
+</rpc>
+]]>]]>
 """

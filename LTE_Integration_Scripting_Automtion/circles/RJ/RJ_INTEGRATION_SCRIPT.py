@@ -3463,7 +3463,7 @@ deb Transport=1,Synchronization=1,RadioEquipmentClock=1,NodeGroupSyncMember=1
 
 ldeb RadioEquipmentClockReference=1
 
-set 0 Userlabel {Phy_SiteID_Userlabel} 
+
 
 """
 
