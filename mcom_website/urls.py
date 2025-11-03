@@ -21,9 +21,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from mcom_website.views import home_page
 
 
 urlpatterns = [
+    path("", home_page, name="backend server is running"),
     path("admin/", admin.site.urls),
     # path('',views.index,name="main"),
     path("trend/", include("trend.urls")),
@@ -92,6 +94,7 @@ urlpatterns = [
     path("degrow_dismental/" , include("degrowDismental.urls")),
     path("alok_tracker/" , include("alok_tracker.urls")),
     path("Alarm_old_new_Tool/" , include("Alarm_old_new_Tool.urls")),
+
 ]
 
 if settings.DEBUG:
