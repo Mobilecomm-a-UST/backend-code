@@ -13,6 +13,7 @@ import stat
 import datetime
 import json
 import zipfile
+from django.conf import settings
 
 
 ###################### TAKING ENM VALUES ####################################################
@@ -1316,7 +1317,12 @@ def extract_data_from_log(request):
                         arcname = os.path.relpath(file_path, base_media_url)
                         zipf.write(file_path, arcname)
         
-        download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
+        relative_path = zip_filename.replace(settings.MEDIA_ROOT + "/", "")
+        download_link = request.build_absolute_uri(settings.MEDIA_URL + relative_path)
+        
+        # download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
+
+        print(download_link,"download_linkdownload_link")
         print(f"Output file created: {output_path}")
         print(f"Zip file created: {zip_filename}")
         ###########################################################################################################################

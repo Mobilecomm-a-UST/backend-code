@@ -1,205 +1,644 @@
 from mailapp.tasks import send_email
 import pandas as pd
 
-def send_email_for_Alarm(df_combined_dict , output_path):
-    """
-    Sends a summary email if multiple rows are either locked or unlocked,
-    with colorful tables, status icons, and icons in the subject.
-    """
+def send_email_for_Alarm(df_combined_dict, output_path):
+    """Sends a detailed alarm email showing Locked/Unlocked cells per Circle."""
+
     df_combined = pd.DataFrame(df_combined_dict)
+    def extract_matched_cells(val):
+        if pd.isna(val) or val == "":
+            return ("", "")
+        parts = str(val).split("|")
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        return ("", "")
 
-    # Email recipients
-    to_mails = ['Karamalla.Valli@ust.com','Nishant.Sharma2@ust.com','Saurabh.Rathore@ust.com',
-                'Vijay.Kumar2@ust.com','Prateek.Saxena@ust.com','Amit.Rai@ust.com','Krishna.KantVerma@ust.com','Harsh.Rajender@ust.com','Deepu.Sharma@ust.com']
-    cc_mails = ['Abhinav.Verma@ust.com', 'Prerna.PramodKumar@ust.com',
-                'Mohit.Batra@ust.com','Deepak.KumarYadav@ust.com','','Vinay.Duklan@ust.com','Lalit.Namdev2@ust.com','Shashank.Rai@ust.com']
-    
-    # to_mails =['Abhinav.Verma@ust.com']
-    # cc_mails = ['Prerna.PramodKumar@ust.com','Vinay.Duklan@ust.com']
-    to_email = ";".join(to_mails)
+    df_combined[["Matched_old", "Matched_new"]] = df_combined["Matched_Cells"].apply(
+        lambda x: pd.Series(extract_matched_cells(x))
+    )
+    # print(df_combined[["Matched_old", "Matched_new"]].head())
+
+    circle_to_emails = {
+        "KK": [
+            'Karamalla.Valli@ust.com','Rahul.Charak@ust.com',
+            'Aashish.Sharma@ust.com'
+        ],
+        "AP": [
+            'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Pankaj.Singh@ust.com','Ramesh.ThodaDurga@ust.com',
+            'SattaChandra.Shekar@ust.com','LingisettyVenkata.Kumar@ust.com','RudraHari.Krishna@ust.com'
+        ],
+        "NESA": [
+            'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Mohit.Kumar@ust.com','Manoj.Kumar3@ust.com'
+        ],
+        "DL": [
+            'Nishant.Sharma2@ust.com','Vijay.Kumar2@ust.com',
+            'Prateek.Saxena@ust.com','Harsh.Rajender@ust.com','Deepu.Sharma@ust.com'
+        ],
+        "JK" :['Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Manik.Mahajan@ust.com',
+            'Lalit.Kaul@ust.com','Suman.Raman@ust.com','Namandeep.Singh@ust.com'
+        ],
+        "CHN": ['S.Ramanathan@ust.com','A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
+
+        "HRY": ['Manoj.Kumar5@ust.com',"Umair.Wali@ust.com","Anil.Sharma@ust.com","Somnath.OmParkash@ust.com"],
+        "UPW" :['Sanjay.Pandey2@ust.com','Shivam.Mittal@ust.com','Shubham.Gupta2@ust.com']
+    }
+
+    cc_mails = [
+        'Abhinav.Verma@ust.com','Prerna.PramodKumar@ust.com','Mohit.Batra@ust.com',
+        'Deepak.KumarYadav@ust.com','Amit.rai@ust.com','Lalit.Namdev2@ust.com','Shashank.Rai@ust.com',
+        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com'
+    ]
+    # circle_to_emails = {
+    #     "KK": ["Abhinav.Verma@ust.com"],
+    #     "AP": ["Abhinav.Verma@ust.com"],
+    #     "JK": ["Abhinav.Verma@ust.com"],
+    #     "DL": ["Abhinav.Verma@ust.com"],
+    # }
+
+    # cc_mails = ["Abhinav.Verma@ust.com", "Prerna.PramodKumar@ust.com"]
     cc_email = ";".join(cc_mails)
-    
-    # Generate Remarks
-    df_combined['Remark'] = df_combined.apply(lambda row: 
-        "Locked" if row["4G Cell Status - Adm State_old"].lower() == "locked" and row["4G Cell Status - Adm State_new"].lower() == "locked"
-        else ("Unlocked" if row["4G Cell Status - Adm State_old"].lower() == "unlocked" and row["4G Cell Status - Adm State_new"].lower() == "unlocked"
-        else ""), axis=1)
 
-    # Now filter only rows with meaningful remark
-    locked_unlocked_rows = df_combined[df_combined['Remark'].isin(["Locked", "Unlocked"])]
 
-    # Separate locked and unlocked rows
-    # locked_unlocked_rows = df_combined[
-    #     (df_combined["4G Cell Status - Adm State_old"].str.lower() == "locked") &
-    #     (df_combined["4G Cell Status - Adm State_new"].str.lower() == "locked")&
-    #     (df_combined["4G Cell Status - Adm State_old"].str.lower() == "unlocked")&
-    #     (df_combined["4G Cell Status - Adm State_new"].str.lower() == "unlocked")
-    # ]
+    def get_remark(row):
+        old_state = str(row.get("4G Cell Status - Adm State_old", "")).strip().lower()
+        new_state = str(row.get("4G Cell Status - Adm State_new", "")).strip().lower()
 
-    def generate_html_table(df_rows, table_color="#ffcccc", status_icon=""):
-        """
-        Generates a colorful HTML table with icons for email.
-        """
-        if df_rows.empty:
+        matched_old = str(row.get("Matched_old", "")).strip()
+        matched_new = str(row.get("Matched_new", "")).strip()
+
+        if matched_old != "" and matched_new != "":
+            if old_state == "locked" and new_state == "locked":
+                return "old/new locked"
+            if old_state == "unlocked" and new_state == "unlocked":
+                return "old/new unlocked"
             return ""
-    
-        html = f"""
-        <table style="border-collapse: collapse; width: 70%; font-family: Arial, sans-serif;">
-            <thead>
-                <tr style="background-color: {table_color}; color: #000; text-align: center;">
-                    <th style="border: 1px solid #000; padding: 8px;">circle</th>
-                    <th style="border: 1px solid #000; padding: 8px;">Old Site ID</th>
-                    <th style="border: 1px solid #000; padding: 8px;">Old Cell</th>
-                    <th style="border: 1px solid #000; padding: 8px;">New Site ID</th>
-                    <th style="border: 1px solid #000; padding: 8px;">New Cell</th>
-                    <th style="border: 1px solid #000; padding: 8px;">Remark</th>
+
+        if old_state == "" and new_state == "locked":
+            return "old down/new locked"
+        if old_state == "" and new_state == "unlocked":
+            return "old down/new unlocked"
+        if old_state == "locked" and new_state == "":
+            return "old locked/new down"
+        if old_state == "unlocked" and new_state == "":
+            return "old unlocked/new down"
+        return ""
+
+    df_combined["Remark"] = df_combined.apply(get_remark, axis=1)
+
+    # df_combined.to_excel("debug_combined.xlsx", index=False)
+
+
+    # SUMMARY TABLE (Matched only)
+
+    df_matched = df_combined[df_combined["Remark"].isin(["old/new locked", "old/new unlocked"])].copy()
+
+    # Circles that actually exist in the dataframe
+    circles_in_data = df_combined["Circle"].unique().tolist()
+    full_summary = pd.DataFrame({"Circle": circles_in_data})
+
+    if not df_matched.empty:
+        matched_summary = (
+            df_matched.groupby("Circle")["Remark"]
+            .value_counts()
+            .unstack(fill_value=0)
+            .reset_index()
+        )
+
+    # Ensure both columns exist
+        for col in ["old/new locked", "old/new unlocked"]:
+            if col not in matched_summary.columns:
+                matched_summary[col] = 0
+
+    # Total impacted sites
+        total_sites = (
+            df_matched.groupby("Circle")["Site ID_old"]
+            .nunique()
+            .reset_index(name="Total Impacted Sites")
+        )
+
+        matched_summary = matched_summary.merge(total_sites, on="Circle", how="left")
+
+    else:
+        # If no matched rows, create an empty summary
+        matched_summary = pd.DataFrame(columns=[
+            "Circle", "old/new locked", "old/new unlocked", "Total Impacted Sites"
+        ])
+
+# Final merge ensuring only data circles are shown
+
+    matched_summary = (
+        full_summary.merge(matched_summary, on="Circle", how="left")
+        .fillna({
+            "old/new locked": 0,
+            "old/new unlocked": 0,
+            "Total Impacted Sites": 0
+        })
+    )
+
+# DOWN/UP CASES TABLE
+
+    down_cases_list = [
+        "old down/new locked", "old down/new unlocked",
+        "old locked/new down", "old unlocked/new down",
+        "new down/old locked", "new down/old unlocked",
+        "new locked/old down", "new unlocked/old down"
+    ]
+    df_down_cases = df_combined[df_combined["Remark"].isin(down_cases_list)].copy()
+
+# HTML TABLES
+
+    def generate_matched_summary_html(df):
+        if df.empty:
+            return """
+            <div style='background:#f0f7ff;
+                        border-left:4px solid #007BFF;
+                        padding:12px 18px;
+                        margin-bottom:20px;
+                        border-radius:6px;'>
+                <p style='margin:0; color:#003d80; font-size:14px;'>
+                    ..............There has no any both locked and both unlocked Summary.............
+                </p>
+            </div>
+        """
+
+        html = """
+        <h3> Alarm Summary</h3>
+        <table border="1" style="border-collapse: collapse; width:50%;">
+            <thead style="background-color:#444; color:white;">
+                <tr>
+                    <th>Circle</th>
+                    <th>Total Locked cell(Old/New)</th>
+                    <th>Total Unlocked cell(Old/New)</th>
+                    <th>Total Impacted Sites</th>
                 </tr>
             </thead>
             <tbody>
         """
-
-        for i, row in df_rows.iterrows():
-            if status_icon == "🔒":
-                row_color = "#ffe6e6" if i % 2 == 0 else "#fff2f2"
-            else:
-                row_color = "#e6ffe6" if i % 2 == 0 else "#f2fff2"
+        for _, r in df.iterrows():
             html += f"""
-                <tr style="background-color: {row_color}; text-align: center;">
-                    <td style="border: 1px solid #000; padding: 6px;">{row['Circle_old']}</td>
-                    <td style="border: 1px solid #000; padding: 6px;">{row['Site ID_old']}</td>
-                    <td style="border: 1px solid #000; padding: 6px;">{row['Cells_old']}</td>
-                    <td style="border: 1px solid #000; padding: 6px;">{row['Site ID_new']}</td>
-                    <td style="border: 1px solid #000; padding: 6px;">{row['Cells_new']}</td>
-                    <td style="border: 1px solid #000; padding: 6px;">{row['Remark']}</td>
+            <tr style="text-align:center;">
+                <td>{r['Circle']}</td>
+                <td>{r['old/new locked']}</td>
+                <td>{r['old/new unlocked']}</td>
+                <td>{r['Total Impacted Sites']}</td>
+            </tr>
+            """
+        html += "</tbody></table>"
+        return html
+    valid_remarks = ["old/new locked", "old/new unlocked"]
+    table_df = df_combined[
+        df_combined["Remark"].isin(valid_remarks)
+    ][["Circle", "Site ID_old", "Cells_old", "Site ID_new", "Cells_new", "Remark"]].copy()
 
+    # table_df.to_excel("debug_table_df.xlsx", index=False)
+    
+    def generate_matched_details_html(df):
+        if table_df.empty:
+            return """
+            <div style='background:#f0f7ff;
+                        border-left:4px solid #007BFF;
+                        padding:12px 18px;
+                        margin-bottom:20px;
+                        border-radius:6px;'>
+                <p style='margin:0; color:#003d80; font-size:14px;'>
+                    ...........There has no any both locked and both unlocked Sites...........
+                </p>
+            </div>
+        """
+        html = """
+        <h3>📋 Alarm Details (Old/New)</h3>
+        <table border="1" style="border-collapse: collapse; width:95%;">
+            <thead style="background-color:#444; color:white;">
+                <tr>
+                    <th>Circle</th><th>Old Site</th><th>Old Cell</th>
+                    <th>New Site</th><th>New Cell</th><th>Remark</th>
                 </tr>
+            </thead>
+            <tbody>
+        """
+        for _, r in table_df.iterrows():
+            color = "#ffcccc" if r["Remark"] == "old/new locked" else "#ccffcc"
+            text_color = "#D9534F" if r["Remark"] == "old/new locked" else "#5cb85c"
+            html += f"""
+            <tr style="background-color:{color}; text-align:center;">
+                <td>{r['Circle']}</td>
+                <td>{r['Site ID_old']}</td>
+                <td>{r.get('Cells_old', '')}</td>
+                <td>{r['Site ID_new']}</td>
+                <td>{r.get('Cells_new', '')}</td>
+                <td style="color:{text_color}; font-weight:bold;">{r['Remark']}</td>
+            </tr>
             """
         html += "</tbody></table>"
         return html
 
-    # Send LOCKED email
-    if not locked_unlocked_rows.empty:
-        subject = "🔒 Alarm flag - Multiple sites LOCKED"
+    def generate_down_cases_html(df_rows):
+        if df_rows.empty:
+            return "<p><b>No Down/Up cases found.</b></p>"
+        html = """
+        <h3>⚠️ Down/Up Status Cases (Old & New)</h3>
+        <table border="1" style="border-collapse: collapse; width:95%;">
+            <thead style="background-color:#444; color:white;">
+                <tr>
+                    <th>Circle</th><th>Old Site</th><th>Old Cell</th>
+                    <th>New Site</th><th>New Cell</th><th>Remark</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        for _, r in df_rows.iterrows():
+            if "locked" in r["Remark"] and "down" in r["Remark"]:
+                bg = "#ffcccc"; color = "#d9534f"
+            elif "locked" in r["Remark"]:
+                bg = "#ffdddd"; color = "#d9534f"
+            else:
+                bg = "#ccffcc"; color = "#5cb85c"
+            html += f"""
+            <tr style="background:{bg}; text-align:center;">
+                <td>{r['Circle']}</td>
+                <td>{r['Site ID_old']}</td>
+                <td>{r.get('Cells_old','')}</td>
+                <td>{r['Site ID_new']}</td>
+                <td>{r.get('Cells_new','')}</td>
+                <td style="color:{color}; font-weight:bold;">{r['Remark']}</td>
+            </tr>
+            """
+        html += "</tbody></table>"
+        return html
+
+    Summary_html = generate_matched_summary_html(matched_summary)
+    Alarm_details_html = generate_matched_details_html(df_matched)
+    down_cases_html = generate_down_cases_html(df_down_cases)
+
+    # EMAIL SENDING
+    print("Email Sending 274")
+
+    for circle, circle_df in df_combined.groupby("Circle"):
+        if circle not in circle_to_emails:
+            continue
+        subject = f"🔔 4G Alarm Summary Report - {circle}"
+
+        to_email = ";".join(circle_to_emails[circle])
         body = f"""
-        <p> <strong>both site LOCKED/ UNLOCKED</strong>:</p>
-        {generate_html_table(locked_unlocked_rows, table_color="#DE5B64")}
-        <p>Please review the details and take necessary action.</p>
-        <p><em>Note: This is an automated email. Do not reply.</em></p>
-        <p>Regards,<br>Developer Team</p>
+        <html>
+        <body style="font-family:Arial; background-color:#f7f7f7; padding:20px;">
+            <div style="background-color:white; padding:20px; border-radius:8px; border:1px solid black;">
+                <h2 style="
+                    color:#007BFF;
+                    margin-top:0;
+                    font-size:26px;
+                    letter-spacing:0.5px;
+                    border-bottom:2px solid #e3e3e3;
+                    padding-bottom:10px;
+                ">
+                    🔔 Alarm Status Report — <span style="color:#333;">{circle}</span>
+                </h2>
+                {Summary_html}
+                {Alarm_details_html}
+                {down_cases_html}
+                <div style="
+                    margin-top:35px;
+                    padding:15px;
+                    background:#f7f7f7;
+                    border-radius:6px;
+                    font-size:13px;
+                    color:#444;
+                ">
+                    <p><b>Note:</b> This is an automated system-generated email. Please do not reply.</p>
+                    <p style="margin:5px 0 0 0;">Regards,<br>
+                    <span style="color:#007BFF; font-weight:bold;">Developer Team</span></p>
+                </div>
+            </div>
+        </body>
+        </html>
         """
         try:
-            print("Sending LOCKED email...")
-            send_email.delay(
-                    to_email,
-                    cc_email,
-                    subject,
-                    body,
-                    attachment_path=output_path,
-                    is_html=True
-                )            
-            print("Locked email sent.")
+            print(f"📧 Sending email for {circle} → {to_email} (cc: {cc_email})")
+            send_email.delay(to_email, cc_email, subject, body, attachment_path=output_path, is_html=True)
+            print(f"✅ Email sent successfully for {circle}")
         except Exception as e:
-            print(f"Failed to send locked email: {e}")
+            print(f"❌ Failed to send email for {circle}: {e}")
+        
 
-# import pandas as pd
-# from mailapp.tasks import send_email
+# -------------------------------------------5G Alarm email function--------------------------------------------------
 
-# def send_email_for_Alarm(df_combined_dict, output_path):
-#     df_combined = pd.DataFrame(df_combined_dict)
+def send_email_for_5G_Alarm(df_combined_dict, output_path):
+    """Sends a detailed alarm email showing Locked/Unlocked cells per Circle."""
 
-#     # Email recipients
-#     to_mails = ['Abhinav.Verma@ust.com']
-#     cc_mails = ['Prerna.PramodKumar@ust.com', 'Vinay.Duklan@ust.com']
-#     to_email = ";".join(to_mails)
-#     cc_email = ";".join(cc_mails)
+    df_combined = pd.DataFrame(df_combined_dict)
+    def extract_matched_cells(val):
+        if pd.isna(val) or val == "":
+            return ("", "")
+        parts = str(val).split("|")
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        return ("", "")
 
-#     # Function to check if two cells are similar based on suffix match
-#     def cells_similar(cells_old, cells_new, suffix_length=8):
-#         cells_old = str(cells_old).strip()
-#         cells_new = str(cells_new).strip()
-#         if not cells_old or not cells_new:
-#             return False
-#         match = cells_old[-suffix_length:] == cells_new[-suffix_length:]
-#         print(f"Comparing Cells: OLD={cells_old}, NEW={cells_new}, Match={match}")
-#         return match
+    df_combined[["Matched_old", "Matched_new"]] = df_combined["Matched_Cells"].apply(
+        lambda x: pd.Series(extract_matched_cells(x))
+    )
+    # print(df_combined[["Matched_old", "Matched_new"]].head())
 
-#     # Function to generate Remark column value
-#     def get_remark(row):
-#         old_cell = str(row.get("Cells_old", "")).strip()
-#         new_cell = str(row.get("Cells_new", "")).strip()
-#         old_state = str(row.get("5G Cell Status - Adm State_old", "")).strip().lower()
-#         new_state = str(row.get("5G Cell Status - Adm State_new", "")).strip().lower()
+    circle_to_emails = {
+        "KK": [
+            'Karamalla.Valli@ust.com','Rahul.Charak@ust.com',
+            'Aashish.Sharma@ust.com'
+        ],
+        "AP": [
+            'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Pankaj.Singh@ust.com','Ramesh.ThodaDurga@ust.com',
+            'SattaChandra.Shekar@ust.com','LingisettyVenkata.Kumar@ust.com','RudraHari.Krishna@ust.com'
+        ],
+        "NESA": [
+            'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Mohit.Kumar@ust.com','Manoj.Kumar3@ust.com'
+        ],
+        "DL": [
+            'Nishant.Sharma2@ust.com','Vijay.Kumar2@ust.com',
+            'Prateek.Saxena@ust.com','Harsh.Rajender@ust.com','Deepu.Sharma@ust.com'
+        ],
+        "JK" :['Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Manik.Mahajan@ust.com',
+            'Lalit.Kaul@ust.com','Suman.Raman@ust.com','Namandeep.Singh@ust.com'
+ 
+        ],
+        "CHN": ['S.Ramanathan@ust.com','A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
+ 
+        "HRY": ['Manoj.Kumar5@ust.com',"Umair.Wali@ust.com","Anil.Sharma@ust.com","Somnath.OmParkash@ust.com"],
+        "UPW" :['Sanjay.Pandey2@ust.com','Shivam.Mittal@ust.com','Shubham.Gupta2@ust.com']
+    }
+ 
+    cc_mails = [
+        'Abhinav.Verma@ust.com','Prerna.PramodKumar@ust.com','Mohit.Batra@ust.com',
+        'Deepak.KumarYadav@ust.com','Amit.rai@ust.com','Lalit.Namdev2@ust.com','Shashank.Rai@ust.com',
+        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com'
+    ]
 
-#         if cells_similar(old_cell, new_cell, suffix_length=8):
-#             if old_state == "locked" and new_state == "locked":
-#                 print(f"✅ Locked Match: {old_cell} ↔ {new_cell}")
-#                 return "Locked"
-#             elif old_state == "unlocked" and new_state == "unlocked":
-#                 print(f"✅ Unlocked Match: {old_cell} ↔ {new_cell}")
-#                 return "Unlocked"
-#         return ""
 
-#     # Apply get_remark to dataframe
-#     df_combined["Remark"] = df_combined.apply(get_remark, axis=1)
+    # circle_to_emails = {
+    #     "KK": ["Abhinav.Verma@ust.com"],
+    #     "AP": ["Abhinav.Verma@ust.com"],
+    #     "JK": ["Abhinav.Verma@ust.com"],
+    #     "DL": ["Abhinav.Verma@ust.com"],
+    # }
 
-#     # Filter rows with Locked or Unlocked remark
-#     locked_unlocked_rows = df_combined[df_combined["Remark"].isin(["Locked", "Unlocked"])]
+    # cc_mails = ["Abhinav.Verma@ust.com", "Prerna.PramodKumar@ust.com"]
+    cc_email = ";".join(cc_mails)
 
-#     # Function to generate HTML table for email body
-#     def generate_html_table(df_rows):
-#         if df_rows.empty:
-#             return ""
-#         html = """
-#         <table style="border-collapse: collapse; width: 80%; font-family: Arial, sans-serif;">
-#             <thead>
-#                 <tr style="background-color: #ffcdd2; color: black;">
-#                     <th style="border: 1px solid black; padding: 8px;">Circle</th>
-#                     <th style="border: 1px solid black; padding: 8px;">Old Site ID</th>
-#                     <th style="border: 1px solid black; padding: 8px;">Old Cell</th>
-#                     <th style="border: 1px solid black; padding: 8px;">New Site ID</th>
-#                     <th style="border: 1px solid black; padding: 8px;">New Cell</th>
-#                     <th style="border: 1px solid black; padding: 8px;">Remark</th>
-#                 </tr>
-#             </thead>
-#             <tbody>
-#         """
-#         for i, row in df_rows.iterrows():
-#             bg_color = "#f8bbd0" if row['Remark'] == "Locked" else "#c8e6c9"
-#             html += f"""
-#                 <tr style="background-color: {bg_color}; text-align: center;">
-#                     <td style="border: 1px solid black; padding: 6px;">{row.get('Circle_old', '')}</td>
-#                     <td style="border: 1px solid black; padding: 6px;">{row.get('Site ID_old', '')}</td>
-#                     <td style="border: 1px solid black; padding: 6px;">{row.get('Cells_old', '')}</td>
-#                     <td style="border: 1px solid black; padding: 6px;">{row.get('Site ID_new', '')}</td>
-#                     <td style="border: 1px solid black; padding: 6px;">{row.get('Cells_new', '')}</td>
-#                     <td style="border: 1px solid black; padding: 6px;">{row.get('Remark', '')}</td>
-#                 </tr>
-#             """
-#         html += "</tbody></table>"
-#         return html
 
-#     # Send email if there are locked/unlocked rows
-#     if not locked_unlocked_rows.empty:
-#         subject = "🔒 Alarm flag - Locked/Unlocked Sites Detected"
-#         body = f"""
-#         <p><strong>Sites with Locked or Unlocked states (based on Cell suffix match):</strong></p>
-#         {generate_html_table(locked_unlocked_rows)}
-#         <p>Please review and take action if required.</p>
-#         <p><em>Note: This is an automated email. Do not reply.</em></p>
-#         <p>Regards,<br>Developer Team</p>
-#         """
-#         try:
-#             print("📤 Sending email...")
-#             send_email.delay(
-#                 to_email,
-#                 cc_email,
-#                 subject,
-#                 body,
-#                 attachment_path=output_path,
-#                 is_html=True
-#             )
-#             print("✅ Email sent successfully.")
-#         except Exception as e:
-#             print(f"❌ Failed to send email: {e}")
-#     else:
-#         print("No locked/unlocked rows found; no email sent.")
+    def get_remark(row):
+        old_state = str(row.get("5G Cell Status - Adm State_old", "")).strip().lower()
+        new_state = str(row.get("5G Cell Status - Adm State_new", "")).strip().lower()
+
+        matched_old = str(row.get("Matched_old", "")).strip()
+        matched_new = str(row.get("Matched_new", "")).strip()
+
+        if matched_old != "" and matched_new != "":
+            if old_state == "locked" and new_state == "locked":
+                return "old/new locked"
+            if old_state == "unlocked" and new_state == "unlocked":
+                return "old/new unlocked"
+            return ""
+
+        if old_state == "" and new_state == "locked":
+            return "old down/new locked"
+        if old_state == "" and new_state == "unlocked":
+            return "old down/new unlocked"
+        if old_state == "locked" and new_state == "":
+            return "old locked/new down"
+        if old_state == "unlocked" and new_state == "":
+            return "old unlocked/new down"
+        return ""
+
+    df_combined["Remark"] = df_combined.apply(get_remark, axis=1)
+
+    # df_combined.to_excel("debug_combined.xlsx", index=False)
+
+    # SUMMARY TABLE (Matched only)
+
+    df_matched = df_combined[df_combined["Remark"].isin(["old/new locked", "old/new unlocked"])].copy()
+
+    # Circles that actually exist in the dataframe
+    circles_in_data = df_combined["Circle"].unique().tolist()
+    full_summary = pd.DataFrame({"Circle": circles_in_data})
+
+    if not df_matched.empty:
+        matched_summary = (
+            df_matched.groupby("Circle")["Remark"]
+            .value_counts()
+            .unstack(fill_value=0)
+            .reset_index()
+        )
+
+        # Ensure both columns exist
+        for col in ["old/new locked", "old/new unlocked"]:
+            if col not in matched_summary.columns:
+                matched_summary[col] = 0
+
+        # Total impacted sites
+        total_sites = (
+            df_matched.groupby("Circle")["Site ID_old"]
+            .nunique()
+            .reset_index(name="Total Impacted Sites")
+        )
+
+        matched_summary = matched_summary.merge(total_sites, on="Circle", how="left")
+
+    else:
+        # If no matched rows, create an empty summary
+        matched_summary = pd.DataFrame(columns=[
+            "Circle", "old/new locked", "old/new unlocked", "Total Impacted Sites"
+        ])
+
+    # Final merge ensuring only data circles are shown
+    matched_summary = (
+        full_summary.merge(matched_summary, on="Circle", how="left")
+        .fillna({
+            "old/new locked": 0,
+            "old/new unlocked": 0,
+            "Total Impacted Sites": 0
+        })
+    )
+
+    # DOWN/UP CASES TABLE
+
+    down_cases_list = [
+        "old down/new locked", "old down/new unlocked",
+        "old locked/new down", "old unlocked/new down",
+        "new down/old locked", "new down/old unlocked",
+        "new locked/old down", "new unlocked/old down"
+    ]
+    df_down_cases = df_combined[df_combined["Remark"].isin(down_cases_list)].copy()
+
+    # HTML TABLES
+
+    def generate_matched_summary_html(df):
+        if df.empty:
+            return """
+            <div style='background:#f0f7ff;
+                        border-left:4px solid #007BFF;
+                        padding:12px 18px;
+                        margin-bottom:20px;
+                        border-radius:6px;'>
+                <p style='margin:0; color:#003d80; font-size:14px;'>
+                    ...............There has no any both locked and both unlocked Summary..............
+                </p>
+            </div>
+        """
+        html = """
+        <h3> Alarm Summary</h3>
+        <table border="1" style="border-collapse: collapse; width:50%;">
+            <thead style="background-color:#444; color:white;">
+                <tr>
+                    <th>Circle</th>
+                    <th>Total Locked cell(Old/New)</th>
+                    <th>Total Unlocked cell(Old/New)</th>
+                    <th>Total Impacted Sites</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        for _, r in df.iterrows():
+            html += f"""
+            <tr style="text-align:center;">
+                <td>{r['Circle']}</td>
+                <td>{r['old/new locked']}</td>
+                <td>{r['old/new unlocked']}</td>
+                <td>{r['Total Impacted Sites']}</td>
+            </tr>
+            """
+        html += "</tbody></table>"
+        return html
+    valid_remarks = ["old/new locked", "old/new unlocked"]
+    table_df = df_combined[
+        df_combined["Remark"].isin(valid_remarks)
+    ][["Circle", "Site ID_old", "Cells_old", "Site ID_new", "Cells_new", "Remark"]].copy()
+
+    # table_df.to_excel("debug_table_df.xlsx", index=False)
+    
+    def generate_matched_details_html(df):
+        if table_df.empty:
+            return """
+            <div style='background:#f0f7ff;
+                        border-left:4px solid #007BFF;
+                        padding:12px 18px;
+                        margin-bottom:20px;
+                        border-radius:6px;'>
+                <p style='margin:0; color:#003d80; font-size:14px;'>
+                    .............There has no any both locked and both unlocked Sites....................
+                </p>
+            </div>
+        """
+        html = """
+        <h3>📋 Alarm Details (Old/New)</h3>
+        <table border="1" style="border-collapse: collapse; width:95%;">
+            <thead style="background-color:#444; color:white;">
+                <tr>
+                    <th>Circle</th><th>Old Site</th><th>Old Cell</th>
+                    <th>New Site</th><th>New Cell</th><th>Remark</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        for _, r in table_df.iterrows():
+            color = "#ffcccc" if r["Remark"] == "old/new locked" else "#ccffcc"
+            text_color = "#D9534F" if r["Remark"] == "old/new locked" else "#103c10"
+            html += f"""
+            <tr style="background-color:{color}; text-align:center;">
+                <td>{r['Circle']}</td>
+                <td>{r['Site ID_old']}</td>
+                <td>{r.get('Cells_old', '')}</td>
+                <td>{r['Site ID_new']}</td>
+                <td>{r.get('Cells_new', '')}</td>
+                <td style="color:{text_color}; font-weight:bold;">{r['Remark']}</td>
+            </tr>
+            """
+        html += "</tbody></table>"
+        return html
+
+    def generate_down_cases_html(df_rows):
+        if df_rows.empty:
+            return "<p><b>There has no Down Sites .</b></p>"
+        html = """
+        <h3>⚠️ Down/Up Status Cases (Old & New)</h3>
+        <table border="1" style="border-collapse: collapse; width:95%;">
+            <thead style="background-color:#444; color:white;">
+                <tr>
+                    <th>Circle</th><th>Old Site</th><th>Old Cell</th>
+                    <th>New Site</th><th>New Cell</th><th>Remark</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        for _, r in df_rows.iterrows():
+            if "locked" in r["Remark"] and "down" in r["Remark"]:
+                bg = "#ffcccc"; color = "#eca8a5"
+            elif "locked" in r["Remark"]:
+                bg = "#ffdddd"; color = "#e9a29f"
+            else:
+                bg = "#ccffcc"; color = "#b9e4b9"
+            html += f"""
+            <tr style="background:{bg}; text-align:center;">
+                <td>{r['Circle']}</td>
+                <td>{r['Site ID_old']}</td>
+                <td>{r.get('Cells_old','')}</td>
+                <td>{r['Site ID_new']}</td>
+                <td>{r.get('Cells_new','')}</td>
+                <td style="color:{color}; font-weight:bold;">{r['Remark']}</td>
+            </tr>
+            """
+        html += "</tbody></table>"
+        return html
+
+    Summary_html = generate_matched_summary_html(matched_summary)
+    Alarm_details_html = generate_matched_details_html(df_matched)
+    down_cases_html = generate_down_cases_html(df_down_cases)
+
+    # EMAIL SENDING
+
+    for circle, circle_df in df_combined.groupby("Circle"):
+        if circle not in circle_to_emails:
+            continue
+        subject = f"🔔 5G Alarm Summary Report  - {circle}"
+
+        to_email = ";".join(circle_to_emails[circle])
+        body = f"""
+        <html>
+        <body style="font-family:Arial; background-color:#f7f7f7; padding:20px;">
+            <div style="background-color:white; padding:20px; border-radius:8px; border:1px solid black;">
+                <h2 style="
+                    color:#007BFF;
+                    margin-top:0;
+                    font-size:26px;
+                    letter-spacing:0.5px;
+                    border-bottom:2px solid #e3e3e3;
+                    padding-bottom:10px;
+                ">
+                    🔔 Alarm Status Report — <span style="color:#333;">{circle}</span>
+                </h2>
+
+                {Summary_html}
+                {Alarm_details_html}
+                {down_cases_html}
+
+                <div style="
+                    margin-top:35px;
+                    padding:15px;
+                    background:#f7f7f7;
+                    border-radius:6px;
+                    font-size:13px;
+                    color:#444;
+                ">
+                    <p><b>Note:</b> This is an automated system-generated email. Please do not reply.</p>
+                    <p style="margin:5px 0 0 0;">Regards,<br>
+                    <span style="color:#007BFF; font-weight:bold;">Developer Team</span></p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        try:
+            print(f"📧 Sending email for {circle} → {to_email} (cc: {cc_email})")
+            send_email.delay(to_email, cc_email, subject, body, attachment_path=output_path, is_html=True)
+            print(f"✅ Email sent successfully for {circle}")
+        except Exception as e:
+            print(f"❌ Failed to send email for {circle}: {e}")
+
+

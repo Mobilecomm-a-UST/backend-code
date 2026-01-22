@@ -1384,7 +1384,6 @@ def kpi_trend_4g_api(request):
     # paginated_result = paginator.paginate_queryset(result_df.to_dict('records'), request)
 
     json_data = result_df.to_json(orient="records")
-
     new_json = json.loads(json_data)
 
     return Response(

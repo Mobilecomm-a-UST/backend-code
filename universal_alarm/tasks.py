@@ -1,6 +1,6 @@
 import os
-import win32com.client
-import pythoncom
+# import win32com.client
+# import pythoncom
 import requests
 import zipfile
 import shutil
@@ -33,8 +33,11 @@ def save_last_mail(unique_id):
 @shared_task
 def check_outlook_mail(expected_subject="MS2 Pending Sites"):
     # pythoncom.CoInitialize()
-    outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
-    inbox = outlook.Folders.Item("nocsupport@mcpsinc.com").Folders["Inbox"]
+    # outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+    # inbox = outlook.Folders.Item("nocsupport@mcpsinc.com").Folders["Inbox"]
+
+    outlook = ""
+    inbox = ""
 
     messages = inbox.Items
     messages.Sort("[ReceivedTime]", True) 

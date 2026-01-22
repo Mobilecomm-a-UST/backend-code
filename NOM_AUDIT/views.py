@@ -1222,6 +1222,7 @@ def generate_site_scripts(request):
 
     try:
         df_planed_sites = pd.read_excel(file_path, sheet_name="CELL DETAIL", engine='openpyxl')
+        df_planed_sites.columns = df_planed_sites.columns.str.strip()
     except Exception as e:
         return Response({"error": f"Error reading Excel file: {str(e)}"}, status=400)
 

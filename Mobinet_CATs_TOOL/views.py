@@ -824,8 +824,10 @@ def rfs_dump(request):
         merged_site_df["Dismantled date"] = pd.to_datetime(merged_site_df["Dismantled date"], errors='coerce')
         merged_site_df["RFS_CREATED_DATE"] = pd.to_datetime(merged_site_df["RFS_CREATED_DATE"], errors='coerce')
  
-        merged_site_df["Aging"] = (merged_site_df["Dismantled date"] - merged_site_df["RFS_CREATED_DATE"]).dt.days
-        merged_site_df = merged_site_df[merged_site_df["Aging"].between(-45, 45, inclusive="both")]
+        # merged_site_df["Aging"] = (merged_site_df["Dismantled date"] - merged_site_df["RFS_CREATED_DATE"]).dt.days
+        merged_site_df["Aging"] = ( merged_site_df["RFS_CREATED_DATE"] - merged_site_df["Dismantled date"]).dt.days
+        # merged_site_df = merged_site_df[merged_site_df["Aging"].between(-45, 45, inclusive="both")]
+        merged_site_df = merged_site_df[merged_site_df["Aging"] >= -45]
  
        
         merged_site_df["Site+Module"] = merged_site_df["Unique Site ID"].astype(str) + "_" + merged_site_df["Module Name"].astype(str)
@@ -963,8 +965,10 @@ def rfs_dump(request):
         merged_site_df_ms_mf["Dismantled date"] = pd.to_datetime(merged_site_df_ms_mf["Dismantled date"], errors='coerce')
         merged_site_df_ms_mf["MOVE_START_DATE"] = pd.to_datetime(merged_site_df_ms_mf["MOVE_START_DATE"], errors='coerce')
        
-        merged_site_df_ms_mf["Aging"] = (merged_site_df_ms_mf["Dismantled date"] - merged_site_df_ms_mf["MOVE_START_DATE"]).dt.days
-        merged_site_df_ms_mf = merged_site_df_ms_mf[merged_site_df_ms_mf["Aging"].between(-45, 45, inclusive="both")]
+        # merged_site_df_ms_mf["Aging"] = (merged_site_df_ms_mf["Dismantled date"] - merged_site_df_ms_mf["MOVE_START_DATE"]).dt.days
+        merged_site_df_ms_mf["Aging"] = (merged_site_df_ms_mf["MOVE_START_DATE"] - merged_site_df_ms_mf["Dismantled date"] ).dt.days
+        # merged_site_df_ms_mf = merged_site_df_ms_mf[merged_site_df_ms_mf["Aging"].between(-45, 45, inclusive="both")]
+        merged_site_df_ms_mf = merged_site_df_ms_mf[merged_site_df_ms_mf["Aging"] >= -45]
  
        
         merged_site_df_ms_mf["Site+Module"] = merged_site_df_ms_mf["Unique Site ID"].astype(str) + "_" + merged_site_df_ms_mf["Module Name"].astype(str)
@@ -1580,3 +1584,192 @@ def ms_mf_site_mapping(request):
             })      
     except Exception as e:
      return Response({"error": f"find an error: {str(e)}"}, status=500)            
+
+
+
+
+    #new api------ site+searial match
+    #here the logic is to match the serial number from mobinet dump file with rfs and ms-mf file------
+@api_view(['GET','POST'])
+def mobinet_sitecircle_match(request):
+    mobinet_log_folder = os.path.join(main_folder, 'mobinet_dump_data')
+    if not os.path.exists(mobinet_log_folder):
+        return Response({"error": "mobinet_dump_data folder not found"}, status=400)
+
+    log_df_list = []
+    for file in os.listdir(mobinet_log_folder):
+        file_path = os.path.join(mobinet_log_folder, file)
+        if not os.path.isfile(file_path):
+            continue
+        try:
+            if file_path.endswith('.csv'):
+                df = pd.read_csv(file_path)
+            elif file_path.endswith(('.xls', '.xlsx')):
+                df = pd.read_excel(file_path, engine='openpyxl')
+            else:
+                continue
+            log_df_list.append(df)
+        except Exception as e:
+            return Response({"error": f"Error reading file {file}: {str(e)}"}, status=500)
+
+    if not log_df_list:
+        return Response({"error": "No valid Mobinet log files found"}, status=400)
+
+    log_df = pd.concat(log_df_list, ignore_index=True)
+
+    # ------------------- RFS DATA -------------------
+    rfs_df = pd.DataFrame()  # default blank
+    rfs_folder = os.path.join(main_folder, 'rfs_data')
+    if os.path.exists(rfs_folder):
+        for file in os.listdir(rfs_folder):
+            rfs_file_path = os.path.join(rfs_folder, file)
+            if not os.path.isfile(rfs_file_path):
+                continue
+            try:
+                if rfs_file_path.endswith('.csv'):
+                    rfs_df = pd.read_csv(rfs_file_path)
+                elif rfs_file_path.endswith(('.xls', '.xlsx')):
+                    rfs_df = pd.read_excel(rfs_file_path, engine='openpyxl')
+                else:
+                    continue
+                rfs_df.columns = rfs_df.columns.str.strip()
+                # print("RFS columns:", rfs_df.columns)
+                break  # take only first valid file
+            except Exception as e:
+                print(f"Error reading RFS file: {e}")
+    else:
+        print("rfs_data folder not found — continuing with blank DataFrame.")
+
+    # ------------------- MSMF DATA -------------------
+    msmf_df = pd.DataFrame()  # default blank
+    msmf_folder = os.path.join(main_folder, 'msmf_data')
+    if os.path.exists(msmf_folder):
+        for file in os.listdir(msmf_folder):
+            msmf_file_path = os.path.join(msmf_folder, file)
+            if not os.path.isfile(msmf_file_path):
+                continue
+            try:
+                if msmf_file_path.endswith('.csv'):
+                    msmf_df = pd.read_csv(msmf_file_path)
+                elif msmf_file_path.endswith(('.xls', '.xlsx')):
+                    msmf_df = pd.read_excel(msmf_file_path, engine='openpyxl')
+                else:
+                    continue
+                msmf_df.columns = msmf_df.columns.str.strip()
+                # print("MS-MF columns:", msmf_df.columns)
+                break
+            except Exception as e:
+                print(f"Error reading MS-MF file: {e}")
+    else:
+        print("msmf_data folder not found — continuing with blank DataFrame.")
+
+    # ------------------- LOCATOR DATA -------------------
+    locator_folder = os.path.join(main_folder, 'locator_data')
+    if not os.path.exists(locator_folder):
+        return Response({"error": "locator_data folder not found"}, status=400)
+
+    locator_df_list = []
+    for file in os.listdir(locator_folder):
+        locator_file_path = os.path.join(locator_folder, file)
+        if not os.path.isfile(locator_file_path):
+            continue
+        try:
+            if locator_file_path.endswith('.csv'):
+                df = pd.read_csv(locator_file_path, usecols=['LOCATION_NAME', 'SITEID'])
+            elif locator_file_path.endswith(('.xls', '.xlsx')):
+                df = pd.read_excel(locator_file_path, engine='openpyxl', usecols=['LOCATION_NAME', 'SITEID'])
+            else:
+                continue
+            df.columns = df.columns.str.strip()
+            locator_df_list.append(df)
+        except Exception as e:
+            print(f"Error reading locator file {file}: {e}")
+
+    locator_df = pd.concat(locator_df_list, ignore_index=True).drop_duplicates()
+
+    # ------------------- FILTER MOBINET SERIALS -------------------
+    log_df = log_df[
+        log_df['Serial Number'].notna() &
+        (log_df['Serial Number'].astype(str).str.strip() != '') &
+        (log_df['Serial Number'].astype(str).str.strip() != '-')
+    ]
+    log_df['SiteID+SN'] = log_df['Parent Site'].astype(str) + "_" + log_df['Serial Number'].astype(str)
+
+    # ------------------- Circle Mapping -------------------
+    circle_map_code = {
+        151: 'AP', 132: 'BR', 152: 'CN', 111: 'DL', 113: 'HR', 114: 'JK',
+        153: 'KK', 174: 'MU', 172: 'MP', 134: 'OR', 115: 'PB', 176: 'RJ',
+        116: 'UE', 117: 'UW', 135: 'WB', 136: 'KO', 155: 'TN', 133: 'NE', 131: 'AS'
+    }
+
+    # ------------------- RFS MERGE -------------------
+    if not rfs_df.empty:
+        merged_rfs_df = pd.merge(
+            rfs_df, locator_df[['LOCATION_NAME', 'SITEID']],
+            how='inner', left_on='FROMLOCATION', right_on='LOCATION_NAME', sort=False
+        )
+        merged_rfs_df['Circle_Map'] = merged_rfs_df['FROMLOCATION'].astype(str).str[:3].astype(int)
+        merged_rfs_df['Circle'] = merged_rfs_df['Circle_Map'].map(circle_map_code)
+        merged_rfs_df['Unique Site ID'] = merged_rfs_df['SITEID'].astype(str) + "_" + merged_rfs_df['Circle'].astype(str)
+        merged_rfs_df.drop(columns=['LOCATION_NAME', 'Circle_Map'], inplace=True)
+        merged_rfs_df["SiteID+SN"] = merged_rfs_df["Unique Site ID"].astype(str) + "_" + merged_rfs_df["SERIALNUMBER"].astype(str)
+
+        matched_rfs_sn = pd.merge(
+            merged_rfs_df, 
+            log_df[['SiteID+SN', 'Board Model']],
+            how='inner', 
+            on='SiteID+SN', 
+            sort=False
+        )
+    else:
+        matched_rfs_sn = pd.DataFrame(columns=['No RFS Data Found'])
+
+    # ------------------- MSMF MERGE -------------------
+    if not msmf_df.empty:
+        merged_msmf_df = pd.merge(
+            msmf_df, locator_df[['LOCATION_NAME', 'SITEID']],
+            how='inner', left_on='MS_FROMLOCATION', right_on='LOCATION_NAME', sort=False
+        )
+        merged_msmf_df['Circle_Map'] = merged_msmf_df['MS_FROMLOCATION'].astype(str).str[:3].astype(int)
+        merged_msmf_df['Circle'] = merged_msmf_df['Circle_Map'].map(circle_map_code)
+        merged_msmf_df['Unique Site ID'] = merged_msmf_df['SITEID'].astype(str) + "_" + merged_msmf_df['Circle'].astype(str)
+        merged_msmf_df.drop(columns=['LOCATION_NAME', 'Circle_Map'], inplace=True)
+        merged_msmf_df["SiteID+SN"] = merged_msmf_df["Unique Site ID"].astype(str) + "_" + merged_msmf_df["SERIAL_NUMBER"].astype(str)
+
+        matched_msmf_sn = pd.merge(
+            merged_msmf_df, 
+            log_df[['SiteID+SN', 'Board Model']],
+            how='inner',
+            on='SiteID+SN', 
+            sort=False
+        )
+    else:
+        matched_msmf_sn = pd.DataFrame(columns=['No MS-MF Data Found'])
+        
+   
+
+    # ------------------ OUTPUT FILE --------------------
+    output_dir = os.path.join(main_folder, 'SN_Match_Output')
+    os.makedirs(output_dir, exist_ok=True)
+    delete_existing_files(output_dir)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"SN_Match_Output_{timestamp}.xlsx"
+    output_path = os.path.join(output_dir, filename)
+
+    with pd.ExcelWriter(output_path, engine="xlsxwriter") as writer:
+        # safe_write(log_df, writer, "Mobinet_Summary")
+        safe_write(matched_rfs_sn, writer, "RFS_Summary")
+        safe_write(matched_msmf_sn, writer, "MS-MF_Summary")
+        
+    print("End Of Process_________")
+    relative_path = os.path.relpath(output_path, MEDIA_ROOT)
+    download_url = request.build_absolute_uri(
+        os.path.join(MEDIA_URL, relative_path).replace("\\", "/")
+    ).replace("\\", "/")
+
+    return Response({
+        "status": True,
+        "message": "All Files processed successfully",
+        "download_url": download_url
+    })

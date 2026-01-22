@@ -868,7 +868,7 @@ def trendfor2g(request):
 
     # create dataframe
     site_id_df = pd.DataFrame(site_id, columns=["Site ID"])
-    site_id_df["Site ID"] = "Z" + site_id_df["Site ID"].str.replace("-", "", regex=False)
+    site_id_df["Site ID"] = "E" + site_id_df["Site ID"].str.replace("-", "", regex=False)
     print(site_id_df)
 
     

@@ -1,0 +1,20 @@
+from django.urls import path 
+from upgrade_tracker.views import *
+
+urlpatterns = [
+    path("upload_file/", upload_tracker_data_view, name="upload_tracker_data"),
+    path("download_tracker_file/", download_tracker_data_view, name="download_tracker_data"),
+    path("delete_tracker_data/", delete_tracker_data_view, name="delete_tracker_data"),
+    path("daily_dashboard_file/", daily_dashboard_view, name="daily_dashboard"),
+    path("weekly_monthly_dashboard_file/", weekly_monthly_dashboard_view, name="weekly_mpnthly_dashboard"),
+    path("gap_view/", gap_view, name="GAP"),
+    path("ms1_ageing_dashboard_table1/", ms1_ageing_dashboard_table1, name="ms1_ageing_dashboard_table1"),
+    path("ms1_ageing_dashboard_table2/", ms1_ageing_dashboard_table2, name="ms1_ageing_dashboard_table2"),
+    path("lifecycle_display/", lifecycle_display, name="lifecycle_display"),
+    path("issue_timeline_display/", issue_timeline_display, name="issue_timeline"),
+    path("issue_timeline_add/", issue_timeline_add, name="issue_timeline_add"),
+    path("issue_timeline_update/", issue_timeline_update, name="issue_timeline_update"),
+    path("issue_timeline_delete/", issue_timeline_delete, name="issue_timeline_delete"),
+    path("ms2_daily_dashboard/", ms2_daily_waterfall, name="ms2_daily_dashboard"),
+    path("ms2_weekly_monthly_dashboard/", ms2_weekly_monthly_waterfall, name="ms2_weekly_monthly_dashboard"),
+]

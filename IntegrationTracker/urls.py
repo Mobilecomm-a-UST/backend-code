@@ -7,6 +7,7 @@ router = DefaultRouter()
 
 urlpatterns = [
     path("upload/",upload_excel),
+    path('add_integration_record/', add_integration_record, name='add_integration_record'),
     path('datewise-integration-data/', datewise_integration_data, name='datewise-integration-data'),
     path('monthwise-integration-data/', monthwise_integration_data, name='monthwise-integration-data'),
     path('template/',get_excel_temp_link , name='get_excel_temp_link'),
@@ -22,13 +23,12 @@ urlpatterns = [
     path('edit-integration-record/<int:id>/',integration_table_update, name='update_my_model'),
     path('oem_wise_integration_data/',overall_integration_for_perticular_oem),
     
+    
     # relocation apis
     path('relocation/tracker/',Relocation_trackerViewSet.as_view() ),
     path('relocation/tracker/<int:id>/',Relocation_trackerViewSet.as_view() ),
-   
     path('New_site_locked_unlocked_date/',New_site_locked_unlocked_dateView.as_view() ),
     path('old_site_locked_unlocked_date/',old_site_locked_unlocked_dateView.as_view() ),
-   
     path("upload-relocation-excel/", upload_relocation_excel, name="upload_relocation_excel"),
     path('relocation-template/',get_relocation_excel_temp_link , name='get_relocation_excel_temp_link'),
     path('get_old_site_locked_unlocked_date/',get_old_site_locked_unlocked_date ),

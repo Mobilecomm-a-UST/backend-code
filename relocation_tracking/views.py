@@ -37,6 +37,7 @@ circle_map = {
     "MUM":"MUM",
     "BI":"BIH",
     "PJ": "PUN",
+    "MH": "MAH"
 }
  
 def cut_if_alpha(s):
@@ -192,7 +193,10 @@ def referenceView(request):
         )
         
         df_4G1['SITEID'] = df_4G1.apply(
-            lambda x: re.sub(r"^[a-zA-Z]+|[a-zA-Z]+$", "", x['SITEID']) if x['CIRCLE2']=="DEL" else x['SITEID'], axis=1
+            lambda x: re.sub(r"^[a-zA-Z]+|[a-zA-Z]+$", "", str(x['SITEID']))
+            if x['CIRCLE2'] == "DEL" and pd.notna(x['SITEID'])
+            else x['SITEID'],
+            axis=1
         )
         
         new_df = df_4G1[
@@ -205,7 +209,7 @@ def referenceView(request):
         
         hs_data = new_df[
             (new_df['Short name'].str.contains("_HS_")) &
-            (new_df['Circle'].isin(['AS', 'MU', 'NE']))
+            (new_df['Circle'].isin(['AS', 'MU', 'NE', 'BH','OD','OR']))
         ].copy()
         
         all_data_clean = all_data[~all_data['Short name'].str.contains("_HS_")]
@@ -339,7 +343,7 @@ def relocationView(request):
         
         HS_main_4G_df = main_4G_df[
             (main_4G_df['Short name'].str.contains("_HS_")) &
-            (main_4G_df['Circle'].isin(['AS', 'MU', 'NE','']))
+            (main_4G_df['Circle'].isin(['AS', 'MU', 'NE', 'BH','OD','OR']))
         ]
         
         main_4G_df = main_4G_df[~main_4G_df['Short name'].str.contains("_HS_")]

@@ -82,7 +82,7 @@ urlpatterns = [
     path('soft_at_status/', include('soft_at_status_tech.urls')),
     path("gpl_audit/", include("gpl_audit_tool_V1_1.urls")),
     path("Soft_AT_Checklist_Ericsson/", include("Soft_AT_Checklist_Ericsson.urls")),
-    path("Soft_AT_Checklist_Nokia/", include("Soft_AT_Checklist_Nokia.urls")),
+    path("Soft_AT_Checklist_Nokia/", include("Soft_At_Nokia.urls")),
     path("LTE/", include("LTE_Integration_Scripting_Automtion.urls")),
     path("soft_at_5g_summary/", include("soft_at_5g_summary.urls")),
     path ("soft_at_5g_checklist/", include("soft_at_5g_summary.urls")),
@@ -91,7 +91,14 @@ urlpatterns = [
     path("relocation_tracking/", include("relocation_tracking.urls")),
     path("degrow_dismental/" , include("degrowDismental.urls")),
     path("alok_tracker/" , include("alok_tracker.urls")),
-    path("Alarm_old_new_Tool/" , include("Alarm_old_new_Tool.urls")),
+    path("Alarm/" , include("Alarm_old_new_Tool.urls")),
+    path("xml_parser/", include("Xml_parsar_script_tool.urls")),
+    path("ix_tracker_vi/", include("IX_Tracker_VI.urls")),
+    path("daily_alarm/", include("Nokia_SA_NSA.urls")),
+    path('mw_app/',include("Micro_wave_Tool.urls")),
+    path("nt_tracker/", include("nt_site_tracker.urls")),
+    path("upgrade_tracker/", include("upgrade_tracker.urls")),
+
 ]
 
 if settings.DEBUG:

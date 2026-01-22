@@ -25,7 +25,7 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import fixed_pre_traffic, daily_pre_traffic, daily_post_traffic 
-
+from django.utils.dateparse import parse_datetime
 from rest_framework.response import Response
 from django.db.models import Count
 from .models import IntegrationData
@@ -34,6 +34,32 @@ from datetime import datetime, timedelta
 from .serializers import New_site_locked_unlocked_date_serializer ,old_site_locked_unlocked_date_serializer
 from .models import *
 
+
+
+
+ALLOWED_VALUES = {
+    "OEM": ["NOKIA", "ZTE", "SAMSUNG", "ERICSSON", "HUAWEI"],
+    "CIRCLE": [
+        "AP","BIH","CHN","ROTN","DEL","HRY","JK","JRK","KOL","MAH",
+        "MP","MUM","ORI","PUN","RAJ","UPE","UPW","WB","KK","HP","NESA","ASM"
+    ],
+    "Activity_Name": [
+        "ULS_HPSC","RELOCATION","MACRO","DE-GROW","RET","IBS","ODSC","IDSC",
+        "HT INCREMENT","FEMTO","OTHERS","UPGRADE","RECTIFICATION",
+        "5G SECTOR ADDITION","OPERATIONS","5G RELOCATION",
+        "TRAFFIC SHIFTING","RRU UPGRADE","5G RRU SWAP","5G BW UPGRADE"
+    ],
+    "Activity_Mode": ["SA", "NSA"],
+    "Technology_SIWA": ["2G", "FDD", "TDD", "5G"],
+    "Band_SIWA": ["G900","G1800","L850","L900","L1800","L2100","L2300","3500"],
+    "Old_Site_Tech": ["G900","G1800","L850","L900","L1800","L2100","L2300","3500"],
+    "Allocated_Tech": ["G900","G1800","L850","L900","L1800","L2100","L2300","3500"],
+    "Deployed_Tech": ["G900","G1800","L850","L900","L1800","L2100","L2300","3500"],
+}
+
+def validate_multi(value, allowed):
+    values = [v.strip().upper() for v in value.split(",") if v.strip()]
+    return all(v in allowed for v in values)
 
 
 
@@ -60,13 +86,13 @@ def generate_date_list(start_date):
 def get_excel_temp_link(request):
     #mcom123 temp id.
     # Path to the Excel file
-    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.8.2.xlsm')
+    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.8.3.xlsm')
 
     # Check if the file exists
     if os.path.exists(file_path):
         # Construct the URL to access the file
-        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.8.2.xlsm')              
-        return Response({'file_url': file_url,'template_version':'v1.8.2'}, status=status.HTTP_200_OK)
+        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.8.3.xlsm')              
+        return Response({'file_url': file_url,'template_version':'v1.8.3'}, status=status.HTTP_200_OK)
     else:
         # Return a 404 response if the file does not exist
         return Response({'error': 'Excel file not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -112,7 +138,7 @@ def upload_excel(request):
     file = request.data['file']
     value_in_cell = read_excel_cell(file.read(), sheet_name='Sheet2', cell='BE37')
     print("cell_value:",value_in_cell)
-    if value_in_cell == "mcom_v1.8.2":
+    if value_in_cell == "mcom_v1.8.3":
             try:
                 df = pd.read_excel(file,sheet_name="Tracker",keep_default_na=False,skiprows=1)
             except Exception as e:
@@ -124,7 +150,7 @@ def upload_excel(request):
 
                 'CIRCLE': ['AP', 'BIH', 'CHN', 'ROTN', 'DEL', 'HRY', 'JK', 'JRK', 'KOL', 'MAH', 'MP', 'MUM', 'ORI', 'PUN', 'RAJ', 'UPE', 'UPW', 'WB', 'KK','MAH', 'HP', 'NESA', 'ASM'],
                  'OEM': ['SAMSUNG', 'NOKIA', 'ERICSSON','HUAWEI','ZTE'],
-                'Activity Name': ['ULS_HPSC', 'RELOCATION', 'MACRO', 'DE-GROW', 'RET', 'IBS', 'ODSC', 'IDSC', 'HT INCREMENT', 'FEMTO', 'OTHERS', 'UPGRADE','RECTIFICATION','5G SECTOR ADDITION','OPERATIONS','5G RELOCATION','TRAFFIC SHIFTING', 'RRU UPGRADE', '5G RRU SWAP', '5G BW UPGRADE'],
+                'Activity Name': ['ULS_HPSC', 'RELOCATION', 'MACRO', 'DE-GROW', 'RET', 'IBS', 'ODSC', 'IDSC', 'HT INCREMENT', 'FEMTO', 'OTHERS', 'UPGRADE','RECTIFICATION','5G SECTOR ADDITION','OPERATIONS','5G RELOCATION','TRAFFIC SHIFTING', 'RRU UPGRADE', '5G RRU SWAP', '5G BW UPGRADE','RRU SWAP'],
                 'Activity Mode (SA/NSA)':['SA','NSA'],
                 'Technology (SIWA)': ['2G','FDD','TDD','5G'],
                 'Activity Type (SIWA)': ["FDD_SEC_ADDITION", "FDD_TWIN_BEAM", "FDD_UPGRADE", "L2100_UPGRADE", "L900_UPGRADE", "NEW_TOWER", "NEW_TOWER_ULS", "TDD_SEC_ADDITION", "TDD_TWIN_BEAM", "TDD_UPGRADE", "UPGRADE_SW_ONLY", "UPGRADE_ULS", "5G_SEC_ADDITION", "5G_UPGRADE","CPRI ADDITION","SFP CHANGE", "BW UPGRADATION", "BTS SWAP", "IP MODIFICATION", "HOT SWAP", "NOMENCLATURE CHANGE", "2G DELETION", "CARRIER ADDITION"],
@@ -188,6 +214,27 @@ def upload_excel(request):
                     invalid_row = {'unique_key': unique_combination, 'invalid_fields': invalid_fields, 'remarks':'These columns are mandatory OR value out of specified options'}
                     invalid_rows.append(invalid_row)
                     continue
+                # Validate Integration Remark only for RELOCATION & MACRO
+                if str(row['Activity Name']).strip().upper() in ['RELOCATION', 'MACRO']:
+                    allowed_remarks = ["IX DONE", "IX DONE WITH ALARM", "PARTIAL IX DONE"]
+                    remark_value = str(row.get('Integration Remark', '')).strip().upper()
+ 
+                    if remark_value not in allowed_remarks:
+                        invalid_rows.append({
+                            'unique_key': unique_combination,
+                            'invalid_fields': [
+                                "Integration Remark (Allowed Only: IX Done / IX Done With Alarm / Partial IX Done)"
+                            ],
+                            'remarks': 'Please provide a valid Integration Remark for RELOCATION & MACRO activities.'
+                        })
+                       
+                        return Response({
+                                            'message': 'Invalid Integration Remark for RELOCATION & MACRO activities.',
+                                            'error_type': True,
+                                            'error_rows': invalid_rows},
+                                        status=status.HTTP_400_BAD_REQUEST)
+
+
                 unique_key = str(row['Integration Date']) + str(row['Activity Name']).upper() + str(row['Site ID']) + str(row['Technology (SIWA)']) + str(row['CIRCLE']).upper() + str(row['Cell ID']) + str(row['LNBTS ID']) + str(row['OEM']).upper()+ str(row['NO OF BBU'])
                 obj,created = IntegrationData.objects.update_or_create(
                     Integration_Date=row['Integration Date'],
@@ -208,6 +255,7 @@ def upload_excel(request):
                         'PRE_ALARM': row['PRE-ALARM'],
                         'GPS_IP_CLK': row['GPS/IP CLK'],
                         'RET': row['RET'],
+                        'Configuration_5G': row['5G Configuration'],
                         'POST_VSWR': row['POST-VSWR'],
                         'POST_Alarms': row['POST Alarms'],
                         'CELL_STATUS': row['CELL STATUS'],
@@ -366,6 +414,143 @@ def upload_excel(request):
 
 
 
+@api_view(["POST"])
+def add_integration_record(request):
+    data = request.data
+    errors = []
+
+    def val(key):
+        return str(data.get(key, "")).strip()
+
+    # 🔹 Mandatory fields
+    mandatory_fields = [
+        "OEM",
+        "Integration_Date",
+        "CIRCLE",
+        "Activity_Name",
+        "Site_ID",
+        "Technology_SIWA",
+    ]
+
+    for field in mandatory_fields:
+        if not val(field):
+            errors.append(field)
+
+    # 🔹 Allowed value validation
+    for field, allowed in ALLOWED_VALUES.items():
+        value = val(field)
+        if not value:
+            continue
+
+        if "," in value:
+            if not validate_multi(value, allowed):
+                errors.append(field)
+        else:
+            if value.upper() not in allowed:
+                errors.append(field)
+
+    if errors:
+        return Response(
+            {
+                "message": "Validation failed",
+                "invalid_fields": list(set(errors)),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # 🔹 Parse date
+    integration_date = parse_datetime(val("Integration_Date"))
+
+    # 🔹 Create record
+    unique_key = (
+        val("Integration_Date")
+        + val("Activity_Name").upper()
+        + val("Site_ID")
+        + val("Technology_SIWA")
+        + val("CIRCLE").upper()
+        + val("Cell_ID")
+        + val("LNBTS_ID")
+        + val("OEM").upper()
+        + val("NO_OF_BBU")
+    )
+    obj = IntegrationData.objects.create(
+        unique_key= str(unique_key).upper(),     
+        OEM=val("OEM").upper(),
+        Integration_Date=integration_date,
+        CIRCLE=val("CIRCLE").upper(),
+        Activity_Name=val("Activity_Name").upper(),
+        Site_ID=val("Site_ID"),
+        MO_NAME=val("MO_NAME"),
+        LNBTS_ID=val("LNBTS_ID"),
+        Technology_SIWA=val("Technology_SIWA"),
+        Configuration_5G=val("Configuration_5G"),
+        OSS_Details=val("OSS_Details"),
+        Cell_ID=val("Cell_ID"),
+        CELL_COUNT=data.get("CELL_COUNT") or None,
+        BSC_NAME=val("BSC_NAME"),
+        BCF=val("BCF"),
+        TRX_Count=val("TRX_Count"),
+        PRE_ALARM=val("PRE_ALARM"),
+        GPS_IP_CLK=val("GPS_IP_CLK"),
+        RET=val("RET"),
+        POST_VSWR=val("POST_VSWR"),
+        POST_Alarms=val("POST_Alarms"),
+        Activity_Mode=val("Activity_Mode"),
+        Activity_Type_SIWA=val("Activity_Type_SIWA"),
+        Band_SIWA=val("Band_SIWA"),
+        CELL_STATUS=val("CELL_STATUS"),
+        CTR_STATUS=val("CTR_STATUS"),
+        Integration_Remark=val("Integration_Remark"),
+        T2T4R=val("T2T4R"),
+        BBU_TYPE=val("BBU_TYPE"),
+        BB_CARD=val("BB_CARD"),
+        RRU_Type=val("RRU_Type"),
+        Media_Status=val("Media_Status"),
+        Mplane_IP=val("Mplane_IP"),
+        SCF_PREPARED_BY=val("SCF_PREPARED_BY"),
+        SITE_INTEGRATE_BY=val("SITE_INTEGRATE_BY"),
+        Site_Status=val("Site_Status"),
+        External_Alarm_Confirmation=val("External_Alarm_Confirmation"),
+        SOFT_AT_STATUS=val("SOFT_AT_STATUS"),
+        LICENCE_Status=val("LICENCE_Status"),
+        ESN_NO=val("ESN_NO"),
+        Responsibility_for_alarm_clearance=val("Responsibility_for_alarm_clearance"),
+        TAC=val("TAC"),
+        PCI_TDD_20=val("PCI_TDD_20"),
+        PCI_TDD_10_20=val("PCI_TDD_10_20"),
+        PCI_FDD_2100=val("PCI_FDD_2100"),
+        PCI_FDD_1800=val("PCI_FDD_1800"),
+        PCI_L900=val("PCI_L900"),
+        PCI_5G=val("PCI_5G"),
+        RSI_TDD_20=val("RSI_TDD_20"),
+        RSI_TDD_10_20=val("RSI_TDD_10_20"),
+        RSI_FDD_2100=val("RSI_FDD_2100"),
+        RSI_FDD_1800=val("RSI_FDD_1800"),
+        RSI_L900=val("RSI_L900"),
+        RSI_5G=val("RSI_5G"),
+        GPL=val("GPL"),
+        Pre_Post_Check=val("Pre_Post_Check"),
+        CRQ=val("CRQ"),
+        Customer_Approval=val("Customer_Approval"),
+        Old_Site_ID=val("Old_Site_ID"),
+        Old_Site_Tech=val("Old_Site_Tech"),
+        Allocated_Tech=val("Allocated_Tech"),
+        Deployed_Tech=val("Deployed_Tech"),
+        NO_OF_BBU=val("NO_OF_BBU"),
+        uploaded_by=request.user.username,
+    )
+
+    return Response(
+        {
+            "message": "Integration record added successfully",
+            "data": {
+                "id": obj.id,
+                "Site_ID": obj.Site_ID,
+                "Activity_Name": obj.Activity_Name,
+            },
+        },
+        status=status.HTTP_201_CREATED,
+    )
 # @api_view(['GET'])
 # def datewise_integration_data(request):
 #     # Get the latest 3 dates
@@ -613,7 +798,7 @@ def datewise_integration_data(request):
         "latest_dates": [date1, date2, date3],
         "download_data": serializer.data
     }
-    print('integration data in datewise',data)
+    # print('integration data in datewise',data)
     return Response(data)
 
 
@@ -894,7 +1079,7 @@ def date_range_wise_integration_data(request):
 
     activity_columns = [f'"{sql_safe(a)}" INTEGER' for a in activity_type]
 
-    print("activity columns →", activity_columns)
+    # print("activity columns →", activity_columns)
 
     # ✅ Crosstab fetcher
     def fetch_crosstab_data(activity_type: list, activity_columns: list) -> tuple:
@@ -1265,8 +1450,7 @@ def monthly_oemwise_integration_data(request):
         latest_year = IntegrationData.objects.latest('Integration_Date').Integration_Date.year
          
         month=latest_month
-        year=latest_year
-        
+        year=latest_year 
 
     with connection.cursor() as cursor:
 
@@ -1290,19 +1474,17 @@ def monthly_oemwise_integration_data(request):
          """
         cursor.execute(query)
         results = cursor.fetchall()
-        # print(results)        
+        columns = [col[0] for col in cursor.description]       
     results_as_strings = []
     for row in results:
         # Convert each element in the row to a string
         row_as_string = [str(element) for element in row]
         # Append the row as a string to the list
         results_as_strings.append(row_as_string)
-    
-    rows_as_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in results_as_strings]
+    rows_as_dict = [dict(zip(columns, row)) for row in results_as_strings]
 
     jsonResult =  json.dumps(rows_as_dict)
 
-    # print(jsonResult)
     data={"table_data":jsonResult,'month':month,'year':year}
     return Response(data)
         
@@ -1348,19 +1530,22 @@ def hyperlink_monthly_oemwise_integration_data(request):
                                     'TRAFFIC SHIFTING',
                                     'ULS_HPSC',
                                     'UPGRADE',
-                                    '5G AIR SWAP']) AS "Activity_Name") AS "Activity_Name"
+                                    '5G AIR SWAP',
+                                    'RRU SWAP']) AS "Activity_Name") AS "Activity_Name"
      LEFT JOIN
         (select "CIRCLE","Activity_Name", count("id") as cnt from 
  						(select "id", "CIRCLE", UPPER("Activity_Name") as "Activity_Name" from public."IntegrationTracker_integrationdata" WHERE EXTRACT(MONTH FROM "Integration_Date") = {month} and EXTRACT(YEAR FROM "Integration_Date") = {year} and "OEM"='{oem}' and "CIRCLE"='{circle}') in_0
  group by "CIRCLE","Activity_Name") as r
      USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
-ct(cir text, "5G RELOCATION" INTEGER,"5G RRU SWAP" INTEGER,"5G SECTOR ADDITION" INTEGER,"DE-GROW" INTEGER,"FEMTO" INTEGER,"HT INCREMENT" INTEGER,"IBS" INTEGER,"IDSC" INTEGER,"MACRO" INTEGER, "ODSC" INTEGER,"OPERATIONS" INTEGER,"RECTIFICATION" INTEGER,"OTHERS" INTEGER,"RECTIFICATION" INTEGER,"RELOCATION" INTEGER,"RET" INTEGER,"RRU UPGRADE" INTEGER,"TRAFFIC SHIFTING" INTEGER,"ULS_HPSC" INTEGER,"UPGRADE" INTEGER,"5G AIR SWAP" INTEGER)) as m1
+ct(cir text, "5G RELOCATION" INTEGER,"5G RRU SWAP" INTEGER,"5G SECTOR ADDITION" INTEGER,"DE-GROW" INTEGER,"FEMTO" INTEGER,"HT INCREMENT" INTEGER,"IBS" INTEGER,"IDSC" INTEGER,"MACRO" INTEGER, "ODSC" INTEGER,"OPERATIONS" INTEGER,"RECTIFICATION" INTEGER,"OTHERS" INTEGER,"RELOCATION" INTEGER,"RET" INTEGER,"RRU UPGRADE" INTEGER,"TRAFFIC SHIFTING" INTEGER,"ULS_HPSC" INTEGER,"UPGRADE" INTEGER,"5G AIR SWAP" INTEGER,"RRU SWAP" INTEGER)) as m1
 
         
         
          """
         cursor.execute(query)
         results = cursor.fetchall()
+        columns=cursor.description
+        
         # print(results)        
     results_as_strings = []
     for row in results:
@@ -1369,8 +1554,10 @@ ct(cir text, "5G RELOCATION" INTEGER,"5G RRU SWAP" INTEGER,"5G SECTOR ADDITION" 
         # Append the row as a string to the list
         results_as_strings.append(row_as_string)
     
-    rows_as_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in results_as_strings]
-
+    rows_as_dict = [
+    dict(zip([column[0] for column in columns], row))
+    for row in results_as_strings
+]
     jsonResult =  json.dumps(rows_as_dict)
 
     # print(jsonResult)
@@ -1418,6 +1605,7 @@ def overall_record_summary(request):
         """
         cursor.execute(query)
         results = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]
         # print(results)        
     results_as_strings = []
     for row in results:
@@ -1426,7 +1614,7 @@ def overall_record_summary(request):
         # Append the row as a string to the list
         results_as_strings.append(row_as_string)
     
-    rows_as_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in results_as_strings]
+    rows_as_dict = [dict(zip(columns, row)) for row in results_as_strings]
 
     jsonResult =  json.dumps(rows_as_dict)
 
@@ -1439,11 +1627,11 @@ def delete_integration_record(request, pk):
     print("User: ", request.user.username)
     user=request.user.username
     print("pk: ", pk)
-    nokia_spocks=['chandan.kumar@mcpsinc.com']
-    zte_spocks=['aashish.s@mcpsinc.com']
-    huawei_spocks=['rahul.dahiya@mcpsinc.com']
-    samsung_spocks=['rahul.dahiya@mcpsinc.com']
-    ericsson_spocks=['aashish.s@mcpsinc.com']
+    nokia_spocks=['chandan.kumar@mcpsinc.com','Chandan.Kumar2@ust.com']
+    zte_spocks=['Aashish.Sharma@ust.com']
+    huawei_spocks=['rahul.dahiya@mcpsinc.com','Rahul.Dahiya@ust.com']
+    samsung_spocks=['rahul.dahiya@mcpsinc.com','Rahul.Dahiya@ust.com']
+    ericsson_spocks=['Aashish.Sharma@ust.com']
     print("here")
     try:
         obj = IntegrationData.objects.get(pk=pk)
@@ -1480,11 +1668,11 @@ def delete_integration_record(request, pk):
 def integration_table_update(request, id=None):
     user = request.user.username
     print("username: ", user)
-    nokia_spocks=['chandan.kumar@mcpsinc.com','Prerna.PramodKumar@ust.com','girraj.singh@mcpsinc.in','mohit.batra@mcpsinc.com','abhishek.gupta']
-    zte_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta','Prerna.PramodKumar@ust.com']
-    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com','abhishek.gupta', 'Prerna.PramodKumar@ust.com']
-    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com', 'abhishek.gupta', 'Prerna.PramodKumar@ust.com']
-    ericsson_spocks=['aashish.s@mcpsinc.com','mohit.batra@mcpsinc.com','abhishek.gupta', 'Prerna.PramodKumar@ust.com']
+    nokia_spocks=['chandan.kumar@mcpsinc.com','Prerna.PramodKumar@ust.com','girraj.singh@mcpsinc.in','mohit.batra@mcpsinc.com','abhishek.gupta','Abhinav.Verma@ust.com']
+    zte_spocks=['Aashish.Sharma@ust.com','mohit.batra@mcpsinc.com','abhishek.gupta','Prerna.PramodKumar@ust.com','Abhinav.Verma@ust.com']
+    huawei_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com','abhishek.gupta', 'Prerna.PramodKumar@ust.com','Abhinav.Verma@ust.com']
+    samsung_spocks=['rahul.dahiya@mcpsinc.com','mohit.batra@mcpsinc.com','harish.singh@ust.com', 'abhishek.gupta', 'Prerna.PramodKumar@ust.com','Abhinav.Verma@ust.com']
+    ericsson_spocks=['Aashish.Sharma@ust.com','mohit.batra@mcpsinc.com','abhishek.gupta', 'Prerna.PramodKumar@ust.com','Abhinav.Verma@ust.com']
   
     if request.method == 'PUT':
         try:

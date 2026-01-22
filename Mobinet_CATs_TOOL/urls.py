@@ -15,6 +15,7 @@ urlpatterns = [
     path('stock/', views.upload_stock_report_data),
     path('rfs_site_mapping/', views.rfs_site_mapping),
     path('ms_mf_site_mapping/', views.ms_mf_site_mapping),
+    path('site_sn/', views.mobinet_sitecircle_match), #new api site+sn
 
 ]
 

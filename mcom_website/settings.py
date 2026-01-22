@@ -31,7 +31,7 @@ DEBUG = True
 
 
 # ALLOWED_HOSTS = ["*"]
-ALLOWED_HOSTS = ['192.186.1.7', 'localhost', '127.0.0.1', '122.176.141.197']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1' ,'commtoolapi.mcpspmis.com']
 
 
 # Application definition
@@ -101,7 +101,7 @@ INSTALLED_APPS = [
     "LKF_StatusApp",
     "soft_at_status_tech",
     "Soft_AT_Checklist_Ericsson",
-    "Soft_AT_Checklist_Nokia",
+    "Soft_At_Nokia",
     "LTE_Integration_Scripting_Automtion",
     "soft_at_5g_summary",
     "gpl_audit_tool_V1_1",
@@ -110,6 +110,12 @@ INSTALLED_APPS = [
     "degrowDismental",
     "alok_tracker",
     "Alarm_old_new_Tool",
+    "Xml_parsar_script_tool",
+    "IX_Tracker_VI",
+    "Nokia_SA_NSA",
+    "Micro_wave_Tool",
+    "nt_site_tracker",
+    "upgrade_tracker"
 ]
 
 MIDDLEWARE = [
@@ -171,7 +177,8 @@ DATABASES = {
         'NAME': 'mobilecomm',
         'USER':'postgres',
         'PASSWORD':'mcomnpn',
-        'HOST':'localhost'
+        'HOST':'localhost',
+        'PORT': '5432',
 }}
 # DATABASES = {
 #    'default': {

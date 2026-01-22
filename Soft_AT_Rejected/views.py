@@ -1,10 +1,10 @@
-import win32com.client
+# import win32com.client
 from pathlib import Path
 import datetime
 from itertools import chain
 import json
 from datetime import datetime as dt
-import pythoncom
+# import pythoncom
 import re
 import pandas as pd
 from django.http import JsonResponse

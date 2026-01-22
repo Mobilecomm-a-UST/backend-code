@@ -11,3 +11,11 @@ class SummaryDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = SummaryData
         fields = '__all__'
+
+from .models import UserCounter
+
+
+class UserCounterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserCounter
+        fields = '__all__'

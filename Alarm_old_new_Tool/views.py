@@ -10,7 +10,7 @@ from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 from rest_framework import status
 import shutil
 from datetime import datetime
-from Alarm_old_new_Tool.tasks import send_email_for_Alarm
+from Alarm_old_new_Tool.tasks import send_email_for_Alarm , send_email_for_5G_Alarm
 
 def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
     """
@@ -97,8 +97,6 @@ def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
                 style = missing_format
             worksheet.write(startrow + row_idx + 1, startcol + col_idx, cell_value, style)
 
-
-
 def delete_existing_files(folder_path):
     """Remove all files inside folder_path (not the folder itself)."""
     if not os.path.exists(folder_path):
@@ -107,10 +105,10 @@ def delete_existing_files(folder_path):
         file_path = os.path.join(folder_path, file_name)
         if os.path.isfile(file_path):
             os.remove(file_path)
-            
+        
 # Prepare folders---
-base_folder = os.path.join(MEDIA_ROOT, "Alarm_New_Old_Data")       
-os.makedirs(base_folder, exist_ok=True)     
+base_folder = os.path.join(MEDIA_ROOT, "Alarm_New_Old_Data")      
+os.makedirs(base_folder, exist_ok=True)    
 
 #function and process logic for 4g logs for new and old----------------------------------------------------------------------------------------
 def get_band(cell_name):
@@ -126,7 +124,6 @@ def get_band(cell_name):
         return band_map.get(match.group(1), "")
     return ""
 
-
 def extract_4g_sync_status(content_4g):
     sync_ok = False
     for line in content_4g.splitlines():
@@ -135,16 +132,13 @@ def extract_4g_sync_status(content_4g):
             break
     return "OK" if sync_ok else "NOT OK"
 
-
 def extract_4g_site_id_from_cell_name(cell_name):
     match = re.search(r'_([A-Za-z0-9]{5,12})[A-Z]_', cell_name)
     return match.group(1) if match else ""
 
-
 def extract_4g_circle_from_cell_name(cell_name):
     match = re.match(r'([A-Z]+)_', cell_name)
     return match.group(1) if match else "Unknown"
-
 
 def site_down_4g(content_4g):
     ip_match = re.search(r'Logging to file .+?/([a-fA-F0-9:.]+)\.log', content_4g)
@@ -152,12 +146,9 @@ def site_down_4g(content_4g):
     status = "OK" if "Checking ip contact...OK" in content_4g else "NOT OK"
     return {"Status": status, "IP Address": ip_address}
 
-
-
-
 def extract_4galarms_from_alt(content, site_id="Unknown"):
     alarms = []
-    
+
     node_id_match = re.search(r'(\S+)>[\s]*altk', content)
     node_id = node_id_match.group(1).strip() if node_id_match else "NA"
     site=node_id[1:] if node_id.startswith('L') else node_id
@@ -167,10 +158,10 @@ def extract_4galarms_from_alt(content, site_id="Unknown"):
     alarm_pattern = re.compile(r'''
         ^\s*
         (?P<dt>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})  
-        \s+(?P<sev>[Mm])                              
+        \s+(?P<sev>[A-Za-z])                              
         \s+(?P<prob>.+?)                              
         \s+(?P<mo>[^()]+?)                            
-        (?:\s*\(\s*(?P<add>.*?)\))?                   
+        (?:\s*\(\s*(?P<add>.*?)\))?                  
         \s*$
     ''', re.MULTILINE | re.VERBOSE)
 
@@ -186,7 +177,6 @@ def extract_4galarms_from_alt(content, site_id="Unknown"):
             "Additional": (m.group("add") or "").strip()
         })
     return alarms
-
 
 def extract_all_2g_trx_status(content):
     pattern = re.compile(
@@ -208,7 +198,6 @@ def extract_all_2g_trx_status(content):
             final_status = "UNKNOWN"
         trx_status_dict[trx_name] = final_status
     return [(trx, status) for trx, status in trx_status_dict.items()]
-
 
 def parse_4g_st_cell_output(content_4g):
     """
@@ -232,7 +221,7 @@ def parse_4g_st_cell_output(content_4g):
         cells.append({
             "Cell Name": cell_name,
             "Site ID": site_id,
-            "site" : re.sub(r'^[A-Z]+', '', site_id),
+            "site": (re.sub(r'^[A-Z]+', '', site_id) if (circle.strip() in ["DEL", "DL"]) else site_id),
             "Circle": circle,
             "Band": band,
             "Adm State": adm_state,
@@ -240,10 +229,8 @@ def parse_4g_st_cell_output(content_4g):
         })
     return cells
 
-
-
 def process_log_files(saved_files_folder):
-   
+
     rows = []
     alarms = []
     site_down_list = []
@@ -309,13 +296,12 @@ def process_log_files(saved_files_folder):
         # alarms for this file
         alarms_for_file = extract_4galarms_from_alt(content, site_id="Unknown")
         for a in alarms_for_file:
-         alarms.extend(alarms_for_file)
+            alarms.extend(alarms_for_file)
 
         # site down info
         site_down_list.append(site_down_4g(content))
 
     return rows, alarms, site_down_list
-
 
 @api_view(['POST'])
 def upload_4g_new_old(request):
@@ -328,22 +314,23 @@ def upload_4g_new_old(request):
 
     if not old_files and not new_files:
         return Response({"error": "No files uploaded in old_logs or new_logs"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     site_file = request.FILES.get('site_file')
     if not site_file:
         return Response({"error": "Site file is required for 4G logs"}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Read mapping file (OldSite - NewSite)
-    site_mapping_df = pd.read_excel(site_file, engine='openpyxl', usecols=["OldSite", "NewSite"])
+    # Read mapping file
+    site_mapping_df = pd.read_excel(site_file, engine='openpyxl', usecols=["OldSite", "NewSite","Circle"])
     site_mapping_df["OldSite"] = site_mapping_df["OldSite"].astype(str).str.replace(r"\.0$", "", regex=True)
     site_mapping_df["NewSite"] = site_mapping_df["NewSite"].astype(str).str.replace(r"\.0$", "", regex=True)
+    site_mapping_df["Circle"] = site_mapping_df["Circle"].astype(str).str.strip()
 
     # Setup folders
     output_folder = os.path.join(base_folder, "output_4g")
     log_folder = os.path.join(base_folder, "log_files_4g")
     old_folder = os.path.join(log_folder, "old_logs")
     new_folder = os.path.join(log_folder, "new_logs")
-     
+    
     os.makedirs(log_folder, exist_ok=True)
     os.makedirs(old_folder, exist_ok=True)
     os.makedirs(new_folder, exist_ok=True)
@@ -352,7 +339,7 @@ def upload_4g_new_old(request):
     delete_existing_files(old_folder)
     delete_existing_files(new_folder)
 
-    # Save uploaded logs
+    # Save logs
     for f in old_files:
         with open(os.path.join(old_folder, f.name), "wb+") as dest:
             for chunk in f.chunks():
@@ -377,7 +364,7 @@ def upload_4g_new_old(request):
     df_old = pd.DataFrame(rows_old)
     df_new = pd.DataFrame(rows_new)
 
-    # Filter logs by Site IDs in mapping file
+    # Filter logs by mapping
     if not df_old.empty:
         df_old["Site ID"] = df_old["Site ID"].astype(str).str.replace(r"\.0$", "", regex=True)
         df_old = df_old[df_old["Site ID"].isin(site_mapping_df["OldSite"])]
@@ -386,19 +373,22 @@ def upload_4g_new_old(request):
         df_new["Site ID"] = df_new["Site ID"].astype(str).str.replace(r"\.0$", "", regex=True)
         df_new = df_new[df_new["Site ID"].isin(site_mapping_df["NewSite"])]
 
-    # Merge site mapping to logs
+    # Merge mapping with logs
     if not df_old.empty:
-        df_old = df_old.merge(site_mapping_df, how='left', left_on="Site ID", right_on="OldSite")
-    if not df_new.empty:
-        df_new = df_new.merge(site_mapping_df, how='left', left_on="Site ID", right_on="NewSite")
+        df_old = df_old.merge(site_mapping_df[["OldSite", "NewSite", "Circle"]], how='left',
+                        left_on="Site ID", right_on="OldSite")
 
-    # Add suffix for clarity
+    if not df_new.empty:
+        df_new = df_new.merge(site_mapping_df[["OldSite", "NewSite", "Circle"]], how='left',
+                        left_on="Site ID", right_on="NewSite")
+
+    # Add suffix
     if not df_old.empty:
         df_old = df_old.add_suffix("_old")
     if not df_new.empty:
         df_new = df_new.add_suffix("_new")
 
-    # Merge old and new logs side by side using mapping
+    # Combine old + new
     if not df_old.empty and not df_new.empty:
         df_combined = pd.merge(
             df_old, df_new,
@@ -409,7 +399,64 @@ def upload_4g_new_old(request):
         df_combined = df_old.copy()
     else:
         df_combined = df_new.copy()
-    print(df_combined)
+
+    #  UPDATED UNIVERSAL CELL MATCHING (FINAL)
+
+    def extract_parts(cell):
+        """
+        Extract:
+        - Middle Pattern → F3_OM / F8_UM / T1_OM / F1_UM etc
+        - Short Name → A_A / B_B / C_N / D_O
+        """
+        try:
+            parts = str(cell).split("_")
+
+            middle = f"{parts[2]}_{parts[3]}"     
+            shortname = parts[-1]                
+
+            return middle, shortname
+
+        except:
+            return "", ""
+
+    def clean_unique(cells):
+        return sorted(list(set([x.strip() for x in cells if x.strip()])))
+
+    def match_cells(row):
+        cell_old = str(row.get("Cells_old", "")).strip()
+        cell_new = str(row.get("Cells_new", "")).strip()
+
+        # CASE 1: Only NEW exists
+        if not cell_old and cell_new:
+            return ", ".join(clean_unique(cell_new.split(",")))
+
+        # CASE 2: Only OLD exists
+        if not cell_new and cell_old:
+            return ", ".join(clean_unique(cell_old.split(",")))
+
+        # CASE 3: Both exist → match by pattern + shortname
+        if cell_old and cell_new:
+            old_list = cell_old.split(",")
+            new_list = cell_new.split(",")
+
+            matched = []
+
+            for o in old_list:
+                p_old, s_old = extract_parts(o)
+
+                for n in new_list:
+                    p_new, s_new = extract_parts(n)
+
+                    if p_old == p_new and s_old == s_new:
+                        matched.append(f"{o}|{n}")
+
+            return ", ".join(matched)
+
+        return ""
+
+    df_combined["Matched_Cells"] = df_combined.apply(match_cells, axis=1)
+
+    # ----------------------------------------------------
 
     # Alarms
     df_alarms_old = pd.DataFrame(alarms_old)
@@ -441,15 +488,15 @@ def upload_4g_new_old(request):
     else:
         df_site_down = df_site_down_new.copy()
 
-    # Clean data
+    # Clean sheets
     for df_var in ["df_combined", "df_alarms", "df_site_down"]:
         if df_var in locals():
             df = locals()[df_var]
             if not df.empty:
-                df.replace({pd.NA: None, np.nan: None}, inplace=True)
+                df.replace(r'^\s*$', "", regex=True, inplace=True)
                 df.fillna("", inplace=True)
 
-    # Create output Excel
+    # Output Excel
     circle_folder = os.path.join(output_folder, circle)
     if os.path.exists(circle_folder):
         shutil.rmtree(circle_folder)
@@ -460,24 +507,51 @@ def upload_4g_new_old(request):
 
     with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
         if not df_combined.empty:
+
+            def get_remark(row):
+                site_old = str(row.get("Site ID_old", "")).strip()
+                site_new = str(row.get("Site ID_new", "")).strip()
+                old_state = str(row.get("4G Cell Status - Adm State_old", "")).strip().lower()
+                new_state = str(row.get("4G Cell Status - Adm State_new", "")).strip().lower()
+
+                if site_old and not site_new:
+                    return "New Locked"
+                elif site_new and not site_old:
+                    return "Old Locked"
+                elif not site_old and not site_new:
+                    return "Both Locked"
+                elif old_state == "locked" and new_state == "locked":
+                    return "Locked"
+                elif new_state == "unlocked" and old_state == "unlocked":
+                    return "unlocked"
+                
+                else:
+                    return ""
+
+            df_combined["Remark"] = df_combined.apply(get_remark, axis=1)
             df_combined.to_excel(writer, index=False, sheet_name="Status")
             format_excel_sheet(writer, "Status", df_combined)
+
         if not df_alarms.empty:
             df_alarms.to_excel(writer, index=False, sheet_name="Alarms")
             format_excel_sheet(writer, "Alarms", df_alarms)
+
         if not df_site_down.empty:
             df_site_down.to_excel(writer, index=False, sheet_name="Site Down")
             format_excel_sheet(writer, "Site Down", df_site_down)
 
-    # Email send
-    send_email_for_Alarm(df_combined,output_path)
-    print("Email sent successfully")
+    if "Circle_old" in df_combined.columns:
+        df_combined["Circle"] = df_combined["Circle_old"]
+    elif "Circle_new" in df_combined.columns:
+        df_combined["Circle"] = df_combined["Circle_new"]
+    else:
+        df_combined["Circle"] = circle
 
-    # Build download URL
+    # Email
+    send_email_for_Alarm(df_combined, output_path)
+
     relative_path = os.path.join(MEDIA_URL.strip("/"), "Alarm_New_Old_Data", "output_4g", circle, output_filename)
     download_url = request.build_absolute_uri("/" + relative_path.replace("\\", "/"))
-
-    print("----- End of 4G Logs Processing -----")
 
     return Response({
         "status": True,
@@ -485,26 +559,10 @@ def upload_4g_new_old(request):
         "download_url": download_url,
     }, status=status.HTTP_200_OK)
 
-    
-    #End process of 4g logs----------------------------------------------------------------------------------------
-    
-    
-    
-    
-    
-#function and process logic for 5g logs for new and old----------------------------------------------------------------------------------------
-# ---------- 5G processing code (aligned with your 4G view) ----------
 
-import os
-import re
-import shutil
-import numpy as np
-import pandas as pd
-from rest_framework.decorators import api_view
-from rest_framework import status
-from rest_framework.response import Response
+# ---------- 5G processing code (aligned with your 4G view) ---
 
-# Helper: extract sync
+# ✔ Extract sync status
 def extract_5g_sync_status(content):
     sync_ok = False
     for line in content.splitlines():
@@ -513,76 +571,86 @@ def extract_5g_sync_status(content):
             break
     return "OK" if sync_ok else "NOT OK"
 
-# Extract site id and circle from cell name (keeps same rules as 4G)
+# ✔ UPDATED SITE ID extraction (NR structure support)
 def extract_5g_site_id_from_cell_name(cell_name):
-    match = re.search(r'_([A-Za-z0-9]{5,12})[A-Z]_', cell_name)
+    """
+    Extract last unique ID before final _A/_B/_C etc.
+    Example: KK_5_EE_T1_OM_5_xxxxMYE863_B → xxxxMYE863
+    """
+    match = re.search(r'_([A-Za-z0-9]{6,20})(?=_[A-Z]$)', cell_name)
     return match.group(1) if match else ""
 
+# ✔ Extract circle from name
 def extract_5g_circle_from_cell_name(cell_name):
     match = re.match(r'([A-Z]+)_', cell_name)
     return match.group(1) if match else "Unknown"
 
-# Site-down detection for 5G (similar approach as 4G)
+# ✔ Site-down detection (unchanged)
 def site_down_5g(content_5g):
     ip_match = re.search(r'Logging to file .+?/([a-fA-F0-9:.]+)\.log', content_5g)
     ip_address = ip_match.group(1) if ip_match else "IP Not Found"
     status = "OK" if "Checking ip contact...OK" in content_5g else "NOT OK"
     return {"Status": status, "IP Address": ip_address}
 
-# Parse cell blocks in 5G log - support NRCellDU and fallback to EUtranCell* if present
+# ------------------ MAIN FIX: UPDATED 5G CELL PARSER ------------------ #
+
 def parse_5g_cell_block(content):
     """
-    Returns list of dicts: 'Cell Name','Site ID','site','Circle','Adm State','Op. State','Cell Type'
-    Pattern chosen to mirror your 4G parser but include NRCellDU detection.
+    Extract NRCellDU / EUtranCellFDD / EUtranCellTDD blocks from logs.
+    FIXED Regex to support full NR cell structure.
     """
+
     pattern = re.compile(
-        r'\d+\s+\d+ \((?P<adm_state>UNLOCKED|LOCKED)\)\s+'  # adm state
-        r'\d+ \((?P<op_state>ENABLED|DISABLED)\)\s+'        # op state
-        r'(?:GNBDUFunction|ENodeBFunction)=\d+,'            # function id segment
-        r'(?P<cell_type>NRCellDU|EUtranCellFDD|EUtranCellTDD)=(?P<cell_name>[\w\-\:]+)',  # cell
+        r'\d+\s+\d+ \((?P<adm_state>UNLOCKED|LOCKED)\)\s+'     # adm
+        r'\d+ \((?P<op_state>ENABLED|DISABLED)\)\s+'           # op
+        r'(?:GNBDUFunction|ENodeBFunction)=\d+,'               # function
+        r'(?P<cell_type>NRCellDU|EUtranCellFDD|EUtranCellTDD)='
+        r'(?P<cell_name>[A-Za-z0-9_\-:]+)' ,                   # ✔ FIXED
         re.IGNORECASE
     )
 
     cells = []
     for match in pattern.finditer(content):
-        adm_state = match.group("adm_state")
-        op_state = match.group("op_state")
-        cell_name = match.group("cell_name")
+
+        adm_state  = match.group("adm_state")
+        op_state   = match.group("op_state")
+        cell_name  = match.group("cell_name")
         cell_type_str = match.group("cell_type")
 
         site_id = extract_5g_site_id_from_cell_name(cell_name)
-        circle = extract_5g_circle_from_cell_name(cell_name)
-        cell_type = "5G" if "NRCellDU" in cell_type_str.upper() else "4G"
+        circle  = extract_5g_circle_from_cell_name(cell_name)
 
+        # classify cell type
+    
         cells.append({
             "Cell Name": cell_name,
             "Site ID": site_id,
-            "site": re.sub(r'^[A-Z]+', '', site_id),
+            "site": re.sub(r'^[A-Z]+', '', site_id),  # same as your logic
             "Circle": circle,
             "Adm State": adm_state,
             "Op. State": op_state,
-            "Cell Type": cell_type
+            "Cell Type": "5G"
         })
+
     return cells
 
-# Extract alarms from 'alt' output for 5G (mirrors 4G alarm regex)
+# ------------------ Alarms extraction (unchanged) ------------------ #
 def extract_5g_alarms_from_alt(content, site_id="Unknown"):
     alarms = []
 
     node_id_match = re.search(r'(\S+)>[\s]*alt', content)
     node_id = node_id_match.group(1).strip() if node_id_match else "NA"
 
-    # timestamp + IP pattern similar to 4G
     ip_match = re.search(r'\d{6}-\d{2}:\d{2}:\d{2}[+\-]\d{4}\s+([a-fA-F0-9:.]+)', content)
     ip = ip_match.group(1) if ip_match else "No IP found"
 
     alarm_pattern = re.compile(r'''
         ^\s*
-        (?P<dt>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})   # datetime
-        \s+(?P<sev>[A-Za-z])                            # single-letter severity
-        \s+(?P<prob>.+?)                                # problem text (non-greedy)
-        \s+(?P<mo>[^()]+?)                              # managed object text
-        (?:\s*\(\s*(?P<add>.*?)\))?                     # optional additional
+        (?P<dt>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})
+        \s+(?P<sev>[A-Za-z])
+        \s+(?P<prob>.+?)
+        \s+(?P<mo>[^()]+?)
+        (?:\s*\(\s*(?P<add>.*?)\))?
         \s*$
     ''', re.MULTILINE | re.VERBOSE)
 
@@ -597,9 +665,11 @@ def extract_5g_alarms_from_alt(content, site_id="Unknown"):
             "MO": m.group("mo").strip(),
             "Additional": (m.group("add") or "").strip()
         })
+
     return alarms
 
-# Process all 5G log files in a folder (returns rows, alarms, site_down_list)
+# ------------------ PROCESS 5G LOG FILES (unchanged except updated parser) ------------------ #
+
 def process_5g_log_files(saved_folder):
     rows = []
     alarms = []
@@ -609,10 +679,10 @@ def process_5g_log_files(saved_folder):
         fpath = os.path.join(saved_folder, fname)
         if not os.path.isfile(fpath):
             continue
+
         with open(fpath, 'r', encoding='utf-8', errors='ignore') as fh:
             content = fh.read()
 
-        # ip/node fallback extraction (same approach as 4G)
         ip_match = re.search(r'([\w:.]+)(?=>\s*lt all)', content)
         ip_5g = ip_match.group(1) if ip_match else "No IP found"
 
@@ -621,8 +691,6 @@ def process_5g_log_files(saved_folder):
 
         sync = extract_5g_sync_status(content)
         cells = parse_5g_cell_block(content)
-
-        # build rows for each cell found
 
         for cell in cells:
             row = {
@@ -639,26 +707,25 @@ def process_5g_log_files(saved_folder):
             }
             rows.append(row)
 
-        # alarms: attempt to attach by site ids present in file, fallback to "Unknown"
+        # Add alarms
         site_ids = [cell.get("Site ID") for cell in cells if cell.get("Site ID")]
+
         if site_ids:
             for sid in site_ids:
-                alarms_for_file = extract_5g_alarms_from_alt(content, site_id=sid)
-                if alarms_for_file:
-                    alarms.extend(alarms_for_file)
+                alarms.extend(extract_5g_alarms_from_alt(content, site_id=sid))
         else:
-            alarms_for_file = extract_5g_alarms_from_alt(content, site_id="Unknown")
-            if alarms_for_file:
-                alarms.extend(alarms_for_file)
+            alarms.extend(extract_5g_alarms_from_alt(content, site_id="Unknown"))
 
-        # site down info
+        # site-down
         site_down_list.append(site_down_5g(content))
 
     return rows, alarms, site_down_list
 
-# ---------- 5G Upload View (mirrors upload_4g_new_old) ----------
+# ---------- 5G Upload View ----------
+
 @api_view(['POST'])
 def upload_5g_new_old(request):
+
     circle = request.POST.get("circle")
     if not circle:
         return Response({"error": "Circle not provided"}, status=status.HTTP_400_BAD_REQUEST)
@@ -666,18 +733,16 @@ def upload_5g_new_old(request):
     old_files = request.FILES.getlist('old_logs')
     new_files = request.FILES.getlist('new_logs')
     site_file = request.FILES.get('site_file')
+
     if not site_file:
-        return Response({"error": "Site file is required for 5G logs"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Site file is required for 5G logs"},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     # Read site mapping
-    try:
-        site_mapping_df = pd.read_excel(site_file, engine='openpyxl', usecols=["OldSite", "NewSite"])
-    except Exception as e:
-        return Response({"error": f"Error reading site file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Normalize mapping columns
-    for col in ["OldSite", "NewSite"]:
-        site_mapping_df[col] = site_mapping_df[col].astype(str).str.strip().str.upper().str.replace(r"\.0$", "", regex=True)
+    site_mapping_df = pd.read_excel(site_file, engine='openpyxl', usecols=["OldSite", "NewSite","Circle"])
+    site_mapping_df["OldSite"] = site_mapping_df["OldSite"].astype(str).str.replace(r"\.0$", "", regex=True)
+    site_mapping_df["NewSite"] = site_mapping_df["NewSite"].astype(str).str.replace(r"\.0$", "", regex=True)
+    site_mapping_df["Circle"] = site_mapping_df["Circle"].astype(str).str.strip()
 
     # Prepare folders
     output_folder = os.path.join(base_folder, "output_5g")
@@ -692,7 +757,7 @@ def upload_5g_new_old(request):
     delete_existing_files(old_folder)
     delete_existing_files(new_folder)
 
-    # save uploaded logs
+    # Save uploaded logs
     def save_files(file_list, target_folder):
         for f in file_list:
             file_path = os.path.join(target_folder, f.name)
@@ -703,12 +768,13 @@ def upload_5g_new_old(request):
     save_files(old_files, old_folder)
     save_files(new_files, new_folder)
 
-    # Process log files
+    # Process old logs
     if os.listdir(old_folder):
         rows_old, alarms_old, site_down_old = process_5g_log_files(old_folder)
     else:
         rows_old, alarms_old, site_down_old = [], [], []
 
+    # Process new logs
     if os.listdir(new_folder):
         rows_new, alarms_new, site_down_new = process_5g_log_files(new_folder)
     else:
@@ -716,47 +782,112 @@ def upload_5g_new_old(request):
 
     df_old = pd.DataFrame(rows_old)
     df_new = pd.DataFrame(rows_new)
-    
-    # Filter logs by Site IDs in mapping file (normalize column names)
+
+    # Normalize Site IDs
     if not df_old.empty:
-        df_old["Site ID"] = (df_old["5G Site ID"].astype(str).str.strip().str.upper().str.replace(r"\.0$", "", regex=True).str.replace(r"^X+", "", regex=True))
+        df_old["Site ID"] = (df_old["5G Site ID"].astype(str).str.strip().str.upper()
+                            .str.replace(r"\.0$", "", regex=True)
+                            .str.replace(r"^X+", "", regex=True))
         df_old = df_old[df_old["Site ID"].isin(site_mapping_df["OldSite"])]
 
     if not df_new.empty:
-        df_new["Site ID"] = df_new["5G Site ID"].astype(str).str.strip().str.upper().str.replace(r"\.0$", "", regex=True).str.replace(r"^X+", "", regex=True)
+        df_new["Site ID"] = (df_new["5G Site ID"].astype(str).str.strip().str.upper()
+                            .str.replace(r"\.0$", "", regex=True)
+                            .str.replace(r"^X+", "", regex=True))
         df_new = df_new[df_new["Site ID"].isin(site_mapping_df["NewSite"])]
 
-    # Merge site mapping to logs
+    # Merge mapping
     if not df_old.empty:
-        df_old = df_old.merge(site_mapping_df, how='left', left_on="Site ID", right_on="OldSite")
-        df_old.drop_duplicates(inplace=True)
-    if not df_new.empty:
-        df_new = df_new.merge(site_mapping_df, how='left', left_on="Site ID", right_on="NewSite")
-        df_new.drop_duplicates(inplace=True)
-    
+        df_old = df_old.merge(site_mapping_df, how='left',
+                            left_on="Site ID", right_on="OldSite").drop_duplicates()
 
-    # Add suffix for clarity (keeps same approach as 4G view)
+    if not df_new.empty:
+        df_new = df_new.merge(site_mapping_df, how='left',
+                            left_on="Site ID", right_on="NewSite").drop_duplicates()
+
+    # Add suffix
     if not df_old.empty:
         df_old = df_old.add_suffix("_old")
+
     if not df_new.empty:
         df_new = df_new.add_suffix("_new")
 
-    # Merge old and new logs side by side using mapping
+    # Merge old & new logs
     if not df_old.empty and not df_new.empty:
         df_combined_5g = pd.merge(
             df_old, df_new,
-            left_on="NewSite_old", right_on="NewSite_new",
+            left_on="NewSite_old",
+            right_on="NewSite_new",
             how="outer"
-        )
-
-        df_combined_5g.drop_duplicates(inplace=True)
-
+        ).drop_duplicates()
     elif not df_old.empty:
         df_combined_5g = df_old.copy()
     else:
         df_combined_5g = df_new.copy()
 
-    # Alarms
+    def extract_parts_5g(cell):
+        """
+        Extract:
+        - Layer_Mode (F1_OM)
+        - Identifier (X12345A)
+        - Shortname (A_A)
+        """
+        try:
+            parts = str(cell).strip().split("_")
+            middle = f"{parts[2]}_{parts[3]}"
+            identifier = parts[4]
+            shortname = parts[-1]
+            return middle, identifier, shortname
+        except:
+            return "", "", ""
+
+    def clean_unique(cells):
+        return sorted(list(set([x.strip() for x in cells if x.strip()])))
+
+    def match_cells_5g(row):
+        cell_old = str(row.get("Cells_old", "")).strip()
+        cell_new = str(row.get("Cells_new", "")).strip()
+
+        # Only new exists
+        if not cell_old and cell_new:
+            return ", ".join(clean_unique(cell_new.split(",")))
+
+        # Only old exists
+        if not cell_new and cell_old:
+            return ", ".join(clean_unique(cell_old.split(",")))
+
+        # Both exist → exact match
+        if cell_old and cell_new:
+            old_list = [x.strip() for x in cell_old.split(",")]
+            new_list = [x.strip() for x in cell_new.split(",")]
+
+            matched = []
+
+            for o in old_list:
+                p_old, id_old, s_old = extract_parts_5g(o)
+
+                for n in new_list:
+                    p_new, id_new, s_new = extract_parts_5g(n)
+
+                    if p_old == p_new and id_old == id_new and s_old == s_new:
+                        matched.append(f"{o}|{n}")
+
+            return ", ".join(matched)
+
+        return ""
+
+    # Apply matching
+
+    if not df_combined_5g.empty:
+        df_combined_5g["Matched_Cells"] = df_combined_5g.apply(match_cells_5g, axis=1)
+    
+    if "Circle_old" in df_combined_5g.columns:
+        df_combined_5g["Circle"] = df_combined_5g["Circle_old"]
+    elif "Circle_new" in df_combined_5g.columns:
+        df_combined_5g["Circle"] = df_combined_5g["Circle_new"]
+    else:
+        df_combined_5g["Circle"] = circle    
+
     df_alarms_old = pd.DataFrame(alarms_old).add_suffix("_old") if alarms_old else pd.DataFrame()
     df_alarms_new = pd.DataFrame(alarms_new).add_suffix("_new") if alarms_new else pd.DataFrame()
 
@@ -767,9 +898,11 @@ def upload_5g_new_old(request):
     else:
         df_alarms = df_alarms_new.copy()
 
-    # Site Down
+    # Site down
+
     df_site_down_old = pd.DataFrame(site_down_old).drop_duplicates() if site_down_old else pd.DataFrame()
     df_site_down_new = pd.DataFrame(site_down_new).drop_duplicates() if site_down_new else pd.DataFrame()
+
     if not df_site_down_old.empty:
         df_site_down_old = df_site_down_old.add_suffix("_old")
     if not df_site_down_new.empty:
@@ -782,14 +915,13 @@ def upload_5g_new_old(request):
     else:
         df_site_down = df_site_down_new.copy()
 
-    print("5G DataFrames prepared",df_combined_5g)
-    # Clean dataframes
+    # Clean frames
     for df in [df_combined_5g, df_alarms, df_site_down]:
         if isinstance(df, pd.DataFrame) and not df.empty:
             df.replace({pd.NA: None, np.nan: None}, inplace=True)
             df.fillna("", inplace=True)
 
-    # Create output excel (same behavior as 4G)
+    # Create output Excel
     circle_folder = os.path.join(output_folder, circle)
     if os.path.exists(circle_folder):
         shutil.rmtree(circle_folder)
@@ -799,25 +931,40 @@ def upload_5g_new_old(request):
     output_path = os.path.join(circle_folder, output_filename)
 
     with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
-        if isinstance(df_combined_5g, pd.DataFrame) and not df_combined_5g.empty:
+        if not df_combined_5g.empty:
+            def get_remark(row):
+                site_old = str(row.get("Site ID_old", "")).strip()
+                site_new = str(row.get("Site ID_new", "")).strip()
+                if site_old and not site_new:
+                    return "New Locked"
+                elif site_new and not site_old:
+                    return "Old Locked"
+                elif not site_old and not site_new:
+                    return "Both Locked"
+                else:
+                    return ""
+            df_combined_5g["Remark"] = df_combined_5g.apply(get_remark, axis=1)
+
             df_combined_5g.to_excel(writer, index=False, sheet_name="Status")
             format_excel_sheet(writer, "Status", df_combined_5g)
-        if isinstance(df_alarms, pd.DataFrame) and not df_alarms.empty:
+
+        if not df_alarms.empty:
             df_alarms.to_excel(writer, index=False, sheet_name="Alarms")
             format_excel_sheet(writer, "Alarms", df_alarms)
-        if isinstance(df_site_down, pd.DataFrame) and not df_site_down.empty:
+
+        if not df_site_down.empty:
             df_site_down.to_excel(writer, index=False, sheet_name="Site Down")
             format_excel_sheet(writer, "Site Down", df_site_down)
 
-    # optionally send email (same helper as 4G)
-    try:
-        send_email_for_Alarm(df_combined_5g)
-    except Exception:
-        # avoid crashing the response if email fails; log/print for debugging
-        print("Warning: send_email_for_Alarm failed for 5G. Check email helper.")
+    send_email_for_5G_Alarm(df_combined_5g, output_path)
+    relative_path = os.path.join(
+        MEDIA_URL.strip("/"),
+        "Alarm_New_Old_Data",
+        "output_5g",
+        circle,
+        output_filename
+    )
 
-    # Build download URL
-    relative_path = os.path.join(MEDIA_URL.strip("/"), "Alarm_New_Old_Data", "output_5g", circle, output_filename)
     download_url = request.build_absolute_uri("/" + relative_path.replace("\\", "/"))
 
     return Response({

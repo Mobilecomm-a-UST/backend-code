@@ -266,7 +266,7 @@ def soft_at_5G_Summary_Ericsson(request):
             os.makedirs(log_excel_folder, exist_ok=True)
       else:
             try:
-                  shutil.rmtree(log_excel_folder, onerror=on_rm_error)
+                  shutil.rmtree(log_excel_folder, onexc=on_rm_error)
                   os.makedirs(log_excel_folder, exist_ok=True)
             except PermissionError as e:
                   print("Permission denied:- ", str(e))
@@ -343,7 +343,7 @@ def soft_at_5G_Summary_Ericsson(request):
             termpointtoenode_df = explode_data_from_log(
                   r'[A-Z0-9_-]+>\sst\stermpointtoenode',
                   r'(Proxy)\s+(Adm\sState)\s+(Op\.\sState)\s+(MO)',
-                  r'\s*(\d+)\s+(\d+\s+\((?:UNLOCKED|LOCKED)\))\s+(\d+\s+\((?:ENABLED|DISABLED)\))\s+(.*)$',
+                  r'\s*(\d+)\s+(\d+\s+\((?:UNLOCKED)\))\s+(\d+\s+\((?:ENABLED)\))\s+(.*)$',
                   r'^Total:\s\d+',
                   file_content
             )
@@ -416,7 +416,7 @@ def soft_at_5G_Summary_Ericsson(request):
                   os.makedirs(template_file_path, exist_ok=True)
 
 
-      #######################################################Output##############################################################
+#######################################################Output##############################################################
             excel_files_paths = [
             os.path.join(log_excel_folder, file)
             for file in os.listdir(log_excel_folder)
@@ -439,21 +439,16 @@ def soft_at_5G_Summary_Ericsson(request):
                         df = xls.parse(sheet_name)
                         
                         if "MO" in df.columns:
-                              # Circle
+                              # Extract the 'circle' part from 'MO' column
                               circle = df["MO"].str.extract(r"NRCellDU=([A-Z]{2})_").dropna()
-                              template_df.loc[0, "Circle"] = circle.iloc[0, 0].strip() if not circle.empty else "NA"
 
-                              # circle = df["MO"].str.extract(r"NRCellDU=([A-Z]{2})_")
-                              # print("Circle:", circle)
-                              layer = df["MO"].str.extract(r"NRCellDU=\w+_(F\d|T\d)")[0]
-                              # print("layer:", layer)
-                              circle_clean = circle.dropna()
-                              if not circle_clean.empty:
-                                    circle_value = circle_clean.iloc[0, 0].strip()
+                              circle = circle.replace("UW", "UPW")
+                              if not circle.empty:
+                                    circle_value = circle.iloc[0, 0].strip()
                               else:
-                                    circle_value = None
-                              template_df.loc[0, 'Circle'] = circle_value
-                              print("Circle:", circle_value)
+                                    circle_value = "NA"
+                              template_df.loc[0, "Circle"] = circle_value
+                              layer = df["MO"].str.extract(r"NRCellDU=\w+_(F\d|T\d)")[0]
                               layer_value = '_'.join(layer.dropna().unique()) if not layer.dropna().empty else "NA"
                               print("Layer Value:", layer_value)
                               layer_mapping = {
@@ -582,8 +577,8 @@ def soft_at_5G_Summary_Ericsson(request):
                                     filtered_df.dropna(subset=["enodeid"], inplace=True)
 
                                     # Take 15 random enodeids
-                                    result_df = filtered_df.sample(
-                                    n=min(15, len(filtered_df)), random_state=1)["enodeid"].tolist()
+                                    result_df = (filtered_df.sample(
+                                    n=min(15, len(filtered_df)), random_state=1)["enodeid"].astype(int).sort_values().tolist())
 
                                     print("Random ENBIDs:", result_df)
 
@@ -674,7 +669,6 @@ def soft_at_5G_Summary_Ericsson(request):
                         template_df.loc[0, "SiteID(5G/)/MRBTSID"] = "NA"
                         template_df.loc[0, "SW Version"] = "NA"
 
-                  
             if sheet_name == "hget field prod":
                   df = xls.parse(sheet_name)
                   df.columns = df.columns.astype(str).str.strip()  # Clean column names
@@ -867,7 +861,7 @@ def soft_at_5G_checkpoint(request):
             os.makedirs(log_excel_folder, exist_ok=True)
       else:
             try:
-                  shutil.rmtree(log_excel_folder, onerror=on_rm_error)
+                  shutil.rmtree(log_excel_folder, onexc=on_rm_error)
                   os.makedirs(log_excel_folder, exist_ok=True)
             except PermissionError as e:
                   print("Permission denied:- ", str(e))

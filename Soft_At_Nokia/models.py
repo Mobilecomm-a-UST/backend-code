@@ -1,12 +1,11 @@
 from django.db import models
-import re
+from django.contrib.auth.models import User
 
 class ExpectedParameter(models.Model):
     path = models.CharField(max_length=500)
     parameter_name = models.CharField(max_length=200)
     expected_value = models.CharField(max_length=500)
 
-  
     def __str__(self):
         return f"{self.path} - {self.parameter_name}: {self.expected_value}"
 
@@ -31,12 +30,18 @@ class AlarmMapping(models.Model):
 class SummaryData(models.Model):
     MO_Class = models.CharField(max_length=500)
     Parameter = models.CharField(max_length=200)
-   
 
     def __str__(self):
         return f"{self.MO_Class}-{self.Parameter}"
     
 
+class UserCounter(models.Model):
+    user_name = models.CharField(max_length=200)
+    api_name = models.CharField(max_length=200)                   
+    count = models.PositiveIntegerField(default=0)               
 
+    class Meta:
+        unique_together = ("user_name", "api_name")    
 
-   
+    def __str__(self):
+        return f"{self.user_name} - {self.api_name}: {self.count}"
