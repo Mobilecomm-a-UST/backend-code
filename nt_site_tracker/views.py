@@ -97,7 +97,7 @@ ALL_COLUMNS = [
     "KPI AT Accepted Date",
 
     "4G MS2 Date",
-    "5G MS2 date",
+    "5G MS2 Date",
     "Final MS2 Date",
 
     "Last Updated Date",
@@ -201,7 +201,7 @@ COLUMN_MAP = {
 
     # -------- MS2 --------
     "4G MS2 Date": "four_g_ms2_date",
-    "5G MS2 date": "five_g_ms2_date",
+    "5G MS2 Date": "five_g_ms2_date",
     "Final MS2 Date": "final_ms2_date",
 
     # -------- Audit --------
@@ -2541,7 +2541,7 @@ def ms2_daily_waterfall(request):
             "KPI AT Accepted Date",
 
             "4G MS2 Date",
-            "5G MS2 date",
+            "5G MS2 Date",
             "Final MS2 Date",
         ]
 
