@@ -2840,7 +2840,7 @@ def ms2_weekly_monthly_waterfall(request):
             "KPI AT Accepted Date",
 
             "4G MS2 Date",
-            "5G MS2 date",
+            "5G MS2 Date",
             "Final MS2 Date",
         ]
  
