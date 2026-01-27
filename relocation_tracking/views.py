@@ -93,6 +93,7 @@ prefix_parsers = {
     ),
     "NE-ik-": lambda sn: parse_neik(sn, "NE-ik-"),
     "EWB_": lambda sn: sn.split("_")[-2],
+    "MH_": lambda sn: cut_if_alpha(sn.split("_")[-2]), 
 }
 
 def extract_site_name(sn):
