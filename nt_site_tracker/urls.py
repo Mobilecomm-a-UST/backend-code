@@ -16,5 +16,9 @@ urlpatterns = [
     path("issue_timeline_update/", issue_timeline_update, name="issue_timeline_update"),
     path("issue_timeline_delete/", issue_timeline_delete, name="issue_timeline_delete"),
     path("ms2_daily_dashboard/", ms2_daily_waterfall, name="ms2_daily_dashboard"),
-    path("ms2_weekly_monthly_dashboard/", ms2_weekly_monthly_waterfall, name="ms2_weekly_monthly_dashboard"),
+    path("ms2_weekly_monthly_dashboard/", ms2_weekly_monthly_waterfall, name="ms2_weekly_monthly_dashboard"),    
+    path("graphs/", graphs_view, name="graphs"),
+    path("monthly_graph/", monthly_graph, name="monthly_graph"),
+    path("ms2_ageing_dashboard_table1/", ms2_ageing_dashboard_table1, name="ms2_ageing_dashboard_table1"),
+    path("ms2_ageing_dashboard_table2/", ms2_ageing_dashboard_table2, name="ms2_ageing_dashboard_table2"),
 ]
