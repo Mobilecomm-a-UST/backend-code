@@ -4554,7 +4554,7 @@ def ms2_daily_waterfall(request):
                 .replace(" ", "_")
                 .replace("-", "_")
                 .replace("(", "")
-                .replace(")", "")
+                .replace(")", "").replace("4", "four_").replace("5", "five_")
             )
 
             if milestone_df_format not in df.columns:
@@ -4845,7 +4845,7 @@ def ms2_weekly_monthly_waterfall(request):
         data = []
         for milestone in milestones:
             
-            milestone_df_format = milestone.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_")
+            milestone_df_format = milestone.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_").replace("5", "five_")
             if milestone_df_format not in df.columns:
                 continue
             
@@ -6527,7 +6527,7 @@ def ms2_graphs_view(request):
         if current_status and "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if month_start and month_end:
-            filters[f"{milestone1.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '') + '_date'}__range"] = (month_start, month_end)
+            filters[f"{milestone1.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_").replace("5", "five_") + '_date'}__range"] = (month_start, month_end)
 
         obj = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
         df = pd.DataFrame(obj.values())
@@ -6556,8 +6556,8 @@ def ms2_graphs_view(request):
         start_label = milestone1 if milestones.index(milestone1) < milestones.index(milestone2) else milestone2
         end_label = milestone2 if milestones.index(milestone1) < milestones.index(milestone2) else milestone1
 
-        start_col = start_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_") + "_date"
-        end_col = end_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_") + "_date"
+        start_col = start_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+        end_col = end_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
         
         graph_summary = generate_summary(df, start_label, end_label, start_col, end_col)
 
@@ -6591,8 +6591,8 @@ def ms2_monthly_graph(request):
     site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
-    milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
-    milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
+    milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+    milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
     
     all_unique_circles = list(
         AlokTrackerModel.objects.exclude(circle__isnull=True)
