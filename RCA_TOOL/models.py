@@ -61,6 +61,7 @@ class Daily_4G_KPI(models.Model):
     MV_eCell_Data_BH = models.TimeField(null=True, blank=True)
     dlRsBoost = models.FloatField(null=True, blank=True, default=0)
     RS_Power_dB = models.FloatField(null=True, blank=True, default=0)
+    UL_RSSI_CDBH = models.FloatField(null=True, blank=True, default=0)
 
     MV_CSFB_Redirection_Success_Rate = models.FloatField(
         null=True, blank=True, default=0

@@ -300,7 +300,7 @@ def Daily_RAW_KPI_4G(request):
         return Response({"status": False, "error": str(e)}, status=500)
 
     try:
-        df["Short name"] = df["Short name"].fillna(method="ffill")
+        df["Short name"] = df["Short name"].ffill()
         df.rename(columns={"Unnamed: 1": "Date"}, inplace=True)
         df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
         df["MV eCell Data BH"] = pd.to_datetime(
@@ -347,6 +347,7 @@ def Daily_RAW_KPI_4G(request):
             "Average UE Distance_KM [CDBH]",
             "MV_VoLTE Packet Loss UL [CBBH]",
             "MV_VoLTE Packet Loss DL [CBBH]",
+            "UL RSSI [CDBH]",
         ]
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
@@ -472,6 +473,7 @@ def Daily_RAW_KPI_4G(request):
                         MV_VoLTE_Packet_Loss_DL_CBBH=row[
                             "MV_VoLTE Packet Loss DL [CBBH]"
                         ],
+                        UL_RSSI_CDBH=row["UL RSSI [CDBH]"],
                         # UL_RSSI_Nokia_RSSI_SINR = row["UL RSSI [RSSI-SINR]"],
                     )
                     objects_to_create.append(obj)

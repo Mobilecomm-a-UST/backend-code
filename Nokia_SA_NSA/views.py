@@ -15,6 +15,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill, Alignment, Font,Border,Side
 from openpyxl.utils import get_column_letter
 from urllib.parse import urljoin
+import re
 
 
 
@@ -113,11 +114,11 @@ def fileupload(request):
 
             return Response({"status": True,'message': f'{count} alarms saved successfully!'}, status=status.HTTP_201_CREATED)
       
-
 @api_view(['POST'])
 def alarmfileUpload(request):
       alarm_files = request.FILES.getlist('alarm_file')
       mapping_file = request.FILES.get('mapping_file')
+
       if not alarm_files or not mapping_file:
             return Response(
                   {'error': 'Both alarm_file and mapping_file are required!'},
@@ -152,7 +153,7 @@ def alarmfileUpload(request):
 
       df_alarm = pd.concat(alarm_dfs, ignore_index=True)
 
-      # ---------------- Read Mapping File ----------------
+    # ---------------- Read Mapping File ----------------
       try:
             if mapping_file.name.endswith('.csv'):
                   df_map = pd.read_csv(mapping_file)
@@ -165,7 +166,7 @@ def alarmfileUpload(request):
                   status=status.HTTP_400_BAD_REQUEST
             )
 
-      # ---------------- Ensure MRBTS ----------------
+    # ---------------- Ensure MRBTS ----------------
       if "MRBTS" not in df_alarm.columns:
             if "Distinguished Name" in df_alarm.columns:
                   df_alarm["MRBTS"] = (
@@ -189,21 +190,38 @@ def alarmfileUpload(request):
       nsa = list(NokiaAlarm.objects.exclude(NSA__isnull=True).values_list('NSA', flat=True))
       combined_alarms = set(sa + nsa)
 
-      # ---------------- Classify Alarms ----------------
+      # ---------------- Timeout Regex ----------------
+      timeout_regex = re.compile(r"Timeout\s+connecting\s+to|No\s+route\s+to\s+host|CommunicationTimeout|CommunicationTimeout", re.IGNORECASE)
+
+    # ---------------- Classify Alarms ----------------
       def classify_alarms(info):
             if pd.isna(info):
                   return pd.Series(["", ""])
+
             alarms = [a.strip() for a in str(info).split(',') if a.strip()]
-            service = [a for a in alarms if a in combined_alarms]
-            effective = [a for a in alarms if a not in combined_alarms]
-            return pd.Series([', '.join(service), ', '.join(effective)])
+
+            service = []
+            effective = []
+
+            for alarm in alarms:
+            # ✅ Timeout check
+                  if timeout_regex.search(alarm):
+                        service.append(alarm)  # Change to effective.append(alarm) if needed in NSA
+                  elif alarm in combined_alarms:
+                        service.append(alarm)
+                  else:
+                        effective.append(alarm)
+
+                  return pd.Series([
+                  ', '.join(service),
+                  ', '.join(effective)
+                  ])
 
       df_alarm[["Service Affecting Alarms", "Effective Alarms"]] = (
             df_alarm["Supplementary Information"].apply(classify_alarms)
       )
-      # df_alarm.drop(columns=["Supplementary Information"], inplace=True)
 
-      # ---------------- Group & Deduplicate ----------------
+    # ---------------- Group & Deduplicate ----------------
       df_alarm = (
             df_alarm.drop_duplicates()
             .groupby("MRBTS", as_index=False)
@@ -212,10 +230,19 @@ def alarmfileUpload(request):
             ))
       )
 
-      df_alarm[["Service Affecting Alarms", "Effective Alarms"]] = (
-            df_alarm[["Service Affecting Alarms", "Effective Alarms"]]
-            .replace('', 'No Alarms')
+
+      # df_alarm[["Service Affecting Alarms", "Effective Alarms"]] = (
+      #       df_alarm[["Service Affecting Alarms", "Effective Alarms"]]
+      #       .replace('', 'No Alarms')
+      # )
+
+      df_alarm["Service Affecting Alarms"] = df_alarm["Service Affecting Alarms"].apply(
+      lambda x: "Site Down"
+      if timeout_regex.search(str(x))
+      else ("No Alarms" if pd.isna(x) or str(x).strip() == "" else x)
       )
+
+
 
       df_alarm["Alarm Status (Yes/No)"] = df_alarm["Service Affecting Alarms"].apply(
             lambda x: "Yes" if x != "No Alarms" else "No"
@@ -224,19 +251,20 @@ def alarmfileUpload(request):
       sa_set = set(sa)
       nsa_set = set(nsa)
 
+
       df_alarm["No Alarms/Service Affecting Alarms/Non-Service Affecting Alarms"] = (
-      df_alarm["Service Affecting Alarms"]
-      .apply(lambda x: (
-            "SA"
-            if any(a.strip() in sa_set for a in str(x).split(','))
-            else "NSA"
-            if any(a.strip() in nsa_set for a in str(x).split(','))
-            else "No Alarms"
-      ))
+      df_alarm["Service Affecting Alarms"].apply(
+            lambda x: (
+                  "SA" if str(x).strip().lower() == "site down"
+                  else "SA" if any(a.strip() in sa_set for a in str(x).split(','))
+                  else "NSA" if any(a.strip() in nsa_set for a in str(x).split(','))
+                  else "No Alarms"
+            )
+      )
       )
 
 
-      # ---------------- Normalize MRBTS ----------------
+# ---------------- Normalize MRBTS ----------------
       df_alarm["MRBTS"] = df_alarm["MRBTS"].astype(str).str.replace('.0', '', regex=False)
       df_map["MRBTS"] = df_map["MRBTS"].astype(str).str.replace('.0', '', regex=False)
 
@@ -269,10 +297,12 @@ def alarmfileUpload(request):
                   df_merged[alarm_col]
                   )
                   df_merged.drop(columns=[alarm_col], inplace=True)
+      
+      
 
-      # ---------------- Add Extra Columns If Missing ----------------
+    # ---------------- Add Extra Columns If Missing ----------------
       extra_cols = [
-            "Effective Alarms",
+            # "Effective Alarms",
             "Supplementary Information",
             "Origin Alarm Time",
             "Origin Alarm Update Time"
@@ -284,6 +314,10 @@ def alarmfileUpload(request):
                   if col not in df_merged.columns:
                         df_merged[col] = df_merged[alarm_col]
                   df_merged.drop(columns=[alarm_col], inplace=True)
+      
+      if "Effective Alarms" in df_merged.columns:
+            df_merged.drop(columns=["Effective Alarms"], inplace=True)
+
 
       # ---------------- Save Output ----------------
       output_path = os.path.join(MEDIA_ROOT, "NOKIA_OUTPUT")
@@ -298,12 +332,10 @@ def alarmfileUpload(request):
       download_link = request.build_absolute_uri(urljoin(MEDIA_URL, relative_url))
 
       return Response(
-      {
-            "status": True,
-            "message": "alarm files processed successfully",
-            "download_url": download_link
-      },
-      status=status.HTTP_200_OK
+            {
+                  "status": True,
+                  "message": "alarm files processed successfully",
+                  "download_url": download_link
+            },
+            status=status.HTTP_200_OK
       )
-
-
