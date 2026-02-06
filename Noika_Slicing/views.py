@@ -47,7 +47,6 @@ def dumpdata_to_xml(dumy_data, output_file):
 main_folder=os.path.join(MEDIA_ROOT, "Nokia_Slicing")
 output_path = os.path.join(main_folder, "Final_Output")
 dump_data_path=os.path.join(main_folder,"Dump_data")
-os.makedirs(main_folder,exist_ok=True)
 os.makedirs(output_path, exist_ok=True)
 os.makedirs(dump_data_path, exist_ok=True)
 
@@ -1084,7 +1083,28 @@ def nokia_slicing_dump(request):
         data_df.to_excel(dump_output_path, index=False, engine="openpyxl")
 
     #matincting-----
-    excel_df = pd.read_excel(excel_file, engine="openpyxl")
+    fixpara_folder = os.path.join(main_folder, 'Nokia_Slicing_Fixpara')
+    excel_dfs = []
+
+    for file in os.listdir(fixpara_folder):
+
+        if file.startswith('~$'):  # ignore temp excel
+            continue
+
+        if file.endswith(('.xlsx', '.xls')):
+            file_path = os.path.join(fixpara_folder, file)
+            print("Reading FixPara:", file_path)
+
+            df = pd.read_excel(file_path, engine="openpyxl")
+            df["source_file"] = file
+            excel_dfs.append(df)
+
+    # merge all fix parameter files
+    if excel_dfs:
+        excel_df = pd.concat(excel_dfs, ignore_index=True)
+    else:
+        excel_df = pd.DataFrame()
+
 
     excel_df["ID"] = excel_df["ID"].apply(normalize_id)
     data_df["ID"] = data_df["ID"].apply(normalize_id)
@@ -1128,7 +1148,7 @@ def nokia_slicing_dump(request):
     finaldf.loc[mask_change, "Remark"] = "Value Changed"
 
     finaldf = finaldf.sort_values(["MO", "ID", "Parameter"])
-    finaldf.drop(columns=["Final_Value", "Remark"], inplace=True)
+    finaldf.drop(columns=["Final_Value", "Remark","source_file"], inplace=True)
     finaldf["Remarks"] = finaldf.apply(
     lambda r: remark(r["Value(Internal)"], r["value(External)"]),
     axis=1
