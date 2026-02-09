@@ -13,35 +13,6 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, Alignment, Border, Side,PatternFill
 from openpyxl.utils import get_column_letter
 
-def dumpdata_to_xml(dumy_data, output_file):
-
-    import xml.etree.ElementTree as ET
-
-    root = ET.Element("raml")
-
-    # group by MO + DistName
-    grouped = {}
-    for row in dumy_data:
-        key = (row.get("MO"), row.get("DistName"))
-        grouped.setdefault(key, []).append(row)
-
-    for (mo, dist), rows in grouped.items():
-
-        mo_tag = ET.SubElement(root, "managedObject")
-        mo_tag.set("class", mo)
-
-        if dist:
-            mo_tag.set("distName", dist)
-
-        for r in rows:
-            p = ET.SubElement(mo_tag, "p")
-            p.set("name", str(r.get("Parameter")))
-            val = r.get("value")
-            p.text = "" if val is None else str(val)
-
-    tree = ET.ElementTree(root)
-    tree.write(output_file, encoding="utf-8", xml_declaration=True)
-
 
 
 main_folder=os.path.join(MEDIA_ROOT, "Nokia_Slicing")
@@ -98,23 +69,51 @@ def format_excel(file_path, sheet_name="Slicing"):
     wb.save(file_path)
 
 #for remark--
+def extract_last_mo(val):
+    if pd.isna(val):
+        return None
+
+    val = str(val).lower().strip()
+    val = val.replace("toattach", "").strip()
+
+    parts = [p.strip() for p in val.split(";") if p.strip()]
+    cleaned = []
+
+    for p in parts:
+        if "/" in p:
+            p = p.split("/")[-1]  
+        cleaned.append(p)
+
+    return sorted(cleaned)
+
+
 def remark(internal, external):
+
     if pd.isna(internal) and pd.isna(external):
         return "No Changes in value"
+
     if pd.isna(internal) or pd.isna(external):
         return "No find new value"
 
     i = str(internal).strip().lower()
     e = str(external).strip().lower()
+
     if i == e:
         return "No Changes in value"
+
     ni = re.search(r'\d+', i)
     ne = re.search(r'\d+', e)
-
     if ni and ne and ni.group() == ne.group():
         return "No Changes in value"
 
+    i_parts = extract_last_mo(internal)
+    e_parts = extract_last_mo(external)
+
+    if i_parts == e_parts:
+        return "No Changes in value"
+
     return "Changes in value"
+
 
 # change t/f-> 0,1--
 def tf_to_01(val):
