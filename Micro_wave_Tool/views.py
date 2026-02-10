@@ -1,3 +1,4 @@
+
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
@@ -366,6 +367,19 @@ def microwave_upload(request):
 
 # make Logic and get requried cloumn in the Radio Report file----
     radio_report_df["Radio-Reference-key"]=radio_report_df["Interface"].str.extract(r"^(\S+)")
+    rename_map = {
+        "RSL Min (dB)": "RSL Min (dBm)",
+        "RSL Max (dB)": "RSL Max (dBm)",
+        "Tx Power Max (dB)": "Tx Power Max (dBm)",
+        "XPD Min (dB)": "XPD Min (dBm)",
+        "XPD Max (dB)": "XPD Max (dBm)",
+        "SNR Min (dBm)": "SNR Min (dB)"
+    }
+
+    radio_report_df.rename(
+        columns={k: v for k, v in rename_map.items() if k in radio_report_df.columns},
+        inplace=True
+    )
     radio_report_df["Polarization(Radio)"] = radio_report_df["Interface"].apply(get_polarization)
     radio_report_df=radio_report_df[[
         "Interface",
@@ -868,7 +882,6 @@ def microwave_upload(request):
     })  
 
 
-
 #function for add data in database.......
 @transaction.atomic
 def add_to_db(df):
@@ -919,7 +932,6 @@ def add_to_db(df):
             }
         )  
 
-
 # # api to get and delete data in databse...
 # @api_view(['GET'])
 # def final_excel_indb(request):
@@ -946,15 +958,20 @@ def add_to_db(df):
 #     }, status=200)
 
 
+from django.views.decorators.csrf import csrf_exempt
+
 @csrf_exempt
 @api_view(['GET', 'POST'])
 def final_excel_indb(request):
     queryset = MicrowaveAviat.objects.all()
-    #----------
+
+   
     if request.method == 'POST':
         site_id = request.data.get("site_id")
         circle = request.data.get("circle")
         equipment = request.data.get("equipment_make")
+
+    # (Optional) GET support bhi rehne do
     else:
         site_id = request.GET.get("site_id")
         circle = request.GET.get("circle")
@@ -977,8 +994,9 @@ def final_excel_indb(request):
         "data": data
     }, status=200)
 
-#---------
 
+
+#---------
 @api_view(["GET", "DELETE"])
 def get_delete_file(request):
     folder_path = os.path.join(main_folder, "MW_Final_Output")
