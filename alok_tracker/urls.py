@@ -40,4 +40,6 @@ urlpatterns = [
     path("ms2_monthly_graph/", ms2_monthly_graph, name="monthly_graph"),
     path("dismantle_ageing_dashboard_table1/", dismantle_ageing_dashboard_table1, name="dismantle_ageing_dashboard_table1"),
     path("dismantle_ageing_dashboard_table2/", dismantle_ageing_dashboard_table2, name="dismantle_ageing_dashboard_table2"),
+    path("dismantle_graphs/", dismantle_graphs_view, name="graphs"),
+    path("dismantle_monthly_graph/", dismantle_monthly_graph, name="monthly_graph"),
 ]

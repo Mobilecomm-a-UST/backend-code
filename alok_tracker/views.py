@@ -8005,6 +8005,378 @@ def dismantle_ageing_dashboard_table2(request):
         return Response({'message': 'request processed successfully !!!', "download_link": download_link, "json_data": json_data, "unique_data": unique_data, "breakpoint1" : breakpoint1, "breakpoint2" : breakpoint2}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
+ 
+   
+
+@api_view(['GET', 'POST'])
+def dismantle_graphs_view(request):
+    site_tagging = request.data.get('site_tagging', [])
+    current_status = request.data.get('current_status', [])
+    milestone1 = request.data.get('milestone1')
+    milestone2 = request.data.get('milestone2')
+    month_filtered = request.data.get('month')
+    year_filtered = request.data.get('year')
+
+    all_unique_site_tagging = list(
+        AlokTrackerModel.objects.exclude(site_tagging__isnull=True)
+        .distinct("site_tagging")
+        .values_list("site_tagging", flat=True)
+    )
+
+    all_unique_current_status = list(
+        AlokTrackerModel.objects.exclude(current_status__isnull=True)
+        .distinct("current_status")
+        .values_list("current_status", flat=True)
+    )
+    
+    milestones = [
+        "Site ONAIR",
+        "Dismantling Survey",
+        "SREQ/CREQ Raised",
+        "Dismantle",
+        "Material Pickup",
+        "Material Submission",
+        "OCI Done",
+        "Sign-off",
+    ]
+    
+    unique_data = {
+        "unique_site_tagging": sorted(all_unique_site_tagging),
+        "unique_current_status": sorted(all_unique_current_status),
+        "milestones": milestones
+    }
+
+    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
+    
+    try:
+
+        if month_filtered and year_filtered:
+            month_filtered = int(month_filtered)
+            year_filtered = int(year_filtered)
+
+            month_end = date(year_filtered, month_filtered, 25)
+
+            if month_filtered == 1:
+                month_start = date(year_filtered - 1, 12, 26)
+            else:
+                month_start = date(year_filtered, month_filtered - 1, 26)
+        else:
+            month_start = None
+            month_end = None
+        
+        filters = {}
+        if site_tagging and "ALL" not in site_tagging:
+            filters["site_tagging__in"] = site_tagging
+        if current_status and "ALL" not in current_status:
+            filters["current_status__in"] = current_status
+        if month_start and month_end:
+            filters[f"{milestone1.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_").replace("5", "five_") + '_date'}__range"] = (month_start, month_end)
+
+        obj = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
+        df = pd.DataFrame(obj.values())
+        
+        
+        
+        
+        print(list(df.columns))
+        df['Circle'] = df['circle']
+        print("2")
+
+        def generate_summary(df, start_label, end_label, start_col, end_col):
+            temp = df.copy()
+            summary = (
+                temp.groupby("Circle").apply(lambda g: pd.Series({
+                    f"{start_label} Done Count": g[start_col].notna().sum(),
+                    f"{end_label} Done Count": ((g[end_col].notna()) & (g[start_col].notna())).sum(),
+                    f"{end_label} Pending Count": ((g[end_col].isna()) & (g[start_col].notna())).sum(),
+                }))
+                .reset_index()
+            )
+
+            summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].round(0).astype("Int64")
+
+            summary = summary[
+                ["Circle", f"{start_label} Done Count", f"{end_label} Done Count", f"{end_label} Pending Count"]
+            ]
+
+            return summary
+
+        start_label = milestone1 if milestones.index(milestone1) < milestones.index(milestone2) else milestone2
+        end_label = milestone2 if milestones.index(milestone1) < milestones.index(milestone2) else milestone1
+
+        start_col = start_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+        end_col = end_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+        
+        graph_summary = generate_summary(df, start_label, end_label, start_col, end_col)
+
+        graph_summary = graph_summary.applymap(lambda x: str(x) if pd.notna(x) else "")   
+
+        result_json = graph_summary.to_dict(orient="records")
+        json_data1 = json.dumps(result_json)
+
+        json_data = {
+            "graph_summary": json_data1,
+        }
+
+        return Response({'message': 'request processed successfully !!!', 'json_data': json_data, "unique_data": unique_data}, status=200)
+
+    except Exception as e:
+        return Response({"error": f"{str(e)}"}, status=500)
+ 
+
+@api_view(['GET', 'POST'])
+def dismantle_monthly_graph(request):
+    circle = request.data.get('circle', [])
+    site_tagging = request.data.get('site_tagging', [])
+    current_status = request.data.get('relocation_method', [])
+    new_toco_name = request.data.get('new_toco_name', [])
+    milestone1 = request.data.get('milestone1')
+    milestone2 = request.data.get('milestone2')
+    view = request.data.get('view')
+    type = request.data.get('type')
+    
+    circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
+    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
+    new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
+    milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+    milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+    
+    all_unique_circles = list(
+        AlokTrackerModel.objects.exclude(circle__isnull=True)
+        .distinct("circle")
+        .values_list("circle", flat=True)
+    )
+
+    all_unique_site_tagging = list(
+        AlokTrackerModel.objects.exclude(site_tagging__isnull=True)
+        .distinct("site_tagging")
+        .values_list("site_tagging", flat=True)
+    )
+
+    all_unique_current_status = list(
+        AlokTrackerModel.objects.exclude(current_status__isnull=True)
+        .distinct("current_status")
+        .values_list("current_status", flat=True)
+    )
+
+    all_unique_new_toco_name = list(
+        AlokTrackerModel.objects.exclude(new_toco_name__isnull=True)
+        .distinct("new_toco_name")
+        .values_list("new_toco_name", flat=True)
+    )
+    
+    milestones = [
+        "Site ONAIR",
+        "Dismantling Survey",
+        "SREQ/CREQ Raised",
+        "Dismantle",
+        "Material Pickup",
+        "Material Submission",
+        "OCI Done",
+        "Sign-off",
+    ]
+    
+    unique_data = {
+        "unique_circle": sorted(all_unique_circles),
+        "unique_site_tagging": sorted(all_unique_site_tagging),
+        "unique_relocation_method": sorted(all_unique_current_status),
+        "unique_new_toco_name": sorted(all_unique_new_toco_name),
+        "milestones": milestones
+    }
+    
+    try:
+        filters = {}
+        if "ALL" not in circle:
+            filters["circle__in"] = circle
+        if "ALL" not in site_tagging:
+            filters["site_tagging__in"] = site_tagging
+        if "ALL" not in current_status:
+            filters["current_status__in"] = current_status
+        if "ALL" not in new_toco_name:
+            filters["new_toco_name__in"] = new_toco_name
+        
+            
+            
+        obj = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
+        df = pd.DataFrame(obj.values())
+        
+        # print(df)
+ 
+        if df.empty:
+            return Response({'error': 'No data found for given filters'}, status=404)
+        
+        df = df[[milestone1_col, milestone2_col]]
+       
+        for col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
+        
+        today = dtime.today().date()
+        
+        df["month_num1"] = (
+            df[milestone1_col].dt.month + (df[milestone1_col].dt.day >= 26)
+        ).replace({13: 1}).astype("Int64")
+
+        df["year1"] = (
+            df[milestone1_col].dt.year - (
+                (df[milestone1_col].dt.month < 3) |
+                ((df[milestone1_col].dt.month == 3) & (df[milestone1_col].dt.day < 26))
+            )
+        ).astype("Int64")
+
+        # 3️⃣ Display year
+        df["display_year"] = df["year1"] + (df["month_num1"] <= 3)
+
+        # 4️⃣ Month label
+        df["month_name1"] = pd.to_datetime(
+            df["month_num1"].astype(str) + "-" + df["display_year"].astype(str),
+            format="%m-%Y",
+            errors="coerce"
+        ).dt.strftime("%b-%y")
+
+        # 5️⃣ Current FY
+        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
+
+        # 6️⃣ CF logic
+        df.loc[df["year1"] < current_fy, "month_name1"] = "CF"
+
+
+
+        df['month_num2'] = df[milestone2_col].dt.month + (df[milestone2_col].dt.day >= 26)
+        df['month_num2'] = df['month_num2'].replace({13: 1})
+
+        # 2️⃣ Financial year (derived ONLY from original date)
+        df['year2'] = df[milestone2_col].dt.year - (
+            (df[milestone2_col].dt.month < 3) |
+            ((df[milestone2_col].dt.month == 3) & (df[milestone2_col].dt.day < 26))
+        )
+
+        # 3️⃣ Safe numeric conversion (IMPORTANT)
+        df['month_num2'] = pd.to_numeric(df['month_num2'], errors='coerce')
+        df['year2'] = pd.to_numeric(df['year2'], errors='coerce')
+
+        # 4️⃣ Display year
+        df['display_year2'] = df['year2'] + (df['month_num2'] <= 3)
+
+        # 5️⃣ Month label (NaT-safe)
+        df['month_name2'] = pd.to_datetime(
+            df['month_num2'].astype('Int64').astype(str) + '-' +
+            df['display_year2'].astype('Int64').astype(str),
+            format='%m-%Y',
+            errors='coerce'
+        ).dt.strftime('%b-%y')
+
+        # 6️⃣ Current financial year
+        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
+
+        # 7️⃣ Carry Forward (only where year2 exists)
+        df.loc[df['year2'].notna() & (df['year2'] < current_fy), 'month_name2'] = 'CF'
+        
+        print(df['month_name1'].dropna().unique().tolist())
+
+        
+        print(df['year1'])
+        
+        print(df['month_name2'])
+        
+        print(df['year2'])
+
+        def sort_financial_year(summary):
+            # Extract sorted unique Month-Year (excluding CF)
+            months = [m for m in summary['month_name'].unique() if m != "CF"]
+
+            # Convert to datetime to sort correctly
+            months_sorted = sorted(
+                months,
+                key=lambda x: pd.to_datetime(x, format='%b-%y')
+            )
+
+            # CF should always be first
+            ordered = ["CF"] + months_sorted if "CF" in summary['month_name'].values else months_sorted
+
+            # Convert into ordered categorical for final sort
+            summary['month_name'] = pd.Categorical(summary['month_name'], ordered, ordered=True)
+
+            return summary.sort_values('month_name')
+        
+        def generate_type1_summary(df, start_label, end_label, start_col, end_col):
+            temp = df.copy()
+
+            # Start counts by month_name
+            start_counts = (
+                temp[temp[start_col].notna()]
+                .groupby("month_name1")
+                .size()
+                .reset_index(name=f"{start_label} Done Count")
+                .rename(columns={"month_name1": "month_name"})
+            )
+
+            # End counts by month_name2
+            end_counts = (
+                temp[temp[end_col].notna()]
+                .groupby("month_name2")
+                .size()
+                .reset_index(name=f"{end_label} Done Count")
+                .rename(columns={"month_name2": "month_name"})
+            )
+
+            # Merge both results
+            summary = pd.merge(start_counts, end_counts, on="month_name", how="outer")
+
+            # Convert to Int64 nullable type
+            summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].astype("Int64")
+            summary[f"{end_label} Done Count"] = summary[f"{end_label} Done Count"].astype("Int64")
+
+            summary = sort_financial_year(summary)
+
+            if view == "Cumulative":
+                summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].cumsum()
+                summary[f"{end_label} Done Count"] = summary[f"{end_label} Done Count"].cumsum()
+
+            return summary.reset_index(drop=True)
+        
+        def generate_type2_summary(df, start_label, end_label, start_col, end_col):
+            temp = df.copy()
+            summary = (
+                temp.groupby("month_name1").apply(lambda g: pd.Series({
+                    f"{start_label} Done Count": g[start_col].notna().sum(),
+                    f"{end_label} Done Count": ((g[end_col].notna()) & (g[start_col].notna())).sum(),
+                    # f"{end_label} Pending Count": ((g[end_col].isna()) & (g[start_col].notna())).sum(),
+                }))
+                .reset_index()
+                .rename(columns={"month_name1": "month_name"})
+            )
+
+            summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].astype("Int64")
+
+            summary = summary[
+                ["month_name", f"{start_label} Done Count", f"{end_label} Done Count"]
+            ]
+
+            summary = sort_financial_year(summary)
+
+            if view == "Cumulative":
+                summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].cumsum()
+                summary[f"{end_label} Done Count"] = summary[f"{end_label} Done Count"].cumsum()
+
+            return summary.reset_index(drop=True)
+        
+        summary = generate_type1_summary(df, milestone1, milestone2, milestone1_col, milestone2_col) if type == 'type1' else generate_type2_summary(df, milestone1, milestone2, milestone1_col, milestone2_col)
+
+        numeric_cols = [col for col in summary.columns if "Done Count" in col]
+
+        summary[numeric_cols] = summary[numeric_cols].apply(pd.to_numeric, errors="coerce")
+        summary[numeric_cols] = summary[numeric_cols].fillna(0).astype(int)
+
+        
+        result_json = summary.to_dict(orient = "records")
+        json_data = json.dumps(result_json)
+        
+        return Response({"message" : "request processed successfully ! ", "json_data": json_data, "unique_data": unique_data}, status=200)
+    
+    except Exception as e:
+        return Response({"error": f"{str(e)}"},status=500)
    
  
 
