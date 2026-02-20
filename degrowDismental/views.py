@@ -130,7 +130,58 @@ def upload_locator_data(request):
  
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST', 'GET', 'DELETE'])
+def upload_mobinet_data(request):
+    try:
+        mobinet_folder_path = os.path.join(main_folder, 'mobinet')
+        os.makedirs(mobinet_folder_path, exist_ok=True)
+ 
+        if request.method == 'POST':
+            files = request.FILES.getlist('files')
+            if not files:
+                return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+ 
+            for f in files:
+                file_path = os.path.join(mobinet_folder_path, f.name)
+                with open(file_path, 'wb+') as destination:
+                    for chunk in f.chunks():
+                        destination.write(chunk)
+ 
+            return Response({'status': True, 'message': 'Files saved successfully'}, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'GET':
+            if not os.path.exists(mobinet_folder_path):
+                return Response({'files': []}, status=status.HTTP_200_OK)
+            files = os.listdir(mobinet_folder_path)
+            return Response({
+                'status': True,
+                'message': 'Files found in locator_data folder',
+                'files': files,
+            }, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'DELETE':
+            if not os.path.exists(mobinet_folder_path):
+                return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            deleted_files = []
+            for filename in os.listdir(mobinet_folder_path):
+                file_path = os.path.join(mobinet_folder_path, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    deleted_files.append(filename)
+ 
+            return Response({
+                'status': True,
+                'message': 'Files deleted successfully',
+                'deleted_files': deleted_files
+            }, status=status.HTTP_200_OK)
+ 
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
    
+
+
 # UPLOAD RFS FILES
 @api_view(['POST', 'GET', 'DELETE'])
 def upload_rfs_data(request):
@@ -179,7 +230,6 @@ def upload_rfs_data(request):
  
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-   
 
 # UPLOAD MSMF FILES
 @api_view(['POST', 'GET', 'DELETE'])
@@ -229,7 +279,125 @@ def upload_msmf_data(request):
  
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-   
+
+
+@api_view(['POST'])
+def data_fetch(request):
+    circle = request.data.get("circle")
+    siteId = request.data.get("siteId")
+
+    if not circle or not siteId:
+        return Response({"message": "siteId/circle not provided"}, status=400)
+
+    try:
+        # ---------------- Zone Mapping ----------------
+        zone_map_code = { 
+            151: 'AP', 132: 'BR', 152: 'CN', 111: 'DL', 113: 'HR', 114: 'JK',
+            153: 'KK', 174: 'MU', 172: 'MP', 134: 'OR', 115: 'PB', 176: 'RJ',
+            116: 'UE', 117: 'UW', 135: 'WB', 136: 'KO', 155: 'TN',
+            133: 'NE', 131: 'AS'
+        }
+
+        # ---------------- 1️⃣ Read Mobinet File ----------------
+        mobinet_folder = os.path.join(main_folder, 'mobinet')
+
+        today_date = datetime.now().strftime("%d%m%Y")
+        expected_filename_prefix = f"{circle}-{today_date}"
+
+        mobinet_files = [
+            f for f in os.listdir(mobinet_folder)
+            if f.startswith(expected_filename_prefix)
+        ]
+
+        if not mobinet_files:
+            return Response({"error": "Mobinet file not found for today"}, status=400)
+
+        mobinet_path = os.path.join(mobinet_folder, mobinet_files[0])
+
+        mobinet_df = pd.read_excel(
+            mobinet_path,
+            usecols=["Model", "Zone", "Parent Site", "Cabinet", "Serial Number"],
+            engine="openpyxl"
+        )
+
+        mobinet_df["Parent Site"] = mobinet_df["Parent Site"].astype(str).str.strip()
+        mobinet_df["Zone"] = mobinet_df["Zone"].astype(str).str.strip()
+        mobinet_df["Serial Number"] = mobinet_df["Serial Number"].astype(str).str.strip()
+
+        # Filter by circle & site
+        filtered_mobinet = mobinet_df[
+            (mobinet_df["Zone"] == circle) &
+            (mobinet_df["Parent Site"] == f"{siteId}_{circle}")
+        ].copy()
+
+        if filtered_mobinet.empty:
+            return Response({"message": "No data found in Mobinet for given site"}, status=404)
+
+        # ---------------- 2️⃣ Read RFS File ----------------
+        rfs_folder = os.path.join(main_folder, 'rfs')
+        rfs_files = [
+            f for f in os.listdir(rfs_folder)
+            if os.path.isfile(os.path.join(rfs_folder, f))
+        ]
+
+        if len(rfs_files) != 1:
+            return Response({"error": "RFS folder must contain exactly one file"}, status=400)
+
+        rfs_path = os.path.join(rfs_folder, rfs_files[0])
+
+        rfs_df = pd.read_csv(
+            rfs_path,
+            usecols=["FROMLOCATION", "SITEID", "ITEMCODE", "SERIALNUMBER"]
+        )
+
+        rfs_df["SERIALNUMBER"] = rfs_df["SERIALNUMBER"].astype(str).str.strip()
+        rfs_df["SITEID"] = rfs_df["SITEID"].astype(str).str.strip()
+
+        # Extract zone code from FROMLOCATION
+        rfs_df["zone_code"] = rfs_df["FROMLOCATION"].astype(str).str.split("-").str[0]
+        rfs_df["zone_code"] = pd.to_numeric(rfs_df["zone_code"], errors="coerce")
+
+        rfs_df["circle"] = rfs_df["zone_code"].map(zone_map_code)
+
+        # Filter by circle and site
+        filtered_rfs = rfs_df[
+            (rfs_df["circle"] == circle) &
+            (rfs_df["SITEID"] == str(siteId))
+        ].copy()
+
+        # ---------------- 3️⃣ Compare Serial Numbers ----------------
+        rfs_serials = set(filtered_rfs["SERIALNUMBER"])
+
+        # filtered_mobinet["Remark"] = filtered_mobinet["Serial Number"].apply(
+        #     lambda x: True if x in rfs_serials else False
+        # )
+
+        # Map Item Code from RFS
+        itemcode_map = filtered_rfs.set_index("SERIALNUMBER")["ITEMCODE"].to_dict()
+
+        filtered_mobinet["Item Code"] = filtered_mobinet["Serial Number"].map(itemcode_map)
+
+        # ---------------- 4️⃣ Final DataFrame ----------------
+        final_df = pd.DataFrame({
+            "Circle": circle,
+            "Site-ID": siteId,
+            "Model": filtered_mobinet["Model"],
+            "Serial Number": filtered_mobinet["Serial Number"],
+            "Quantity": filtered_mobinet["Cabinet"],
+            "Item Code": filtered_mobinet["Item Code"],
+            # "Remark": filtered_mobinet["Remark"]
+        })
+
+        return Response({
+            "status": "success",
+            "count": len(final_df),
+            "data": final_df.to_dict(orient="records")
+        })
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+    
 
 @api_view(["POST"])
 def degrow_dismantle(request):
@@ -286,7 +454,7 @@ def degrow_dismantle(request):
 
     locater_df = pd.concat(locater_df_list, ignore_index=True)
 
-#  -------------  END OF LOCATER FILE READ  -----------------
+    #  -------------  END OF LOCATER FILE READ  -----------------
 
 
     # ----------------- Read Input Files -----------------
