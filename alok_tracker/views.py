@@ -4425,7 +4425,7 @@ def ms2_daily_waterfall(request):
     view = request.data.get('view')
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
-    
+
     if month_filtered and year_filtered:
         month_filtered = int(month_filtered)
         year_filtered = int(year_filtered)
@@ -4495,29 +4495,25 @@ def ms2_daily_waterfall(request):
 
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
-        
-        # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
 
         for col in df.columns:
-            if "Date" in col:
-                df[col] = pd.to_datetime(df[col], format="%d-%b-%y", errors="coerce")
+            if "Date" in col or "date" in col:
+                df[col] = pd.to_datetime(df[col], errors="coerce")
 
         today = dtime.today().date()
 
         if (not month_start or not month_end) and (not start_date or not end_date):
             if today.day >= 26:
                 start_date = today.replace(day=26)
-                if today.month == 12:
-                    end_date = today.replace(year=today.year + 1, month=1, day=25)
-                else:
-                    end_date = today.replace(month=today.month + 1, day=25)
+                end_date = (today.replace(month=today.month + 1, day=25)
+                            if today.month != 12
+                            else today.replace(year=today.year + 1, month=1, day=25))
             else:
-                if today.month == 1:
-                    start_date = today.replace(year=today.year - 1, month=12, day=26)
-                else:
-                    start_date = today.replace(month=today.month - 1, day=26)
+                start_date = (today.replace(month=today.month - 1, day=26)
+                              if today.month != 1
+                              else today.replace(year=today.year - 1, month=12, day=26))
                 end_date = today.replace(day=25)
-                
+
         if month_start and month_end:
             date_range = pd.date_range(start=month_start, end=min(month_end, today)).date
         else:
@@ -4529,6 +4525,7 @@ def ms2_daily_waterfall(request):
             result_columns = ["Milestone Track/Site Count", "AOP", "CF"] + formatted_dates
         else:
             result_columns = ["Milestone Track/Site Count", "AOP"] + formatted_dates
+
         result = pd.DataFrame(columns=result_columns)
 
         milestones = [
@@ -4541,69 +4538,67 @@ def ms2_daily_waterfall(request):
             'SCFT Accepted Date',
             'KPI AT offer Date',
             'KPI AT Accepted Date',
-            '4G MS2 Date',
-            '5G MS2 Date',
-            'Final MS2 Date'
+            'MS2 Status'
         ]
 
-        unique_data.update(**{"Milestone": milestones})
+        unique_data.update({"Milestone": milestones})
 
         for milestone in milestones:
-            milestone_df_format = (
-                milestone.lower()
-                .replace(" ", "_")
-                .replace("-", "_")
-                .replace("(", "")
-                .replace(")", "").replace("4", "four_").replace("5", "five_")
-            )
+
+            if milestone == "MS2 Status":
+                milestone_df_format = "final_ms2_date"
+            else:
+                milestone_df_format = (
+                    milestone.lower()
+                    .replace(" ", "_")
+                    .replace("-", "_")
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace("4", "four_")
+                    .replace("5", "five_")
+                )
 
             if milestone_df_format not in df.columns:
                 continue
 
-            df[milestone_df_format] = pd.to_datetime(df[milestone_df_format], errors="coerce").dt.date
-            if month_start and month_end:
-                mask = df['site_onair_date'].isna()
-                valid_dates_cf = df.loc[mask, milestone_df_format].dropna()
-            # else:
-            #     valid_dates = df[milestone_df_format].dropna()
-            
-            valid_dates_aop = df[milestone_df_format].dropna()
+            df[milestone_df_format] = pd.to_datetime(
+                df[milestone_df_format], errors="coerce"
+            ).dt.date
 
-            if valid_dates_aop.empty:
+            valid_dates = df[milestone_df_format].dropna()
+
+            if valid_dates.empty:
+                row = {
+                    "Milestone Track/Site Count": milestone,
+                    "AOP": "-"
+                }
                 if month_start and month_end:
-                    row = {
-                        "Milestone Track/Site Count": milestone,
-                        "AOP": "-",
-                        "CF": "-",
-                        **{d.strftime("%d-%b-%y"): "-" for d in date_range}
-                    }
-                else:
-                    row = {
-                        "Milestone Track/Site Count": milestone,
-                        "AOP": "-",
-                        **{d.strftime("%d-%b-%y"): "-" for d in date_range}
-                    }
-                
+                    row["CF"] = "-"
+
+                for d in date_range:
+                    row[d.strftime("%d-%b-%y")] = "-"
+
                 result.loc[len(result)] = row
                 continue
-            
-            if month_start and month_end:
-                cf_count = (valid_dates_cf < month_start).sum()
-                aop_count = (valid_dates_aop < month_start).sum()
-            else:
-            #     cf_count = (valid_dates < start_date).sum()
-                aop_count = (valid_dates_aop < start_date).sum()
-            
-            if month_start and month_end:
-                cumulative = cf_count
-                row = {"Milestone Track/Site Count": milestone,"AOP": aop_count, "CF": cf_count}
-            else:
-                cumulative = aop_count
-                row = {"Milestone Track/Site Count": milestone,"AOP": aop_count}
 
+            if month_start and month_end:
+                aop_count = (valid_dates < month_start).sum()
+                cumulative = aop_count
+                row = {
+                    "Milestone Track/Site Count": milestone,
+                    "AOP": aop_count,
+                    "CF": aop_count
+                }
+            else:
+                aop_count = (valid_dates < start_date).sum()
+                cumulative = aop_count
+                row = {
+                    "Milestone Track/Site Count": milestone,
+                    "AOP": aop_count
+                }
 
             for d in date_range:
-                count = (valid_dates_aop == d).sum()
+                count = (valid_dates == d).sum()
                 cumulative += count
 
                 if view == "Cumulative":
@@ -4613,30 +4608,26 @@ def ms2_daily_waterfall(request):
 
             result.loc[len(result)] = row
 
-        result.columns = [
-            col.strftime("%d-%b-%y") if isinstance(col, (dtime,)) or hasattr(col, "strftime") else col
-            for col in result.columns
-        ]
-        if month_start and month_end:
-            result = result[["Milestone Track/Site Count", "AOP" , "CF"] + formatted_dates]
-        else:
-            result = result[["Milestone Track/Site Count", "AOP"] + formatted_dates]
- 
+        # -------- GAP CALCULATION FROM SITE ONAIR --------
+
         last_col = formatted_dates[-1]
-        dash_mask = result[last_col] == '-'
 
         result[last_col] = pd.to_numeric(result[last_col], errors='coerce')
-        result['Gap'] = -result[last_col].diff()
 
-        nan_mask = result['Gap'].isna()
+        site_onair_value = result.loc[
+            result['Milestone Track/Site Count'] == 'Site ONAIR Date',
+            last_col
+        ]
 
-        result[last_col] = result[last_col].fillna(0).astype(int)
+        if not site_onair_value.empty:
+            site_onair_value = site_onair_value.values[0]
+            result['Gap'] = site_onair_value - result[last_col]
+        else:
+            result['Gap'] = 0
+
         result['Gap'] = result['Gap'].fillna(0).astype(int)
+        result[last_col] = result[last_col].fillna(0).astype(int)
 
-        result.loc[dash_mask, last_col] = '-'
-        result.loc[nan_mask, 'Gap'] = '-'
-
-        result['Gap'] = result['Gap'].astype(str)
         result = result.astype(str).reset_index(drop=True)
 
         result['Milestone Track/Site Count'] = result['Milestone Track/Site Count'].apply(
@@ -4669,7 +4660,10 @@ def ms2_daily_waterfall(request):
         with pd.ExcelWriter(dashboard_file_path, engine='xlsxwriter') as writer:
             result.to_excel(writer, index=False, sheet_name='Daily Waterfall MS2')
 
-        dashboard_file_path = dashboard_file_path.replace(settings.MEDIA_ROOT, settings.MEDIA_URL).replace("\\", "/")
+        dashboard_file_path = dashboard_file_path.replace(
+            settings.MEDIA_ROOT, settings.MEDIA_URL
+        ).replace("\\", "/")
+
         download_link = request.build_absolute_uri(dashboard_file_path)
 
         return Response({
@@ -4682,7 +4676,6 @@ def ms2_daily_waterfall(request):
 
     except Exception as e:
         return Response({"error": f"{str(e)}"}, status=500)
-
 
 @api_view(['GET','POST'])
 def ms2_weekly_monthly_waterfall(request):
