@@ -1,5 +1,5 @@
 from django.urls import path
-from degrowDismental.views import degrow_dismantle,get_Files,upload_msmf_data,upload_rfs_data,upload_locator_data,delete_single_file
+from degrowDismental.views import *
 
 urlpatterns = [
     path("upload/", degrow_dismantle, name="degrow_dismantle"),
