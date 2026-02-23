@@ -14,4 +14,5 @@ urlpatterns = [
     # path("data_fetch/", data_fetch, name="delete_file"),
     path("mobinet_data_fetch/", mobinet_data_fetch, name="mobinet_data_fetch"),
     path("mobinet_data_submit/", mobinet_data_submit, name="mobinet_data_submit"),
+    
 ]
