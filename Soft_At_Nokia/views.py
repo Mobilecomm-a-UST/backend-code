@@ -11,30 +11,15 @@ from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 from rest_framework.response import Response
 from rest_framework import status
 # from rest_framework import status
-from .models import ExpectedParameter ,SummaryData , UserCounter
+from .models import ExpectedParameter ,SummaryData , UserCounter , ExpectedParameter_5G, SummaryData_5G
 from  mcom_website.settings import MEDIA_ROOT
-from .serializers import ExpectedParameterSerializer,SummaryDataSerializer ,UserCounterSerializer
+from .serializers import ExpectedParameterSerializer,SummaryDataSerializer ,UserCounterSerializer, ExpectedParameterSerializer_5G, SummaryDataSerializer_5G
 import json
-
-
-
-#---------------------------project Type #--------------------
-
-from .models import ExpectedParameter ,SummaryData,AlarmMapping
-from  mcom_website.settings import MEDIA_ROOT
-from .serializers import ExpectedParameterSerializer,SummaryDataSerializer
-import json
-import os
-import pandas as pd
-import xml.etree.ElementTree as ET
-from django.conf import settings
-from rest_framework.decorators import api_view, parser_classes
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.response import Response
-from rest_framework import status
-from .models import ExpectedParameter
-from .serializers import ExpectedParameterSerializer
-from mcom_website.settings import MEDIA_ROOT
+from datetime import datetime
+import re
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+import math
+import gzip
 
 
 # -------------------- Utility Functions --------------------
@@ -51,6 +36,32 @@ def extract_site_id(dist_name):
     except Exception:
         return None
     return None
+
+def get_mrbts_site_map(root, ns):
+    mrbts_site_map = {}
+
+    # namespace-safe tags
+    mo_path = ".//ns:managedObject[@class='MRBTS']" if ns else ".//managedObject"
+    p_tag = "ns:p" if ns else "p"
+
+    for mrbts in root.findall(mo_path, ns):
+        dist_name = mrbts.attrib.get("distName", "")
+        mrbts_id = extract_site_id(dist_name)
+
+        bts_name = ""
+        for p in mrbts.findall(p_tag, ns):
+            if p.attrib.get("name", "").lower() == "btsname":
+                bts_name = (p.text or "").strip()
+                break
+
+        # extract WBJ1503 from WB_ZQ_F_WBJ1503
+        site_id = bts_name.split("_")[-1] if bts_name else ""
+
+        if mrbts_id and site_id:
+            mrbts_site_map[mrbts_id] = site_id
+
+    return mrbts_site_map
+
 
 
 def normalize_path(path):
@@ -248,11 +259,6 @@ def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
                     "bg_color": "#FF6347", "font_color": "#FFFFFF",
                     "align": "center", "valign": "center", "bold": True, "border": 1
                 })
-            elif cell_value == "NA":
-                format_style = workbook.add_format({
-                    "bg_color": "#FCF259", "font_color": "#222831",
-                    "align": "center", "valign": "center", "bold": True, "border": 1
-                })
             elif "|" in cell_value:
                 format_style = workbook.add_format({
                     "font_color": "#FF0000", "align": "center",
@@ -260,8 +266,7 @@ def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
                 })
 
             worksheet.write(startrow + row_num + 1, startcol + col_num, cell_value, format_style)
-import re
-import re
+
 
 def normalize_value(val):
     """Clean value: uppercase, strip spaces, remove special chars"""
@@ -301,7 +306,7 @@ def deduplicate_alarms(alarms):
     seen = set()
     unique_alarms = []
     for alarm in alarms:
-        key = (alarm['file'], alarm['site_id'], alarm['mo_path'], alarm['parameter'])
+        key = (alarm['file'], alarm['MRBTS'], alarm['mo_path'], alarm['parameter'])
         if key not in seen:
             seen.add(key)
             unique_alarms.append(alarm)
@@ -376,14 +381,13 @@ def upload_excel(request):
     excel_file = request.FILES.get('excel_file')
     if not excel_file:
         return Response({"error": "Excel file is required"}, status=status.HTTP_400_BAD_REQUEST)
- 
+
     try:
         df = pd.read_excel(excel_file)
         # df = df.dropna(subset=['MO Class', 'Parameter', 'Value'])
- 
- 
+
         ExpectedParameter.objects.all().delete()  
- 
+
 
         errors = []
 
@@ -398,7 +402,7 @@ def upload_excel(request):
                 serializer.save()
             else:
                 errors.append(serializer.errors)
- 
+
         if errors:
             return Response({"error": "Some rows failed validation", "details": errors}, status=status.HTTP_400_BAD_REQUEST)
         api_usage_all(userId, api)
@@ -430,6 +434,7 @@ FIXED_PARAMETERS = [
 def upload_and_compare_xml_files(request):
     userId = request.data.get('userId')
     api = "checkpoints Report Downloaded"
+
     xml_files = request.FILES.getlist('xml_files')
     circle_name = request.data.get('circle_name', 'default_circle').strip()
     project_type = request.data.get('project_type', 'project_type').strip()
@@ -455,6 +460,8 @@ def upload_and_compare_xml_files(request):
     all_alarms = []
     summary_rows = []
     ipmtu_rows = []
+    nomenclature = []
+
 
     # ------------------------
     # Helper function
@@ -489,6 +496,7 @@ def upload_and_compare_xml_files(request):
         except ET.ParseError:
             results.append({
                 "file": xml_file.name,
+                "MRBTS": '',
                 "site_id": '',
                 "mo_path": '',
                 "parameter": '',
@@ -503,6 +511,10 @@ def upload_and_compare_xml_files(request):
 
         mo_elements = root.findall('.//ns:managedObject', ns) if ns else root.findall('.//managedObject')
 
+        mrbts_site_map = get_mrbts_site_map(root, ns)
+        print("MRBTS → SITE MAP:", mrbts_site_map)
+
+
         # 1. IPMTU VALIDATION
         REQUIRED_IPIF_DISTNAMES = [
             "MRBTS/TNLSVC-1/TNL-1/IPNO-1/IPIF-1",
@@ -516,13 +528,15 @@ def upload_and_compare_xml_files(request):
 
             dist_name = mo.attrib.get("distName", "")
             site_id = extract_site_id(dist_name)
-
+            site = mrbts_site_map.get(site_id, "")
+            
             ipmtu_val = get_param_value(mo, "ipmtu", ns_uri)
             status_ip = "OK" if any(matches_path(req, dist_name) for req in REQUIRED_IPIF_DISTNAMES) else "Extra"
 
             ipmtu_rows.append({
                 "file": xml_file.name,
-                "site_id": site_id,
+                "Site_id":site,
+                "MRBTS": site_id,
                 "dist_name": dist_name,
                 "ipMtu": ipmtu_val,
                 "status": status_ip
@@ -530,13 +544,13 @@ def upload_and_compare_xml_files(request):
 
         # 2. FIXED PARAMETERS SECTION
         
-        summary_rows = []
 
         # First, get all unique site IDs from your XML
         site_ids = set()
         for mo in mo_elements:
             dist_name = mo.attrib.get("distName", "")
             site_id = extract_site_id(dist_name)
+            site = mrbts_site_map.get(site_id, "")
             if site_id:
                 site_ids.add(site_id)
 
@@ -556,7 +570,8 @@ def upload_and_compare_xml_files(request):
 
                 summary_rows.append({
                     "file": xml_file.name,
-                    "site_id": site_id,
+                    "site_id": site,
+                    "MRBTS": site_id,
                     "mo_class": mo_class,
                     "parameter": param,
                     "value": value_found
@@ -623,6 +638,7 @@ def upload_and_compare_xml_files(request):
         for mo in mo_elements:
             dist_name = mo.attrib.get('distName', '')
             site_id = extract_site_id(dist_name)
+            site = mrbts_site_map.get(site_id, "")
 
             port_id = get_param_value(mo, "portid", ns_uri)
             descr = get_param_value(mo, "descr", ns_uri)
@@ -637,14 +653,16 @@ def upload_and_compare_xml_files(request):
             if max_alarms_per_site is None or site_alarm_counts[site_id] + 2 <= max_alarms_per_site:
                 alarms.append({
                     "file": xml_file.name,
-                    "site_id": site_id,
+                    "Site_id":site,
+                    "MRBTS": site_id,
                     "mo_path": dist_name,
                     "parameter": "descr",
                     "Status": descr
                 })
                 alarms.append({
                     "file": xml_file.name,
-                    "site_id": site_id,
+                    "Site_id":site,
+                    "MRBTS": site_id,
                     "mo_path": dist_name,
                     "parameter": "polarity",
                     "Status": polarity
@@ -659,6 +677,7 @@ def upload_and_compare_xml_files(request):
         for mo in mo_elements:
             dist_name = mo.attrib.get("distName", "")
             site_id = extract_site_id(dist_name)
+            site = mrbts_site_map.get(site_id, "")
 
             for path, params in expected_values.items():
                 if not matches_path(path, dist_name):
@@ -688,7 +707,8 @@ def upload_and_compare_xml_files(request):
                     if matching_value:
                         results.append({
                             "file": xml_file.name,
-                            "site_id": site_id,
+                            "site_id": site,
+                            "MRBTS": site_id,
                             "mo_path": path,
                             "parameter": param_name,
                             "actual_value": matching_value,
@@ -708,26 +728,85 @@ def upload_and_compare_xml_files(request):
                     #     })
 
         # ---------------------------------------
+        # 5. Nomenclature Validation (FIXED)
+        # ---------------------------------------
+        for mo in mo_elements:
+
+            mo_class = mo.attrib.get("class")
+
+            dist_name = mo.attrib.get("distName", "")
+            site_id = extract_site_id(dist_name)
+            site = mrbts_site_map.get(site_id, "")
+
+            bts_name = ""
+            cell_name = ""
+            itemname = ""
+            tac = ""
+
+            p_tag = f"{{{ns_uri}}}p" if ns_uri else "p"
+
+            # 👉 MRBTS → BTS NAME
+            if mo_class == "MRBTS":
+                for p in mo.findall(p_tag):
+                    if p.attrib.get("name", "").lower() == "btsname":
+                        bts_name = (p.text or "").strip()
+                        break
+
+            # 👉 LNCEL → CELL NAME + TAC
+            elif mo_class == "LNCEL":
+                for p in mo.findall(p_tag):
+                    pname = p.attrib.get("name", "").lower()
+
+                    if pname == "name":
+                        cell_name = (p.text or "").strip()
+
+                    elif pname == "tac":
+                        tac = (p.text or "").strip()
+
+            # 👉 LNBTS → siteTemplateName
+            elif mo_class == "LNBTS":
+                for p in mo.findall(p_tag):
+                    if p.attrib.get("name", "").lower() == "sitetemplatename":
+                        itemname = (p.text or "").strip()
+                        break
+
+            if bts_name or cell_name or itemname or tac:
+                nomenclature.append({
+                    "Site_id": site,
+                    "MRBTS": site_id,
+                    "BTS_NAME": bts_name,
+                    "CELL_NAME": cell_name,
+                    "SiteTemplateName": itemname,
+                    "TAC": tac,
+                })
+
+
+
+        # ---------------------------------------
         # Deduplicate final outputs
         # ---------------------------------------
         all_alarms = deduplicate_alarms(all_alarms)
 
         df_results = pd.DataFrame(results).drop_duplicates(
-            subset=["file", "site_id", "mo_path", "parameter", "actual_value", "expected_value"],
+            subset=["file","MRBTS", "mo_path", "parameter", "actual_value", "expected_value"],
             keep="first"
         )
 
         df_alarms = pd.DataFrame(all_alarms).drop_duplicates(
-            subset=["file", "site_id", "mo_path", "parameter", "Status"],
+            subset=["file", "MRBTS", "mo_path", "parameter", "Status"],
             keep="first"
         )
 
         df_summary = pd.DataFrame(summary_rows).drop_duplicates()
 
         df_ipmtu = pd.DataFrame(ipmtu_rows).drop_duplicates(
-            subset=["file", "site_id", "dist_name", "ipMtu", "status"],
+            subset=["file", "MRBTS","dist_name", "ipMtu", "status"],
             keep="first"
         )
+        df_nomenclature = pd.DataFrame(nomenclature).drop_duplicates()
+
+
+
         # ---------------------------------------
         # SAVE EXCEL REPORT
         # ---------------------------------------
@@ -746,7 +825,7 @@ def upload_and_compare_xml_files(request):
                 df_alarms["param_order"] = df_alarms["parameter"].map({"descr": 1, "polarity": 2})
 
                 df_alarms = df_alarms.sort_values(
-                    by=["site_id", "sort_key", "param_order"],
+                    by=["MRBTS", "sort_key", "param_order"],
                     ascending=[True, True, True]
                 ).drop(columns=["sort_key", "param_order"])
 
@@ -812,14 +891,28 @@ def upload_and_compare_xml_files(request):
                 #     for actual, expected in zip(status_list, expected_sequence)
                 # ]
 
+                # status_ok = []
+
+                # for idx, actual in enumerate(status_list):
+                #     if idx < len(expected_sequence):
+                #         status_ok.append(actual == expected_sequence[idx])
+                #     else:
+                #         # extra rows beyond expected sequence = WRONG
+                #         status_ok.append(False)
                 status_ok = []
+                seq_len = len(expected_sequence)
 
                 for idx, actual in enumerate(status_list):
-                    if idx < len(expected_sequence):
+
+                    # 🔹 normal range → PURANA behaviour
+                    if idx < seq_len:
                         status_ok.append(actual == expected_sequence[idx])
+
+                    # 🔁 repeat start → cyclic allow
                     else:
-                        # extra rows beyond expected sequence = WRONG
-                        status_ok.append(False)
+                        expected = expected_sequence[idx % seq_len]
+                        status_ok.append(actual == expected)
+
 
                 df_alarms["Status_OK"] = status_ok
 
@@ -926,6 +1019,13 @@ def upload_and_compare_xml_files(request):
             if not df_ipmtu.empty:
                 df_ipmtu.to_excel(writer, index=False, sheet_name="ipMtu Status")
                 format_excel_sheet(writer, "ipMtu Status", df_ipmtu)
+            
+            if not df_nomenclature.empty:
+                df_nomenclature.to_excel(writer, index=False, sheet_name="Nomenclature")
+                format_excel_sheet(writer, "Nomenclature", df_nomenclature)
+
+
+
         api_usage_all(userId, api)
         return Response({
             "message": f"Report generated successfully for circle: {circle_name}",
@@ -1018,6 +1118,7 @@ def get_summary_data(request):
 def upload_summary_xml_files(request):
     userId = request.data.get('userId')
     api = "Summary Report Downloaded"
+   
     xml_files = request.FILES.getlist('xml_files')
     circle_name = request.data.get('circle_name', 'default_circle').strip()
     project_type = request.data.get('project_type', 'project_type').strip()
@@ -1321,3 +1422,1724 @@ def upload_summary_xml_files(request):
         "download_link": download_link,
         "status": True
     }, status=status.HTTP_200_OK)
+
+
+#----------------------------------------------------------
+#------------------------------------------ 5G API's --------------------------------------
+
+
+#-----------SUMMARY REPORT 5G------------------------------
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def upload_summary_xml_files_5G(request):
+    userId = request.data.get('userId')
+    api = "Summary Report Downloaded 5G"
+    site_id = request.data.get('Site_ID')
+    xml_files = request.FILES.getlist('xml_files')
+    circle_name = request.data.get('circle_name', 'default_circle').strip()
+    project_type = request.data.get('project_type', 'project_type').strip()
+
+    if not xml_files:
+        return Response({"error": "At least one XML file is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Paths
+    base_media_url = os.path.join(MEDIA_ROOT, "Soft_AT_Nokia")
+    template_file_path = os.path.join(base_media_url, "template_file")
+    output_dir = os.path.join(base_media_url, 'output_files')
+
+    os.makedirs(template_file_path, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
+
+    template_path = os.path.join(template_file_path, "5G Soft AT.xlsx")
+    output_path = os.path.join(output_dir, "AT_Summary_5G.xlsx")
+
+    # Load template ONCE (important)
+    base_template_df = pd.read_excel(template_path, engine='openpyxl', sheet_name='Sheet1')
+
+    all_dataframes = []
+
+    # -----------------------------
+    #       XML Extractor
+    # -----------------------------
+    def extract_data_from_xml(xml_file):
+        tree = ET.parse(xml_file)
+        root = tree.getroot()
+
+        # Namespace
+        ns = {}
+        if '}' in root.tag:
+            ns = {'ns': root.tag.split('}')[0].strip('{')}
+
+        def find(path): return root.find(path, ns)
+        def findall(path): return root.findall(path, ns)
+
+        all_sites = []
+
+        for mrbts in findall(".//ns:managedObject[@class='MRBTS']"):
+            data = {}
+
+            # Dictionary for MRBTS
+            p_dict = {
+                p.attrib.get("name"): (p.text.strip() if p.text else "")
+                for p in mrbts.findall("ns:p", ns)
+            }
+
+            dist_name = mrbts.attrib.get("distName", "")
+            mrbts_id = dist_name.split("MRBTS-")[-1] if "MRBTS-" in dist_name else ""
+
+            data["MRBTS_ID"] = mrbts_id
+            data["MRBTS_Name"] = p_dict.get("btsName", "")
+
+            # Site ID from name
+            site_name = p_dict.get("btsName", "")
+            data["Site_ID"] = site_name.split('_')[-1] if site_name else ""
+
+            data["latitude"] = p_dict.get("latitude", "")
+            data["longitude"] = p_dict.get("longitude", "")
+
+            # ----------------- BCF -----------------
+            gnbid = ""
+
+            for gnbcf in root.findall(".//ns:managedObject[@class='LNADJGNB']", ns):
+                dist_name = gnbcf.attrib.get("distName", "")
+
+                if dist_name.endswith("LNADJGNB-0") and mrbts_id in dist_name:
+                    for p in gnbcf.findall("ns:p", ns):
+                        if p.attrib.get("name") == "adjGnbId":
+                            gnbid = p.text.strip() if p.text else ""
+                            break
+                    break
+
+            data["gnbid"] = gnbid
+
+
+            # ----------------- SW Version -----------------
+            data["swVersion"] = ""
+            for hw in findall(".//ns:managedObject[@class='MNL_R']"):
+                if mrbts_id in hw.attrib.get("distName", ""):
+                    for p in hw.findall("ns:p", ns):
+                        if p.attrib.get("name") == "activeSWReleaseVersion":
+                            data["swVersion"] = p.text.strip()
+                            break
+
+            # ----------------- MPlane IP -----------------
+            data["Mplane"] = ""
+
+            for ip in root.findall(".//ns:managedObject", ns):
+                dist = ip.attrib.get("distName", "")
+
+                # Check for correct class AND IPIF-3 in distName
+                if "IPIF-3" in dist and mrbts_id in dist:
+                    for p in ip.findall("ns:p", ns):
+                        if p.attrib.get("name") == "localIpAddrAllocated":
+                            data["Mplane"] = p.text.strip()
+                            break
+
+
+            # ----------------- Cells -----------------
+            cells = []
+
+            for cell in root.findall(".//ns:managedObject[@class='NRCELLGRP']", ns):
+                if mrbts_id in cell.attrib.get("distName", ""):
+                    nr_list = cell.find("ns:list[@name='nrCellList']", ns)
+                    if nr_list is not None:
+                        cells.extend(
+                            p.text.strip() for p in nr_list.findall("ns:p", ns) if p.text
+                        )
+
+            data["cells"] = " & ".join(cells)
+
+            # ----------------- RET Count -----------------
+            data["RET Count"] = len([
+                r for r in findall(".//ns:managedObject[@class='RET']")
+                if mrbts_id in r.attrib.get("distName", "")
+            ])
+
+            # ----------------- TAC -----------------
+            data["TAC"] = ""
+            for tracking in findall(".//ns:managedObject[@class='LNCEL']"):
+                if mrbts_id in tracking.attrib.get("distName", ""):
+                    for p in tracking.findall("ns:p", ns):
+                        if p.attrib.get("name") == "tac":
+                            data["TAC"] = p.text.strip()
+                            break
+
+            # ----------------- Sync Status -----------------
+            data["Sync Status"] = "Not Available"
+            for clock in findall(".//ns:managedObject[@class='CLOCK']"):
+                if mrbts_id in clock.attrib.get("distName", ""):
+                    sync_list = clock.find("ns:list[@name='syncInputList']", ns)
+                    if sync_list is not None:
+                        for item in sync_list.findall("ns:item", ns):
+                            for p in item.findall("ns:p", ns):
+                                # We only need syncInputType
+                                if p.attrib.get("name") == "syncInputType" and p.text:
+                                    value = p.text.strip()
+                                    if "GNSS" in value:
+                                        data["Sync Status"] = "GPS"
+                                    elif "Sync Hub Master" in value:
+                                        data["Sync Status"] = "HUB"
+                                    else:
+                                        data["Sync Status"] = value
+                                    break
+
+            # ----------------- DPR Cell Name -----------------
+            data["DPR_Cell_Name"] = ""
+            for lncel in findall(".//ns:managedObject[@class='LNCEL']"):
+                dist = lncel.attrib.get("distName", "")
+                if mrbts_id in dist:
+                    for p in lncel.findall("ns:p", ns):
+                        if p.attrib.get("name") == "name":
+                            data["DPR_Cell_Name"] = p.text.strip()
+                            break
+
+            # ----------------- LCR_ID (LNCEL IDs) -----------------
+            lncel_ids = []
+            for lncel in findall(".//ns:managedObject[@class='LNCEL']"):
+                dist = lncel.attrib.get("distName", "")
+                if mrbts_id in dist:
+                    match = re.search(r"LNCEL-(\d+)", dist)
+                    if match:
+                        lncel_ids.append(match.group(1))
+
+            data["LCR_ID"] = "&".join(lncel_ids)
+
+            # ----------Determine Activity Type based on project_type---------------------------------
+            Activity_Type = []
+            if project_type.lower() == 'uls':
+                Activity_Type.append('NEW_TOWER_ULS')
+            elif project_type.lower() == 'nt':
+                Activity_Type.append('NEW_TOWER')
+            elif project_type.lower() == 'relocation':
+                Activity_Type.append('NT_Relocation')
+            elif project_type.lower() == 'upgrade':
+                Activity_Type.append('L2100_UPGRADE')
+
+            data["Activity_Type"] = ",".join(Activity_Type) if Activity_Type else ""
+
+
+            # Add to site list
+            all_sites.append(data)
+
+        return all_sites
+    
+    circle_sgw_map = {
+    "WB": [
+        "2401:4900:40:200::1:48c",
+        "2401:4900:44:2600::102",
+        "2401:4900:0040:0200:0:0:0001:1500",
+        "2401:4900:0040:0200:0:0:0001:1501",
+        "2401:4900:0040:0200:0:0:0001:1502",
+        "2401:4900:0040:0200:0:0:0001:1503",
+        "2401:4900:0040:0200:0:0:0001:1504",
+        "2401:4900:0040:0200:0:0:0001:1505",
+        "2401:4900:40:3::1:c00",
+        "2401:4900:0040:0003:0::0001:0942",
+    ],
+    "AP": [
+        "2401:4900:50:200::1:48c",
+        "2401:4900:50:3::1:c01"
+    ],
+}
+
+
+    # -----------------------------
+    #       Process each XML
+    # -----------------------------
+    for xml_file in xml_files:
+        sites_data = extract_data_from_xml(xml_file)
+
+        for data in sites_data:
+            template_df = base_template_df.copy()
+
+
+            # Static fields
+            template_df.loc[0, 'OEM'] = 'Nokia'
+            template_df.loc[0, 'AoP'] = '2025-26'
+            template_df.loc[0, 'AT_Type'] = 'Soft_AT'
+            template_df.loc[0, 'TSP'] = 'Mobilecomm'
+            template_df.loc[0, 'Offer/Reoffer'] = 'OFFER'
+            template_df.loc[0, 'Project_Remarks'] = ' OK '
+            template_df.loc[0, 'Band'] = 'N3500'
+            template_df.loc[0, 'SMP_ID'] = 'NA'
+            template_df.loc[0, 'BSC'] = 'NA'
+            template_df.loc[0, 'Offered_Date'] = datetime.now().date()
+            template_df.loc[0, 'Media '] = 'Microwave'
+            template_df.loc[0, 'Ckt_Id'] = 'Microwave'
+            template_df.loc[0, 'Processed_By'] = 'Mobilecomm'
+            template_df.loc[0, 'Tech_info'] = '5G'
+            template_df.loc[0, 'Tech'] = '5G'
+            template_df.loc[0, 'Cell_ID'] = 'NA'
+            template_df.loc[0, 'Activity'] ='5G Combo_Relocation'
+            template_df.loc[0, 'MRBTS_Name'] = data.get('MRBTS_Name', '')
+            template_df.loc[0, 'Site_ID'] = data.get('Site_ID', '')
+            template_df.loc[0, 'Site ID (4G)'] = data.get('Site_ID', '')
+            template_df.loc[0, 'Reference_Id'] = f"{circle_name}_{data.get('Site_ID', '')}_5G_NA"
+            template_df.loc[0, 'BCF'] = 'NA'
+            template_df.loc[0, 'FDD_MRBTS_ID'] = 'NA'
+            template_df.loc[0, 'FDD_Mplane_IP'] = 'NA'
+            template_df.loc[0, 'FDD_Mplane_IP'] = 'NA'
+            template_df.loc[0, 'Nominal_Type'] = 'NA'
+            template_df.loc[0, 'Latitude (N)'] = data.get('latitude', '')
+            template_df.loc[0, 'Longitude (E)'] = data.get('longitude', '')
+            template_df.loc[0, 'Profile/SW Version'] = data.get("swVersion",'')
+            template_df.loc[0, 'TAC'] = data.get('TAC', '') 
+            template_df.loc[0, 'gNB_ID'] = data.get('gnbid', '') 
+            template_df.loc[0, 'Circle'] = circle_name
+            template_df.loc[0, "SGW IP"] = " ; ".join(circle_sgw_map.get(circle_name, []))
+            template_df.loc[0, 'Other Hardware Related Additional Information'] = '1-ABIO/2-AQQF'
+            template_df.loc[0, 'All Approved features & Compliance implemented'] = ' OK '
+            template_df.loc[0, 'RET_Count'] = data.get('RET Count', '')
+            template_df.loc[0, 'Sync_Status'] = data.get('Sync Status', '')
+            template_df.loc[0, 'NRCEL_ID'] = data['cells'] if data.get("cells") else ''
+            template_df.loc[0, 'DPR_Cell_Name'] = data.get('DPR_Cell_Name', '')
+
+
+            # Dynamic (from XML)
+            for key, value in data.items():
+                if key in template_df.columns:
+                    template_df.loc[0, key] = value
+
+            template_df.loc[0, 'Circle'] = circle_name
+
+            all_dataframes.append(template_df)
+
+    # -----------------------------
+    # Final Excel Output
+    # -----------------------------
+    final_df = pd.concat(all_dataframes, ignore_index=True)
+    final_df.drop_duplicates(inplace=True)
+    final_df = final_df.fillna("")
+
+    with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
+        final_df.to_excel(writer, index=False, sheet_name='Sheet1')
+        format_excel_sheet(writer, 'Sheet1', final_df)
+
+    relative_output_path = os.path.relpath(output_path, MEDIA_ROOT)
+    download_link = request.build_absolute_uri(os.path.join(MEDIA_URL, relative_output_path).replace('\\', '/'))
+    api_usage_all(userId, api)
+    return Response({
+        "message": f"Report generated successfully for circle: {circle_name}",
+        "download_link": download_link,
+        "status": True
+    }, status=status.HTTP_200_OK)
+
+
+
+#-----------------------------------Checklist 5G APIs---------------------------------------
+def remark(internal, external):
+    if pd.isna(internal) and pd.isna(external):
+        return "OK"
+    if pd.isna(internal) or pd.isna(external):
+        return "Not OK"
+
+    i = str(internal).strip().lower()
+    e = str(external).strip().lower()
+
+    if i == e:
+        return "OK"
+
+    ni = re.search(r'\d+', i)
+    ne = re.search(r'\d+', e)
+
+    if ni and ne and ni.group() == ne.group():
+        return "OK"
+
+    return "Not OK"
+
+
+def tf_to_01(val):
+    if val is None:
+        return val
+    val = str(val).strip().lower()
+    if val == "true":
+        return 1
+    if val == "false":
+        return 0
+    return val
+
+
+def normalize_id(val):
+    if pd.isna(val):
+        return pd.NA
+    parts = [p.strip() for p in str(val).split(",") if p.strip().isdigit()]
+    return ",".join(map(str, sorted(map(int, parts)))) if parts else pd.NA
+
+
+def normalize(val):
+    if pd.isna(val):
+        return val
+    v = str(val).strip()
+    try:
+        return int(v)
+    except:
+        try:
+            return float(v)
+        except:
+            return v.lower()
+
+
+@api_view(["POST"])
+def upload_checklist_xml_files_5G(request):
+
+    xml_files = request.FILES.getlist("xml_files")
+    if not xml_files:
+        return Response({"error": "Please upload XML files"}, status=HTTP_400_BAD_REQUEST)
+
+    excel_file = request.FILES.get("file")
+    if not excel_file:
+        return Response({"error": "Please upload excelfile"}, status=HTTP_400_BAD_REQUEST)
+
+    dumy_data = []
+
+    # ---------------------------------------
+    # XML PARSING
+    # ---------------------------------------
+    for file in xml_files:
+
+        file_name = file.name.lower()
+        if file_name.endswith(".gz"):
+            xml_bytes = gzip.decompress(file.read())
+        else:
+            xml_bytes = file.read()
+
+        root = ET.fromstring(xml_bytes)
+
+        m = re.match(r'\{(.*)\}', root.tag)
+        ns_url = m.group(1) if m else root.attrib.get("xmlns", "")
+        ns = {"ns": ns_url} if ns_url else {}
+
+        for mrbts in root.findall(".//ns:managedObject[@class='MRBTS']", ns):
+            p_dict = {
+                p.attrib.get("name"): (p.text or "").strip()
+                for p in mrbts.findall("ns:p", ns)
+            }
+
+            dist_name = mrbts.attrib.get("distName", "")
+            mrbts_id = dist_name.split("MRBTS-")[-1] if "MRBTS-" in dist_name else ""
+
+            mrbts_name = p_dict.get("btsName", "")
+            site = mrbts_name.split('_')[-1] if mrbts_name else ""
+            print("Site_ids:", site)
+
+        managed_objects = root.findall(".//ns:managedObject", ns) if ns else []
+        if not managed_objects:
+            managed_objects = root.findall(".//managedObject")
+        
+        for mo in managed_objects:
+
+            mo_class = mo.attrib.get("class", "")
+            dist_name = mo.attrib.get("distName", "")
+
+
+            # ---------------------------------------------------
+            # NRBTS
+            # ---------------------------------------------------
+            if mo_class == "NRBTS":
+                required = {
+                    "actSliceAwareScheduler",
+                    "actHighSliceWeightFactor",
+                    "actSliceAwareSchedulerUlAndEnh",
+                    "actSliceSwitchToDefault",
+                    "actAdditionalSliceSupport",
+                    "actSliceNumExt",
+                    "actExtSchedWeightAndPrefWrrAlg",
+                }
+
+                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                    name = p.attrib.get("name")
+                    if name in required:
+                        dumy_data.append({
+                            "MO": "NRBTS",
+                            "DistName": dist_name,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+
+            # ---------------------------------------------------
+            # NRCELL
+            # ---------------------------------------------------
+            elif mo_class == "NRCELL":
+                required = {
+                    "actUlTxSkip",
+                    "srPeriodicityMin",
+                    "adaptiveSrLoadThresholdUp",
+                    "adaptiveSrLoadThresholdDown",
+                    "adaptiveSrBlockingMinimization",
+                    "maxNbrTrafficLimit",
+                    "preferredVoNrSrPeriod",
+                    "actNbrForNonGbrBearers",
+                    "congDetectPeriod",
+                    "congWeightAlg",
+                    "maxNumOfNbrBearers",
+                    "maxPrbsPerNbrUe",
+                    "nbrPdcchCongHandlingDl",
+                    "nbrPdcchCongHandlingUl",
+                    "nbrPdschCongHandling",
+                    "nbrPuschCongHandling",
+                    "nrResourceGroupProfileDN"
+                }
+
+                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                    name = p.attrib.get("name")
+                    if name in required:
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+
+            # ---------------------------------------------------
+            # NRDRB (deep search)
+            # ---------------------------------------------------
+            elif mo_class == "NRDRB":
+                dist_name = mo.attrib.get("distName", "")
+                try:
+                    nrdrb_id = int(dist_name.split("NRDRB-")[-1])
+                except:
+                    continue
+    
+                group_1_ids = {5, 6, 11, 12, 21, 22, 25, 26}
+                group_2_ids = {21, 22, 25, 26}
+                group_3_ids = {6}
+                group_4_ids = {5, 6, 7, 8, 9, 11, 12, 21, 22, 25}
+                group_5_ids = {26}
+                group_6_ids = {11, 21}
+                group_7_ids = {12, 22}
+                group_8_ids = {5, 25}
+                group_9_ids = {6, 26}
+                group_10_ids = {7}
+                group_11_ids = {8, 9}
+    
+                group_1_params = {
+                    "pdcpStatRepWaitTimerOffset",
+                    "pdcpStatRepWaitTimer"
+                }
+    
+                group_2_params = {
+                    "actDddsReduction",
+                    "actDlTxResumeOnPdcpStatRep",
+                    "actLostPduFastRetx",
+                    "actOptDataFlowRateEst",
+                    "reTxPrioritizationType"
+                }
+    
+                group_3_params = {
+                    "inactPeriodX2PdcpDuplication"
+                }
+    
+                group_4_params = {
+                    "schedulWeight"
+                }
+    
+                group_5_params = {
+                    "schedulWeight",
+                    "nrDrbMacDN"
+                }
+    
+                group_6_params = {"priorityLevel"}
+                group_7_params = {"priorityLevel"}
+                group_8_params = {"priorityLevel"}
+                group_9_params = {"priorityLevel"}
+                group_10_params = {"priorityLevel"}
+                group_11_params = {"priorityLevel"}
+    
+                #FIX IS HERE (deep search for <p>)
+                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+                    name = p.attrib.get("name")
+    
+                    if nrdrb_id in group_1_ids and name in group_1_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+    
+                    if nrdrb_id in group_2_ids and name in group_2_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+    
+                    if nrdrb_id in group_3_ids and name in group_3_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+    
+                    if nrdrb_id in group_4_ids and name in group_4_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+    
+                    if nrdrb_id in group_5_ids and name in group_5_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+    
+                    if nrdrb_id in group_6_ids and name in group_6_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+    
+                    if nrdrb_id in group_7_ids and name in group_7_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+    
+                    if nrdrb_id in group_8_ids and name in group_8_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+    
+                    if nrdrb_id in group_9_ids and name in group_9_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+    
+                    if nrdrb_id in group_10_ids and name in group_10_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+    
+                    if nrdrb_id in group_11_ids and name in group_11_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+    
+    
+            # for RDRB_5QI class---            
+            elif mo_class == "NRDRB_5QI":
+                dist_name = mo.attrib.get("distName", "")
+                try:
+                    nrdrb_5qi_id = int(dist_name.rsplit("NRDRB_5QI-", 1)[-1])
+                except:
+                    continue
+    
+                nrdrb_5qi_param_map = {
+                    21: {"snssaiDN"},
+                    22: {"snssaiDN"},
+                    25: {"snssaiDN"},
+                    26: {"snssaiDN"},
+                    5:  {"snssaiDN"},
+                    6:  {"snssaiDN"},
+                    7:  {"snssaiDN"},
+                    8:  {"snssaiDN"},
+                    9:  {"snssaiDN"},
+                    1:  {"snssaiDN"},
+                    2:  {"snssaiDN"},
+                }
+    
+                allowed_params = nrdrb_5qi_param_map.get(nrdrb_5qi_id)
+                if not allowed_params:
+                    continue
+    
+                # snssaiDN is inside list/item/p
+                for item in (
+                    mo.findall(".//ns:list[@name='snssaiList']/ns:item", ns)
+                    if ns else
+                    mo.findall(".//list[@name='snssaiList']/item")
+                ):
+                    p = item.find("ns:p", ns) if ns else item.find("p")
+                    if p is None:
+                        continue
+    
+                    name = p.attrib.get("name")
+                    if name in allowed_params:
+                        dumy_data.append({
+                            "MO": "NRDRB_5QI",
+                            "DistName": dist_name,
+                            "ID": nrdrb_5qi_id,
+                            "Parameter":'Item-snssaiList-snssaiDN',        
+                            "value": p.text            
+                        })  
+            #
+            # for NRDRB_MAC classs---
+            elif mo_class == "NRDRB_MAC":
+                dist_name = mo.attrib.get("distName", "")
+                try:
+                    nrdrb_mac_id = int(dist_name.rsplit("NRDRB_MAC-", 1)[-1])
+                except:
+                    continue
+
+                group_1_ids={1}
+                group_2_ids={2}
+                group_3_ids={3}
+                group_4_ids={4}
+                group_5_ids={4}
+
+                group_1_params={"schedulBSD"}
+                group_2_params={"schedulBSD"}
+                group_3_params={"schedulBSD"}
+                group_4_params={"schedulBSD"}
+                group_5_params={'lcgid','maxDlHarqTxDrb','prioritisedBitRate','schedulPrio','nbrDl','nbrUl'}
+
+
+                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                    name = p.attrib.get("name")
+
+                    if nrdrb_mac_id in group_1_ids and name in group_1_params:
+                        dumy_data.append({
+                            "MO": "NRDRB_MAC",
+                            "DistName": dist_name,
+                            "ID": nrdrb_mac_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+
+                    if nrdrb_mac_id in group_2_ids and name in group_2_params:
+                        dumy_data.append({
+                            "MO": "NRDRB_MAC",
+                            "DistName": dist_name,
+                            "ID": nrdrb_mac_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+
+                    if nrdrb_mac_id in group_3_ids and name in group_3_params:
+                        dumy_data.append({
+                            "MO": "NRDRB_MAC",
+                            "DistName": dist_name,
+                            "ID": nrdrb_mac_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })  
+
+                    if nrdrb_mac_id in group_4_ids and name in group_4_params:
+                        dumy_data.append({
+                            "MO": "NRDRB_MAC",
+                            "DistName": dist_name,
+                            "ID": nrdrb_mac_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })  
+
+                    if nrdrb_mac_id in group_5_ids and name in group_5_params:
+                        dumy_data.append({
+                            "MO": "NRDRB_MAC",
+                            "DistName": dist_name,
+                            "ID": nrdrb_mac_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+
+            # for NRDRB_PDCP class----------
+            elif mo_class == "NRDRB_PDCP":
+                dist_name = mo.attrib.get("distName", "")
+                try:
+                    nrdrb_pdcp_id = int(dist_name.rsplit("NRDRB_PDCP-", 1)[-1])
+                except:
+                    continue  
+    
+                nrdrb_pdcp_param_map = {
+    
+                    2:{'tReorderingDl','tReorderingUl'}
+                }
+    
+                allowed_params = nrdrb_pdcp_param_map.get(nrdrb_pdcp_id)
+                if not allowed_params:
+                    continue                
+                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                    name = p.attrib.get("name")
+                    if name in allowed_params:
+                        dumy_data.append({
+                            "MO": "NRDRB_PDCP",
+                            "DistName": dist_name,
+                            "ID":nrdrb_pdcp_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })  
+    
+    
+    
+            #  for classs NRDRB_RLC_AM-----  
+            elif mo_class == "NRDRB_RLC_AM":
+                dist_name = mo.attrib.get("distName", "")
+                try:
+                    nrdrb_rlc_id = int(dist_name.rsplit("NRDRB_RLC_AM-", 1)[-1])
+                except:
+                    continue
+    
+    
+                nrdrb_rlc_param_map = {
+                    1:{'dlMaxRetxThreshold','dlPollByte',
+                        'ulMaxRetxThreshold','ulPollByte'}
+                        }
+
+                allowed_params = nrdrb_rlc_param_map.get(nrdrb_rlc_id)
+                if not allowed_params:
+                    continue                
+                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                    name = p.attrib.get("name")
+                    if name in allowed_params:
+                        dumy_data.append({
+                            "MO": "NRDRB_RLC_AM",
+                            "DistName": dist_name,
+                            "ID":nrdrb_rlc_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })  
+
+            # for classs NRDRB_RLC_UM-----  
+            elif mo_class == "NRDRB_RLC_UM":
+                dist_name = mo.attrib.get("distName", "")
+                try:
+                    nrdrb_rlcum_id = int(dist_name.rsplit("NRDRB_RLC_UM-", 1)[-1])
+                except:
+                    continue
+
+                nrdrb_rlcum_param_map = {
+                    1:{'rlcUMDrbSNLength',
+                        'ulTReassemblyUm'}
+                        }
+
+                allowed_params = nrdrb_rlcum_param_map.get(nrdrb_rlcum_id)
+                if not allowed_params:
+                    continue  
+                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):      
+                    name = p.attrib.get("name")
+                    if name in allowed_params:
+                        dumy_data.append({
+                            "MO": "NRDRB_RLC_UM",
+                            "DistName": dist_name,
+                            "ID":nrdrb_rlcum_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+
+            # for NRDRB_TCP_BOOST  
+            elif mo_class == "NRDRB_TCP_BOOST":
+                dist_name = mo.attrib.get("distName", "")
+                try:
+                    nrdrb_tcp_id = int(dist_name.rsplit("NRDRB_TCP_BOOST-", 1)[-1])
+                except:
+                    continue
+
+                nrdrb_tcp_param_map = {
+                    1:{'tcpBoostPugMinSrPeriodicity'}
+                        }
+
+                allowed_params = nrdrb_tcp_param_map.get(nrdrb_tcp_id)
+                if not allowed_params:
+                    continue                
+                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                    name = p.attrib.get("name")
+                    if name in allowed_params:
+                        dumy_data.append({
+                            "MO": "NRDRB_TCP_BOOST",
+                            "DistName": dist_name,
+                            "ID":nrdrb_tcp_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+
+            # for NRPMRNL class---
+            elif mo_class == "NRPMRNL":
+
+                required_in_nrpmrl = {
+                    'miNrCellUtilPerNrg',
+                    'miNrInterRATMobilitySaPmqap',
+                    'miNrSaCuNrpmqap',
+                    'miNrNgInterfaceNrpmqap',
+                    'miNrPdcpCellNrpmqap',
+                    'miNrCellUtilization',
+                    'miNrHighRlcCellNrpmqap',
+                    'miNrUeStatNrpmqap',
+                    'miNrPdcpLatNrpmqap'
+
+                }
+
+                params_nrpmrl = {}
+
+                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                    name = p.attrib.get("name")
+                    if name in required_in_nrpmrl :
+                        params_nrpmrl[name] = p.text
+                        dumy_data.append({
+                        "MO": "NRPMRNL",
+                        "DistName": dist_name,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
+
+            # for SNSSAI class---
+            elif mo_class == "SNSSAI":
+                dist_name = mo.attrib.get("distName", "")
+                try:
+                    snssai_id = int(dist_name.rsplit("SNSSAI-", 1)[-1])
+                except:
+                    continue  
+
+                group_1_ids={1}
+                group_2_ids={2}
+
+                group_1_params={'sd','sst','userLabel'}
+                group_2_params={'sd','sst','userLabel'}
+
+                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                    name = p.attrib.get("name")
+
+                    if snssai_id in group_1_ids and name in group_1_params:
+                        dumy_data.append({
+                            "MO": "SNSSAI",
+                            "DistName": dist_name,
+                            "ID": snssai_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+
+                    if snssai_id in group_2_ids and name in group_2_params:
+                        dumy_data.append({
+                            "MO": "SNSSAI",
+                            "DistName": dist_name,
+                            "ID": snssai_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+
+            # for TRACKINGAREA class---
+            elif  mo_class == "TRACKINGAREA":
+                dist_name = mo.attrib.get("distName", "")
+
+                snssai_values = []
+
+                for item in (
+                    mo.findall(".//ns:list[@name='snssaiList']/ns:item", ns)
+                    if ns else
+                    mo.findall(".//list[@name='snssaiList']/item")
+                ):
+                    p = item.find("ns:p", ns) if ns else item.find("p")
+                    if p is not None and p.attrib.get("name") == "snssaiDN":
+                        snssai_values.append(p.text)
+
+                if snssai_values:
+                    dumy_data.append({
+                        "MO": "TRACKINGAREA",
+                        "DistName": dist_name,
+                        "Parameter": "Item-snssaiList-snssaiDN",
+                        "value": ";".join(snssai_values)
+                    })
+
+
+    # ---------------------------------------
+    # DATAFRAME CREATION
+    # ---------------------------------------
+    df = pd.DataFrame(dumy_data)
+
+    for col in ["MO", "ID", "Parameter", "value"]:
+        if col not in df.columns:
+            df[col] = ""
+
+    df["ID"] = pd.to_numeric(df.get("ID"), errors="coerce")
+
+    data_df = (
+        df.groupby(["MO", "Parameter", "value"], as_index=False)
+                .agg({
+                    "ID": lambda x: ",".join(map(str, sorted(i for i in x.dropna().astype(int))))
+                })
+            )
+
+    data_df = data_df[["MO", "ID", "Parameter", "value"]]
+    data_df.rename(columns={"value": "value(External)"}, inplace=True)
+
+    # ---------------------------------------
+    # COMPARISON WITH EXCEL
+    # ---------------------------------------
+    excel_df = pd.read_excel(excel_file, engine="openpyxl")
+
+    excel_df["ID"] = excel_df["ID"].apply(normalize_id)
+    data_df["ID"] = data_df["ID"].apply(normalize_id)
+
+    finaldf = excel_df.merge(
+        data_df[["MO", "ID", "Parameter", "value(External)"]],
+        on=["MO", "ID", "Parameter"],
+        how="left"
+    )
+
+    finaldf["value(External)"] = finaldf["value(External)"].apply(normalize)
+    finaldf["Value(Internal)"] = finaldf["Value(Internal)"].apply(normalize)
+
+    finaldf["Remarks"] = finaldf.apply(
+        lambda r: remark(r["Value(Internal)"], r["value(External)"]),
+        axis=1
+    )
+
+    # ---------------------------------------
+    # SAVE REPORT
+    # ---------------------------------------
+    report_folder = os.path.join(settings.MEDIA_ROOT, "reports")
+    os.makedirs(report_folder, exist_ok=True)
+
+    filepath = os.path.join(report_folder, "5G-AT_Checklist.xlsx")
+
+    with pd.ExcelWriter(filepath, engine="xlsxwriter") as writer:
+        finaldf.to_excel(writer, index=False, sheet_name="Comparison")
+        format_excel_sheet(writer, "Comparison", finaldf)
+
+    return Response({
+        "status": True,
+        "message": "All XML files successfully parsed"
+    }, status=HTTP_200_OK)
+
+#for remark--
+# def remark(internal, external):
+#     if pd.isna(internal) and pd.isna(external):
+#         return "OK"
+#     if pd.isna(internal) or pd.isna(external):
+#         return "Not OK"
+
+#     i = str(internal).strip().lower()
+#     e = str(external).strip().lower()
+#     if i == e:
+#         return "OK"
+#     ni = re.search(r'\d+', i)
+#     ne = re.search(r'\d+', e)
+
+#     if ni and ne and ni.group() == ne.group():
+#         return "OK"
+
+#     return "Not OK"
+
+# # change t/f-> 0,1--
+# def tf_to_01(val):
+#     if val is None:
+#         return val
+#     val = str(val).strip().lower()
+#     if val == "true":
+#         return 1
+#     if val == "false":
+#         return 0
+#     return val
+
+# # normalize function-----
+# def normalize_id(val):
+#     if pd.isna(val):
+#         return pd.NA
+#     parts = [p.strip() for p in str(val).split(",") if p.strip().isdigit()]
+#     return ",".join(map(str, sorted(map(int, parts)))) if parts else pd.NA
+
+# def normalize(val):
+#     if pd.isna(val):
+#         return val
+#     v = str(val).strip()
+#     try:
+#         return int(v)
+#     except:
+#         try:
+#             return float(v)
+#         except:
+#             return v.lower()
+
+# @api_view(["POST"])
+# def upload_checklist_xml_files_5G(request):
+#     xml_files = request.FILES.getlist("xml_files")
+#     if not xml_files:
+#         return Response({"error": "Please upload XML files"}, status=HTTP_400_BAD_REQUEST)
+   
+#     excel_file=request.FILES.get("file")
+#     if not excel_file:
+#         return Response({"error": "Please upload excelfile"}, status=HTTP_400_BAD_REQUEST)
+ 
+#     # main_folder = os.path.join(MEDIA_ROOT, "Xml_parsar_script")
+#     # output_folder = os.path.join(main_folder, "Parsed_Output")
+#     # os.makedirs(output_folder, exist_ok=True)
+ 
+#     for file in xml_files:
+ 
+#         file_name = file.name.lower()
+#         if file_name.endswith(".gz"):
+#             xml_bytes = gzip.decompress(file.read())
+#         else:
+#             xml_bytes = file.read()
+           
+#         root = ET.fromstring(xml_bytes)
+ 
+ 
+#         m = re.match(r'\{(.*)\}', root.tag)
+#         ns_url = m.group(1) if m else root.attrib.get("xmlns", "")
+#         ns = {"ns": ns_url} if ns_url else {}
+ 
+#         print(f"File: {file.name}, Namespace: {ns_url}")
+ 
+#         # ---- Try both namespace & no namespace ----
+#     dumy_data=[]
+#     managed_objects = root.findall(".//ns:managedObject", ns) if ns else []
+#     if not managed_objects:
+#         managed_objects = root.findall(".//managedObject")
+ 
+#     for mo in managed_objects:
+ 
+#         mo_class = mo.attrib.get("class", "")
+#         dist_name = mo.attrib.get("distName", "")
+ 
+#         # for NRBTS class--------
+#         if mo_class == "NRBTS":
+ 
+#             required_in_nrbts = {
+#                 "actSliceAwareScheduler",
+#                 "actHighSliceWeightFactor",
+#                 "actSliceAwareSchedulerUlAndEnh",
+#                 "actSliceSwitchToDefault",
+#                 "actAdditionalSliceSupport",
+#                 "actSliceNumExt",
+#                 "actExtSchedWeightAndPrefWrrAlg",
+               
+#             }
+ 
+#             params_nrbts = {}
+ 
+#             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+#                 name = p.attrib.get("name")
+#                 if name in required_in_nrbts:
+#                     params_nrbts[name] = p.text
+#                     dumy_data.append({
+#                     "MO": "NRBTS",
+#                     "DistName": dist_name,
+#                     "Parameter": name,
+#                     "value": tf_to_01(p.text)
+#                 })
+ 
+#             # print("NRBTS FOUND ------------------")
+#             # print("Class:", mo_class)
+#             # print("DistName:", dist_name)
+#             # print("Params_NRBTS:", params_nrbts)
+ 
+#         # for NRCELL Class-----------
+#         elif mo_class == "NRCELL":
+ 
+#             required_in_nrcell = {
+#                 "actUlTxSkip",
+#                 "srPeriodicityMin",
+#                 "adaptiveSrLoadThresholdUp",
+#                 "adaptiveSrLoadThresholdDown",
+#                 "adaptiveSrBlockingMinimization",
+#                 "maxNbrTrafficLimit",
+#                 "preferredVoNrSrPeriod",
+#                 "actNbrForNonGbrBearers",
+#                 "congDetectPeriod",
+#                 "congWeightAlg",
+#                 "maxNumOfNbrBearers",
+#                 "maxPrbsPerNbrUe",
+#                 "nbrPdcchCongHandlingDl",
+#                 "nbrPdcchCongHandlingUl",
+#                 "nbrPdschCongHandling",
+#                 "nbrPuschCongHandling",
+#                 "nrResourceGroupProfileDN"
+#             }
+ 
+#             params_nrcell = {}
+ 
+#             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+#                 name = p.attrib.get("name")
+#                 if name in required_in_nrcell:
+#                     params_nrcell[name] = p.text
+#                     dumy_data.append({
+#                     "MO": "NRCELL",
+#                     "DistName": dist_name,
+#                     "Parameter": name,
+#                     "value": tf_to_01(p.text)
+#                 })
+ 
+#             # print("NRCELL FOUND ----------------")
+#             # print("Class:", mo_class)
+#             # print("DistName:", dist_name)
+#             # print("Params_NRCELL:", params_nrcell)
+ 
+     
+#          # For NRDRB class------------------
+#         elif mo_class == "NRDRB":
+#             dist_name = mo.attrib.get("distName", "")
+#             try:
+#                 nrdrb_id = int(dist_name.split("NRDRB-")[-1])
+#             except:
+#                 continue
+ 
+#             group_1_ids = {5, 6, 11, 12, 21, 22, 25, 26}
+#             group_2_ids = {21, 22, 25, 26}
+#             group_3_ids = {6}
+#             group_4_ids = {5, 6, 7, 8, 9, 11, 12, 21, 22, 25}
+#             group_5_ids = {26}
+#             group_6_ids = {11, 21}
+#             group_7_ids = {12, 22}
+#             group_8_ids = {5, 25}
+#             group_9_ids = {6, 26}
+#             group_10_ids = {7}
+#             group_11_ids = {8, 9}
+ 
+#             group_1_params = {
+#                 "pdcpStatRepWaitTimerOffset",
+#                 "pdcpStatRepWaitTimer"
+#             }
+ 
+#             group_2_params = {
+#                 "actDddsReduction",
+#                 "actDlTxResumeOnPdcpStatRep",
+#                 "actLostPduFastRetx",
+#                 "actOptDataFlowRateEst",
+#                 "reTxPrioritizationType"
+#             }
+ 
+#             group_3_params = {
+#                 "inactPeriodX2PdcpDuplication"
+#             }
+ 
+#             group_4_params = {
+#                 "schedulWeight"
+#             }
+ 
+#             group_5_params = {
+#                 "schedulWeight",
+#                 "nrDrbMacDN"
+#             }
+ 
+#             group_6_params = {"priorityLevel"}
+#             group_7_params = {"priorityLevel"}
+#             group_8_params = {"priorityLevel"}
+#             group_9_params = {"priorityLevel"}
+#             group_10_params = {"priorityLevel"}
+#             group_11_params = {"priorityLevel"}
+ 
+#             #FIX IS HERE (deep search for <p>)
+#             for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+#                 name = p.attrib.get("name")
+ 
+#                 if nrdrb_id in group_1_ids and name in group_1_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+ 
+#                 if nrdrb_id in group_2_ids and name in group_2_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+ 
+#                 if nrdrb_id in group_3_ids and name in group_3_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+ 
+#                 if nrdrb_id in group_4_ids and name in group_4_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+ 
+#                 if nrdrb_id in group_5_ids and name in group_5_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+ 
+#                 if nrdrb_id in group_6_ids and name in group_6_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+ 
+#                 if nrdrb_id in group_7_ids and name in group_7_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+ 
+#                 if nrdrb_id in group_8_ids and name in group_8_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+ 
+#                 if nrdrb_id in group_9_ids and name in group_9_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+ 
+#                 if nrdrb_id in group_10_ids and name in group_10_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+ 
+#                 if nrdrb_id in group_11_ids and name in group_11_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+ 
+ 
+#         # for RDRB_5QI class---            
+#         elif mo_class == "NRDRB_5QI":
+#             dist_name = mo.attrib.get("distName", "")
+#             try:
+#                 nrdrb_5qi_id = int(dist_name.rsplit("NRDRB_5QI-", 1)[-1])
+#             except:
+#                 continue
+ 
+#             nrdrb_5qi_param_map = {
+#                 21: {"snssaiDN"},
+#                 22: {"snssaiDN"},
+#                 25: {"snssaiDN"},
+#                 26: {"snssaiDN"},
+#                 5:  {"snssaiDN"},
+#                 6:  {"snssaiDN"},
+#                 7:  {"snssaiDN"},
+#                 8:  {"snssaiDN"},
+#                 9:  {"snssaiDN"},
+#                 1:  {"snssaiDN"},
+#                 2:  {"snssaiDN"},
+#             }
+ 
+#             allowed_params = nrdrb_5qi_param_map.get(nrdrb_5qi_id)
+#             if not allowed_params:
+#                 continue
+ 
+#             # snssaiDN is inside list/item/p
+#             for item in (
+#                 mo.findall(".//ns:list[@name='snssaiList']/ns:item", ns)
+#                 if ns else
+#                 mo.findall(".//list[@name='snssaiList']/item")
+#             ):
+#                 p = item.find("ns:p", ns) if ns else item.find("p")
+#                 if p is None:
+#                     continue
+ 
+#                 name = p.attrib.get("name")
+#                 if name in allowed_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB_5QI",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_5qi_id,
+#                         "Parameter":'Item-snssaiList-snssaiDN',        
+#                         "value": p.text            
+#                     })  
+#         #
+#         # for NRDRB_MAC classs---
+#         elif mo_class == "NRDRB_MAC":
+#             dist_name = mo.attrib.get("distName", "")
+#             try:
+#                 nrdrb_mac_id = int(dist_name.rsplit("NRDRB_MAC-", 1)[-1])
+#             except:
+#                 continue
+
+#             group_1_ids={1}
+#             group_2_ids={2}
+#             group_3_ids={3}
+#             group_4_ids={4}
+#             group_5_ids={4}
+
+#             group_1_params={"schedulBSD"}
+#             group_2_params={"schedulBSD"}
+#             group_3_params={"schedulBSD"}
+#             group_4_params={"schedulBSD"}
+#             group_5_params={'lcgid','maxDlHarqTxDrb','prioritisedBitRate','schedulPrio','nbrDl','nbrUl'}
+
+
+#             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+#                 name = p.attrib.get("name")
+
+#                 if nrdrb_mac_id in group_1_ids and name in group_1_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB_MAC",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_mac_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+
+#                 if nrdrb_mac_id in group_2_ids and name in group_2_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB_MAC",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_mac_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+
+#                 if nrdrb_mac_id in group_3_ids and name in group_3_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB_MAC",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_mac_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })  
+
+#                 if nrdrb_mac_id in group_4_ids and name in group_4_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB_MAC",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_mac_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })  
+
+#                 if nrdrb_mac_id in group_5_ids and name in group_5_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB_MAC",
+#                         "DistName": dist_name,
+#                         "ID": nrdrb_mac_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+
+#         # for NRDRB_PDCP class----------
+#         elif mo_class == "NRDRB_PDCP":
+#             dist_name = mo.attrib.get("distName", "")
+#             try:
+#                 nrdrb_pdcp_id = int(dist_name.rsplit("NRDRB_PDCP-", 1)[-1])
+#             except:
+#                 continue  
+ 
+#             nrdrb_pdcp_param_map = {
+ 
+#                 2:{'tReorderingDl','tReorderingUl'}
+#             }
+ 
+#             allowed_params = nrdrb_pdcp_param_map.get(nrdrb_pdcp_id)
+#             if not allowed_params:
+#                 continue                
+#             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+#                 name = p.attrib.get("name")
+#                 if name in allowed_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB_PDCP",
+#                         "DistName": dist_name,
+#                         "ID":nrdrb_pdcp_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })  
+ 
+ 
+ 
+#         #  for classs NRDRB_RLC_AM-----  
+#         elif mo_class == "NRDRB_RLC_AM":
+#             dist_name = mo.attrib.get("distName", "")
+#             try:
+#                 nrdrb_rlc_id = int(dist_name.rsplit("NRDRB_RLC_AM-", 1)[-1])
+#             except:
+#                 continue
+ 
+ 
+#             nrdrb_rlc_param_map = {
+#                 1:{'dlMaxRetxThreshold','dlPollByte',
+#                     'ulMaxRetxThreshold','ulPollByte'}
+#                     }
+
+#             allowed_params = nrdrb_rlc_param_map.get(nrdrb_rlc_id)
+#             if not allowed_params:
+#                 continue                
+#             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+#                 name = p.attrib.get("name")
+#                 if name in allowed_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB_RLC_AM",
+#                         "DistName": dist_name,
+#                         "ID":nrdrb_rlc_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })  
+
+#         # for classs NRDRB_RLC_UM-----  
+#         elif mo_class == "NRDRB_RLC_UM":
+#             dist_name = mo.attrib.get("distName", "")
+#             try:
+#                 nrdrb_rlcum_id = int(dist_name.rsplit("NRDRB_RLC_UM-", 1)[-1])
+#             except:
+#                 continue
+
+#             nrdrb_rlcum_param_map = {
+#                 1:{'rlcUMDrbSNLength',
+#                     'ulTReassemblyUm'}
+#                     }
+
+#             allowed_params = nrdrb_rlcum_param_map.get(nrdrb_rlcum_id)
+#             if not allowed_params:
+#                 continue  
+#             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):      
+#                 name = p.attrib.get("name")
+#                 if name in allowed_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB_RLC_UM",
+#                         "DistName": dist_name,
+#                         "ID":nrdrb_rlcum_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+
+#         # for NRDRB_TCP_BOOST  
+#         elif mo_class == "NRDRB_TCP_BOOST":
+#             dist_name = mo.attrib.get("distName", "")
+#             try:
+#                 nrdrb_tcp_id = int(dist_name.rsplit("NRDRB_TCP_BOOST-", 1)[-1])
+#             except:
+#                 continue
+
+#             nrdrb_tcp_param_map = {
+#                 1:{'tcpBoostPugMinSrPeriodicity'}
+#                     }
+
+#             allowed_params = nrdrb_tcp_param_map.get(nrdrb_tcp_id)
+#             if not allowed_params:
+#                 continue                
+#             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+#                 name = p.attrib.get("name")
+#                 if name in allowed_params:
+#                     dumy_data.append({
+#                         "MO": "NRDRB_TCP_BOOST",
+#                         "DistName": dist_name,
+#                         "ID":nrdrb_tcp_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+
+#         # for NRPMRNL class---
+#         elif mo_class == "NRPMRNL":
+
+#             required_in_nrpmrl = {
+#                 'miNrCellUtilPerNrg',
+#                 'miNrInterRATMobilitySaPmqap',
+#                 'miNrSaCuNrpmqap',
+#                 'miNrNgInterfaceNrpmqap',
+#                 'miNrPdcpCellNrpmqap',
+#                 'miNrCellUtilization',
+#                 'miNrHighRlcCellNrpmqap',
+#                 'miNrUeStatNrpmqap',
+#                 'miNrPdcpLatNrpmqap'
+
+#             }
+
+#             params_nrpmrl = {}
+
+#             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+#                 name = p.attrib.get("name")
+#                 if name in required_in_nrpmrl :
+#                     params_nrpmrl[name] = p.text
+#                     dumy_data.append({
+#                     "MO": "NRPMRNL",
+#                     "DistName": dist_name,
+#                     "Parameter": name,
+#                     "value": tf_to_01(p.text)
+#                 })
+
+#         # for SNSSAI class---
+#         elif mo_class == "SNSSAI":
+#             dist_name = mo.attrib.get("distName", "")
+#             try:
+#                 snssai_id = int(dist_name.rsplit("SNSSAI-", 1)[-1])
+#             except:
+#                 continue  
+
+#             group_1_ids={1}
+#             group_2_ids={2}
+
+#             group_1_params={'sd','sst','userLabel'}
+#             group_2_params={'sd','sst','userLabel'}
+
+#             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+#                 name = p.attrib.get("name")
+
+#                 if snssai_id in group_1_ids and name in group_1_params:
+#                     dumy_data.append({
+#                         "MO": "SNSSAI",
+#                         "DistName": dist_name,
+#                         "ID": snssai_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+
+#                 if snssai_id in group_2_ids and name in group_2_params:
+#                     dumy_data.append({
+#                         "MO": "SNSSAI",
+#                         "DistName": dist_name,
+#                         "ID": snssai_id,
+#                         "Parameter": name,
+#                         "value": tf_to_01(p.text)
+#                     })
+
+#         # for TRACKINGAREA class---
+#         elif  mo_class == "TRACKINGAREA":
+#             dist_name = mo.attrib.get("distName", "")
+
+#             snssai_values = []
+
+#             for item in (
+#                 mo.findall(".//ns:list[@name='snssaiList']/ns:item", ns)
+#                 if ns else
+#                 mo.findall(".//list[@name='snssaiList']/item")
+#             ):
+#                 p = item.find("ns:p", ns) if ns else item.find("p")
+#                 if p is not None and p.attrib.get("name") == "snssaiDN":
+#                     snssai_values.append(p.text)
+
+#             if snssai_values:
+#                 dumy_data.append({
+#                     "MO": "TRACKINGAREA",
+#                     "DistName": dist_name,
+#                     "Parameter": "Item-snssaiList-snssaiDN",
+#                     "value": ";".join(snssai_values)
+#                 })
+
+#         df = pd.DataFrame(dumy_data)
+#         for col in ["MO", "ID", "Parameter", "value"]:
+#             if col not in df.columns:
+#                 df[col] = ""
+
+#         df["ID"] = pd.to_numeric(df.get("ID"), errors="coerce")
+#         data_df = (
+#         df
+#         .groupby(["MO", "Parameter", "value"], as_index=False)
+#         .agg({
+#             "ID": lambda x: ",".join(
+#                 map(str, sorted(i for i in x.dropna().astype(int)))
+#             )
+#         })
+#     )
+#         data_df = data_df[["MO", "ID", "Parameter", "value"]]
+#         data_df.rename(columns={"value": "value(External)"}, inplace=True)
+#         data_df.to_excel("Nokia_Slicing_Long_Format.xlsx", index=False)
+
+#     #matincting-----
+#     excel_df = pd.read_excel(excel_file, engine="openpyxl")
+
+#     excel_df["ID"] = excel_df["ID"].apply(normalize_id)
+#     data_df["ID"] = data_df["ID"].apply(normalize_id)
+
+#     finaldf = excel_df.merge(
+#         data_df[["MO", "ID", "Parameter", "value(External)"]],
+#         on=["MO", "ID", "Parameter"],
+#         how="left"
+#     )
+
+#     fallback_map = (
+#         data_df
+#         .dropna(subset=["value(External)"])
+#         .groupby(["MO", "Parameter"])["value(External)"]
+#         .first()
+#         .to_dict()
+#     )
+
+#     mask_na = finaldf["value(External)"].isna()
+
+#     finaldf.loc[mask_na, "value(External)"] = finaldf.loc[mask_na].apply(
+#         lambda r: fallback_map.get((r["MO"], r["Parameter"])),
+#         axis=1
+#     )
+
+#     finaldf["value(External)"] = finaldf["value(External)"].apply(normalize)
+#     finaldf["Value(Internal)"] = finaldf["Value(Internal)"].apply(normalize)
+
+#     finaldf["Final_Value"] = finaldf["Value(Internal)"]
+#     finaldf["Remark"] = "Not ok"
+
+#     finaldf.loc[finaldf["value(External)"].isna(), "Remark"] = "Not Found"
+
+#     mask_change = (
+#         finaldf["value(External)"].notna() &
+#         (finaldf["value(External)"] != finaldf["Value(Internal)"])
+#     )
+
+#     finaldf.loc[mask_change, "Final_Value"] = finaldf.loc[mask_change, "value(External)"]
+#     finaldf.loc[mask_change, "Remark"] = "Value Changed"
+#     finaldf = finaldf.sort_values(["MO", "ID", "Parameter"])
+#     finaldf.drop(columns=["Final_Value",'Remark'], inplace=True)
+#     finaldf["Remarks"] = finaldf.apply(
+#     lambda r: remark(r["Value(Internal)"], r["value(External)"]),
+#     axis=1
+# )
+#     # finaldf.to_excel("5G-AT_Checklist.xlsx", index=False)
+
+#     # ---------------------------------------
+#     # SAVE EXCEL REPORT
+#     # ---------------------------------------
+#     report_folder = os.path.join(settings.MEDIA_ROOT, "reports")
+#     os.makedirs(report_folder, exist_ok=True)
+
+#     filename = "5G-AT_Checklist.xlsx"
+#     filepath = os.path.join(report_folder, filename)
+
+#     with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
+#         finaldf.to_excel(writer, index=False, sheet_name="Comparison")
+#         format_excel_sheet(writer, "Comparison", finaldf)
+
+#     return Response({
+#         "status": True,
+#         "message": "All XML files successfully parsed",
+
+#     }, status=HTTP_200_OK)
