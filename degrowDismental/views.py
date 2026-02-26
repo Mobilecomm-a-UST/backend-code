@@ -8,7 +8,10 @@ from datetime import datetime
 from rest_framework import status
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 import re
-
+from degrowDismental.models import *
+from datetime import date
+import json
+from django.db.models import F
 
 
 
@@ -131,273 +134,6 @@ def upload_locator_data(request):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-@api_view(['POST', 'GET', 'DELETE'])
-def upload_mobinet_data(request):
-    try:
-        mobinet_folder_path = os.path.join(main_folder, 'mobinet')
-        os.makedirs(mobinet_folder_path, exist_ok=True)
- 
-        if request.method == 'POST':
-            files = request.FILES.getlist('files')
-            if not files:
-                return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
- 
-            for f in files:
-                file_path = os.path.join(mobinet_folder_path, f.name)
-                with open(file_path, 'wb+') as destination:
-                    for chunk in f.chunks():
-                        destination.write(chunk)
- 
-            return Response({'status': True, 'message': 'Files saved successfully'}, status=status.HTTP_200_OK)
- 
-        elif request.method == 'GET':
-            if not os.path.exists(mobinet_folder_path):
-                return Response({'files': []}, status=status.HTTP_200_OK)
-            files = os.listdir(mobinet_folder_path)
-            return Response({
-                'status': True,
-                'message': 'Files found in locator_data folder',
-                'files': files,
-            }, status=status.HTTP_200_OK)
- 
-        elif request.method == 'DELETE':
-            if not os.path.exists(mobinet_folder_path):
-                return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
-            deleted_files = []
-            for filename in os.listdir(mobinet_folder_path):
-                file_path = os.path.join(mobinet_folder_path, filename)
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
-                    deleted_files.append(filename)
- 
-            return Response({
-                'status': True,
-                'message': 'Files deleted successfully',
-                'deleted_files': deleted_files
-            }, status=status.HTTP_200_OK)
- 
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-   
-
-
-# UPLOAD RFS FILES
-@api_view(['POST', 'GET', 'DELETE'])
-def upload_rfs_data(request):
-    try:
-        rfs_folder_path = os.path.join(main_folder, 'rfs')
-        os.makedirs(rfs_folder_path, exist_ok=True)
-
-        if request.method == 'POST':
-            files = request.FILES.getlist('files')
-            if not files:
-                return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
- 
-            for f in files:
-                file_path = os.path.join(rfs_folder_path, f.name)
-                with open(file_path, 'wb+') as destination:
-                    for chunk in f.chunks():
-                        destination.write(chunk)
- 
-            return Response({'status': True, 'message': 'Files saved successfully'}, status=status.HTTP_200_OK)
- 
-        elif request.method == 'GET':
-            if not os.path.exists(rfs_folder_path):
-                return Response({'files': []}, status=status.HTTP_200_OK)
-            files = os.listdir(rfs_folder_path)
-            return Response({
-                'status': True,
-                'message': 'Files found in rfs folder',
-                'files': files,
-            }, status=status.HTTP_200_OK)
- 
-        elif request.method == 'DELETE':
-            if not os.path.exists(rfs_folder_path):
-                return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
-            deleted_files = []
-            for filename in os.listdir(rfs_folder_path):
-                file_path = os.path.join(rfs_folder_path, filename)
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
-                    deleted_files.append(filename)
- 
-            return Response({
-                'status': True,
-                'message': 'Files deleted successfully',
-                'deleted_files': deleted_files
-            }, status=status.HTTP_200_OK)
- 
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-# UPLOAD MSMF FILES
-@api_view(['POST', 'GET', 'DELETE'])
-def upload_msmf_data(request):
-    try:
-        msmf_folder_path = os.path.join(main_folder, 'msmf')
-        os.makedirs(msmf_folder_path, exist_ok=True)
-
-        if request.method == 'POST':
-            files = request.FILES.getlist('files')
-            if not files:
-                return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
- 
-            for f in files:
-                file_path = os.path.join(msmf_folder_path, f.name)
-                with open(file_path, 'wb+') as destination:
-                    for chunk in f.chunks():
-                        destination.write(chunk)
- 
-            return Response({'status': True, 'message': 'Files saved successfully'}, status=status.HTTP_200_OK)
- 
-        elif request.method == 'GET':
-            if not os.path.exists(msmf_folder_path):
-                return Response({'files': []}, status=status.HTTP_200_OK)
-            files = os.listdir(msmf_folder_path)
-            return Response({
-                'status': True,
-                'message': 'Files found in msmf folder',
-                'files': files,
-            }, status=status.HTTP_200_OK)
- 
-        elif request.method == 'DELETE':
-            if not os.path.exists(msmf_folder_path):
-                return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
-            deleted_files = []
-            for filename in os.listdir(msmf_folder_path):
-                file_path = os.path.join(msmf_folder_path, filename)
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
-                    deleted_files.append(filename)
- 
-            return Response({
-                'status': True,
-                'message': 'Files deleted successfully',
-                'deleted_files': deleted_files
-            }, status=status.HTTP_200_OK)
- 
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['POST'])
-def data_fetch(request):
-    circle = request.data.get("circle")
-    siteId = request.data.get("siteId")
-
-    if not circle or not siteId:
-        return Response({"message": "siteId/circle not provided"}, status=400)
-
-    try:
-        # ---------------- Zone Mapping ----------------
-        zone_map_code = { 
-            151: 'AP', 132: 'BR', 152: 'CN', 111: 'DL', 113: 'HR', 114: 'JK',
-            153: 'KK', 174: 'MU', 172: 'MP', 134: 'OR', 115: 'PB', 176: 'RJ',
-            116: 'UE', 117: 'UW', 135: 'WB', 136: 'KO', 155: 'TN',
-            133: 'NE', 131: 'AS'
-        }
-
-        # ---------------- 1️⃣ Read Mobinet File ----------------
-        mobinet_folder = os.path.join(main_folder, 'mobinet')
-
-        today_date = datetime.now().strftime("%d%m%Y")
-        expected_filename_prefix = f"{circle}-{today_date}"
-
-        mobinet_files = [
-            f for f in os.listdir(mobinet_folder)
-            if f.startswith(expected_filename_prefix)
-        ]
-
-        if not mobinet_files:
-            return Response({"error": "Mobinet file not found for today"}, status=400)
-
-        mobinet_path = os.path.join(mobinet_folder, mobinet_files[0])
-
-        mobinet_df = pd.read_excel(
-            mobinet_path,
-            usecols=["Model", "Zone", "Parent Site", "Cabinet", "Serial Number"],
-            engine="openpyxl"
-        )
-
-        mobinet_df["Parent Site"] = mobinet_df["Parent Site"].astype(str).str.strip()
-        mobinet_df["Zone"] = mobinet_df["Zone"].astype(str).str.strip()
-        mobinet_df["Serial Number"] = mobinet_df["Serial Number"].astype(str).str.strip()
-
-        # Filter by circle & site
-        filtered_mobinet = mobinet_df[
-            (mobinet_df["Zone"] == circle) &
-            (mobinet_df["Parent Site"] == f"{siteId}_{circle}")
-        ].copy()
-
-        if filtered_mobinet.empty:
-            return Response({"message": "No data found in Mobinet for given site"}, status=404)
-
-        # ---------------- 2️⃣ Read RFS File ----------------
-        rfs_folder = os.path.join(main_folder, 'rfs')
-        rfs_files = [
-            f for f in os.listdir(rfs_folder)
-            if os.path.isfile(os.path.join(rfs_folder, f))
-        ]
-
-        if len(rfs_files) != 1:
-            return Response({"error": "RFS folder must contain exactly one file"}, status=400)
-
-        rfs_path = os.path.join(rfs_folder, rfs_files[0])
-
-        rfs_df = pd.read_csv(
-            rfs_path,
-            usecols=["FROMLOCATION", "SITEID", "ITEMCODE", "SERIALNUMBER"]
-        )
-
-        rfs_df["SERIALNUMBER"] = rfs_df["SERIALNUMBER"].astype(str).str.strip()
-        rfs_df["SITEID"] = rfs_df["SITEID"].astype(str).str.strip()
-
-        # Extract zone code from FROMLOCATION
-        rfs_df["zone_code"] = rfs_df["FROMLOCATION"].astype(str).str.split("-").str[0]
-        rfs_df["zone_code"] = pd.to_numeric(rfs_df["zone_code"], errors="coerce")
-
-        rfs_df["circle"] = rfs_df["zone_code"].map(zone_map_code)
-
-        # Filter by circle and site
-        filtered_rfs = rfs_df[
-            (rfs_df["circle"] == circle) &
-            (rfs_df["SITEID"] == str(siteId))
-        ].copy()
-
-        # ---------------- 3️⃣ Compare Serial Numbers ----------------
-        rfs_serials = set(filtered_rfs["SERIALNUMBER"])
-
-        # filtered_mobinet["Remark"] = filtered_mobinet["Serial Number"].apply(
-        #     lambda x: True if x in rfs_serials else False
-        # )
-
-        # Map Item Code from RFS
-        itemcode_map = filtered_rfs.set_index("SERIALNUMBER")["ITEMCODE"].to_dict()
-
-        filtered_mobinet["Item Code"] = filtered_mobinet["Serial Number"].map(itemcode_map)
-
-        # ---------------- 4️⃣ Final DataFrame ----------------
-        final_df = pd.DataFrame({
-            "Circle": circle,
-            "Site-ID": siteId,
-            "Model": filtered_mobinet["Model"],
-            "Serial Number": filtered_mobinet["Serial Number"],
-            "Quantity": filtered_mobinet["Cabinet"],
-            "Item Code": filtered_mobinet["Item Code"],
-            # "Remark": filtered_mobinet["Remark"]
-        })
-
-        return Response({
-            "status": "success",
-            "count": len(final_df),
-            "data": final_df.to_dict(orient="records")
-        })
-
-    except Exception as e:
-        return Response({"error": str(e)}, status=500)
-
-    
 
 @api_view(["POST"])
 def degrow_dismantle(request):
@@ -650,3 +386,557 @@ def degrow_dismantle(request):
         "columns": merged_dpr_rfs_df.columns.to_list(),
         "rfs_columns": final_rfs_df.columns.to_list()
     })
+    
+    
+@api_view(['POST', 'GET', 'DELETE'])
+def upload_mobinet_data(request):
+    try:
+        mobinet_folder_path = os.path.join(main_folder, 'mobinet')
+        os.makedirs(mobinet_folder_path, exist_ok=True)
+ 
+        if request.method == 'POST':
+            files = request.FILES.getlist('files')
+            if not files:
+                return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+ 
+            for f in files:
+                file_path = os.path.join(mobinet_folder_path, f.name)
+                with open(file_path, 'wb+') as destination:
+                    for chunk in f.chunks():
+                        destination.write(chunk)
+ 
+            return Response({'status': True, 'message': 'Files saved successfully'}, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'GET':
+            if not os.path.exists(mobinet_folder_path):
+                return Response({'files': []}, status=status.HTTP_200_OK)
+            files = os.listdir(mobinet_folder_path)
+            return Response({
+                'status': True,
+                'message': 'Files found in locator_data folder',
+                'files': files,
+            }, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'DELETE':
+            if not os.path.exists(mobinet_folder_path):
+                return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            deleted_files = []
+            for filename in os.listdir(mobinet_folder_path):
+                file_path = os.path.join(mobinet_folder_path, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    deleted_files.append(filename)
+ 
+            return Response({
+                'status': True,
+                'message': 'Files deleted successfully',
+                'deleted_files': deleted_files
+            }, status=status.HTTP_200_OK)
+ 
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+   
+
+@api_view(['POST', 'GET', 'DELETE'])
+def upload_rfs_data(request):
+    try:
+        rfs_folder_path = os.path.join(main_folder, 'rfs')
+        os.makedirs(rfs_folder_path, exist_ok=True)
+
+        if request.method == 'POST':
+            files = request.FILES.getlist('files')
+            if not files:
+                return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+ 
+            for f in files:
+                file_path = os.path.join(rfs_folder_path, f.name)
+                with open(file_path, 'wb+') as destination:
+                    for chunk in f.chunks():
+                        destination.write(chunk)
+ 
+            return Response({'status': True, 'message': 'Files saved successfully'}, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'GET':
+            if not os.path.exists(rfs_folder_path):
+                return Response({'files': []}, status=status.HTTP_200_OK)
+            files = os.listdir(rfs_folder_path)
+            return Response({
+                'status': True,
+                'message': 'Files found in rfs folder',
+                'files': files,
+            }, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'DELETE':
+            if not os.path.exists(rfs_folder_path):
+                return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            deleted_files = []
+            for filename in os.listdir(rfs_folder_path):
+                file_path = os.path.join(rfs_folder_path, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    deleted_files.append(filename)
+ 
+            return Response({
+                'status': True,
+                'message': 'Files deleted successfully',
+                'deleted_files': deleted_files
+            }, status=status.HTTP_200_OK)
+ 
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST', 'GET', 'DELETE'])
+def upload_msmf_data(request):
+    try:
+        msmf_folder_path = os.path.join(main_folder, 'msmf')
+        os.makedirs(msmf_folder_path, exist_ok=True)
+
+        if request.method == 'POST':
+            files = request.FILES.getlist('files')
+            if not files:
+                return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+ 
+            for f in files:
+                file_path = os.path.join(msmf_folder_path, f.name)
+                with open(file_path, 'wb+') as destination:
+                    for chunk in f.chunks():
+                        destination.write(chunk)
+ 
+            return Response({'status': True, 'message': 'Files saved successfully'}, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'GET':
+            if not os.path.exists(msmf_folder_path):
+                return Response({'files': []}, status=status.HTTP_200_OK)
+            files = os.listdir(msmf_folder_path)
+            return Response({
+                'status': True,
+                'message': 'Files found in msmf folder',
+                'files': files,
+            }, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'DELETE':
+            if not os.path.exists(msmf_folder_path):
+                return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            deleted_files = []
+            for filename in os.listdir(msmf_folder_path):
+                file_path = os.path.join(msmf_folder_path, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    deleted_files.append(filename)
+ 
+            return Response({
+                'status': True,
+                'message': 'Files deleted successfully',
+                'deleted_files': deleted_files
+            }, status=status.HTTP_200_OK)
+ 
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST', 'GET', 'DELETE'])
+def upload_aw_rfs_data(request):
+    try:
+        aw_rfs_folder_path = os.path.join(main_folder, 'aw_rfs')
+        os.makedirs(aw_rfs_folder_path, exist_ok=True)
+ 
+        if request.method == 'POST':
+            files = request.FILES.getlist('files')
+            if not files:
+                return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+ 
+            for f in files:
+                file_path = os.path.join(aw_rfs_folder_path, f.name)
+                with open(file_path, 'wb+') as destination:
+                    for chunk in f.chunks():
+                        destination.write(chunk)
+ 
+            return Response({'status': True, 'message': 'Files saved successfully'}, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'GET':
+            if not os.path.exists(aw_rfs_folder_path):
+                return Response({'files': []}, status=status.HTTP_200_OK)
+            files = os.listdir(aw_rfs_folder_path)
+            return Response({
+                'status': True,
+                'message': 'Files found in locator_data folder',
+                'files': files,
+            }, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'DELETE':
+            if not os.path.exists(aw_rfs_folder_path):
+                return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            deleted_files = []
+            for filename in os.listdir(aw_rfs_folder_path):
+                file_path = os.path.join(aw_rfs_folder_path, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    deleted_files.append(filename)
+ 
+            return Response({
+                'status': True,
+                'message': 'Files deleted successfully',
+                'deleted_files': deleted_files
+            }, status=status.HTTP_200_OK)
+ 
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+   
+
+@api_view(['POST', 'GET', 'DELETE'])
+def upload_aw_msmf_data(request):
+    try:
+        aw_msmf_folder_path = os.path.join(main_folder, 'aw_msmf')
+        os.makedirs(aw_msmf_folder_path, exist_ok=True)
+ 
+        if request.method == 'POST':
+            files = request.FILES.getlist('files')
+            if not files:
+                return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+ 
+            for f in files:
+                file_path = os.path.join(aw_msmf_folder_path, f.name)
+                with open(file_path, 'wb+') as destination:
+                    for chunk in f.chunks():
+                        destination.write(chunk)
+ 
+            return Response({'status': True, 'message': 'Files saved successfully'}, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'GET':
+            if not os.path.exists(aw_msmf_folder_path):
+                return Response({'files': []}, status=status.HTTP_200_OK)
+            files = os.listdir(aw_msmf_folder_path)
+            return Response({
+                'status': True,
+                'message': 'Files found in locator_data folder',
+                'files': files,
+            }, status=status.HTTP_200_OK)
+ 
+        elif request.method == 'DELETE':
+            if not os.path.exists(aw_msmf_folder_path):
+                return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            deleted_files = []
+            for filename in os.listdir(aw_msmf_folder_path):
+                file_path = os.path.join(aw_msmf_folder_path, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    deleted_files.append(filename)
+ 
+            return Response({
+                'status': True,
+                'message': 'Files deleted successfully',
+                'deleted_files': deleted_files
+            }, status=status.HTTP_200_OK)
+ 
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+   
+
+@api_view(['POST'])
+def fetch_site_status(request):
+    circle = request.data.get("circle")
+    site_id = request.data.get("siteId")
+
+    if not circle:
+        return Response(
+            {"error": "circle is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if site_id:
+        obj = DismantleCircleData.objects.filter(
+            circle=circle,
+            site_id=site_id
+        )
+    else:
+        obj = DismantleCircleData.objects.filter(
+            circle=circle
+        )
+
+    if obj:
+        data = {
+            "id": obj.id,
+            "Circle": obj.circle,
+            "Site ID": obj.site_id,
+            "Is Approved": obj.is_approved.strftime("%d-%b-%y") if obj.is_approved else None,
+            # "Approval Remarks": obj.approval_remarks,
+            "Is Surveyed": obj.is_surveyed.strftime("%d-%b-%y") if obj.is_surveyed else None,
+            "Survey Remarks": obj.survey_remarks,
+        }
+
+        return Response({"data" : data}, status=status.HTTP_200_OK)
+    
+    
+    
+    # mobinet_folder = os.path.join(main_folder, 'mobinet')
+
+    # expected_filename_prefix = f"{circle}"
+
+    # mobinet_files = [
+    #     f for f in os.listdir(mobinet_folder)
+    #     if f.startswith(expected_filename_prefix)
+    # ]
+
+    # if not mobinet_files:
+    #     return Response({"error": "Mobinet file not found"}, status=400)
+
+    # mobinet_path = os.path.join(mobinet_folder, mobinet_files[0])
+
+    # if mobinet_path.endswith(".csv"):
+    #     mobinet_df = pd.read_csv(
+    #         mobinet_path,
+    #         usecols=["Zone", "Parent Site"]
+    #     )
+    # elif mobinet_path.endswith((".xls", ".xlsx")):
+    #     mobinet_df = pd.read_excel(
+    #         mobinet_path,
+    #         usecols=["Zone", "Parent Site"],
+    #         engine="openpyxl"
+    #     )
+    # else:
+    #     return Response({"error": "Unsupported mobinet file format"}, status=400)
+
+    # mobinet_df["Parent Site"] = mobinet_df["Parent Site"].astype(str).str.strip()
+    # mobinet_df["Zone"] = mobinet_df["Zone"].astype(str).str.strip()
+
+    # # Filter by circle & site
+    # filtered_mobinet = mobinet_df[
+    #     (mobinet_df["Zone"] == circle) &
+    #     (mobinet_df["Parent Site"] == f"{site_id}_{circle}")
+    # ].copy()
+
+    # if filtered_mobinet.empty:
+    #     return Response({"message": "No data found in Mobinet for given site"}, status=404)
+    
+    
+    # fallback_data = {
+    #     "Circle": circle,
+    #     "Site ID": site_id,
+    #     "Is Approved": "",
+    #     # "Approval Remarks": "",
+    #     "Is Surveyed": "",
+    #     "Survey Remarks": "",
+    # }
+
+    return Response(
+        {
+            "message": "No DB record for this circle yet.",
+        },
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['POST'])
+def mobinet_data_fetch_from_file(request):
+    circle = request.data.get("circle")
+    siteId = request.data.get("siteId")
+    board = request.data.get("board")
+    
+    print(board)
+
+    if not circle or not siteId:
+        return Response({"message": "siteId/circle not provided"}, status=400)
+    
+    try:
+        mobinet_folder = os.path.join(main_folder, 'mobinet')
+
+        expected_filename_prefix = f"{circle}"
+
+        mobinet_files = [
+            f for f in os.listdir(mobinet_folder)
+            if f.startswith(expected_filename_prefix)
+        ]
+
+        if not mobinet_files:
+            return Response({"error": "Mobinet file not found"}, status=400)
+
+        mobinet_path = os.path.join(mobinet_folder, mobinet_files[0])
+
+        if mobinet_path.endswith(".csv"):
+            mobinet_df = pd.read_csv(
+                mobinet_path,
+                usecols=["Model", "Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"]
+            )
+        elif mobinet_path.endswith((".xls", ".xlsx")):
+            mobinet_df = pd.read_excel(
+                mobinet_path,
+                usecols=["Model", "Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"],
+                engine="openpyxl"
+            )
+        else:
+            return Response({"error": "Unsupported mobinet file format"}, status=400)
+
+        mobinet_df["Parent Site"] = mobinet_df["Parent Site"].astype(str).str.strip()
+        mobinet_df["Zone"] = mobinet_df["Zone"].astype(str).str.strip()
+
+        # Filter by circle & site
+        filtered_mobinet = mobinet_df[
+            (mobinet_df["Zone"] == circle) &
+            (mobinet_df["Parent Site"] == f"{siteId}_{circle}")
+        ].copy()
+
+        if filtered_mobinet.empty:
+            return Response({"message": "No data found in Mobinet for given site"}, status=404)
+        
+        
+        filtered_mobinet = filtered_mobinet[
+              filtered_mobinet['Serial Number'].notna() &
+            ( ~filtered_mobinet['Serial Number'].astype(str).str.strip().isin(["", "-", "_", "N/A", "NaN", "Nan", "undefined", None]))
+        ]
+        
+        if board:
+            board_list = [b.strip() for b in board.split(",") if b.strip()]
+        else:
+            board_list = []
+            
+        if board_list:
+            print(board_list)
+            filtered_mobinet = filtered_mobinet[
+                ~filtered_mobinet["Board Model"].astype(str).str.strip().isin(board_list)
+            ]
+        
+        filtered_mobinet = filtered_mobinet[['Model', 'Cabinet', 'Serial Number']]
+        
+        filtered_mobinet.rename(columns={"Cabinet": "Expected Quantity"}, inplace=True)
+        
+        filtered_mobinet = filtered_mobinet.where(pd.notnull(filtered_mobinet), None)
+        
+        filtered_mobinet["Is In Mobinet"] = True
+        
+        filtered_mobinet["Remarks"] = ""
+        
+        filtered_mobinet["SRN Number"] = ""
+        
+        filtered_mobinet["Approval Date"] = ""
+        
+        filtered_mobinet["index"] = range(1, len(filtered_mobinet) + 1)
+        
+        filtered_mobinet["Is Found"] = False
+        
+        return Response({"data" : filtered_mobinet.to_dict(orient="records")}, status= status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+        
+@api_view(['POST'])
+def mobinet_data_submit_by_central(request):
+    circle = request.data.get("circle")
+    siteId = request.data.get("siteId")
+    records = request.data.get("data", [])
+
+    if not circle or not siteId:
+        return Response({"message": "siteId/circle not provided"}, status=400)
+
+    if not records:
+        return Response({"message": "No data provided"}, status=400)
+
+    try:
+        
+        # 🔎 Check if already exists
+        existing_obj = DismantleCircleData.objects.filter(
+            circle=circle,
+            site_id=siteId
+        ).first()
+
+        if existing_obj:
+            data = {
+                "id": existing_obj.id,
+                "Circle": existing_obj.circle,
+                "Site ID": existing_obj.site_id,
+                "Is Approved": existing_obj.is_approved.strftime("%d-%b-%y") if existing_obj.is_approved else "",
+                # "Approval Remarks": existing_obj.approval_remarks,
+                "Is Surveyed": existing_obj.is_surveyed.strftime("%d-%b-%y") if existing_obj.is_surveyed else "",
+                "Survey Remarks": existing_obj.survey_remarks,
+            }
+
+            return Response(
+                {
+                    "message": "Site already approved. No changes made.",
+                    "data": data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        # 🆕 Create new if not exists
+        obj = DismantleCircleData.objects.create(
+            circle=circle,
+            site_id=siteId,
+            is_approved=date.today(),
+            # approval_remarks="",
+            is_surveyed="",
+            survey_remarks="",
+        ) 
+        
+        
+        def parse_bool(value):
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                return value.strip().lower() in ["true", "1", "yes"]
+            if isinstance(value, int):
+                return value == 1
+            return False
+        
+        print("0")
+        
+        records = json.loads(records)
+        
+        for record in records:
+
+            # Convert frontend keys back to DB field names
+            model_name = record["Model Name"]
+            expected_quantity = record["Expected Quantity"]
+            serial_number = record["Serial Number"]
+            is_found = False
+            is_in_mobinet = True
+            approval_date = date.today()
+            srn_number = ""
+            remarks = ""
+            
+            print("1")
+            
+
+            # 🔥 Update if exists, else create
+            obj = DismantleModelData.objects.update_or_create(
+                zone=circle,
+                site_id=siteId,
+                serial_number=serial_number,
+                defaults={
+                    "model_name": model_name,
+                    "expected_quantity": expected_quantity,
+                    "is_found": is_found,
+                    "is_in_mobinet": is_in_mobinet,
+                    "approval_date": approval_date,
+                    "srn_number": srn_number,
+                    "remarks": remarks,
+                }
+            )
+
+        return Response({
+            "status": "success",
+            "message": "Data saved successfully"
+        })
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+@api_view(['DELETE'])
+def empty_my_model(request):
+    try:
+        deleted_count, _ = DismantleCircleData.objects.all().delete()
+
+        return Response(
+            {
+                "message": "All records deleted successfully",
+                "deleted_count": deleted_count
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
