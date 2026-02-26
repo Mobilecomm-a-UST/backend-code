@@ -886,7 +886,7 @@ def mobinet_data_submit_by_central(request):
         for record in records:
 
             # Convert frontend keys back to DB field names
-            model_name = record["Model Name"]
+            model_name = record["Model"]
             expected_quantity = record["Expected Quantity"]
             serial_number = record["Serial Number"]
             is_found = False
