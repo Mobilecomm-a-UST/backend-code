@@ -633,6 +633,12 @@ def upload_aw_msmf_data(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
    
 
+def format_date(value):
+    if isinstance(value, (date, datetime)):
+        return value.strftime("%d-%b-%y")
+    return value
+
+
 @api_view(['POST'])
 def fetch_site_status(request):
     circle = request.data.get("circle")
@@ -643,7 +649,6 @@ def fetch_site_status(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Get all records of that circle
     queryset = DismantleCircleData.objects.filter(circle=circle)
 
     if not queryset.exists():
@@ -659,15 +664,12 @@ def fetch_site_status(request):
             "id": obj.id,
             "Circle": obj.circle,
             "Site ID": obj.site_id,
-            "Is Approved": obj.is_approved.strftime("%d-%b-%y") if obj.is_approved else None,
-            "Is Surveyed": obj.is_surveyed.strftime("%d-%b-%y") if obj.is_surveyed else None,
+            "Is Approved": format_date(obj.is_approved),
+            "Is Surveyed": format_date(obj.is_surveyed),
             "Survey Remarks": obj.survey_remarks,
         })
 
-    return Response(
-        {"data": data},
-        status=status.HTTP_200_OK
-    )
+    return Response({"data": data}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -776,8 +778,6 @@ def mobinet_data_submit_by_central(request):
         return Response({"message": "No data provided"}, status=400)
 
     try:
-        
-        # 🔎 Check if already exists
         existing_obj = DismantleCircleData.objects.filter(
             circle=circle,
             site_id=siteId
@@ -788,9 +788,8 @@ def mobinet_data_submit_by_central(request):
                 "id": existing_obj.id,
                 "Circle": existing_obj.circle,
                 "Site ID": existing_obj.site_id,
-                "Is Approved": existing_obj.is_approved.strftime("%d-%b-%y") if existing_obj.is_approved else "",
-                # "Approval Remarks": existing_obj.approval_remarks,
-                "Is Surveyed": existing_obj.is_surveyed.strftime("%d-%b-%y") if existing_obj.is_surveyed else "",
+                "Is Approved": format_date(existing_obj.is_approved),
+                "Is Surveyed": format_date(existing_obj.is_surveyed),
                 "Survey Remarks": existing_obj.survey_remarks,
             }
 
@@ -802,58 +801,36 @@ def mobinet_data_submit_by_central(request):
                 status=status.HTTP_200_OK
             )
 
-        # 🆕 Create new if not exists
-        obj = DismantleCircleData.objects.create(
+        DismantleCircleData.objects.create(
             circle=circle,
             site_id=siteId,
             is_approved=date.today(),
-            # approval_remarks="",
-            is_surveyed="",
+            is_surveyed=None,
             survey_remarks="",
-        ) 
-        
-        
-        def parse_bool(value):
-            if isinstance(value, bool):
-                return value
-            if isinstance(value, str):
-                return value.strip().lower() in ["true", "1", "yes"]
-            if isinstance(value, int):
-                return value == 1
-            return False
-        
-        print("0")
-        
-        records = json.loads(records)
-        
+        )
+
+        # ✅ Safe json load
+        if isinstance(records, str):
+            records = json.loads(records)
+
         for record in records:
 
-            # Convert frontend keys back to DB field names
-            model_name = record["Model"]
-            expected_quantity = record["Expected Quantity"]
-            serial_number = record["Serial Number"]
-            is_found = False
-            is_in_mobinet = True
-            approval_date = date.today()
-            srn_number = ""
-            remarks = ""
-            
-            print("1")
-            
+            model_name = record.get("Model")
+            expected_quantity = record.get("Expected Quantity")
+            serial_number = record.get("Serial Number")
 
-            # 🔥 Update if exists, else create
-            obj = DismantleModelData.objects.update_or_create(
+            DismantleModelData.objects.update_or_create(
                 zone=circle,
                 site_id=siteId,
                 serial_number=serial_number,
                 defaults={
                     "model_name": model_name,
                     "expected_quantity": expected_quantity,
-                    "is_found": is_found,
-                    "is_in_mobinet": is_in_mobinet,
-                    "approval_date": approval_date,
-                    "srn_number": srn_number,
-                    "remarks": remarks,
+                    "is_found": False,
+                    "is_in_mobinet": True,
+                    "approval_date": date.today(),
+                    "srn_number": "",
+                    "remarks": "",
                 }
             )
 
@@ -869,6 +846,7 @@ def mobinet_data_submit_by_central(request):
 @api_view(['DELETE'])
 def empty_my_model(request):
     try:
+        DismantleModelData.objects.all().delete()
         deleted_count, _ = DismantleCircleData.objects.all().delete()
 
         return Response(
@@ -939,14 +917,13 @@ def mobinet_data_fetch_from_database(request):
         
     except Exception as e:
         return Response({"error": str(e)}, status=500)
-
+   
 
 @api_view(['POST'])
 def mobinet_data_submit_by_circle(request):
     circle = request.data.get("circle")
     siteId = request.data.get("siteId")
     records = request.data.get("data", [])
-    survey_remark = request.data.get("survey_remark")
 
     if not circle or not siteId:
         return Response({"message": "siteId/circle not provided"}, status=400)
@@ -955,26 +932,21 @@ def mobinet_data_submit_by_circle(request):
         return Response({"message": "No data provided"}, status=400)
 
     try:
-        
-        # 🔎 Check if already exists
         existing_obj = DismantleCircleData.objects.filter(
             circle=circle,
             site_id=siteId
         ).first()
-        
-        if existing_obj & existing_obj.is_surveyed != "":
-            return Response({"message" : "Survey already done. No changes made"})
 
-        # 🆕 Create new if not exists
+        if existing_obj and existing_obj.is_surveyed:
+            return Response({"message": "Survey already done. No changes made"})
+
         DismantleCircleData.objects.filter(
             circle=circle,
             site_id=siteId
         ).update(
-            is_surveyed=date.today() if survey_remark == "Survey Done" else "",
-            survey_remarks=survey_remark
+            is_surveyed=date.today(),
         )
-        
-        
+
         def parse_bool(value):
             if isinstance(value, bool):
                 return value
@@ -983,33 +955,41 @@ def mobinet_data_submit_by_circle(request):
             if isinstance(value, int):
                 return value == 1
             return False
-        
-        records = json.loads(records)
-        
-        
-        
+
+        # ✅ Safe json load
+        if isinstance(records, str):
+            records = json.loads(records)
+
         for record in records:
 
-            # Convert frontend keys back to DB field names
-            model_name = record.get("Model Name")
+            model_name = record.get("Model")
             expected_quantity = record.get("Expected Quantity")
             serial_number = record.get("Serial Number")
             is_found = parse_bool(record.get("Is Found"))
             is_in_mobinet = parse_bool(record.get("Is In Mobinet"))
+
             approval_date = record.get("Approval Date")
+
+            if approval_date:
+                try:
+                    approval_date = datetime.strptime(approval_date, "%d-%b-%y").date()
+                except:
+                    approval_date = None
+            else:
+                approval_date = None
+
             srn_number = record.get("SRN Number")
             remarks = record.get("Remarks")
-            
 
-            obj = DismantleModelData.objects.filter(
+            # ✅ UPSERT HERE
+            DismantleModelData.objects.update_or_create(
                 zone=circle,
                 site_id=siteId,
-                serial_number=serial_number,
-                model_name=model_name,
-                expected_quantity=expected_quantity,
-                approval_date=approval_date,
-            ).update(
+                serial_number=serial_number,   # unique identifier
                 defaults={
+                    "model_name": model_name,
+                    "expected_quantity": expected_quantity,
+                    "approval_date": approval_date,
                     "is_found": is_found,
                     "is_in_mobinet": is_in_mobinet,
                     "srn_number": srn_number,
