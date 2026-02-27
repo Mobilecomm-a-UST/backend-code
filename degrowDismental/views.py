@@ -636,7 +636,6 @@ def upload_aw_msmf_data(request):
 @api_view(['POST'])
 def fetch_site_status(request):
     circle = request.data.get("circle")
-    site_id = request.data.get("siteId")
 
     if not circle:
         return Response(
@@ -644,85 +643,29 @@ def fetch_site_status(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    if site_id:
-        obj = DismantleCircleData.objects.filter(
-            circle=circle,
-            site_id=site_id
-        ).first()
-    else:
-        obj = DismantleCircleData.objects.filter(
-            circle=circle
-        ).first()
+    # Get all records of that circle
+    queryset = DismantleCircleData.objects.filter(circle=circle)
 
-    if obj:
-        data = {
+    if not queryset.exists():
+        return Response(
+            {"message": "No DB records found for this circle."},
+            status=status.HTTP_200_OK
+        )
+
+    data = []
+
+    for obj in queryset:
+        data.append({
             "id": obj.id,
             "Circle": obj.circle,
             "Site ID": obj.site_id,
             "Is Approved": obj.is_approved.strftime("%d-%b-%y") if obj.is_approved else None,
-            # "Approval Remarks": obj.approval_remarks,
             "Is Surveyed": obj.is_surveyed.strftime("%d-%b-%y") if obj.is_surveyed else None,
             "Survey Remarks": obj.survey_remarks,
-        }
-
-        return Response({"data" : data}, status=status.HTTP_200_OK)
-    
-    
-    
-    # mobinet_folder = os.path.join(main_folder, 'mobinet')
-
-    # expected_filename_prefix = f"{circle}"
-
-    # mobinet_files = [
-    #     f for f in os.listdir(mobinet_folder)
-    #     if f.startswith(expected_filename_prefix)
-    # ]
-
-    # if not mobinet_files:
-    #     return Response({"error": "Mobinet file not found"}, status=400)
-
-    # mobinet_path = os.path.join(mobinet_folder, mobinet_files[0])
-
-    # if mobinet_path.endswith(".csv"):
-    #     mobinet_df = pd.read_csv(
-    #         mobinet_path,
-    #         usecols=["Zone", "Parent Site"]
-    #     )
-    # elif mobinet_path.endswith((".xls", ".xlsx")):
-    #     mobinet_df = pd.read_excel(
-    #         mobinet_path,
-    #         usecols=["Zone", "Parent Site"],
-    #         engine="openpyxl"
-    #     )
-    # else:
-    #     return Response({"error": "Unsupported mobinet file format"}, status=400)
-
-    # mobinet_df["Parent Site"] = mobinet_df["Parent Site"].astype(str).str.strip()
-    # mobinet_df["Zone"] = mobinet_df["Zone"].astype(str).str.strip()
-
-    # # Filter by circle & site
-    # filtered_mobinet = mobinet_df[
-    #     (mobinet_df["Zone"] == circle) &
-    #     (mobinet_df["Parent Site"] == f"{site_id}_{circle}")
-    # ].copy()
-
-    # if filtered_mobinet.empty:
-    #     return Response({"message": "No data found in Mobinet for given site"}, status=404)
-    
-    
-    # fallback_data = {
-    #     "Circle": circle,
-    #     "Site ID": site_id,
-    #     "Is Approved": "",
-    #     # "Approval Remarks": "",
-    #     "Is Surveyed": "",
-    #     "Survey Remarks": "",
-    # }
+        })
 
     return Response(
-        {
-            "message": "No DB record for this circle yet.",
-        },
+        {"data": data},
         status=status.HTTP_200_OK
     )
 
