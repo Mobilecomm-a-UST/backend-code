@@ -940,3 +940,145 @@ def empty_my_model(request):
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['POST'])
+def mobinet_data_fetch_from_database(request):
+    circle = request.data.get("circle")
+    siteId = request.data.get("siteId")
+
+    if not circle or not siteId:
+        return Response({"message": "siteId/circle not provided"}, status=400)
+    
+    try:
+        # ---------------- 1️⃣ Check Database First ----------------
+        db_queryset = DismantleModelData.objects.filter(
+            zone=circle,
+            site_id=siteId
+        )
+
+        if db_queryset.exists():
+            db_data = db_queryset.values(
+                "approval_date",
+                "model_name",
+                "expected_quantity",
+                "serial_number",
+                "is_found",
+                "is_in_mobinet",
+                "srn_number",
+                "remarks"
+            )
+
+            formatted_data = []
+
+            for row in db_data:
+                formatted_row = {}
+                for key, value in row.items():
+                    # Convert: model_name -> Model Name
+                    new_key = key.replace("_", " ").title()
+                    if new_key == "Srn Number":
+                        new_key = "SRN Number"
+                    if new_key == "Model Name":
+                        new_key = "Model"
+                    formatted_row[new_key] = value
+                formatted_data.append(formatted_row)
+
+            return Response({
+                "status": "success",
+                "source": "database",
+                "count": len(formatted_data),
+                "data": formatted_data
+            })
+
+        return Response({
+            "status": "No Data found"
+        })
+        
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+@api_view(['POST'])
+def mobinet_data_submit_by_circle(request):
+    circle = request.data.get("circle")
+    siteId = request.data.get("siteId")
+    records = request.data.get("data", [])
+    survey_remark = request.data.get("survey_remark")
+
+    if not circle or not siteId:
+        return Response({"message": "siteId/circle not provided"}, status=400)
+
+    if not records:
+        return Response({"message": "No data provided"}, status=400)
+
+    try:
+        
+        # 🔎 Check if already exists
+        existing_obj = DismantleCircleData.objects.filter(
+            circle=circle,
+            site_id=siteId
+        ).first()
+        
+        if existing_obj & existing_obj.is_surveyed != "":
+            return Response({"message" : "Survey already done. No changes made"})
+
+        # 🆕 Create new if not exists
+        DismantleCircleData.objects.filter(
+            circle=circle,
+            site_id=siteId
+        ).update(
+            is_surveyed=date.today() if survey_remark == "Survey Done" else "",
+            survey_remarks=survey_remark
+        )
+        
+        
+        def parse_bool(value):
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                return value.strip().lower() in ["true", "1", "yes"]
+            if isinstance(value, int):
+                return value == 1
+            return False
+        
+        records = json.loads(records)
+        
+        
+        
+        for record in records:
+
+            # Convert frontend keys back to DB field names
+            model_name = record.get("Model Name")
+            expected_quantity = record.get("Expected Quantity")
+            serial_number = record.get("Serial Number")
+            is_found = parse_bool(record.get("Is Found"))
+            is_in_mobinet = parse_bool(record.get("Is In Mobinet"))
+            approval_date = record.get("Approval Date")
+            srn_number = record.get("SRN Number")
+            remarks = record.get("Remarks")
+            
+
+            obj = DismantleModelData.objects.filter(
+                zone=circle,
+                site_id=siteId,
+                serial_number=serial_number,
+                model_name=model_name,
+                expected_quantity=expected_quantity,
+                approval_date=approval_date,
+            ).update(
+                defaults={
+                    "is_found": is_found,
+                    "is_in_mobinet": is_in_mobinet,
+                    "srn_number": srn_number,
+                    "remarks": remarks,
+                }
+            )
+
+        return Response({
+            "status": "success",
+            "message": "Data saved successfully"
+        })
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
