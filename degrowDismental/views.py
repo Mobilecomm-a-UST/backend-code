@@ -648,11 +648,11 @@ def fetch_site_status(request):
         obj = DismantleCircleData.objects.filter(
             circle=circle,
             site_id=site_id
-        )
+        ).first()
     else:
         obj = DismantleCircleData.objects.filter(
             circle=circle
-        )
+        ).first()
 
     if obj:
         data = {
