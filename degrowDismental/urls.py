@@ -11,10 +11,12 @@ urlpatterns = [
     path("upload_rfs/", upload_rfs_data, name="upload_rfs"),
     path("upload_locator/", upload_locator_data, name="upload_locator"),
     path("delete_file/", delete_single_file, name="delete_file"),
+    path("mobinet_data_fetch_from_database/", mobinet_data_fetch_from_database, name="mobinet_data_fetch_from_database"),
     path("mobinet_data_fetch_from_file/", mobinet_data_fetch_from_file, name="mobinet_data_fetch_from_file"),
     path("mobinet_data_submit_central/", mobinet_data_submit_by_central, name="mobinet_data_submit_central"),
     path("mobinet_data_submit_circle/", mobinet_data_submit_by_circle, name="mobinet_data_submit_circle"),
     path("fetch_site_status/", fetch_site_status, name="fetch site status"),
+    path("fetch_all_site_status/", fetch_all_site_status, name="fetch_all_site_status"),
     path("empty_my_model/", empty_my_model, name="empty_my_model"),
-    path("mobinet_data_fetch_from_database/", mobinet_data_fetch_from_database, name="mobinet_data_fetch_from_database"),
+    path("fetch_model_name/", fetch_model_name, name="fetch_model_name"),
 ]
