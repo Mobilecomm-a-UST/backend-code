@@ -30,9 +30,9 @@ class DismantleCircleData(models.Model):
     circle = models.CharField(max_length=100, null=True, blank=True)
     site_id = models.CharField(max_length=100, null=True, blank=True)
     is_approved = models.DateField(null=True, blank=True)
-    # approval_remarks = models.CharField(max_length=500, null=True, blank=True)
-    is_surveyed = models.CharField(max_length=100, null=True, blank=True)
-    survey_remarks = models.CharField(max_length=500, null=True, blank=True)
+    is_surveyed = models.DateField(null=True, blank=True)
+    is_srn_done = models.DateField(null=True, blank=True)
+    remarks = models.CharField(max_length=500, null=True, blank=True)
     
     class Meta:
         db_table = "dismantle_circle_data"

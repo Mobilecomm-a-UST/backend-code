@@ -666,12 +666,95 @@ def fetch_site_status(request):
             "Site ID": obj.site_id,
             "Is Approved": format_date(obj.is_approved),
             "Is Surveyed": format_date(obj.is_surveyed),
-            "Survey Remarks": obj.survey_remarks,
+            "Is SRN Done": format_date(obj.is_srn_done),
+            "Remarks": obj.remarks,
         })
 
     return Response({"data": data}, status=status.HTTP_200_OK)
 
 
+@api_view(['POST'])
+def fetch_all_site_status(request):
+    queryset = DismantleCircleData.objects.all()
+
+    if not queryset.exists():
+        return Response(
+            {"message": "No DB records found for this circle."},
+            status=status.HTTP_200_OK
+        )
+
+    data = []
+
+    for obj in queryset:
+        data.append({
+            "id": obj.id,
+            "Circle": obj.circle,
+            "Site ID": obj.site_id,
+            "Is Approved": format_date(obj.is_approved),
+            "Is Surveyed": format_date(obj.is_surveyed),
+            "Is SRN Done": format_date(obj.is_srn_done),
+            "Remarks": obj.remarks,
+        })
+
+    return Response({"data": data}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def mobinet_data_fetch_from_database(request):
+    circle = request.data.get("circle")
+    siteId = request.data.get("siteId")
+
+    if not circle or not siteId:
+        return Response({"message": "siteId/circle not provided"}, status=400)
+    
+    try:
+        # ---------------- 1️⃣ Check Database First ----------------
+        db_queryset = DismantleModelData.objects.filter(
+            zone=circle,
+            site_id=siteId
+        )
+
+        if db_queryset.exists():
+            db_data = db_queryset.values(
+                "approval_date",
+                "model_name",
+                "expected_quantity",
+                "serial_number",
+                "is_found",
+                "is_in_mobinet",
+                "srn_number",
+                "remarks"
+            )
+
+            formatted_data = []
+
+            for row in db_data:
+                formatted_row = {}
+                for key, value in row.items():
+                    # Convert: model_name -> Model Name
+                    new_key = key.replace("_", " ").title()
+                    if new_key == "Srn Number":
+                        new_key = "SRN Number"
+                    if new_key == "Model Name":
+                        new_key = "Model"
+                    formatted_row[new_key] = value
+                formatted_data.append(formatted_row)
+
+            return Response({
+                "status": "success",
+                "source": "database",
+                "count": len(formatted_data),
+                "data": formatted_data
+            })
+
+        return Response({
+            "status": "No Data found"
+        })
+        
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+        
+ 
 @api_view(['POST'])
 def mobinet_data_fetch_from_file(request):
     circle = request.data.get("circle")
@@ -790,7 +873,8 @@ def mobinet_data_submit_by_central(request):
                 "Site ID": existing_obj.site_id,
                 "Is Approved": format_date(existing_obj.is_approved),
                 "Is Surveyed": format_date(existing_obj.is_surveyed),
-                "Survey Remarks": existing_obj.survey_remarks,
+                "Is SRN Done": format_date(existing_obj.is_srn_done),
+                "Remarks": existing_obj.remarks,
             }
 
             return Response(
@@ -806,7 +890,8 @@ def mobinet_data_submit_by_central(request):
             site_id=siteId,
             is_approved=date.today(),
             is_surveyed=None,
-            survey_remarks="",
+            is_srn_done=None,
+            remarks="Ready for survey",
         )
 
         # ✅ Safe json load
@@ -864,69 +949,14 @@ def empty_my_model(request):
 
 
 @api_view(['POST'])
-def mobinet_data_fetch_from_database(request):
-    circle = request.data.get("circle")
-    siteId = request.data.get("siteId")
-
-    if not circle or not siteId:
-        return Response({"message": "siteId/circle not provided"}, status=400)
-    
-    try:
-        # ---------------- 1️⃣ Check Database First ----------------
-        db_queryset = DismantleModelData.objects.filter(
-            zone=circle,
-            site_id=siteId
-        )
-
-        if db_queryset.exists():
-            db_data = db_queryset.values(
-                "approval_date",
-                "model_name",
-                "expected_quantity",
-                "serial_number",
-                "is_found",
-                "is_in_mobinet",
-                "srn_number",
-                "remarks"
-            )
-
-            formatted_data = []
-
-            for row in db_data:
-                formatted_row = {}
-                for key, value in row.items():
-                    # Convert: model_name -> Model Name
-                    new_key = key.replace("_", " ").title()
-                    if new_key == "Srn Number":
-                        new_key = "SRN Number"
-                    if new_key == "Model Name":
-                        new_key = "Model"
-                    formatted_row[new_key] = value
-                formatted_data.append(formatted_row)
-
-            return Response({
-                "status": "success",
-                "source": "database",
-                "count": len(formatted_data),
-                "data": formatted_data
-            })
-
-        return Response({
-            "status": "No Data found"
-        })
-        
-    except Exception as e:
-        return Response({"error": str(e)}, status=500)
-   
-
-@api_view(['POST'])
 def mobinet_data_submit_by_circle(request):
     circle = request.data.get("circle")
     siteId = request.data.get("siteId")
     records = request.data.get("data", [])
+    remark = request.data.get("remark")
 
-    if not circle or not siteId:
-        return Response({"message": "siteId/circle not provided"}, status=400)
+    if not circle or not siteId or not remark:
+        return Response({"message": "siteId/circle/remark not provided"}, status=400)
 
     if not records:
         return Response({"message": "No data provided"}, status=400)
@@ -944,8 +974,12 @@ def mobinet_data_submit_by_circle(request):
             circle=circle,
             site_id=siteId
         ).update(
-            is_surveyed=date.today(),
+            is_surveyed=date.today() if remark == "Survey done" else None,
+            remarks=remark
         )
+        
+        if not records:
+            return Response({"message" : "Site not surveyed"})
 
         def parse_bool(value):
             if isinstance(value, bool):
@@ -1005,3 +1039,58 @@ def mobinet_data_submit_by_circle(request):
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
+
+@api_view(['POST'])
+def fetch_model_name(request):
+    circle = request.data.get('circle')
+
+    if not circle:
+        return Response({"message": "circle not provided"}, status=400)
+
+    try:
+        mobinet_folder = os.path.join(main_folder, 'mobinet')
+
+        expected_filename_prefix = f"{circle}"
+
+        mobinet_files = [
+            f for f in os.listdir(mobinet_folder)
+            if f.startswith(expected_filename_prefix)
+        ]
+
+        if not mobinet_files:
+            return Response({"error": "Mobinet file not found"}, status=400)
+
+        mobinet_path = os.path.join(mobinet_folder, mobinet_files[0])
+
+        # Read only Model column (optimized)
+        if mobinet_path.endswith(".csv"):
+            mobinet_df = pd.read_csv(
+                mobinet_path,
+                usecols=["Model"]
+            )
+        elif mobinet_path.endswith((".xls", ".xlsx")):
+            mobinet_df = pd.read_excel(
+                mobinet_path,
+                usecols=["Model"],
+                engine="openpyxl"
+            )
+        else:
+            return Response({"error": "Unsupported mobinet file format"}, status=400)
+
+        # Clean data
+        mobinet_df["Model"] = mobinet_df["Model"].astype(str).str.strip()
+
+        # Remove null/invalid values
+        mobinet_df = mobinet_df[
+            mobinet_df["Model"].notna() &
+            (~mobinet_df["Model"].isin(["", "-", "_", "N/A", "NaN", "Nan", "undefined"]))
+        ]
+
+        # Get unique models sorted
+        unique_models = sorted(mobinet_df["Model"].unique().tolist())
+
+        return Response({"models": unique_models}, status=200)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    
