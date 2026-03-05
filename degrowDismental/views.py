@@ -11,7 +11,8 @@ import re
 from degrowDismental.models import *
 from datetime import date
 import json
-from django.db.models import F
+from django.db.models import F, Count, Q
+import shutil
 
 
 
@@ -664,6 +665,8 @@ def fetch_site_status(request):
             "id": obj.id,
             "Circle": obj.circle,
             "Site ID": obj.site_id,
+            "Partner Code": obj.partner_code,
+            "Partner": obj.partner,
             "Is Approved": format_date(obj.is_approved),
             "Is Surveyed": format_date(obj.is_surveyed),
             "Is SRN Done": format_date(obj.is_srn_done),
@@ -673,28 +676,78 @@ def fetch_site_status(request):
     return Response({"data": data}, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
-def fetch_all_site_status(request):
+@api_view(['GET', 'POST'])
+def fetch_circle_summary(request):
+
+    partners = request.data.get("partner") 
+    
+    partners = [p.strip() for p in partners.split(',')] if partners else ["ALL"]
+
     queryset = DismantleCircleData.objects.all()
 
-    if not queryset.exists():
-        return Response(
-            {"message": "No DB records found for this circle."},
-            status=status.HTTP_200_OK
+    # Filter by partners if provided
+    
+    print(partners)
+    if "ALL" not in partners:
+        queryset = queryset.filter(partner__in=partners)
+
+    queryset = (
+        queryset
+        .values("circle")
+        .annotate(
+            total_sites=Count("site_id", distinct=True),
+            surveyed_sites=Count(
+                "site_id",
+                filter=Q(is_surveyed__isnull=False),
+                distinct=True
+            ),
+            srn_done_sites=Count(
+                "site_id",
+                filter=Q(is_srn_done__isnull=False),
+                distinct=True
+            )
         )
+        .order_by("circle")
+    )
 
     data = []
 
-    for obj in queryset:
+    total_sites_sum = 0
+    surveyed_sum = 0
+    srn_sum = 0
+
+    for row in queryset:
+        total_sites = row["total_sites"]
+        surveyed = row["surveyed_sites"]
+        srn_done = row["srn_done_sites"]
+
+        survey_pending = total_sites - surveyed
+        srn_pending = surveyed - srn_done
+
+        total_sites_sum += total_sites
+        surveyed_sum += surveyed
+        srn_sum += srn_done
+
         data.append({
-            "id": obj.id,
-            "Circle": obj.circle,
-            "Site ID": obj.site_id,
-            "Is Approved": format_date(obj.is_approved),
-            "Is Surveyed": format_date(obj.is_surveyed),
-            "Is SRN Done": format_date(obj.is_srn_done),
-            "Remarks": obj.remarks,
+            "Circle": row["circle"],
+            "Total Sites": total_sites,
+            "Survey Done": surveyed,
+            "Survey Pending": survey_pending,
+            "SRN Done": srn_done,
+            "SRN Pending": srn_pending,
         })
+
+    # ALL row
+    all_row = {
+        "Circle": "ALL",
+        "Total Sites": total_sites_sum,
+        "Survey Done": surveyed_sum,
+        "Survey Pending": total_sites_sum - surveyed_sum,
+        "SRN Done": srn_sum,
+        "SRN Pending": surveyed_sum - srn_sum,
+    }
+
+    data.insert(0, all_row)
 
     return Response({"data": data}, status=status.HTTP_200_OK)
 
@@ -757,16 +810,63 @@ def mobinet_data_fetch_from_database(request):
  
 @api_view(['POST'])
 def mobinet_data_fetch_from_file(request):
+
     circle = request.data.get("circle")
     siteId = request.data.get("siteId")
     board = request.data.get("board")
-    
-    print(board)
 
     if not circle or not siteId:
         return Response({"message": "siteId/circle not provided"}, status=400)
-    
+
     try:
+
+        # ---------------- 1️⃣ Check Database First ----------------
+        db_queryset = DismantleModelData.objects.filter(
+            zone=circle,
+            site_id=siteId
+        )
+
+        if db_queryset.exists():
+
+            db_data = db_queryset.values(
+                "approval_date",
+                "model_name",
+                "expected_quantity",
+                "serial_number",
+                "is_found",
+                "is_in_mobinet",
+                "srn_number",
+                "remarks"
+            )
+
+            formatted_data = []
+
+            for row in db_data:
+                formatted_row = {}
+                for key, value in row.items():
+
+                    new_key = key.replace("_", " ").title()
+
+                    if new_key == "Srn Number":
+                        new_key = "SRN Number"
+
+                    if new_key == "Model Name":
+                        new_key = "Model"
+
+                    formatted_row[new_key] = value
+
+                formatted_data.append(formatted_row)
+
+            return Response({
+                "status": "success",
+                "source": "database",
+                "count": len(formatted_data),
+                "data": formatted_data
+            })
+
+
+        # ---------------- 2️⃣ If Not Found → Fetch From File ----------------
+
         mobinet_folder = os.path.join(main_folder, 'mobinet')
 
         expected_filename_prefix = f"{circle}"
@@ -786,12 +886,14 @@ def mobinet_data_fetch_from_file(request):
                 mobinet_path,
                 usecols=["Model", "Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"]
             )
+
         elif mobinet_path.endswith((".xls", ".xlsx")):
             mobinet_df = pd.read_excel(
                 mobinet_path,
                 usecols=["Model", "Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"],
                 engine="openpyxl"
             )
+
         else:
             return Response({"error": "Unsupported mobinet file format"}, status=400)
 
@@ -806,44 +908,43 @@ def mobinet_data_fetch_from_file(request):
 
         if filtered_mobinet.empty:
             return Response({"message": "No data found in Mobinet for given site"}, status=404)
-        
-        
+
         filtered_mobinet = filtered_mobinet[
-              filtered_mobinet['Serial Number'].notna() &
-            ( ~filtered_mobinet['Serial Number'].astype(str).str.strip().isin(["", "-", "_", "N/A", "NaN", "Nan", "undefined", None]))
+            filtered_mobinet['Serial Number'].notna() &
+            (~filtered_mobinet['Serial Number'].astype(str).str.strip().isin(
+                ["", "-", "_", "N/A", "NaN", "Nan", "undefined", None]
+            ))
         ]
-        
+
         if board:
             board_list = [b.strip() for b in board.split(",") if b.strip()]
         else:
             board_list = []
-            
+
         if board_list:
-            print(board_list)
             filtered_mobinet = filtered_mobinet[
                 ~filtered_mobinet["Board Model"].astype(str).str.strip().isin(board_list)
             ]
-        
+
         filtered_mobinet = filtered_mobinet[['Model', 'Cabinet', 'Serial Number']]
-        
+
         filtered_mobinet.rename(columns={"Cabinet": "Expected Quantity"}, inplace=True)
-        
+
         filtered_mobinet = filtered_mobinet.where(pd.notnull(filtered_mobinet), None)
-        
+
         filtered_mobinet["Is In Mobinet"] = True
-        
         filtered_mobinet["Remarks"] = ""
-        
         filtered_mobinet["SRN Number"] = ""
-        
         filtered_mobinet["Approval Date"] = ""
-        
-        filtered_mobinet["index"] = range(1, len(filtered_mobinet) + 1)
-        
         filtered_mobinet["Is Found"] = False
-        
-        return Response({"data" : filtered_mobinet.to_dict(orient="records")}, status= status.HTTP_200_OK)
-        
+
+        filtered_mobinet["index"] = range(1, len(filtered_mobinet) + 1)
+
+        return Response({
+            "source": "file",
+            "data": filtered_mobinet.to_dict(orient="records")
+        }, status=status.HTTP_200_OK)
+
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
@@ -853,8 +954,10 @@ def mobinet_data_submit_by_central(request):
     circle = request.data.get("circle")
     siteId = request.data.get("siteId")
     records = request.data.get("data", [])
+    partner = request.data.get("partner")
+    partner_code = request.data.get("partner_code")
 
-    if not circle or not siteId:
+    if not circle or not siteId or not partner or not partner_code:
         return Response({"message": "siteId/circle not provided"}, status=400)
 
     if not records:
@@ -871,6 +974,8 @@ def mobinet_data_submit_by_central(request):
                 "id": existing_obj.id,
                 "Circle": existing_obj.circle,
                 "Site ID": existing_obj.site_id,
+                "Partner Code": existing_obj.partner_code,
+                "Partner": existing_obj.partner,
                 "Is Approved": format_date(existing_obj.is_approved),
                 "Is Surveyed": format_date(existing_obj.is_surveyed),
                 "Is SRN Done": format_date(existing_obj.is_srn_done),
@@ -888,6 +993,8 @@ def mobinet_data_submit_by_central(request):
         DismantleCircleData.objects.create(
             circle=circle,
             site_id=siteId,
+            partner_code=partner_code,
+            partner=partner,
             is_approved=date.today(),
             is_surveyed=None,
             is_srn_done=None,
@@ -966,8 +1073,59 @@ def mobinet_data_submit_by_circle(request):
             circle=circle,
             site_id=siteId
         ).first()
+        
+        def parse_bool(value):
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                return value.strip().lower() in ["true", "1", "yes"]
+            if isinstance(value, int):
+                return value == 1
+            return False
 
         if existing_obj and existing_obj.is_surveyed:
+            if isinstance(records, str):
+                records = json.loads(records)
+            
+            flag = True
+
+            for record in records:
+
+                model_name = record.get("Model")
+                expected_quantity = record.get("Expected Quantity")
+                serial_number = record.get("Serial Number")
+                is_found = parse_bool(record.get("Is Found"))
+                is_in_mobinet = parse_bool(record.get("Is In Mobinet"))
+                
+                if not is_found:
+                    continue
+
+                srn_number = record.get("SRN Number")
+                remarks = record.get("Remarks")
+                
+                if not srn_number or srn_number.strip() == "":
+                    flag = False
+
+                # ✅ UPSERT HERE
+                DismantleModelData.objects.filter(
+                    zone=circle, 
+                    site_id=siteId, 
+                    model_name=model_name, 
+                    serial_number=serial_number, 
+                    is_in_mobinet=is_in_mobinet
+                ).update(
+                    srn_number = srn_number,
+                    remarks = remarks,
+                )
+                
+            DismantleCircleData.objects.filter(
+                circle=circle,
+                site_id=siteId
+            ).update(
+                is_srn_done = date.today() if flag else None,
+                remarks="SRN Done" if flag else "SRN Pending"
+            )
+            
             return Response({"message": "Survey already done. No changes made"})
 
         DismantleCircleData.objects.filter(
@@ -978,17 +1136,8 @@ def mobinet_data_submit_by_circle(request):
             remarks=remark
         )
         
-        if not records:
-            return Response({"message" : "Site not surveyed"})
-
-        def parse_bool(value):
-            if isinstance(value, bool):
-                return value
-            if isinstance(value, str):
-                return value.strip().lower() in ["true", "1", "yes"]
-            if isinstance(value, int):
-                return value == 1
-            return False
+        # if not records:
+        #     return Response({"message" : "Site not surveyed"})
 
         # ✅ Safe json load
         if isinstance(records, str):
@@ -1006,11 +1155,11 @@ def mobinet_data_submit_by_circle(request):
 
             if approval_date:
                 try:
-                    approval_date = datetime.strptime(approval_date, "%d-%b-%y").date()
+                    approval_date = datetime.strptime(approval_date, "%Y-%m-%d").date()
                 except:
-                    approval_date = None
+                    approval_date = date.today()
             else:
-                approval_date = None
+                approval_date = date.today()
 
             srn_number = record.get("SRN Number")
             remarks = record.get("Remarks")
@@ -1019,13 +1168,13 @@ def mobinet_data_submit_by_circle(request):
             DismantleModelData.objects.update_or_create(
                 zone=circle,
                 site_id=siteId,
-                serial_number=serial_number,   # unique identifier
+                model_name=model_name,
+                serial_number=serial_number,
+                is_in_mobinet=is_in_mobinet,
                 defaults={
-                    "model_name": model_name,
                     "expected_quantity": expected_quantity,
                     "approval_date": approval_date,
                     "is_found": is_found,
-                    "is_in_mobinet": is_in_mobinet,
                     "srn_number": srn_number,
                     "remarks": remarks,
                 }
@@ -1094,3 +1243,111 @@ def fetch_model_name(request):
     except Exception as e:
         return Response({"error": str(e)}, status=500)
     
+
+@api_view(['POST'])
+def master_file_download(request):
+    # 1️⃣ Fetch circle data
+    circle_qs = DismantleCircleData.objects.all().values(
+        "circle",
+        "site_id",
+        "partner_code",
+        "partner",
+        "is_approved",
+        "is_surveyed",
+        "is_srn_done",
+        "remarks"
+    )
+
+    # 2️⃣ Fetch model data
+    model_qs = DismantleModelData.objects.all().values(
+        "zone",
+        "site_id",
+        "model_name",
+        "serial_number",
+        "expected_quantity",
+        "is_in_mobinet",
+        "is_found",
+        "approval_date"
+    )
+
+    # 3️⃣ Convert to DataFrames
+    circle_df = pd.DataFrame(list(circle_qs))
+    model_df = pd.DataFrame(list(model_qs))
+
+    # 4️⃣ Merge both tables
+    df = pd.merge(
+        circle_df,
+        model_df,
+        left_on=["circle", "site_id"],
+        right_on=["zone", "site_id"],
+        how="left"
+    )
+
+    # 5️⃣ Rename columns to required output
+    df = df.rename(columns={
+        "circle": "Circle",
+        "site_id": "Site ID",
+        "partner_code": "Partner Code",
+        "partner": "Partner",
+        "model_name": "Model",
+        "serial_number": "Serial Number",
+        "expected_quantity": "Expected Quantity",
+        "is_in_mobinet": "Is In Mobinet",
+        "is_found": "Is Found",
+        "is_approved": "Approval Date",
+        "is_surveyed": "Survey Date",
+        "is_srn_done": "SRN Date",
+        "remarks": "Current Status"
+    })
+
+    # 6️⃣ Select only required columns
+    df = df[
+        [
+            "Circle",
+            "Site ID",
+            "Partner Code",
+            "Partner",
+            "Model",
+            "Serial Number",
+            "Expected Quantity",
+            "Is In Mobinet",
+            "Is Found",
+            "Approval Date",
+            "Survey Date",
+            "SRN Date",
+            "Current Status"
+        ]
+    ]
+
+    # 7️⃣ Replace NaN values
+    df = df.fillna("")
+    
+    BASE_URL = os.path.join(settings.MEDIA_ROOT, "degrow_dismantle")
+    os.makedirs(BASE_URL, exist_ok=True)
+
+    output_folder = os.path.join(BASE_URL, f"dismantle_master_file")
+    shutil.rmtree(output_folder, ignore_errors=True)
+    os.makedirs(output_folder, exist_ok=True)
+
+    dashboard_file_path = os.path.join(
+        output_folder,
+        f"DISMANTLE_MASTER_FILE.xlsx"
+    )
+
+    with pd.ExcelWriter(dashboard_file_path, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='DISMANTLE_MASTER_FILE')
+
+    dashboard_file_path = dashboard_file_path.replace(
+        settings.MEDIA_ROOT, settings.MEDIA_URL
+    ).replace("\\", "/")
+
+    download_link = request.build_absolute_uri(dashboard_file_path)
+    
+    # 8️⃣ Convert to JSON
+    data = df.to_dict(orient="records")
+
+    return Response({
+        "download_link": download_link,
+        "data": data
+    }, status=200)
+
