@@ -649,8 +649,11 @@ def fetch_site_status(request):
             {"error": "circle is required"},
             status=status.HTTP_400_BAD_REQUEST
         )
-
-    queryset = DismantleCircleData.objects.filter(circle=circle)
+        
+    if circle == 'CENTRAL':
+        queryset = DismantleCircleData.objects.all()
+    else:
+        queryset = DismantleCircleData.objects.filter(circle=circle)
 
     if not queryset.exists():
         return Response(
