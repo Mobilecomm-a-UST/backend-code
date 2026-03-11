@@ -701,10 +701,12 @@ def add_integration_record(request):
 # ########### DATE WISE INTEGRATION DATA new ###########
 @api_view(['GET','POST'])
 def datewise_integration_data(request):
-    print("User: ", request.user.username)
-    date_str = request.POST.get('date')
-    
-    # Parse dates
+    print("User:", request.user.username)
+    data = request.data if request.method == "POST" else request.query_params
+    date_str = data.get('date')
+    # -----------------------------
+    # Parse Date
+    # -----------------------------
     if date_str:
         try:
             print("user defined date")
@@ -712,23 +714,30 @@ def datewise_integration_data(request):
             date1 = date_obj
             date2 = date_obj - timedelta(days=1)
             date3 = date_obj - timedelta(days=2)
-            print(date1, date2, date3)
             year = date_obj.year
         except ValueError:
             return JsonResponse({'error': 'Invalid date format'}, status=400)
     else:
-        latest_date = IntegrationData.objects.latest('Integration_Date').Integration_Date
-        date1 = latest_date
-        date2 = latest_date - timedelta(days=1)
-        date3 = latest_date - timedelta(days=2)
-        print(date1, date2, date3)
-        year = latest_date.year
-
+        latest_obj = IntegrationData.objects.order_by('-Integration_Date').first()
+        if latest_obj and latest_obj.Integration_Date:
+            latest_date = latest_obj.Integration_Date
+            date1 = latest_date
+            date2 = latest_date - timedelta(days=1)
+            date3 = latest_date - timedelta(days=2)
+            year = latest_date.year
+        else:
+            return Response(
+                {"error": "No Integration data available"},
+                status=400
+            )
+    print(date1, date2, date3)
+    # -----------------------------
+    # Fixed Circles
+    # -----------------------------
     fixed_circles = [
         'AP','BIH','CHN','DEL','HP','HRY','JK','JRK','KK','KOL',
         'MAH','MP','MUM','NESA','ORI','PUN','RAJ','ROTN','UPE','UPW','WB'
     ]
-
     with connection.cursor() as cursor:
         activity_type = [
             '5G SECTOR ADDITION','5G RELOCATION','HT INCREMENT','FEMTO','DE-GROW',
@@ -736,70 +745,177 @@ def datewise_integration_data(request):
             'OTHERS','RECTIFICATION','RELOCATION','5G RRU SWAP','RET',
             'TRAFFIC SHIFTING','ULS_HPSC','UPGRADE','RRU SWAP'
         ]
-        
-        activity_columns = [a.replace(' ', '_').replace('-', '_') for a in activity_type]
+        activity_columns = [
+            a.replace(' ', '_').replace('-', '_') for a in activity_type
+        ]
         dates = [date1, date2, date3]
-
         join_clauses = []
-        alias_list = []
-
         for index, date in enumerate(dates):
             alias = f"d{index+1}"
-            alias_list.append(alias)
             date_tag = f"D{index+1}"
-            columns_def = ",".join([f'"{date_tag}_{col}" INTEGER' for col in activity_columns])
-
+            columns_def = ",".join(
+                [f'"{date_tag}_{col}" INTEGER' for col in activity_columns]
+            )
             select_cte = f"""
-                SELECT * FROM crosstab($$
-                    SELECT 
-                        c.cir AS "CIRCLE",
-                        a."Activity_Name",
-                        COALESCE(r.cnt, 0)::INTEGER AS cnt
-                    FROM 
-                        (SELECT unnest(ARRAY{fixed_circles}) AS cir) c
-                    CROSS JOIN
-                        (SELECT unnest(ARRAY{activity_type}) AS "Activity_Name") a
-                    LEFT JOIN (
-                        SELECT UPPER("CIRCLE") AS "CIRCLE", "Activity_Name", COUNT("id") AS cnt
-                        FROM public."IntegrationTracker_integrationdata"
-                        WHERE "Integration_Date" = '{date}'
-                        GROUP BY "CIRCLE", "Activity_Name"
-                    ) r 
-                    ON UPPER(c.cir) = r."CIRCLE" 
-                    AND a."Activity_Name" = r."Activity_Name"
-                    ORDER BY c.cir, array_position(ARRAY{activity_type}, a."Activity_Name")
-                $$) AS ct(cir text, {columns_def})
+            SELECT * FROM crosstab($$
+                SELECT 
+                    c.cir AS "CIRCLE",
+                    a."Activity_Name",
+                    COALESCE(r.cnt,0)::INTEGER AS cnt
+                FROM
+                    (SELECT unnest(ARRAY{fixed_circles}) AS cir) c
+                CROSS JOIN
+                    (SELECT unnest(ARRAY{activity_type}) AS "Activity_Name") a
+                LEFT JOIN
+                (
+                    SELECT
+                        UPPER("CIRCLE") AS "CIRCLE",
+                        "Activity_Name",
+                        COUNT("id") AS cnt
+                    FROM public."IntegrationTracker_integrationdata"
+                    WHERE "Integration_Date" = '{date}'
+                    GROUP BY "CIRCLE","Activity_Name"
+                ) r
+                ON UPPER(c.cir) = r."CIRCLE"
+                AND a."Activity_Name" = r."Activity_Name"
+                ORDER BY c.cir,
+                array_position(ARRAY{activity_type}, a."Activity_Name")
+            $$)
+            AS ct(cir text,{columns_def})
             """
             join_clauses.append(f"({select_cte}) AS {alias}")
-
-        # Build the FULL OUTER JOIN dynamically
+        # -----------------------------
+        # Build JOIN
+        # -----------------------------
         final_query = join_clauses[0]
         for i in range(1, len(join_clauses)):
             final_query = f"""
-                {final_query}
-                FULL OUTER JOIN
-                {join_clauses[i]}
-                USING (cir)
+            {final_query}
+            FULL OUTER JOIN
+            {join_clauses[i]}
+            USING (cir)
             """
-
         query = f"SELECT * FROM {final_query};"
         cursor.execute(query)
         results = cursor.fetchall()
-
-        results_as_strings = [[str(element) for element in row] for row in results]
-        rows_as_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in results_as_strings]
-
-    # Serialize download data
-    objs = IntegrationData.objects.filter(Integration_Date=date1)
+        columns = [column[0] for column in cursor.description]
+        rows_as_dict = [
+            dict(zip(columns, row)) for row in results
+        ]
+    # -----------------------------
+    # Download Data
+    # -----------------------------
+    objs = IntegrationData.objects.filter(
+        Integration_Date=date1
+    )
     serializer = IntegrationDataSerializer(objs, many=True)
-
     data = {
         "table_data": json.dumps(rows_as_dict),
         "latest_dates": [date1, date2, date3],
         "download_data": serializer.data
     }
-    # print('integration data in datewise',data)
     return Response(data)
+# @api_view(['GET','POST'])
+# def datewise_integration_data(request):
+#     print("User: ", request.user.username)
+#     date_str = request.POST.get('date')
+    
+#     # Parse dates
+#     if date_str:
+#         try:
+#             print("user defined date")
+#             date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+#             date1 = date_obj
+#             date2 = date_obj - timedelta(days=1)
+#             date3 = date_obj - timedelta(days=2)
+#             print(date1, date2, date3)
+#             year = date_obj.year
+#         except ValueError:
+#             return JsonResponse({'error': 'Invalid date format'}, status=400)
+#     else:
+#         latest_date = IntegrationData.objects.latest('Integration_Date').Integration_Date
+#         date1 = latest_date
+#         date2 = latest_date - timedelta(days=1)
+#         date3 = latest_date - timedelta(days=2)
+#         print(date1, date2, date3)
+#         year = latest_date.year
+
+#     fixed_circles = [
+#         'AP','BIH','CHN','DEL','HP','HRY','JK','JRK','KK','KOL',
+#         'MAH','MP','MUM','NESA','ORI','PUN','RAJ','ROTN','UPE','UPW','WB'
+#     ]
+
+#     with connection.cursor() as cursor:
+#         activity_type = [
+#             '5G SECTOR ADDITION','5G RELOCATION','HT INCREMENT','FEMTO','DE-GROW',
+#             'IBS','IDSC','MACRO','ODSC','5G BW UPGRADE','RRU UPGRADE','OPERATIONS',
+#             'OTHERS','RECTIFICATION','RELOCATION','5G RRU SWAP','RET',
+#             'TRAFFIC SHIFTING','ULS_HPSC','UPGRADE','RRU SWAP'
+#         ]
+        
+#         activity_columns = [a.replace(' ', '_').replace('-', '_') for a in activity_type]
+#         dates = [date1, date2, date3]
+
+#         join_clauses = []
+#         alias_list = []
+
+#         for index, date in enumerate(dates):
+#             alias = f"d{index+1}"
+#             alias_list.append(alias)
+#             date_tag = f"D{index+1}"
+#             columns_def = ",".join([f'"{date_tag}_{col}" INTEGER' for col in activity_columns])
+
+#             select_cte = f"""
+#                 SELECT * FROM crosstab($$
+#                     SELECT 
+#                         c.cir AS "CIRCLE",
+#                         a."Activity_Name",
+#                         COALESCE(r.cnt, 0)::INTEGER AS cnt
+#                     FROM 
+#                         (SELECT unnest(ARRAY{fixed_circles}) AS cir) c
+#                     CROSS JOIN
+#                         (SELECT unnest(ARRAY{activity_type}) AS "Activity_Name") a
+#                     LEFT JOIN (
+#                         SELECT UPPER("CIRCLE") AS "CIRCLE", "Activity_Name", COUNT("id") AS cnt
+#                         FROM public."IntegrationTracker_integrationdata"
+#                         WHERE "Integration_Date" = '{date}'
+#                         GROUP BY "CIRCLE", "Activity_Name"
+#                     ) r 
+#                     ON UPPER(c.cir) = r."CIRCLE" 
+#                     AND a."Activity_Name" = r."Activity_Name"
+#                     ORDER BY c.cir, array_position(ARRAY{activity_type}, a."Activity_Name")
+#                 $$) AS ct(cir text, {columns_def})
+#             """
+#             join_clauses.append(f"({select_cte}) AS {alias}")
+
+#         # Build the FULL OUTER JOIN dynamically
+#         final_query = join_clauses[0]
+#         for i in range(1, len(join_clauses)):
+#             final_query = f"""
+#                 {final_query}
+#                 FULL OUTER JOIN
+#                 {join_clauses[i]}
+#                 USING (cir)
+#             """
+
+#         query = f"SELECT * FROM {final_query};"
+#         cursor.execute(query)
+#         results = cursor.fetchall()
+
+#         results_as_strings = [[str(element) for element in row] for row in results]
+#         rows_as_dict = [dict(zip([column[0] for column in cursor.description], row)) for row in results_as_strings]
+
+#     # Serialize download data
+#     objs = IntegrationData.objects.filter(Integration_Date=date1)
+#     serializer = IntegrationDataSerializer(objs, many=True)
+
+#     data = {
+#         "table_data": json.dumps(rows_as_dict),
+#         "latest_dates": [date1, date2, date3],
+#         "download_data": serializer.data
+#     }
+#     # print('integration data in datewise',data)
+#     return Response(data)
 
 
 
