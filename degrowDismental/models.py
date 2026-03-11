@@ -29,6 +29,8 @@ class DismantleModelData(models.Model):
 class DismantleCircleData(models.Model):
     circle = models.CharField(max_length=100, null=True, blank=True)
     site_id = models.CharField(max_length=100, null=True, blank=True)
+    partner_code = models.CharField(max_length=100, null=True, blank=True)
+    partner = models.CharField(max_length=100, null=True, blank=True)
     is_approved = models.DateField(null=True, blank=True)
     is_surveyed = models.DateField(null=True, blank=True)
     is_srn_done = models.DateField(null=True, blank=True)
