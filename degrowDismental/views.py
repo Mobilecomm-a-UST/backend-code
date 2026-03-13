@@ -887,18 +887,20 @@ def mobinet_data_fetch_from_file(request):
         if mobinet_path.endswith(".csv"):
             mobinet_df = pd.read_csv(
                 mobinet_path,
-                usecols=["Model", "Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"]
+                usecols=["Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"]
             )
 
         elif mobinet_path.endswith((".xls", ".xlsx")):
             mobinet_df = pd.read_excel(
                 mobinet_path,
-                usecols=["Model", "Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"],
+                usecols=["Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"],
                 engine="openpyxl"
             )
 
         else:
             return Response({"error": "Unsupported mobinet file format"}, status=400)
+        
+        mobinet_df["Model"] = mobinet_df["Board Model"]
 
         mobinet_df["Parent Site"] = mobinet_df["Parent Site"].astype(str).str.strip()
         mobinet_df["Zone"] = mobinet_df["Zone"].astype(str).str.strip()
@@ -1270,7 +1272,8 @@ def master_file_download(request):
         "expected_quantity",
         "is_in_mobinet",
         "is_found",
-        "approval_date"
+        "approval_date",
+        "srn_number"
     )
 
     # 3️⃣ Convert to DataFrames
@@ -1290,15 +1293,16 @@ def master_file_download(request):
     df = df.rename(columns={
         "circle": "Circle",
         "site_id": "Site ID",
-        "partner_code": "Partner Code",
         "partner": "Partner",
-        "model_name": "Model",
+        "partner_code": "Partner Code",
+        "model_name": "NMS Model",
         "serial_number": "Serial Number",
-        "expected_quantity": "Expected Quantity",
-        "is_in_mobinet": "Is In Mobinet",
-        "is_found": "Is Found",
-        "is_approved": "Approval Date",
+        "expected_quantity": "NMS Quantity",
+        "is_in_mobinet": "NMS Remarks",
+        "is_found": "Is Material Found in Survey",
+        "is_approved": "NMS Fetch Date",
         "is_surveyed": "Survey Date",
+        "srn_number": "SRN Number",
         "is_srn_done": "SRN Date",
         "remarks": "Current Status"
     })
@@ -1308,15 +1312,16 @@ def master_file_download(request):
         [
             "Circle",
             "Site ID",
-            "Partner Code",
             "Partner",
-            "Model",
+            "Partner Code",
+            "NMS Model",
             "Serial Number",
-            "Expected Quantity",
-            "Is In Mobinet",
-            "Is Found",
-            "Approval Date",
+            "NMS Quantity",
+            "NMS Remarks",
+            "Is Material Found in Survey",
+            "NMS Fetch Date",
             "Survey Date",
+            "SRN Number",
             "SRN Date",
             "Current Status"
         ]
