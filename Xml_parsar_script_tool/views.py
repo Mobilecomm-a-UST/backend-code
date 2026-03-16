@@ -9,36 +9,42 @@ import re
 import math
 import gzip
 
-def convert_int(val):   
-    s = str(val).strip()    
-    if re.fullmatch(r"-?\d+", s):             
-        return int(s)     
-    else:         
+
+def convert_int(val):
+    s = str(val).strip()
+    if re.fullmatch(r"-?\d+", s):
+        return int(s)
+    else:
         return val
 
-def in_excel(df, output_path):
+
+def in_excel(df, writer, sheet_name):
     """
-    Save a large DataFrame to Excel using xlsxwriter with multiple sheets if needed.
+    Save DataFrame to Excel with chunking if rows exceed Excel limit.
     """
-    max_rows = 1_048_000  # Safe Excel row limit
+    max_rows = 1_048_000
     total_rows = len(df)
     num_sheets = math.ceil(total_rows / max_rows)
 
+    start = 0
+    for i in range(num_sheets):
+        end = start + max_rows
+        chunk_df = df.iloc[start:end]
 
-    with pd.ExcelWriter(output_path, engine="xlsxwriter") as writer:
-        start = 0
-        for i in range(num_sheets):
-            end = start + max_rows
-            chunk_df = df.iloc[start:end]
-            sheet_name = f"LNADJGNB_{i+1}"
+        if num_sheets == 1:
             chunk_df.to_excel(writer, sheet_name=sheet_name, index=False)
-            start = end
+        else:
+            chunk_df.to_excel(writer, sheet_name=f"{sheet_name}_{i+1}", index=False)
+
+        start = end
 
 
 @api_view(["POST"])
 def xml_bulk_to_excel(request):
     try:
+
         xml_files = request.FILES.getlist("xml_files")
+
         if not xml_files:
             return Response({"error": "Please upload XML files"}, status=HTTP_400_BAD_REQUEST)
 
@@ -47,31 +53,32 @@ def xml_bulk_to_excel(request):
         os.makedirs(output_folder, exist_ok=True)
 
         parse_data = []
+        xnlink_data = []
 
         for file in xml_files:
+
             try:
+
                 file_name = file.name.lower()
+
                 if file_name.endswith(".gz"):
                     xml_bytes = gzip.decompress(file.read())
                 else:
                     xml_bytes = file.read()
-                    
+
                 root = ET.fromstring(xml_bytes)
 
-     
-                m = re.match(r'\{(.*)\}', root.tag)
+                m = re.match(r"\{(.*)\}", root.tag)
                 ns_url = m.group(1) if m else root.attrib.get("xmlns", "")
                 ns = {"ns": ns_url} if ns_url else {}
 
-                print(f"File: {file.name}, Namespace: {ns_url}")
-
-                # ---- Try both namespace & no namespace ----
                 managed_objects = root.findall(".//ns:managedObject", ns) if ns else []
+
                 if not managed_objects:
                     managed_objects = root.findall(".//managedObject")
 
-        
                 for mo in managed_objects:
+
                     record = {
                         "File_Name": file.name,
                         "SW_Version": mo.get("version"),
@@ -79,8 +86,11 @@ def xml_bulk_to_excel(request):
                         "id": mo.get("id", "")
                     }
 
-                    # Extract <p> tags
+                    mo_class = mo.get("class", "")
+                    distname = mo.get("distName", "")
+
                     p_tags = mo.findall("ns:p", ns) if ns else []
+
                     if not p_tags:
                         p_tags = mo.findall("p")
 
@@ -89,53 +99,63 @@ def xml_bulk_to_excel(request):
                         value = (p.text or "").strip()
                         record[key] = value
 
-                    parse_data.append(record)
+                    # ---- XNLINK condition ----
+                    if mo_class == "XNLINK" or "XNLINK-" in distname:
+                        xnlink_data.append(record)
+                    else:
+                        parse_data.append(record)
 
             except Exception as e:
+
                 parse_data.append({
                     "File_Name": file.name,
                     "Error": f"Error parsing XML: {str(e)}"
                 })
 
+        # ---------------- LNADJGNB DATA ---------------- #
+
         dump_df = pd.DataFrame(parse_data)
-        dump_df[["MRBTS", "LNBTS", "LNADJGNB"]] = dump_df["distName"].str.extract(
-                r"MRBTS- *(\d+).*LNBTS- *(\d+).*LNADJGNB- *(\d+)", expand=True
+
+        if not dump_df.empty:
+
+            dump_df[["MRBTS", "LNBTS", "LNADJGNB"]] = dump_df["distName"].str.extract(
+                r"MRBTS-*(\d+).*LNBTS-*(\d+).*LNADJGNB-*(\d+)", expand=True
             )
-        priority_cols = ["MRBTS", "LNBTS", "LNADJGNB", "id"]
-        remaining_cols = [c for c in dump_df.columns if c not in priority_cols]
-        dump_df = dump_df[priority_cols + remaining_cols]
-        
-        cols_to_int = ['id','adjGnbId','adjGnbIdLength','administrativeState',                                 
-                       'cPlaneIpAddrCtrl','mcc','mnc','mncLength',                                
-                       'x2ToGnbLinkStatus','lbpsblockedNrAct','MRBTS','LNBTS','LNADJGNB' 
-                       ]      
-        for col in cols_to_int:            
-            dump_df[col] = dump_df[col].apply(convert_int)
-            
-      
-        # print (dump_df.columns)
-        
-        excel_columns = [
-            "MRBTS", "LNBTS", "LNADJGNB", "id", "File_Name", "SW_Version", "distName",
-            "adjGnbId", "adjGnbIdLength", "administrativeState", "cPlaneIpAddr",
-            "cPlaneIpAddrCtrl", "mcc", "mnc", "mncLength", "x2ToGnbLinkStatus",
-            "lbpsblockedNrAct"
-        ]
-        
-        for col in excel_columns:
-            if col not in dump_df.columns:
-                dump_df[col] = ""
 
-     
-        dump_df = dump_df[excel_columns]
-        print(dump_df.tail())
+            priority_cols = ["MRBTS", "LNBTS", "LNADJGNB", "id"]
+            remaining_cols = [c for c in dump_df.columns if c not in priority_cols]
 
-     
+            dump_df = dump_df[priority_cols + remaining_cols]
+
+        # ---------------- XNLINK DATA ---------------- #
+
+        xnlink_df = pd.DataFrame(xnlink_data)
+
+        if not xnlink_df.empty:
+
+            xnlink_df[["MRBTS", "NRBTS", "XNLINK"]] = xnlink_df["distName"].str.extract(
+                r"MRBTS-(\d+).*NRBTS-(\d+).*XNLINK-(\d+)", expand=True
+            )
+
+            priority_cols = ["MRBTS", "NRBTS", "XNLINK", "id"]
+            remaining_cols = [c for c in xnlink_df.columns if c not in priority_cols]
+
+            xnlink_df = xnlink_df[priority_cols + remaining_cols]
+
         output_path = os.path.join(output_folder, "Dump_Parsed_Output.xlsx")
-        in_excel(dump_df, output_path)
- 
+
+        with pd.ExcelWriter(output_path, engine="xlsxwriter") as writer:
+
+            if not dump_df.empty:
+                in_excel(dump_df, writer, "LNADJGNB")
+
+            if not xnlink_df.empty:
+                in_excel(xnlink_df, writer, "XNLINK")
+
+      
 
         relative_path = os.path.relpath(output_path, MEDIA_ROOT)
+
         download_url = request.build_absolute_uri(
             os.path.join(MEDIA_URL, relative_path).replace("\\", "/")
         )
@@ -147,5 +167,7 @@ def xml_bulk_to_excel(request):
         }, status=HTTP_200_OK)
 
     except Exception as e:
-        return Response({"find an error": str(e)}, status=HTTP_400_BAD_REQUEST)
 
+        return Response({
+            "find an error": str(e)
+        }, status=HTTP_400_BAD_REQUEST)
