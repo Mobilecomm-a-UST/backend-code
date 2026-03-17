@@ -961,6 +961,37 @@ def upload_issues_data_view(request):
     except Exception as e:
         return Response({"status": False, "error": str(e)}, status=500)
 
+@api_view(["POST"])
+def fetch_sites(request):
+    circle = request.data.get("circle")
+    siteId = request.data.get("siteId")
+
+    try:
+        queryset = AlokTrackerModel.objects.all()
+
+        # Filter by circle if provided
+        if circle:
+            queryset = queryset.filter(circle__iexact=circle)
+
+        # Filter by siteId (partial match) if provided
+        if siteId:
+            queryset = queryset.filter(new_site_id__icontains=siteId)
+
+        # Get top 10 results (latest or just first 10)
+        sites = queryset.values_list("new_site_id", flat=True).distinct()[:10]
+
+        return Response({
+            "status": True,
+            "data": list(sites),
+            "message": "Sites fetched"
+        }, status=200)
+
+    except Exception as e:
+        return Response({
+            "status": False,
+            "error": str(e)
+        }, status=500)
+   
 
 ############################################################ DOWNLOAD DATA ###################################################################
 
