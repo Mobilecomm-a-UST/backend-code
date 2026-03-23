@@ -101,10 +101,13 @@ def remark(internal, external):
     if i == e:
         return "No Changes in value"
 
-    ni = re.search(r'\d+', i)
-    ne = re.search(r'\d+', e)
-    if ni and ne and ni.group() == ne.group():
-        return "No Changes in value"
+    ni_all = re.findall(r'\d+', i)
+    ne_all = re.findall(r'\d+', e)
+
+    if ni_all and ne_all:
+        if any(n in ne_all for n in ni_all):
+            return "No Changes in value"
+  
 
     i_parts = extract_last_mo(internal)
     e_parts = extract_last_mo(external)
@@ -218,6 +221,7 @@ def nokia_slicing_dump(request):
         dist_name = mo.attrib.get("distName", "")
 
         # for NRBTS class--------
+
         if mo_class == "com.nokia.srbts.nrbts:NRBTS":
 
             required_in_nrbts = {
@@ -228,21 +232,32 @@ def nokia_slicing_dump(request):
                 "actAdditionalSliceSupport",
                 "actSliceNumExt",
                 "actExtSchedWeightAndPrefWrrAlg",
-                
+                "actDDDSPeriodOptimization"
             }
 
-            params_nrbts = {}
-
+            # -------- simple <p> params --------
             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
                 name = p.attrib.get("name")
                 if name in required_in_nrbts:
-                    params_nrbts[name] = p.text
                     dumy_data.append({
-                    "MO": "NRBTS",
-                    "DistName": dist_name,
-                    "Parameter": name,
-                    "value": tf_to_01(p.text)
-                })
+                        "MO": "NRBTS",
+                        "DistName": dist_name,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
+
+            # -------- list param: dddsPeriodXx --------
+            for item in mo.findall(".//ns:list[@name='xxFlowControlProfForCu']/ns:item", ns) \
+                    if ns else mo.findall(".//list[@name='xxFlowControlProfForCu']/item"):
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    if p.attrib.get("name") == "dddsPeriodXx":
+                        dumy_data.append({
+                            "MO": "NRBTS",
+                            "DistName": dist_name,
+                            "Parameter": "NRBTS.cbtsFlowControlProf.dddsPeriod",
+                            "value": tf_to_01(p.text)
+                        })        
 
             # print("NRBTS FOUND ------------------")
             # print("Class:", mo_class)
@@ -299,17 +314,18 @@ def nokia_slicing_dump(request):
             except:
                 continue
 
-            group_1_ids = {5, 6, 11, 12, 21, 22, 25, 26}
-            group_2_ids = {21, 22, 25, 26}
+            group_1_ids = {5, 6, 11, 12, 21, 22, 25, 26,47}
+            group_2_ids = {21, 22, 25, 26,47}
             group_3_ids = {6}
-            group_4_ids = {5, 6, 7, 8, 9, 11, 12, 21, 22, 25}
+            group_4_ids = {5, 6, 7, 8, 9, 11, 12, 21, 22, 25,47}
             group_5_ids = {26}
             group_6_ids = {11, 21}
             group_7_ids = {12, 22}
             group_8_ids = {5, 25}
             group_9_ids = {6, 26}
-            group_10_ids = {7}
+            group_10_ids = {7,47}
             group_11_ids = {8, 9}
+            group_12_ids = {47}
 
             group_1_params = {
                 "pdcpStatRepWaitTimerOffset",
@@ -343,6 +359,7 @@ def nokia_slicing_dump(request):
             group_9_params = {"priorityLevel"}
             group_10_params = {"priorityLevel"}
             group_11_params = {"priorityLevel"}
+            group_12_params = { "nrDrbMacDN" }
 
             #FIX IS HERE (deep search for <p>)
             for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
@@ -429,13 +446,23 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
 
-                if nrdrb_id in group_10_ids and name in group_10_params:
+                param_values = {}
+
+                if nrdrb_id in group_10_ids:
+                    for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+                        name = p.attrib.get("name")
+
+                        if name in group_10_params:
+                            param_values[name] = p.text
+
+               
+                for param, val in param_values.items():
                     dumy_data.append({
                         "MO": "NRDRB",
                         "DistName": dist_name,
-                        "ID": nrdrb_id,
-                        "Parameter": name,
-                        "value": tf_to_01(p.text)
+                        "ID": ",".join(map(str, sorted(group_10_ids))),  # 👈 merged IDs
+                        "Parameter": param,
+                        "value": val
                     })
 
                 if nrdrb_id in group_11_ids and name in group_11_params:
@@ -446,6 +473,15 @@ def nokia_slicing_dump(request):
                         "Parameter": name,
                         "value": tf_to_01(p.text)
                     })
+
+                if nrdrb_id in group_12_ids and name in group_12_params:
+                    dumy_data.append({
+                        "MO": "NRDRB",
+                        "DistName": dist_name,
+                        "ID": nrdrb_id,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })    
 
 
         # for RDRB_5QI class---            
@@ -461,6 +497,7 @@ def nokia_slicing_dump(request):
                 22: {"snssaiDN"},
                 25: {"snssaiDN"},
                 26: {"snssaiDN"},
+                47: {"snssaiDN"},
                 5:  {"snssaiDN"},
                 6:  {"snssaiDN"},
                 7:  {"snssaiDN"},
@@ -721,9 +758,11 @@ def nokia_slicing_dump(request):
 
             group_1_ids={1}
             group_2_ids={2}
+            group_3_ids={3}
 
             group_1_params={'sd','sst','userLabel'}
             group_2_params={'sd','sst','userLabel'}
+            group_3_params={'sd','sst','userLabel'}
           
 
             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
@@ -749,6 +788,15 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     }) 
 
+                if snssai_id in group_3_ids and name in group_3_params:
+                    dumy_data.append({
+                        "MO": "SNSSAI",
+                        "DistName": dist_name,
+                        "ID": snssai_id,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })     
+
             
 
 
@@ -767,6 +815,7 @@ def nokia_slicing_dump(request):
                 p = item.find("ns:p", ns) if ns else item.find("p")
                 if p is not None and p.attrib.get("name") == "snssaiDN":
                     snssai_values.append(p.text)
+                    print(snssai_values)
 
             if snssai_values:
                 dumy_data.append({
@@ -787,10 +836,13 @@ def nokia_slicing_dump(request):
 
             group_1_ids = {11, 12, 15, 16, 17, 18, 19}
             group_2_ids = {21, 22, 25, 26}
+            group_3_ids = {11,12,15,16,17,18,19,21,22,25,26,47}
+            group_4_ids={47}
+            group_5_ids = {21, 22, 25, 26,47}
 
-            if nrpmqap_id not in group_1_ids and nrpmqap_id not in group_2_ids:
+            if nrpmqap_id not in (group_1_ids | group_2_ids | group_3_ids | group_4_ids | group_5_ids):
                 continue
-
+        
             if nrpmqap_id in group_1_ids:
 
                 for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
@@ -830,16 +882,7 @@ def nokia_slicing_dump(request):
             if nrpmqap_id in group_2_ids:
 
                 simple_params = {
-                    "actCplaneCounters",
-                    "actL2Counters",
-                    "actPacketSchedulerCounters",
                     "cfg5qiRange",
-                    "cfgProfType",
-                    "thpHistDownlinkMaxRange",
-                    "thpHistDownlinkMinRange",
-                    "thpHistScale",
-                    "thpHistUplinkMaxRange",
-                    "thpHistUplinkMinRange",
                 }
 
                 for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
@@ -890,6 +933,105 @@ def nokia_slicing_dump(request):
                             "value": tf_to_01(p.text)  
         
                         })
+
+            param_values = {}
+            if nrpmqap_id in group_3_ids:
+                simple_params = {
+                    'actUPlaneGroup1Counters',
+                    'actUPlaneGroup2Counters',
+                }
+  
+                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+                    name = p.attrib.get("name")
+
+                    if name in simple_params:
+                        param_values[name] = tf_to_01(p.text)
+
+                for param, val in param_values.items():
+                    dumy_data.append({
+                        "MO": "NRPMQAP",
+                        "ID": ",".join(map(str, sorted(group_3_ids))), 
+                        "Parameter": param,
+                        "value": val
+                    })
+
+
+
+            if nrpmqap_id in group_4_ids:
+
+                simple_params = {
+                    'cfg5qiRange',
+                }
+
+                # ✅ only direct <p>
+                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                    name = p.attrib.get("name")
+                    if name in simple_params:
+                        dumy_data.append({
+                            "MO": "NRPMQAP",
+                            "ID": nrpmqap_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+
+                # ✅ cfgPlmnId
+                if mo.findall(".//ns:list[@name='cfgPlmnId']", ns) if ns else mo.findall(".//list[@name='cfgPlmnId']"):
+                    dumy_data.append({
+                        "MO": "NRPMQAP",
+                        "ID": nrpmqap_id,
+                        "Parameter": "cfgPlmnId",
+                        "value": "List"
+                    })
+
+                for item in mo.findall(".//ns:list[@name='cfgPlmnId']/ns:item", ns) \
+                        if ns else mo.findall(".//list[@name='cfgPlmnId']/item"):
+
+                    for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                        dumy_data.append({
+                            "MO": "NRPMQAP",
+                            "ID": nrpmqap_id,
+                            "Parameter": f"Item-cfgPlmnId-{p.attrib.get('name')}",
+                            "value": tf_to_01(p.text)
+                        })
+
+                # ✅ ADD THIS (MISSING PART - IMPORTANT 🔥)
+                for item in mo.findall(".//ns:list[@name='cfgSliceId']/ns:item", ns) \
+                        if ns else mo.findall(".//list[@name='cfgSliceId']/item"):
+
+                    for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                        if p.attrib.get("name") == "sd":
+                            dumy_data.append({
+                                "MO": "NRPMQAP",
+                                "ID": nrpmqap_id,
+                                "Parameter": "Item-cfgSliceId-sd",
+                                "value": tf_to_01(p.text)
+                            })
+
+            if nrpmqap_id in group_5_ids:
+
+                simple_params = {
+                    "actCplaneCounters",
+                    "actL2Counters",
+                    "actPacketSchedulerCounters",
+                    "cfgProfType",
+                    "thpHistDownlinkMaxRange",
+                    "thpHistDownlinkMinRange",
+                    "thpHistScale",
+                    "thpHistUplinkMaxRange",
+                    "thpHistUplinkMinRange",
+                }
+
+                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+                    name = p.attrib.get("name")
+                    if name in simple_params:
+                        dumy_data.append({
+                            "MO": "NRPMQAP",
+                            "ID": nrpmqap_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)   
+                        })                  
+
+            
 
 
         #for ---------- NRRESOURCEGROUP ----------
@@ -1043,40 +1185,56 @@ def nokia_slicing_dump(request):
             if c not in df:
                 df[c] = ""
 
+        # Clean ID
         def clean_id(x):
             if pd.isna(x) or x == "":
                 return ""
+            
+            x = str(x)
+            
+            if "," in x:  # multiple IDs
+                return ",".join(str(int(float(i))) for i in x.split(","))
+            
             return str(int(float(x)))
 
-        df["ID"] = df["ID"].apply(clean_id)
+        df["ID"] = df["ID"].apply(clean_id).astype(str)
 
+        
+        df_47 = df[df["ID"] == "47"].copy()
+        df_rest = df[df["ID"] != "47"].copy()
+
+     
         normal_df = (
-            df[df["Parameter"] != "cfg5qiRange"]
+            df_rest[df_rest["Parameter"] != "cfg5qiRange"]
             .groupby(["MO", "Parameter", "value"], as_index=False)
             .agg({
-                "ID": lambda x: ",".join(i for i in x if i != "")
+                "ID": lambda x: ",".join(sorted(set(i for i in x if i)))
             })
         )
 
-        cfg_df = df[df["Parameter"] == "cfg5qiRange"].copy()
-        cfg_df["pair"] = cfg_df.apply(
-            lambda r: f"{r['ID']}-{r['value']}" if r["ID"] != "" else "",
-            axis=1
-        )
+      
+        cfg_df = df_rest[df_rest["Parameter"] == "cfg5qiRange"].copy()
+
+        cfg_df["pair"] = cfg_df.apply(lambda r: f"{r['ID']}-{r['value']}", axis=1)
 
         cfg_df = (
             cfg_df.groupby(["MO", "Parameter"], as_index=False)
             .agg({
-                "ID": lambda x: ",".join(i for i in x if i != ""),
-                "pair": lambda x: ";".join(i for i in x if i != "")
+                "ID": lambda x: ",".join(sorted(set(x))),
+                "pair": lambda x: ";".join(sorted(set(x)))
             })
             .rename(columns={"pair": "value"})
         )
 
-        data_df = pd.concat([normal_df, cfg_df], ignore_index=True)
+      
+        grouped_df = pd.concat([normal_df, cfg_df], ignore_index=True)
+
+       
+        data_df = pd.concat([grouped_df, df_47], ignore_index=True)
+
+        # Final formatting
         data_df = data_df[["MO", "ID", "Parameter", "value"]]
         data_df.rename(columns={"value": "value(External)"}, inplace=True)
-
         file_name_1 = "Nokia_Slicing_dump_data.xlsx"
         dump_output_path=os.path.join(dump_data_path, file_name_1)
         data_df.to_excel(dump_output_path, index=False, engine="openpyxl")
@@ -1114,6 +1272,7 @@ def nokia_slicing_dump(request):
         on=["MO", "ID", "Parameter"],
         how="left"
     )
+   
 
     fallback_map = (
         data_df
@@ -1168,7 +1327,7 @@ def nokia_slicing_dump(request):
     print('Excel saved, end of process' )
     return Response({
         "status": True,
-        "message": "Data Successfully Parsed",
+        "message": "All Data Successfully Parsed",
         "download_url": download_url,
 
      
