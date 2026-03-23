@@ -126,6 +126,30 @@ def xml_bulk_to_excel(request):
             remaining_cols = [c for c in dump_df.columns if c not in priority_cols]
 
             dump_df = dump_df[priority_cols + remaining_cols]
+            cols_to_int = ['id','adjGnbId','adjGnbIdLength','administrativeState',                                
+                       'cPlaneIpAddrCtrl','mcc','mnc','mncLength',                                
+                       'x2ToGnbLinkStatus','lbpsblockedNrAct','MRBTS','LNBTS','LNADJGNB'
+                       ]      
+        for col in cols_to_int:            
+            dump_df[col] = dump_df[col].apply(convert_int)
+           
+     
+        # print (dump_df.columns)
+       
+        excel_columns = [
+            "MRBTS", "LNBTS", "LNADJGNB", "id", "File_Name", "SW_Version", "distName",
+            "adjGnbId", "adjGnbIdLength", "administrativeState", "cPlaneIpAddr",
+            "cPlaneIpAddrCtrl", "mcc", "mnc", "mncLength", "x2ToGnbLinkStatus",
+            "lbpsblockedNrAct","xnLinkStatus"
+        ]
+       
+        for col in excel_columns:
+            if col not in dump_df.columns:
+                dump_df[col] = ""
+ 
+     
+        dump_df = dump_df[excel_columns]
+        print(dump_df.tail())
 
         # ---------------- XNLINK DATA ---------------- #
 
