@@ -247,11 +247,11 @@ def nokia_slicing_dump(request):
                     })
 
             # -------- list param: dddsPeriodXx --------
-            for item in mo.findall(".//ns:list[@name='xxFlowControlProfForCu']/ns:item", ns) \
-                    if ns else mo.findall(".//list[@name='xxFlowControlProfForCu']/item"):
+            for item in mo.findall(".//ns:list[@name='cbtsFlowControlProf']/ns:item", ns) \
+                    if ns else mo.findall(".//list[@name='cbtsFlowControlProf']/item"):
 
                 for p in item.findall("ns:p", ns) if ns else item.findall("p"):
-                    if p.attrib.get("name") == "dddsPeriodXx":
+                    if p.attrib.get("name") == "dddsPeriod":
                         dumy_data.append({
                             "MO": "NRBTS",
                             "DistName": dist_name,
@@ -948,6 +948,7 @@ def nokia_slicing_dump(request):
                         param_values[name] = tf_to_01(p.text)
 
                 for param, val in param_values.items():
+                    print(f"{param}:{val}")
                     dumy_data.append({
                         "MO": "NRPMQAP",
                         "ID": ",".join(map(str, sorted(group_3_ids))), 
@@ -1265,6 +1266,10 @@ def nokia_slicing_dump(request):
 
     excel_df["ID"] = excel_df["ID"].apply(normalize_id)
     data_df["ID"] = data_df["ID"].apply(normalize_id)
+
+    data_df["ID"] = data_df["ID"].astype(str).str.split(",")
+    data_df = data_df.explode("ID")
+    data_df["ID"] = data_df["ID"].str.strip()
 
 
     finaldf = excel_df.merge(
