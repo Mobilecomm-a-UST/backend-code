@@ -1054,11 +1054,11 @@ def issue_summary(request):
         duration_start = request.data.get('duration_start')
         duration_end = request.data.get('duration_end')
 
-        # Ensure list type
-        if isinstance(milestone, str):
-            milestone = [milestone]
-        if isinstance(owner, str):
-            owner = [owner]
+        # # Ensure list type
+        # if isinstance(milestone, str):
+        #     milestone = [milestone]
+        # if isinstance(owner, str):
+        #     owner = [owner]
 
         # Convert duration safely
         duration_start = int(duration_start) if duration_start not in [None, ""] else None
