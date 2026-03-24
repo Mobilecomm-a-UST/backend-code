@@ -8,6 +8,11 @@ import xml.etree.ElementTree as ET
 import re
 import math
 import gzip
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill, Alignment, Font
+from openpyxl.utils import get_column_letter
+from collections import Counter
+from datetime import datetime
 
 
 def convert_int(val):
@@ -38,6 +43,7 @@ def in_excel(df, writer, sheet_name):
 
         start = end
 
+main_folder = os.path.join(MEDIA_ROOT, "Xml_parsar_script")
 
 @api_view(["POST"])
 def xml_bulk_to_excel(request):
@@ -48,7 +54,7 @@ def xml_bulk_to_excel(request):
         if not xml_files:
             return Response({"error": "Please upload XML files"}, status=HTTP_400_BAD_REQUEST)
 
-        main_folder = os.path.join(MEDIA_ROOT, "Xml_parsar_script")
+        
         output_folder = os.path.join(main_folder, "Parsed_Output")
         os.makedirs(output_folder, exist_ok=True)
 
@@ -195,3 +201,133 @@ def xml_bulk_to_excel(request):
         return Response({
             "find an error": str(e)
         }, status=HTTP_400_BAD_REQUEST)
+    
+
+
+
+    # Nokia Alarm NREEL-----
+
+
+
+# Function to extract PCI & Count pairs
+def extract_pci_count(text):
+    if pd.isna(text):
+        return []
+    
+    pattern = r"NR-PCI\s*=\s*(\d+)\s*COUNT\s*=\s*(\d+)"
+    matches = re.findall(pattern, text)
+    
+    return [(int(pci), int(cnt)) for pci, cnt in matches]
+
+def format_and_autofit_excel(file_path):
+    wb = load_workbook(file_path)
+    ws = wb.active
+
+    # Header formatting
+    header_fill = PatternFill(start_color="92CDDC", end_color="92CDDC", fill_type="solid")
+    header_font = Font(color="000000", bold=True)
+    center_alignment = Alignment(horizontal="center", vertical="center")
+
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = center_alignment
+
+    ws.row_dimensions[1].height =20  
+
+    # Data cell formatting
+    yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    # bold_font = Font(bold=True)
+
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+        for cell in row:
+            cell.alignment = center_alignment
+            # cell.font = bold_font
+            if str(cell.value).strip().upper() == "NA":
+                cell.fill = yellow_fill
+
+    # Autofit columns
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column  # 1-based
+        column_letter = get_column_letter(column)
+
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+
+        ws.column_dimensions[column_letter].width = max_length + 2
+
+    wb.save(file_path)
+
+
+@api_view(["POST"])
+def nrrel_parse_status(request):
+    parse_file=request.FILES.get("file")
+    base_name = os.path.splitext(parse_file.name)[0]
+    if not parse_file:
+        return Response({"error": "Please upload XML files"}, status=HTTP_400_BAD_REQUEST)
+    
+    nokia_output_folder = os.path.join(main_folder, "Nokia_Alarm_parsed")
+    os.makedirs(nokia_output_folder, exist_ok=True)
+
+     
+    file_name = parse_file.name.lower()
+    if file_name.endswith(".csv"):
+        alarm_df = pd.read_csv(parse_file)
+    elif file_name.endswith((".xlsx", ".xls")):
+        alarm_df = pd.read_excel(parse_file)
+    else:
+        return Response({"error": "Unsupported file format"}, status=HTTP_400_BAD_REQUEST)
+
+    
+
+    #-------------------------------
+    alarm_df= alarm_df[alarm_df["Diagnostic Info"].str.contains("8150 supplAlarmInfo", na=False)]
+    if alarm_df.empty:
+        return Response({"message": "No 8150 alarm found"}, status=200)
+    
+    
+    alarm_df=alarm_df[["Distinguished Name", "Diagnostic Info"]].copy()
+    alarm_df["pci_list"] = alarm_df["Diagnostic Info"].apply(extract_pci_count)
+    alarm_df = alarm_df.explode("pci_list")
+
+    alarm_df[["Target_PCI_", "Count"]] = pd.DataFrame(
+        alarm_df["pci_list"].tolist(), index=alarm_df.index
+    )
+    alarm_df = alarm_df[["Distinguished Name", "Target_PCI_", "Count"]].dropna()
+    alarm_df=alarm_df.reset_index().rename(columns={"index":"","Target_PCI_":"Target_PCI"})
+    print(alarm_df.head())
+
+
+   
+    file_name = f"{base_name}_Output.xlsx"
+    output_path = os.path.join(nokia_output_folder, file_name)
+    alarm_df.to_excel(output_path, index=False, engine="openpyxl")
+    format_and_autofit_excel(output_path)
+
+    relative_path = os.path.relpath(output_path, MEDIA_ROOT).replace("\\", "/")
+    download_url = request.build_absolute_uri(MEDIA_URL + relative_path)
+    print("End the Process-")
+   
+
+    return Response(
+        {
+            "status": True,
+            "message": "Files processed successfully",
+            "download_url": download_url,
+        }
+      
+    )
+
+
+   
+
+
+
+
+    
+
