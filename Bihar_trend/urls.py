@@ -6,6 +6,7 @@ urlpatterns = [
     path("makeKpiTrend/old/smallcell",views.old_bih_trend_smallcell),
     path("makeKpiTrend/old/macro",views.old_bih_trend_macro),
     path("makeKpiTrend/old/degrow",views.old_bih_trend_degrow),
+    path("makeKpiTrend/new/degrow/",views.Bihar_degrow)
     
 
 
