@@ -1341,6 +1341,16 @@ def master_file_download(request):
             "Current Status"
         ]
     ]
+    
+    df["Is Material Found in Survey"] = df["Is Material Found in Survey"].map({
+        True: "Yes",
+        False: "No"
+    })
+    
+    df["NMS Remarks"] = df["NMS Remarks"].map({
+        True: "No change",
+        False: "Additional"
+    })
 
     # 7️⃣ Replace NaN values
     df = df.fillna("")
