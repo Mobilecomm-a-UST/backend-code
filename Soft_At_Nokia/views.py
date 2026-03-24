@@ -653,106 +653,25 @@ def upload_and_compare_xml_files(request):
                     "parameter": param,
                     "value": value_found
                 })
-        # for mo in mo_elements:
-        #     if mo.attrib.get("class", "") != "IPIF":
-        #         continue
+        for mo in mo_elements:
+            if mo.attrib.get("class", "") != "IPIF":
+                continue
 
-        #     dist_name = mo.attrib.get("distName", "")
-        #     site_id = extract_site_id(dist_name)
-        #     site = mrbts_site_map.get(site_id, "")
+            dist_name = mo.attrib.get("distName", "")
+            site_id = extract_site_id(dist_name)
+            site = mrbts_site_map.get(site_id, "")
             
-        #     ipmtu_val = get_param_value(mo, "ipmtu", ns_uri)
-        #     status_ip = "OK" if any(matches_path(req, dist_name) for req in REQUIRED_IPIF_DISTNAMES) else "Extra"
+            ipmtu_val = get_param_value(mo, "ipmtu", ns_uri)
+            status_ip = "OK" if any(matches_path(req, dist_name) for req in REQUIRED_IPIF_DISTNAMES) else "Extra"
 
-        #     ipmtu_rows.append({
-        #         "file": xml_file.name,
-        #         "Site_id":site,
-        #         "MRBTS": site_id,
-        #         "dist_name": dist_name,
-        #         "ipMtu": ipmtu_val,
-        #         "status": status_ip
-        #     })
-
-        # # 2. FIXED PARAMETERS SECTION
-        
-
-        # # First, get all unique site IDs from your XML
-        # site_ids = set()
-        # for mo in mo_elements:
-        #     dist_name = mo.attrib.get("distName", "")
-        #     site_id = extract_site_id(dist_name)
-        #     site = mrbts_site_map.get(site_id, "")
-        #     print("SIte_id of FIxed parameters",site)
-
-        # # Now, for each site, iterate over each parameter rule
-        # for site_id in site_ids:
-        #     for rule in FIXED_PARAMETERS:
-        #         param = rule["parameter"].lower().strip()
-        #         mo_class = rule["mo_class"]
-
-        #         # Find the MO that matches both site_id and mo_class
-        #         value_found = "Missing"
-        #         for mo in mo_elements:
-        #             dist_name = mo.attrib.get("distName", "")
-        #             if extract_site_id(dist_name) == site_id and matches_path(mo_class, dist_name):
-        #                 value_found = get_param_value(mo, param, ns_uri)
-        #                 break  # Take first match
-
-        #         summary_rows.append({
-        #             "file": xml_file.name,
-        #             "site_id": site,
-        #             "MRBTS": site_id,
-        #             "mo_class": mo_class,
-        #             "parameter": param,
-        #             "value": value_found
-        #         })
-
-# ALARM SHEET DATA
-# -------- Fixed Alarm Definitions --------
-
-        # LIST_1 = {
-        #     "MAINS FAIL": "Normally_open",
-        #     "RECTIFIER FAIL": "Normally_open",
-        #     "SITE ON BATTERY": "Normally_open",
-        #     "AC FAIL or CANOPY FAN FAIL": "Normally_open",
-        #     "FIRE AND SMOKE": "Normally_open",
-        #     "DG ON LOAD": "Normally_open",
-        #     "DG FAILED TO START": "Normally_open",
-        #     "DG FAILED TO STOP": "Normally_open",
-        #     "HIGH TEMPERATURE": "Normally_open",
-        #     "DOOR OPEN": "Normally_open",
-        #     "LOW BATTERY VOLTAGE": "Normally_open",
-        #     "DG FUEL LEVEL LOW": "Normally_open",
-        # }
-
-        # LIST_2 = {
-        #     "ACOC DOOR OPEN": "Normally_closed",
-        #     "ACOC EXT FAN FAIL": "Normally_closed",
-        #     "ACOC INT FAN FAIL": "Normally_closed",
-        #     "ACOC OVER TEMPERATURE": "Normally_open",
-        #     "MAINS FAIL": "Normally_open",
-        #     "SITE ON BATTERY": "Normally_open",
-        #     "LOW BATTERY VOLTAGE": "Normally_open",
-        #     "DG ON LOAD": "Normally_open",
-        #     "DG FUEL LEVEL LOW": "Normally_open",
-        #     "DG FAILED TO START": "Normally_open",
-        #     "HIGH TEMPERATURE": "Normally_open",
-        #     "FIRE AND SMOKE": "Normally_open",
-        # }
-
-
-        # LIST_1_ORDER = {name: idx for idx, name in enumerate(LIST_1.keys())}
-        # LIST_2_ORDER = {name: idx for idx, name in enumerate(LIST_2.keys())}
-
-
-
-        # def valid_alarm_pair(descr, polarity):
-        #     if descr in LIST_1 and LIST_1[descr] == polarity:
-        #         return True
-        #     if descr in LIST_2 and LIST_2[descr] == polarity:
-        #         return True
-        #     return False
-
+            ipmtu_rows.append({
+                "file": xml_file.name,
+                "Site_id":site,
+                "MRBTS": site_id,
+                "dist_name": dist_name,
+                "ipMtu": ipmtu_val,
+                "status": status_ip
+            })
 
 
         alarms = []
@@ -845,17 +764,7 @@ def upload_and_compare_xml_files(request):
                             "expected_value": expected_value,
                             "status": "OK"
                         })
-                    # else:
-                    #     # If none match DB, still log first actual value as NOT OK
-                    #     results.append({
-                    #         "file": xml_file.name,
-                    #         "site_id": site_id,
-                    #         "mo_path": path,
-                    #         "parameter": param_name,
-                    #         "actual_value": actual_values[0],
-                    #         "expected_value": expected_value,
-                    #         "status": "NOT OK"
-                    #     })
+
 
         # ---------------------------------------
         # 5. Nomenclature Validation (FIXED)
@@ -1091,20 +1000,6 @@ def upload_and_compare_xml_files(request):
                 detected_order = detect_order(status_list, valid_orders)
                 expected_sequence = valid_orders[detected_order]
 
-                # ---- Validation flag ----
-                # df_alarms["Status_OK"] = [
-                #     actual == expected
-                #     for actual, expected in zip(status_list, expected_sequence)
-                # ]
-
-                # status_ok = []
-
-                # for idx, actual in enumerate(status_list):
-                #     if idx < len(expected_sequence):
-                #         status_ok.append(actual == expected_sequence[idx])
-                #     else:
-                #         # extra rows beyond expected sequence = WRONG
-                #         status_ok.append(False)
                 status_ok = []
                 seq_len = len(expected_sequence)
 
@@ -1155,68 +1050,6 @@ def upload_and_compare_xml_files(request):
                 # ---- Hide helper column ----
                 worksheet.set_column(ok_col_idx, ok_col_idx, None, None, {"hidden": True})
 
-            # df_alarms.to_excel(writer, index=False, sheet_name="Alarms")
-            # format_excel_sheet(writer, "Alarms", df_alarms)
-
-            # workbook  = writer.book
-            # worksheet = writer.sheets["Alarms"]
-
-            # red_fmt = workbook.add_format({"bg_color": "#F65353", "bold": True})
-            # green_fmt = workbook.add_format({"bg_color": "#50CB50", "bold": True})
-
-            # status_col = df_alarms.columns.get_loc("Status")
-
-            # last_index_1 = -1
-            # last_index_2 = -1
-
-            # for i in range(0, len(df_alarms), 2):
-            #     if i + 1 >= len(df_alarms):
-            #         break
-
-            #     descr = df_alarms.iloc[i]["Status"].strip()
-            #     polarity = df_alarms.iloc[i + 1]["Status"].strip()
-
-            #     # ---------- polarity check ----------
-            #     if descr in LIST_1:
-            #         expected_polarity = LIST_1[descr]
-            #         list_type = 1
-            #     elif descr in LIST_2:
-            #         expected_polarity = LIST_2[descr]
-            #         list_type = 2
-            #     else:
-            #         expected_polarity = None
-            #         list_type = None
-
-            #     polarity_ok = expected_polarity == polarity
-
-            #     # ---------- order check ----------
-            #     order_ok = True
-
-            #     if list_type == 1:
-            #         current_idx = LIST_1_ORDER[descr]
-            #         if current_idx < last_index_1:
-            #             order_ok = False
-            #         last_index_1 = max(last_index_1, current_idx)
-
-            #     elif list_type == 2:
-            #         current_idx = LIST_2_ORDER[descr]
-            #         if current_idx < last_index_2:
-            #             order_ok = False
-            #         last_index_2 = max(last_index_2, current_idx)
-
-            #     # ---------- coloring ----------
-            #     if not polarity_ok:
-            #         descr_fmt = red_fmt
-            #         polarity_fmt = red_fmt
-            #     elif not order_ok:
-            #         descr_fmt = red_fmt        # ❗ sirf descr red
-            #         polarity_fmt = green_fmt
-            #     else:
-            #         descr_fmt = green_fmt
-            #         polarity_fmt = green_fmt
-
-            #     worksheet.write(i + 1, status_col, descr, descr_fmt)
-            #     worksheet.write(i + 2, status_col, polarity, polarity_fmt)
 
             if not df_summary.empty:
                 df_summary.to_excel(writer, index=False, sheet_name="FixedParameters")
