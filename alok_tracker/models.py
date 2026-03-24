@@ -63,13 +63,14 @@ class AlokTrackerModel(models.Model):
     # mw_issue_close_date = models.DateField(null=True, blank=True)
 
     detailed_remarks = models.CharField(max_length=100, null=True, blank=True)
-    manual_history = models.CharField(max_length=100, null=True, blank=True)
+    # manual_history = models.CharField(max_length=100, null=True, blank=True)
 
     # issue = models.CharField(max_length=100, null=True, blank=True)
     # issue_start_date = models.DateField(null=True, blank=True)
     # issue_close_date = models.DateField(null=True, blank=True)
     # issue_history = models.CharField(max_length=500, null=True, blank=True)
-    other_issue_ageing = models.IntegerField(null=True, blank=True)
+    other_ust_issue_ageing = models.IntegerField(null=True, blank=True)
+    other_airtel_issue_ageing = models.IntegerField(null=True, blank=True)
 
     # clear_rfai_to_ms1_ageing = models.IntegerField(null=True, blank=True)
     total_issue_ageing = models.IntegerField(null=True, blank=True)
