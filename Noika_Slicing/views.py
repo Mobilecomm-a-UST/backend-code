@@ -474,14 +474,18 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
 
-                if nrdrb_id in group_12_ids and name in group_12_params:
-                    dumy_data.append({
-                        "MO": "NRDRB",
-                        "DistName": dist_name,
-                        "ID": nrdrb_id,
-                        "Parameter": name,
-                        "value": tf_to_01(p.text)
-                    })    
+                if nrdrb_id in group_12_ids:
+                    for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+                        name = p.attrib.get("name")
+
+                        if name in group_12_params:
+                            dumy_data.append({
+                                "MO": "NRDRB",
+                                "DistName": dist_name,
+                                "ID": nrdrb_id,
+                                "Parameter": name,
+                                "value": tf_to_01(p.text)
+                            })
 
 
         # for RDRB_5QI class---            
@@ -948,7 +952,6 @@ def nokia_slicing_dump(request):
                         param_values[name] = tf_to_01(p.text)
 
                 for param, val in param_values.items():
-                    print(f"{param}:{val}")
                     dumy_data.append({
                         "MO": "NRPMQAP",
                         "ID": ",".join(map(str, sorted(group_3_ids))), 
@@ -1222,7 +1225,7 @@ def nokia_slicing_dump(request):
             cfg_df.groupby(["MO", "Parameter"], as_index=False)
             .agg({
                 "ID": lambda x: ",".join(sorted(set(x))),
-                "pair": lambda x: ";".join(sorted(set(x)))
+                "pair": lambda x: ",".join(sorted(set(x)))
             })
             .rename(columns={"pair": "value"})
         )
@@ -1266,10 +1269,6 @@ def nokia_slicing_dump(request):
 
     excel_df["ID"] = excel_df["ID"].apply(normalize_id)
     data_df["ID"] = data_df["ID"].apply(normalize_id)
-
-    data_df["ID"] = data_df["ID"].astype(str).str.split(",")
-    data_df = data_df.explode("ID")
-    data_df["ID"] = data_df["ID"].str.strip()
 
 
     finaldf = excel_df.merge(
@@ -1320,6 +1319,7 @@ def nokia_slicing_dump(request):
 
     file_name = "Nokia_Slicing_Final_output.xlsx"
     final_output_path=os.path.join(output_path, file_name)
+    finaldf.drop_duplicates(inplace=True)
     finaldf.to_excel(final_output_path, index=False, engine="openpyxl",sheet_name="Slicing")
     format_excel(final_output_path,"Slicing")
     
