@@ -122,12 +122,12 @@ ALL_COLUMNS = [
     'I-Deploy ONAIR Date',
     'Current Status',
     'Detailed Remarks',
-    'Manual History',
     'RFAI Rejected Date',
     'Re-RFAI Date',
     'PRI Count',
     'PRI Issue Ageing',
-    'Other Issue Ageing',
+    'Other UST Issue Ageing',
+    'Other Airtel Issue Ageing',
     'Total Issue Ageing',
     'RFAI to MS1 Ageing',
     'RAN PAT Accepted Date',
@@ -217,69 +217,114 @@ def compute_union_ageing(rows):
 
 def update_ageing(df, issue_df):
     pri_ageing_list = []
-    other_issue_ageing_list = []
+    other_airtel_issue_ageing_list = []
+    other_ust_issue_ageing_list = []
     total_issue_ageing_list = []
     pri_count_list = []
 
+    # Ensure datetime
+    issue_df["Start Date"] = pd.to_datetime(issue_df["Start Date"], errors="coerce")
+    issue_df["Close Date"] = pd.to_datetime(issue_df["Close Date"], errors="coerce")
+
     for site in df["new_site_id"]:
 
-        print(issue_df)
-
         site_rows = issue_df[issue_df["Site ID"] == site]
-        
-        print("B")
 
-        # PRI rows only
         pri_rows = site_rows[site_rows["Issue Name"] == "PRI"]
 
-        # Other issue rows
-        other_rows = site_rows[site_rows["Issue Name"] != "PRI"]
+        other_rows_airtel = site_rows[
+            (site_rows["Issue Name"] != "PRI") &
+            (site_rows["Issue Owner"] == 'Airtel')
+        ]
 
-        # ALL issue rows
+        other_rows_ust = site_rows[
+            (site_rows["Issue Name"] != "PRI") &
+            (site_rows["Issue Owner"] == 'UST')
+        ]
+
         all_rows = site_rows
 
-        # Compute ageings
         pri_ageing = compute_union_ageing(pri_rows)
-        other_issue_ageing = compute_union_ageing(other_rows)
+        other_airtel_issue_ageing = compute_union_ageing(other_rows_airtel)
+        other_ust_issue_ageing = compute_union_ageing(other_rows_ust)
         total_issue_ageing = compute_union_ageing(all_rows)
 
         pri_count = len(pri_rows)
 
         pri_ageing_list.append(pri_ageing)
-        other_issue_ageing_list.append(other_issue_ageing)
+        other_airtel_issue_ageing_list.append(other_airtel_issue_ageing)
+        other_ust_issue_ageing_list.append(other_ust_issue_ageing)
         total_issue_ageing_list.append(total_issue_ageing)
         pri_count_list.append(pri_count)
 
     df["pri_issue_ageing"] = pri_ageing_list
-    df["other_issue_ageing"] = other_issue_ageing_list
+    df["other_airtel_issue_ageing"] = other_airtel_issue_ageing_list
+    df["other_ust_issue_ageing"] = other_ust_issue_ageing_list
     df["total_issue_ageing"] = total_issue_ageing_list
     df["pri_count"] = pri_count_list
-    
+
+    # Convert dates
     df['site_onair_date'] = pd.to_datetime(df['site_onair_date'], errors='coerce')
     df['re_rfai_date'] = pd.to_datetime(df['re_rfai_date'], errors='coerce')
     df['rfai_date'] = pd.to_datetime(df['rfai_date'], errors='coerce')
 
-    print("3")
- 
+    # 🔥 NEW LOGIC
+    def calculate_adjusted_issue_ageing(site, re_rfai):
+        if pd.isna(re_rfai):
+            return None
+
+        site_rows = issue_df[issue_df["Site ID"] == site]
+
+        total_days = 0
+
+        for _, issue in site_rows.iterrows():
+            start = issue["Start Date"]
+            end = issue["Close Date"]
+
+            if pd.isna(start):
+                continue
+
+            if pd.isna(end):
+                end = datetime.today()
+
+            # Case 1: starts after re_rfai
+            if start >= re_rfai:
+                total_days += (end - start).days
+
+            # Case 2: overlaps re_rfai
+            elif start < re_rfai and end > re_rfai:
+                total_days += (end - re_rfai).days
+
+        return total_days
+
     def calculate_rfai_to_ms1(row):
+        site = row["new_site_id"]
         site_onair = row['site_onair_date']
         rfai = row['re_rfai_date'] if pd.notna(row['re_rfai_date']) else row['rfai_date']
-        issue_ageing = row['total_issue_ageing'] if pd.notna(row['total_issue_ageing']) else 0
- 
+
         if pd.isna(rfai):
             return "-"
-        
+
+        # 🔥 use adjusted ageing if re_rfai present
+        if pd.notna(row['re_rfai_date']):
+            issue_ageing = calculate_adjusted_issue_ageing(site, row['re_rfai_date'])
+        else:
+            issue_ageing = row['total_issue_ageing'] if pd.notna(row['total_issue_ageing']) else 0
+
+        if issue_ageing is None:
+            issue_ageing = 0
+
         if pd.isna(site_onair):
             today = datetime.today()
             return (today - rfai).days - issue_ageing
- 
+
         return (site_onair - rfai).days - issue_ageing
- 
+
     df['rfai_to_ms1_ageing'] = df.apply(calculate_rfai_to_ms1, axis=1)
 
     return df
 
-def update_ageing_new(circle, site_id):
+# def update_ageing_new(circle, site_id):
     # Fetch tracker row
     data_obj = AlokTrackerModel.objects.filter(
         circle=circle,
@@ -878,6 +923,11 @@ def upload_issues_data_view(request):
         today = date.today()
 
         issues_to_create = []
+        
+        def safe_strip(val):
+            if val is None:
+                return None
+            return str(val).strip()
 
         for _, row in df.iterrows():
             try:
@@ -928,31 +978,32 @@ def upload_issues_data_view(request):
 
                 issues_to_create.append(
                     RelocationIssue(
-                        circle=row["circle"],
-                        site_id=row["site_id"],
-                        issue_owner=row["issue_owner"],
-                        milestone=row["milestone"],
-                        issue_name=row["issue_name"],
+                        circle = safe_strip(row["circle"]),
+                        site_id = safe_strip(row["site_id"]),
+                        issue_owner = safe_strip(row["issue_owner"]),
+                        milestone = safe_strip(row["milestone"]),
+                        issue_name = safe_strip(row["issue_name"]),
                         start_date=start_date,
                         close_date=close_date,
                         status=status_val,
                         duration=duration,
-                        remarks=row.get("remarks"),
+                        remarks= safe_strip(row["remarks"]),
                         created_by=user_email,
                         updated_by=user_email,
                     )
                 )
 
             except Exception:
+                print("EXCEPTION----------------------------------------------------------------------------------------")
                 continue  # skip bad rows safely
 
         # ✅ Bulk insert (important for performance)
         RelocationIssue.objects.bulk_create(issues_to_create)
 
-        # Optional: update ageing per unique site
-        unique_sites = df[["circle", "site_id"]].drop_duplicates()
-        for _, row in unique_sites.iterrows():
-            update_ageing_new(row["circle"], row["site_id"])
+        # # Optional: update ageing per unique site
+        # unique_sites = df[["circle", "site_id"]].drop_duplicates()
+        # for _, row in df.iterrows():
+        #     update_ageing_new(row["circle"], row["site_id"])
 
         return Response({
             "message": f"{len(issues_to_create)} issues uploaded successfully!"
@@ -992,6 +1043,138 @@ def fetch_sites(request):
             "error": str(e)
         }, status=500)
    
+
+@api_view(["POST"])
+def issue_summary(request):
+    try:
+        # ---------------- 0️⃣ Input Handling ----------------
+        status = request.data.get('status', 'ALL')
+        milestone = request.data.get('milestone', '')
+        owner = request.data.get('owner', '')
+        duration_start = request.data.get('duration_start')
+        duration_end = request.data.get('duration_end')
+
+        # Ensure list type
+        if isinstance(milestone, str):
+            milestone = [milestone]
+        if isinstance(owner, str):
+            owner = [owner]
+
+        # Convert duration safely
+        duration_start = int(duration_start) if duration_start not in [None, ""] else None
+        duration_end = int(duration_end) if duration_end not in [None, ""] else None
+
+        # ---------------- 1️⃣ Fetch Data ----------------
+        qs = RelocationIssue.objects.all().values(
+            "circle",
+            "issue_name",
+            "issue_owner",
+            "milestone",
+            "site_id",
+            "status",
+            "duration",   # ✅ added
+            "start_date",
+            "close_date"
+        )
+
+        df = pd.DataFrame(list(qs))
+
+        if df.empty:
+            return Response({"message": "No data found"}, status=200)
+
+        # ---------------- 2️⃣ Clean Data ----------------
+        df["circle"] = df["circle"].astype(str).str.strip()
+        df["issue_name"] = df["issue_name"].astype(str).str.strip()
+        df["site_id"] = df["site_id"].astype(str).str.strip()
+
+        # ---------------- 3️⃣ Filters ----------------
+        
+        milestone = [c.strip() for c in milestone.split(',')] if milestone else ["ALL"]
+        owner = [c.strip() for c in owner.split(',')] if owner else ["ALL"]
+        
+        if status != 'ALL':
+            df = df[df['status'] == status]
+
+        if duration_start is not None:
+            df = df[df['duration'] >= duration_start]
+
+        if duration_end is not None:
+            df = df[df['duration'] <= duration_end]
+
+        if 'ALL' not in milestone:
+            df = df[df['milestone'].isin(milestone)]
+
+        if 'ALL' not in owner:
+            df = df[df['issue_owner'].isin(owner)]
+
+        # ---------------- 4️⃣ Deduplicate (IMPORTANT) ----------------
+        df = df.drop_duplicates(subset=["circle", "issue_name", "site_id", 'issue_owner', 'milestone'])
+        
+        all_unique_milestones = list(
+            RelocationIssue.objects.exclude(milestone__isnull=True)
+            .distinct("milestone")
+            .values_list("milestone", flat=True)
+        )
+        
+        all_unique_owners = list(
+            RelocationIssue.objects.exclude(issue_owner__isnull=True)
+            .distinct("issue_owner")
+            .values_list("issue_owner", flat=True)
+        )
+        
+        unique_data = {
+            "unique_milestone": sorted(all_unique_milestones),
+            "unique_owners": sorted(all_unique_owners),
+        }
+        
+
+        # ---------------- 5️⃣ Pivot ----------------
+        pivot_df = pd.pivot_table(
+            df,
+            index="issue_name",
+            columns="circle",
+            values="site_id",
+            aggfunc="size",
+            fill_value=0
+        )
+
+        # ---------------- 6️⃣ Totals ----------------
+        pivot_df["Total"] = pivot_df.sum(axis=1)
+
+        total_row = pivot_df.sum(axis=0)
+        total_row.name = "Total"
+
+        pivot_df = pd.concat([pivot_df, total_row.to_frame().T])
+
+        # ---------------- 7️⃣ Column Order ----------------
+        circle_order = [
+            "AP","ASM","BIH","CHN","DEL","HRY","JK","JRK",
+            "KK","KOL","MAH","MP","MUM","NE","ORI","PUN",
+            "RAJ","ROTN","UPE","UPW","WB"
+        ]
+
+        existing_cols = [c for c in circle_order if c in pivot_df.columns]
+
+        pivot_df = pivot_df.reindex(columns=existing_cols + ["Total"], fill_value=0)
+
+        # ---------------- 8️⃣ Sort ----------------
+        pivot_df = pivot_df.sort_values(by="Total", ascending=False)
+
+        # ---------------- 9️⃣ Final Format ----------------
+        pivot_df = pivot_df.reset_index().rename(columns={"index": "Issue"})
+
+        return Response({
+            "message": "Success",
+            "data": pivot_df.to_dict(orient="records"),
+            "unique_data": unique_data
+        }, status=200)
+
+    except Exception as e:
+        return Response({
+            "message": "Error",
+            "error": str(e)
+        }, status=500)
+
 
 ############################################################ DOWNLOAD DATA ###################################################################
 
@@ -1060,6 +1243,7 @@ def download_tracker_data_view(request):
             if col in issue_df.columns:
                 issue_df[col] = pd.to_datetime(issue_df[col], errors='coerce')
         
+        print("1.1")
         df = update_ageing(df, issue_df)
 
         print("2")
@@ -1092,6 +1276,8 @@ def download_tracker_data_view(request):
                 status_df[col] = None
         
         print(status_df['date'].dropna().unique().tolist())
+        
+
         
 
         print("4")
@@ -1148,9 +1334,9 @@ def download_tracker_data_view(request):
                  'integration_date', 'emf_submission_date', 'ran_lkf_status', 'alarm_status', 'alarm_rectification_done_date',
                  'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
-                 'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'manual_history', 'rfai_rejected_date', 
-                 're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
-                  'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
+                 'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
+                 're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
+                 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
                  "dismantle_date", "material_pickup_date", "material_submission_date", "oci_done_date", "sign_off_date", "dismantling_status", 
@@ -5608,7 +5794,7 @@ def issue_timeline_add(request):
             created_by=userId,
         )
         
-        update_ageing_new(circle, siteId)
+        # update_ageing_new(circle, siteId)
 
         return Response(
             {
@@ -5727,7 +5913,7 @@ def issue_timeline_update(request):
             "updated_by": userId
         }
         
-        update_ageing_new(circle, issue_obj.site_id)
+        # update_ageing_new(circle, issue_obj.site_id)
 
         return Response(
             {"message": "Issue updated successfully!", "json_data": response_data},
@@ -5775,7 +5961,7 @@ def issue_timeline_delete(request):
     #         status=status.HTTP_400_BAD_REQUEST
     #     )
     
-    update_ageing_new(circle, issue_obj.site_id)
+    # update_ageing_new(circle, issue_obj.site_id)
 
     issue_obj.delete()
 
