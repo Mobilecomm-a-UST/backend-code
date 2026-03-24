@@ -887,18 +887,20 @@ def mobinet_data_fetch_from_file(request):
         if mobinet_path.endswith(".csv"):
             mobinet_df = pd.read_csv(
                 mobinet_path,
-                usecols=["Model", "Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"]
+                usecols=["Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"]
             )
 
         elif mobinet_path.endswith((".xls", ".xlsx")):
             mobinet_df = pd.read_excel(
                 mobinet_path,
-                usecols=["Model", "Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"],
+                usecols=["Zone", "Parent Site", "Cabinet", "Serial Number", "Board Model"],
                 engine="openpyxl"
             )
 
         else:
             return Response({"error": "Unsupported mobinet file format"}, status=400)
+        
+        mobinet_df["Model"] = mobinet_df["Board Model"]
 
         mobinet_df["Parent Site"] = mobinet_df["Parent Site"].astype(str).str.strip()
         mobinet_df["Zone"] = mobinet_df["Zone"].astype(str).str.strip()
@@ -1270,7 +1272,8 @@ def master_file_download(request):
         "expected_quantity",
         "is_in_mobinet",
         "is_found",
-        "approval_date"
+        "approval_date",
+        "srn_number"
     )
 
     # 3️⃣ Convert to DataFrames
@@ -1290,15 +1293,16 @@ def master_file_download(request):
     df = df.rename(columns={
         "circle": "Circle",
         "site_id": "Site ID",
-        "partner_code": "Partner Code",
         "partner": "Partner",
-        "model_name": "Model",
+        "partner_code": "Partner Code",
+        "model_name": "NMS Model",
         "serial_number": "Serial Number",
-        "expected_quantity": "Expected Quantity",
-        "is_in_mobinet": "Is In Mobinet",
-        "is_found": "Is Found",
-        "is_approved": "Approval Date",
+        "expected_quantity": "NMS Quantity",
+        "is_in_mobinet": "NMS Remarks",
+        "is_found": "Is Material Found in Survey",
+        "is_approved": "NMS Fetch Date",
         "is_surveyed": "Survey Date",
+        "srn_number": "SRN Number",
         "is_srn_done": "SRN Date",
         "remarks": "Current Status"
     })
@@ -1308,15 +1312,16 @@ def master_file_download(request):
         [
             "Circle",
             "Site ID",
-            "Partner Code",
             "Partner",
-            "Model",
+            "Partner Code",
+            "NMS Model",
             "Serial Number",
-            "Expected Quantity",
-            "Is In Mobinet",
-            "Is Found",
-            "Approval Date",
+            "NMS Quantity",
+            "NMS Remarks",
+            "Is Material Found in Survey",
+            "NMS Fetch Date",
             "Survey Date",
+            "SRN Number",
             "SRN Date",
             "Current Status"
         ]
@@ -1354,3 +1359,85 @@ def master_file_download(request):
         "data": data
     }, status=200)
 
+
+@api_view(["POST"])
+def fetch_sites(request):
+    circle = request.data.get("circle")
+    siteId = request.data.get("siteId")
+
+    try:
+        # ---------------- 1️⃣ DB SITES ----------------
+        queryset = DismantleModelData.objects.all()
+
+        if circle:
+            queryset = queryset.filter(zone__iexact=circle)
+
+        if siteId:
+            queryset = queryset.filter(site_id__icontains=siteId)
+
+        db_sites = list(
+            queryset.values_list("site_id", flat=True).distinct()
+        )
+
+        # ---------------- 2️⃣ FILE SITES ----------------
+        file_sites = []
+
+        if circle:
+            mobinet_folder = os.path.join(main_folder, 'mobinet')
+
+            mobinet_files = [
+                f for f in os.listdir(mobinet_folder)
+                if f.startswith(circle)
+            ]
+
+            if mobinet_files:
+                mobinet_path = os.path.join(mobinet_folder, mobinet_files[0])
+
+                if mobinet_path.endswith(".csv"):
+                    df = pd.read_csv(
+                        mobinet_path,
+                        usecols=["Zone", "Parent Site"]
+                    )
+                elif mobinet_path.endswith((".xls", ".xlsx")):
+                    df = pd.read_excel(
+                        mobinet_path,
+                        usecols=["Zone", "Parent Site"],
+                        engine="openpyxl"
+                    )
+                else:
+                    df = None
+
+                if df is not None:
+                    df["Zone"] = df["Zone"].astype(str).str.strip()
+                    df["Parent Site"] = df["Parent Site"].astype(str).str.strip()
+
+                    df = df[df["Zone"] == circle]
+
+                    # Extract siteId from "Parent Site" → format: siteId_circle
+                    df["site_clean"] = df["Parent Site"].apply(
+                        lambda x: x.split("_")[0] if "_" in x else x
+                    )
+
+                    if siteId:
+                        df = df[df["site_clean"].str.contains(siteId, case=False, na=False)]
+
+                    file_sites = df["site_clean"].dropna().unique().tolist()
+
+        # ---------------- 3️⃣ MERGE + UNIQUE ----------------
+        all_sites = list(set(db_sites + file_sites))
+
+        # Optional: sort for consistency
+        all_sites = sorted(all_sites)
+
+        # ---------------- 4️⃣ LIMIT ----------------
+        return Response({
+            "status": True,
+            "data": all_sites[:10],
+            "message": "Sites fetched (DB + File)"
+        }, status=200)
+
+    except Exception as e:
+        return Response({
+            "status": False,
+            "error": str(e)
+        }, status=500)

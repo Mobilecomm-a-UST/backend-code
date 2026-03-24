@@ -838,6 +838,161 @@ def upload_tracker_data_view(request):
     except Exception as e:
         return Response({"status": False, "error": str(e)}, status=500)
 
+
+@api_view(["POST"])
+def upload_issues_data_view(request):
+    file = request.data.get("tracker_file")
+
+    try:
+        df = pd.read_csv(file) if file.name.endswith('.csv') else pd.read_excel(file)
+        
+        # Clean dataframe safely
+        # df.columns = df.columns.astype(str).str.strip()
+
+        # Convert NaN properly
+        df = df.replace({pd.NA: None, "NaN": None})
+
+        # DO NOT convert everything to ""
+        # This breaks datetime columns
+        # print(df.columns.tolist())
+        # Rename columns
+        df.columns = [
+            str(col).strip().lower().replace(" ", "_")
+            for col in df.columns
+        ]
+
+        df = df[
+            [
+                "circle",
+                "site_id",
+                "issue_owner",
+                "milestone",
+                "issue_name",
+                "start_date",
+                "close_date",
+                "remarks",
+            ]
+        ]
+
+        user_email = "devansh.jain@ust.com"
+        today = date.today()
+
+        issues_to_create = []
+
+        for _, row in df.iterrows():
+            try:
+                # Required fields check
+                if not all([
+                    row["circle"],
+                    row["site_id"],
+                    row["issue_owner"],
+                    row["milestone"],
+                    row["issue_name"],
+                    row["start_date"]
+                ]):
+                    continue  # skip invalid row
+
+                # Parse dates
+                try:
+                    start_date = pd.to_datetime(row["start_date"]).date()
+                except:
+                    continue
+
+                close_date = None
+                if row["close_date"] not in [None, "-", "nan", "undefined"]:
+                    try:
+                        close_date = pd.to_datetime(row["close_date"]).date()
+                    except:
+                        close_date = None
+
+                # Status + duration
+                if close_date:
+                    status_val = "Closed"
+                    duration = (close_date - start_date).days
+                else:
+                    status_val = "Open"
+                    duration = (today - start_date).days
+
+                # Duplicate check (same as your API)
+                filters = {
+                    "circle": row["circle"],
+                    "site_id": row["site_id"],
+                    "issue_owner": row["issue_owner"],
+                    "milestone": row["milestone"],
+                    "issue_name": row["issue_name"],
+                    "status": "Open"
+                }
+
+                if RelocationIssue.objects.filter(**filters).exists():
+                    continue  # skip duplicate open issue
+
+                issues_to_create.append(
+                    RelocationIssue(
+                        circle=row["circle"],
+                        site_id=row["site_id"],
+                        issue_owner=row["issue_owner"],
+                        milestone=row["milestone"],
+                        issue_name=row["issue_name"],
+                        start_date=start_date,
+                        close_date=close_date,
+                        status=status_val,
+                        duration=duration,
+                        remarks=row.get("remarks"),
+                        created_by=user_email,
+                        updated_by=user_email,
+                    )
+                )
+
+            except Exception:
+                continue  # skip bad rows safely
+
+        # ✅ Bulk insert (important for performance)
+        RelocationIssue.objects.bulk_create(issues_to_create)
+
+        # Optional: update ageing per unique site
+        unique_sites = df[["circle", "site_id"]].drop_duplicates()
+        for _, row in unique_sites.iterrows():
+            update_ageing_new(row["circle"], row["site_id"])
+
+        return Response({
+            "message": f"{len(issues_to_create)} issues uploaded successfully!"
+        }, status=200)
+
+    except Exception as e:
+        return Response({"status": False, "error": str(e)}, status=500)
+
+@api_view(["POST"])
+def fetch_sites(request):
+    circle = request.data.get("circle")
+    siteId = request.data.get("siteId")
+
+    try:
+        queryset = AlokTrackerModel.objects.all()
+
+        # Filter by circle if provided
+        if circle:
+            queryset = queryset.filter(circle__iexact=circle)
+
+        # Filter by siteId (partial match) if provided
+        if siteId:
+            queryset = queryset.filter(new_site_id__icontains=siteId)
+
+        # Get top 10 results (latest or just first 10)
+        sites = queryset.values_list("new_site_id", flat=True).distinct()[:10]
+
+        return Response({
+            "status": True,
+            "data": list(sites),
+            "message": "Sites fetched"
+        }, status=200)
+
+    except Exception as e:
+        return Response({
+            "status": False,
+            "error": str(e)
+        }, status=500)
+   
+
 ############################################################ DOWNLOAD DATA ###################################################################
 
 @api_view(['POST'])
@@ -931,13 +1086,13 @@ def download_tracker_data_view(request):
         
         print(status_df)
         
-        print(status_df['date'].dropna().unique().tolist())
-        
-
         required_cols = ["site_id", "date", "status"]
         for col in required_cols:
             if col not in status_df.columns:
                 status_df[col] = None
+        
+        print(status_df['date'].dropna().unique().tolist())
+        
 
         print("4")
         # Ensure datetime
