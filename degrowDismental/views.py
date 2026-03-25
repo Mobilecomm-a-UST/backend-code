@@ -957,6 +957,8 @@ def mobinet_data_fetch_from_file(request):
         filtered_mobinet["SRN Number"] = ""
         filtered_mobinet["Approval Date"] = ""
         filtered_mobinet["Is Found"] = False
+        
+        filtered_mobinet = filtered_mobinet.drop_duplicates(subset=["Model", "Serial Number"])
 
         filtered_mobinet["index"] = range(1, len(filtered_mobinet) + 1)
 

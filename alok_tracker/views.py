@@ -3298,8 +3298,9 @@ def ageing_dashboard_view_issues(request):
             if start_col == 'rfai_date' and end_col == 'site_onair_date' and issue == 'considered':
                 temp['rfai_date'] = temp['rfai_date'].where(temp['re_rfai_date'].isna(), temp['re_rfai_date'])
             if issue == 'considered':
-                temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
-                temp['days_diff'] = (temp[end_col] - temp[start_col]).dt.days - temp['total_issue_ageing']
+                # temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
+                # temp['days_diff'] = (temp[end_col] - temp[start_col]).dt.days - temp['total_issue_ageing']
+                temp['days_diff'] = temp['rfai_to_ms1_ageing']
             else:
                 temp["days_diff"] = (temp[end_col] - temp[start_col]).dt.days
             
