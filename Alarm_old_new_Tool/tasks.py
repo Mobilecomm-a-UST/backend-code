@@ -44,9 +44,9 @@ def send_email_for_Alarm(df_combined_dict, output_path):
     }
 
     cc_mails = [
-        'Abhinav.Verma@ust.com','Prerna.PramodKumar@ust.com','Mohit.Batra@ust.com',
+        'Prerna.PramodKumar@ust.com','Mohit.Batra@ust.com',
         'Deepak.KumarYadav@ust.com','Amit.rai@ust.com','Lalit.Namdev2@ust.com','Shashank.Rai@ust.com',
-        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com'
+        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com',"vishal.yadav@ust.com"
     ]
     # circle_to_emails = {
     #     "KK": ["Abhinav.Verma@ust.com"],
@@ -314,7 +314,7 @@ def send_email_for_Alarm(df_combined_dict, output_path):
         """
         try:
             print(f"📧 Sending email for {circle} → {to_email} (cc: {cc_email})")
-            send_email.delay(to_email, cc_email, subject, body, attachment_path=output_path, is_html=True)
+            send_email(to_email, cc_email, subject, body, attachment_path=output_path, is_html=True)
             print(f"✅ Email sent successfully for {circle}")
         except Exception as e:
             print(f"❌ Failed to send email for {circle}: {e}")
@@ -636,7 +636,7 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
         """
         try:
             print(f"📧 Sending email for {circle} → {to_email} (cc: {cc_email})")
-            send_email.delay(to_email, cc_email, subject, body, attachment_path=output_path, is_html=True)
+            send_email(to_email, cc_email, subject, body, attachment_path=output_path, is_html=True)
             print(f"✅ Email sent successfully for {circle}")
         except Exception as e:
             print(f"❌ Failed to send email for {circle}: {e}")
