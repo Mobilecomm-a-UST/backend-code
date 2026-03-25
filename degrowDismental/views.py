@@ -816,7 +816,6 @@ def mobinet_data_fetch_from_file(request):
 
     circle = request.data.get("circle")
     siteId = request.data.get("siteId")
-    board = request.data.get("board")
 
     if not circle or not siteId:
         return Response({"message": "siteId/circle not provided"}, status=400)
@@ -921,15 +920,31 @@ def mobinet_data_fetch_from_file(request):
             ))
         ]
 
-        if board:
-            board_list = [b.strip() for b in board.split(",") if b.strip()]
-        else:
-            board_list = []
+        board_list = [
+            "DPLX-1",
+            "SFP_R",
+            "MN1",
+            "FTLF1436W5BTD-SJ",
+            "MRSB-OC",
+            "RTXM228-702",
+            "DuraRET2-AirT20",
+            "SPP10ELRIDFRSEC",
+            "RTXM228-702-C30",
+            "FTLX1370W4BTL-SM",
+            "RTXM191-404",
+            "COMMRET2S",
+            "RTXL185-210",
+            "MTRS-1E21-01",
+            "SFP24-IS3LC-IAA",
+            "LX1801INA-CER",
+            "LTF1303-BH+",
+            "ECU-005L",
+            "ACCURET1"
+        ]
 
-        if board_list:
-            filtered_mobinet = filtered_mobinet[
-                ~filtered_mobinet["Board Model"].astype(str).str.strip().isin(board_list)
-            ]
+        filtered_mobinet = filtered_mobinet[
+            ~filtered_mobinet["Board Model"].astype(str).str.strip().isin(board_list)
+        ]
 
         filtered_mobinet = filtered_mobinet[['Model', 'Cabinet', 'Serial Number']]
 
@@ -1326,6 +1341,16 @@ def master_file_download(request):
             "Current Status"
         ]
     ]
+    
+    df["Is Material Found in Survey"] = df["Is Material Found in Survey"].map({
+        True: "Yes",
+        False: "No"
+    })
+    
+    df["NMS Remarks"] = df["NMS Remarks"].map({
+        True: "No change",
+        False: "Additional"
+    })
 
     # 7️⃣ Replace NaN values
     df = df.fillna("")

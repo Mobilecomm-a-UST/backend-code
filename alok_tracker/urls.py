@@ -44,4 +44,5 @@ urlpatterns = [
     path("dismantle_monthly_graph/", dismantle_monthly_graph, name="monthly_graph"),
     path("upload_issues_data_view/", upload_issues_data_view, name="upload_issues_data_view"),
     path("fetch_sites/", fetch_sites, name="fetch_sites"),
+    path("issue_summary/", issue_summary, name="issue_summary"),
 ]
