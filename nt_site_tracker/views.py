@@ -642,12 +642,29 @@ def download_tracker_data_view(request):
 
 @api_view(['DELETE'])
 def delete_tracker_data_view(request):
+    sr_number = request.data.get('sr_number')
+    
     try:
+    
+        if sr_number:
+            qs = NTSiteTracker.objects.filter(sr_number=sr_number)
+            
+            if not qs.exists():
+                return Response(
+                    {"message": "No record found with this sr number"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            qs.delete()
+            
+            return Response({"message": "1 site deleted successfully"})
+        
+    
         qs = NTSiteTracker.objects.all()
         
         qs.delete()
         
-        return Response({"message": "deleted successfully"})
+        return Response({"message": " all sites deleted successfully"})
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
