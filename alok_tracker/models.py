@@ -72,7 +72,7 @@ class AlokTrackerModel(models.Model):
     other_ust_issue_ageing = models.IntegerField(null=True, blank=True)
     other_airtel_issue_ageing = models.IntegerField(null=True, blank=True)
 
-    # clear_rfai_to_ms1_ageing = models.IntegerField(null=True, blank=True)
+    clear_rfai_to_ms1_ageing = models.IntegerField(null=True, blank=True)
     total_issue_ageing = models.IntegerField(null=True, blank=True)
     rfai_to_ms1_ageing = models.IntegerField(null=True, blank=True)
     
