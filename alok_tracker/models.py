@@ -47,7 +47,7 @@ class AlokTrackerModel(models.Model):
     current_status = models.CharField(max_length=100, null=True, blank=True)
     # five_g_onair_date = models.DateField(null=True, blank=True)
     rfai_rejected_date = models.DateField(null=True, blank=True)
-    re_rfai_date = models.DateField(null=True, blank=True)
+    clear_rfai_date = models.DateField(null=True, blank=True)
 
     # pri_start_date = models.DateField(null=True, blank=True)
     # pri_close_date = models.DateField(null=True, blank=True)
