@@ -129,6 +129,7 @@ ALL_COLUMNS = [
     'Other UST Issue Ageing',
     'Other Airtel Issue Ageing',
     'Total Issue Ageing',
+    'Clear RFAI to MS1 Ageing',
     'RFAI to MS1 Ageing',
     'RAN PAT Accepted Date',
     'RAN SAT Accepted Date',
@@ -297,7 +298,7 @@ def update_ageing(df, issue_df):
 
         return total_days
 
-    def calculate_rfai_to_ms1(row):
+    def calculate_clear_rfai_to_ms1(row):
         site = row["new_site_id"]
         site_onair = row['site_onair_date']
         rfai = row['re_rfai_date'] if pd.notna(row['re_rfai_date']) else row['rfai_date']
@@ -320,11 +321,27 @@ def update_ageing(df, issue_df):
 
         return (site_onair - rfai).days - issue_ageing
 
+    df['clear_rfai_to_ms1_ageing'] = df.apply(calculate_clear_rfai_to_ms1, axis=1)
+    
+    def calculate_rfai_to_ms1(row):
+        site = row["new_site_id"]
+        site_onair = row['site_onair_date']
+        rfai = row['rfai_date']
+
+        if pd.isna(rfai):
+            return "-"
+
+        if pd.isna(site_onair):
+            today = datetime.today()
+            return (today - rfai).days
+
+        return (site_onair - rfai).days
+    
     df['rfai_to_ms1_ageing'] = df.apply(calculate_rfai_to_ms1, axis=1)
 
     return df
 
-# def update_ageing_new(circle, site_id):
+def update_ageing_new(circle, site_id):
     # Fetch tracker row
     data_obj = AlokTrackerModel.objects.filter(
         circle=circle,
@@ -357,8 +374,6 @@ def update_ageing(df, issue_df):
         "created_by": "Created_by",
         "created_at": "Created_at"
     }
-
-    print(issue_df)
     
     issue_df = issue_df.rename(columns=rename_map)
 
@@ -389,23 +404,24 @@ def update_ageing(df, issue_df):
 
     rfai_final = re_rfai if pd.notna(re_rfai) else rfai
 
-    # Calculate rfai_to_ms1_ageing
+    # Calculate clear_rfai_to_ms1_ageing
     if pd.isna(rfai_final):
-        data_obj.rfai_to_ms1_ageing = "-"
+        data_obj.clear_rfai_to_ms1_ageing = "-"
     else:
         issue_ageing = total_issue_ageing or 0
 
         if pd.isna(site_onair):
             today = datetime.today()
-            data_obj.rfai_to_ms1_ageing = (today - rfai_final).days - issue_ageing
+            data_obj.clear_rfai_to_ms1_ageing = (today - rfai_final).days - issue_ageing
         else:
-            data_obj.rfai_to_ms1_ageing = (site_onair - rfai_final).days - issue_ageing
+            data_obj.clear_rfai_to_ms1_ageing = (site_onair - rfai_final).days - issue_ageing
 
     # Save changes
     data_obj.save()
 
     return
- 
+
+
 def get_ftr_month(date):
     if pd.isna(date):
         return None
@@ -1002,8 +1018,8 @@ def upload_issues_data_view(request):
 
         # # Optional: update ageing per unique site
         # unique_sites = df[["circle", "site_id"]].drop_duplicates()
-        # for _, row in df.iterrows():
-        #     update_ageing_new(row["circle"], row["site_id"])
+        for _, row in df.iterrows():
+            update_ageing_new(row["circle"], row["site_id"])
 
         return Response({
             "message": f"{len(issues_to_create)} issues uploaded successfully!"
@@ -1053,6 +1069,7 @@ def issue_summary(request):
         owner = request.data.get('owner', '')
         duration_start = request.data.get('duration_start')
         duration_end = request.data.get('duration_end')
+        site_on_air = request.data.get('is_on_air')
 
         # # Ensure list type
         # if isinstance(milestone, str):
@@ -1086,6 +1103,51 @@ def issue_summary(request):
         df["circle"] = df["circle"].astype(str).str.strip()
         df["issue_name"] = df["issue_name"].astype(str).str.strip()
         df["site_id"] = df["site_id"].astype(str).str.strip()
+        
+        # ---------------- Site ON AIR Filtering ----------------
+        if site_on_air in ["Yes", "No"]:
+            qs1 = AlokTrackerModel.objects.all().values(
+                "circle", "new_site_id", "site_onair_date"
+            )
+
+            df1 = pd.DataFrame(list(qs1))
+
+            if not df1.empty:
+                # Clean
+                df1["circle"] = df1["circle"].fillna("").astype(str).str.strip()
+                df1["new_site_id"] = df1["new_site_id"].fillna("").astype(str).str.strip()
+
+                # Rename for merge
+                df1 = df1.rename(columns={"new_site_id": "site_id"})
+
+                # 🔥 Mark ON AIR sites
+                df1["is_on_air"] = df1["site_onair_date"].notna()
+
+                # Merge
+                df = df.merge(
+                    df1[["circle", "site_id", "is_on_air"]],
+                    on=["circle", "site_id"],
+                    how="left"
+                )
+
+                # If site not found in df1 → treat as NOT ON AIR
+                df["is_on_air"] = df["is_on_air"].fillna(False)
+
+                # 🎯 Apply filter
+                if site_on_air == "No":
+                    # Keep only NOT ON AIR
+                    df = df[df["is_on_air"] == False]
+
+                elif site_on_air == "Yes":
+                    # Keep only ON AIR
+                    df = df[df["is_on_air"] == True]
+
+                # Cleanup
+                df = df.drop(columns=["is_on_air"])
+
+                if df.empty:
+                    return Response({"message": "No data found"}, status=200)
+                
 
         # ---------------- 3️⃣ Filters ----------------
         
@@ -1139,12 +1201,26 @@ def issue_summary(request):
         )
 
         # ---------------- 6️⃣ Totals ----------------
+        # Existing row-wise total (keep this)
         pivot_df["Total"] = pivot_df.sum(axis=1)
 
-        total_row = pivot_df.sum(axis=0)
-        total_row.name = "Total"
+        # 🔥 NEW: Unique site count per circle
+        circle_unique_sites = (
+            df.groupby("circle")["site_id"]
+            .nunique()
+        )
 
-        pivot_df = pd.concat([pivot_df, total_row.to_frame().T])
+        # Convert to row format
+        total_row = circle_unique_sites.to_dict()
+
+        # Add overall total (unique sites across all circles)
+        total_row["Total"] = df["site_id"].nunique()
+
+        # Convert to DataFrame row
+        total_row_df = pd.DataFrame([total_row], index=["Total"])
+
+        # Append
+        pivot_df = pd.concat([pivot_df, total_row_df])
 
         # ---------------- 7️⃣ Column Order ----------------
         circle_order = [
@@ -1336,7 +1412,7 @@ def download_tracker_data_view(request):
                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
                  'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
                  're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
-                 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
+                 'clear_rfai_to_ms1_ageing', 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
                  "dismantle_date", "material_pickup_date", "material_submission_date", "oci_done_date", "sign_off_date", "dismantling_status", 
@@ -5796,7 +5872,7 @@ def issue_timeline_add(request):
             created_by=userId,
         )
         
-        # update_ageing_new(circle, siteId)
+        update_ageing_new(circle, siteId)
 
         return Response(
             {
@@ -5915,7 +5991,7 @@ def issue_timeline_update(request):
             "updated_by": userId
         }
         
-        # update_ageing_new(circle, issue_obj.site_id)
+        update_ageing_new(circle, issue_obj.site_id)
 
         return Response(
             {"message": "Issue updated successfully!", "json_data": response_data},
@@ -5963,7 +6039,7 @@ def issue_timeline_delete(request):
     #         status=status.HTTP_400_BAD_REQUEST
     #     )
     
-    # update_ageing_new(circle, issue_obj.site_id)
+    update_ageing_new(circle, issue_obj.site_id)
 
     issue_obj.delete()
 
