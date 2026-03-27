@@ -266,24 +266,31 @@ def format_and_autofit_excel(file_path):
 
 @api_view(["POST"])
 def nrrel_parse_status(request):
-    parse_file=request.FILES.get("file")
-    base_name = os.path.splitext(parse_file.name)[0]
+    parse_file=request.FILES.getlist("file")
     if not parse_file:
         return Response({"error": "Please upload XML files"}, status=HTTP_400_BAD_REQUEST)
     
+    parse_file_list=[]
+    for file in parse_file:
+        if file.name.endswith('.xlsx'):
+            alarm_df=pd.read_excel(file)
+        elif file.name.endswith('.csv'):
+            alarm_df = pd.read_csv(file)
+        else :
+            return Response({"status": "ERROR", "message": f"Unsupported file type"}, status=HTTP_400_BAD_REQUEST)
+
+        alarm_df.columns=alarm_df.columns.str.strip()
+        parse_file_list.append(alarm_df)
+        alarm_df = pd.concat(parse_file_list, ignore_index=True)
+        print(alarm_df.head())
+  
+
+
+
+
     nokia_output_folder = os.path.join(main_folder, "Nokia_Alarm_parsed")
     os.makedirs(nokia_output_folder, exist_ok=True)
 
-     
-    file_name = parse_file.name.lower()
-    if file_name.endswith(".csv"):
-        alarm_df = pd.read_csv(parse_file)
-    elif file_name.endswith((".xlsx", ".xls")):
-        alarm_df = pd.read_excel(parse_file)
-    else:
-        return Response({"error": "Unsupported file format"}, status=HTTP_400_BAD_REQUEST)
-
-    
 
     #-------------------------------
     alarm_df= alarm_df[alarm_df["Diagnostic Info"].str.contains("8150 supplAlarmInfo", na=False)]
@@ -294,17 +301,19 @@ def nrrel_parse_status(request):
     alarm_df=alarm_df[["Distinguished Name", "Diagnostic Info"]].copy()
     alarm_df["pci_list"] = alarm_df["Diagnostic Info"].apply(extract_pci_count)
     alarm_df = alarm_df.explode("pci_list")
+  
 
     alarm_df[["Target_PCI_", "Count"]] = pd.DataFrame(
         alarm_df["pci_list"].tolist(), index=alarm_df.index
     )
+  
     alarm_df = alarm_df[["Distinguished Name", "Target_PCI_", "Count"]].dropna()
     alarm_df=alarm_df.reset_index().rename(columns={"index":"","Target_PCI_":"Target_PCI"})
     print(alarm_df.head())
 
 
    
-    file_name = f"{base_name}_Output.xlsx"
+    file_name = "5G-NRREL_Output.xlsx"
     output_path = os.path.join(nokia_output_folder, file_name)
     alarm_df.to_excel(output_path, index=False, engine="openpyxl")
     format_and_autofit_excel(output_path)
