@@ -123,7 +123,7 @@ ALL_COLUMNS = [
     'Current Status',
     'Detailed Remarks',
     'RFAI Rejected Date',
-    'Re-RFAI Date',
+    'Clear RFAI Date',
     'PRI Count',
     'PRI Issue Ageing',
     'Other UST Issue Ageing',
@@ -266,12 +266,12 @@ def update_ageing(df, issue_df):
 
     # Convert dates
     df['site_onair_date'] = pd.to_datetime(df['site_onair_date'], errors='coerce')
-    df['re_rfai_date'] = pd.to_datetime(df['re_rfai_date'], errors='coerce')
+    df['clear_rfai_date'] = pd.to_datetime(df['clear_rfai_date'], errors='coerce')
     df['rfai_date'] = pd.to_datetime(df['rfai_date'], errors='coerce')
 
     # 🔥 NEW LOGIC
-    def calculate_adjusted_issue_ageing(site, re_rfai):
-        if pd.isna(re_rfai):
+    def calculate_adjusted_issue_ageing(site, clear_rfai):
+        if pd.isna(clear_rfai):
             return None
 
         site_rows = issue_df[issue_df["Site ID"] == site]
@@ -288,27 +288,27 @@ def update_ageing(df, issue_df):
             if pd.isna(end):
                 end = datetime.today()
 
-            # Case 1: starts after re_rfai
-            if start >= re_rfai:
+            # Case 1: starts after clear_rfai
+            if start >= clear_rfai:
                 total_days += (end - start).days
 
-            # Case 2: overlaps re_rfai
-            elif start < re_rfai and end > re_rfai:
-                total_days += (end - re_rfai).days
+            # Case 2: overlaps clear_rfai
+            elif start < clear_rfai and end > clear_rfai:
+                total_days += (end - clear_rfai).days
 
         return total_days
 
     def calculate_clear_rfai_to_ms1(row):
         site = row["new_site_id"]
         site_onair = row['site_onair_date']
-        rfai = row['re_rfai_date'] if pd.notna(row['re_rfai_date']) else row['rfai_date']
+        rfai = row['clear_rfai_date'] if pd.notna(row['clear_rfai_date']) else row['rfai_date']
 
         if pd.isna(rfai):
             return "-"
 
-        # 🔥 use adjusted ageing if re_rfai present
-        if pd.notna(row['re_rfai_date']):
-            issue_ageing = calculate_adjusted_issue_ageing(site, row['re_rfai_date'])
+        # 🔥 use adjusted ageing if clear_rfai present
+        if pd.notna(row['clear_rfai_date']):
+            issue_ageing = calculate_adjusted_issue_ageing(site, row['clear_rfai_date'])
         else:
             issue_ageing = row['total_issue_ageing'] if pd.notna(row['total_issue_ageing']) else 0
 
@@ -399,10 +399,10 @@ def update_ageing_new(circle, site_id):
 
     # Convert dates
     site_onair = pd.to_datetime(data_obj.site_onair_date, errors="coerce")
-    re_rfai = pd.to_datetime(data_obj.re_rfai_date, errors="coerce")
+    clear_rfai = pd.to_datetime(data_obj.clear_rfai_date, errors="coerce")
     rfai = pd.to_datetime(data_obj.rfai_date, errors="coerce")
 
-    rfai_final = re_rfai if pd.notna(re_rfai) else rfai
+    rfai_final = clear_rfai if pd.notna(clear_rfai) else rfai
 
     # Calculate clear_rfai_to_ms1_ageing
     if pd.isna(rfai_final):
@@ -1411,7 +1411,7 @@ def download_tracker_data_view(request):
                  'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
                  'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
-                 're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
+                 'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
                  'clear_rfai_to_ms1_ageing', 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
@@ -1760,7 +1760,7 @@ def sync_alok_tracker_to_site_status(request):
 #         if df.empty:
 #             return Response({'error': 'No data found for given filters'}, status=404)
         
-#         # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
+#         # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
 
 #         for col in df.columns:
 #             if "Date" in col:
@@ -2001,7 +2001,7 @@ def daily_dashboard_view(request):
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
         
-        # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
+        # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
 
         for col in df.columns:
             if "Date" in col:
@@ -2275,7 +2275,7 @@ def weekly_monthly_dashboard_view(request):
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
         
-        # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
+        # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
        
         for col in df.columns:
             if "Date" in col:
@@ -2681,7 +2681,7 @@ def gap_view(request):
                  'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
                  'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
-                 're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
+                 'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
                  'clear_rfai_to_ms1_ageing', 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
@@ -2933,7 +2933,7 @@ def ageing_dashboard_view(request):
         def generate_done_summary(df, start_label, end_label, start_col, end_col, breakpoint1, breakpoint2):
             temp = df.copy()
             # if start_col == 'rfai_date' and end_col == 'site_onair_date':
-            #     temp['rfai_date'] = temp['rfai_date'].where(temp['re_rfai_date'].isna(), temp['re_rfai_date'])
+            #     temp['rfai_date'] = temp['rfai_date'].where(temp['clear_rfai_date'].isna(), temp['clear_rfai_date'])
             # if issue == 'considered':
             #     temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
             #     temp['days_diff'] = (temp[end_col] - temp[start_col]).dt.days - temp['total_issue_ageing']
@@ -3073,7 +3073,7 @@ def ageing_dashboard_view(request):
             temp = df.copy()
             
             # if start_col == 'rfai_date' and end_col == 'site_onair_date':
-            #     temp['rfai_date'] = temp['rfai_date'].where(temp['re_rfai_date'].isna(), temp['re_rfai_date'])
+            #     temp['rfai_date'] = temp['rfai_date'].where(temp['clear_rfai_date'].isna(), temp['clear_rfai_date'])
             
             # if issue == 'considered':
             #     temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
@@ -3372,7 +3372,7 @@ def ageing_dashboard_view_issues(request):
         def generate_done_summary(df, start_label, end_label, start_col, end_col, breakpoint1, breakpoint2):
             temp = df.copy()
             if start_col == 'rfai_date' and end_col == 'site_onair_date' and issue == 'considered':
-                temp['rfai_date'] = temp['rfai_date'].where(temp['re_rfai_date'].isna(), temp['re_rfai_date'])
+                temp['rfai_date'] = temp['rfai_date'].where(temp['clear_rfai_date'].isna(), temp['clear_rfai_date'])
             if issue == 'considered':
                 # temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
                 # temp['days_diff'] = (temp[end_col] - temp[start_col]).dt.days - temp['total_issue_ageing']
@@ -3513,7 +3513,7 @@ def ageing_dashboard_view_issues(request):
             temp = df.copy()
             
             if start_col == 'rfai_date' and end_col == 'site_onair_date' and issue == 'considered':
-                temp['rfai_date'] = temp['rfai_date'].where(temp['re_rfai_date'].isna(), temp['re_rfai_date'])
+                temp['rfai_date'] = temp['rfai_date'].where(temp['clear_rfai_date'].isna(), temp['clear_rfai_date'])
             
             if issue == 'considered':
                 # temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
@@ -3863,7 +3863,7 @@ def frontend_editing_display_view(request):
                  'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
                  'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
-                 're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
+                 'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
                  'clear_rfai_to_ms1_ageing', 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
@@ -7313,7 +7313,7 @@ def ms2_monthly_graph(request):
 #         if df.empty:
 #             return Response({'error': 'No data found for given filters'}, status=404)
         
-#         # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
+#         # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
 
 #         for col in df.columns:
 #             if "Date" in col:
@@ -7546,7 +7546,7 @@ def dismantle_daily_dashboard_view(request):
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
         
-        # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
+        # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
 
         for col in df.columns:
             if "Date" in col:
@@ -7812,7 +7812,7 @@ def dismantle_weekly_monthly_dashboard_view(request):
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
         
-        # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
+        # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
        
         for col in df.columns:
             if "Date" in col:
@@ -8963,7 +8963,7 @@ def dismantle_monthly_graph(request):
 #                  'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
 #                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
 #                  'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'manual_history', 'rfai_rejected_date', 
-#                  're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
+#                  'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
 #                   'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
 #                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
 #                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
@@ -10345,7 +10345,7 @@ def dismantle_monthly_graph(request):
 #                      'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
 #                      'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
 #                      'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'manual_history', 'rfai_rejected_date', 
-#                      're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
+#                      'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
 #                       'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
 #                      'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
 #                      'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', 'last_updated_date', 'last_updated_by']]
