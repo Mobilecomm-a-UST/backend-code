@@ -3376,7 +3376,7 @@ def ageing_dashboard_view_issues(request):
             if issue == 'considered':
                 # temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
                 # temp['days_diff'] = (temp[end_col] - temp[start_col]).dt.days - temp['total_issue_ageing']
-                temp['days_diff'] = temp['rfai_to_ms1_ageing']
+                temp['days_diff'] = temp['clear_rfai_to_ms1_ageing']
             else:
                 temp["days_diff"] = (temp[end_col] - temp[start_col]).dt.days
             
@@ -3518,7 +3518,7 @@ def ageing_dashboard_view_issues(request):
             if issue == 'considered':
                 # temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
                 # temp['days_diff'] = (today - temp[start_col]).dt.days - temp['total_issue_ageing']
-                temp['days_diff'] = temp['rfai_to_ms1_ageing']
+                temp['days_diff'] = temp['clear_rfai_to_ms1_ageing']
             else:
                 temp["days_diff"] = (today - temp[start_col]).dt.days
 
