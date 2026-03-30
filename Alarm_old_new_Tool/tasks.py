@@ -27,20 +27,21 @@ def send_email_for_Alarm(df_combined_dict, output_path):
             'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Pankaj.Singh@ust.com','Ramesh.ThodaDurga@ust.com',
             'SattaChandra.Shekar@ust.com','LingisettyVenkata.Kumar@ust.com','RudraHari.Krishna@ust.com'
         ],
-        "NESA": [
+        "NESA" or "AS": [
             'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Mohit.Kumar@ust.com','Manoj.Kumar3@ust.com'
         ],
-        "DL": [
+        "DEL": [
             'Nishant.Sharma2@ust.com','Vijay.Kumar2@ust.com',
             'Prateek.Saxena@ust.com','Harsh.Rajender@ust.com','Deepu.Sharma@ust.com'
         ],
         "JK" :['Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Manik.Mahajan@ust.com',
             'Lalit.Kaul@ust.com','Suman.Raman@ust.com','Namandeep.Singh@ust.com'
         ],
-        "CHN": ['S.Ramanathan@ust.com','A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
+        "ROTN" or "CHN": ['A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
 
         "HRY": ['Manoj.Kumar5@ust.com',"Umair.Wali@ust.com","Anil.Sharma@ust.com","Somnath.OmParkash@ust.com"],
-        "UPW" :['Sanjay.Pandey2@ust.com','Shivam.Mittal@ust.com','Shubham.Gupta2@ust.com']
+        "UPW" :['Sanjay.Pandey2@ust.com','Shivam.Mittal@ust.com','Shubham.Gupta2@ust.com'],
+        "RAJ" :['Raju.Maheshwari@ust.com','Manoj.Vishwakarma@ust.com','Pushkar.VimaljaKantShukla@ust.com']
     }
 
     cc_mails = [
@@ -348,23 +349,23 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
             'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Pankaj.Singh@ust.com','Ramesh.ThodaDurga@ust.com',
             'SattaChandra.Shekar@ust.com','LingisettyVenkata.Kumar@ust.com','RudraHari.Krishna@ust.com'
         ],
-        "NESA": [
+        "NESA" or "AS": [
             'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Mohit.Kumar@ust.com','Manoj.Kumar3@ust.com'
         ],
-        "DL": [
+        "DEL": [
             'Nishant.Sharma2@ust.com','Vijay.Kumar2@ust.com',
             'Prateek.Saxena@ust.com','Harsh.Rajender@ust.com','Deepu.Sharma@ust.com'
         ],
         "JK" :['Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Manik.Mahajan@ust.com',
             'Lalit.Kaul@ust.com','Suman.Raman@ust.com','Namandeep.Singh@ust.com'
- 
         ],
-        "CHN": ['S.Ramanathan@ust.com','A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
- 
+        "ROTN" or "CHN": ['A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
+
         "HRY": ['Manoj.Kumar5@ust.com',"Umair.Wali@ust.com","Anil.Sharma@ust.com","Somnath.OmParkash@ust.com"],
-        "UPW" :['Sanjay.Pandey2@ust.com','Shivam.Mittal@ust.com','Shubham.Gupta2@ust.com']
+        "UPW" :['Sanjay.Pandey2@ust.com','Shivam.Mittal@ust.com','Shubham.Gupta2@ust.com'],
+        "RAJ" :['Raju.Maheshwari@ust.com','Manoj.Vishwakarma@ust.com','Pushkar.VimaljaKantShukla@ust.com']
     }
- 
+
     cc_mails = [
         'Abhinav.Verma@ust.com','Prerna.PramodKumar@ust.com','Mohit.Batra@ust.com',
         'Deepak.KumarYadav@ust.com','Amit.rai@ust.com','Lalit.Namdev2@ust.com','Shashank.Rai@ust.com',
