@@ -839,7 +839,8 @@ def upload_tracker_data_view(request):
                     val = row.get(col)
 
                     if "date" in col.lower():
-                        val = safe_datetime(val)if val and val > timezone.now():
+                        val = safe_datetime(val)
+                        if val and val > timezone.now():
                             return Response(
                                 {
                                     "status": False,
