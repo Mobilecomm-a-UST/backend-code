@@ -840,7 +840,7 @@ def upload_tracker_data_view(request):
 
                     if "date" in col.lower():
                         val = safe_datetime(val)
-                        if val and val > timezone.now():
+                        if val and val.date() > timezone.localdate():
                             return Response(
                                 {
                                     "status": False,
