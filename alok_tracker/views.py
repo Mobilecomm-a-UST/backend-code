@@ -839,7 +839,21 @@ def upload_tracker_data_view(request):
                     val = row.get(col)
 
                     if "date" in col.lower():
-                        val = safe_datetime(val)
+                        val = safe_datetime(val)if val and val > timezone.now():
+                            return Response(
+                                {
+                                    "status": False,
+                                    "error": f"Future date found in column '{col}'",
+                                    "details": {
+                                        "circle": circle_val,
+                                        "new_site_id": new_site_id_val,
+                                        "column": col,
+                                        "value": val
+                                    }
+                                },
+                                
+                                status=400
+                            )
                     elif "ageing" in col.lower() or "count" in col.lower():
                         val = safe_int(val)
 
