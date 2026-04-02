@@ -43,7 +43,7 @@ class UserCounter(models.Model):
     Date = models.DateField(auto_now_add=True)      
 
     class Meta:
-        unique_together = ("user_name", "api_name")
+        unique_together = ("user_name", "api_name", "Date" ,"site_id")  # Ensure uniqueness for the combination of user_name, api_name, and Date
 
     def __str__(self):
         return f"{self.user_name} - {self.api_name}: {self.count}"
