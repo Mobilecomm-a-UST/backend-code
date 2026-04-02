@@ -462,6 +462,11 @@ def month_sort_key(label):
     # label like "Apr'25"
     month = label.split("'")[0]
     year = int(label.split("'")[1])
+
+    # Adjust year for FY (Jan–Mar should belong to previous year)
+    if month in ["Jan", "Feb", "Mar"]:
+        year -= 1
+
     return (year, MONTH_ORDER[month])
 
 def build_circlewise_ftr(df, status_col, reject_col):
