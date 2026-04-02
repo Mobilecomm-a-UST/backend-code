@@ -2223,12 +2223,16 @@ def weekly_monthly_dashboard_view(request):
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
     view = request.data.get('view')
+    year2 = request.data.get('year2')
  
     # Default to 'ALL' if not provided
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
     site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
+    
+    if year2:
+        year2 = int(year2)
     
     if month_filtered and year_filtered:
         month_filtered = int(month_filtered)
@@ -2287,28 +2291,36 @@ def weekly_monthly_dashboard_view(request):
             filters["current_status__in"] = current_status
         if "ALL" not in new_toco_name:
             filters["new_toco_name__in"] = new_toco_name
- 
+            
         # 🔹 Fetch data
         obj = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
         df = pd.DataFrame(obj.values())
+        
  
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
         
-        # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
+        # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
        
         for col in df.columns:
             if "Date" in col:
                 df[col] = pd.to_datetime(df[col], format="%d-%b-%y", errors="coerce")
+                
                
         today = dtime.today().date()
- 
-        if today.month >= 4:
-            fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
-            fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+        
+        if year2:
+            fy_start = dtime(year2, 3, 26).date()   # 26-Apr current year start
+            fy_end = dtime(year2 + 1, 3, 25).date() # 25-Mar next year end
         else:
-            fy_start = dtime(today.year - 1, 3, 26).date()
-            fy_end = dtime(today.year, 3, 25).date()
+            if today.month >= 4:
+                fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
+                fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+            else:
+                fy_start = dtime(today.year - 1, 3, 26).date()
+                fy_end = dtime(today.year, 3, 25).date()
+                
+        print("2.5-------------------------------------------------------------")
  
         # 🧩 2. Determine current cycle (26th prev → 25th curr)
         if today.day >= 26:
@@ -2324,6 +2336,15 @@ def weekly_monthly_dashboard_view(request):
             else:
                 current_cycle_start = dtime(today.year, today.month - 1, 26).date()
             current_cycle_end = dtime(today.year, today.month, 25).date()
+            
+        if year2:
+            current_cycle_start = min(dtime(year2+1, 2, 26).date(), current_cycle_start)
+            current_cycle_end = min(dtime(year2+1, 3, 25).date(), current_cycle_end)
+            
+        print(fy_start)
+        print(fy_end)    
+        print(current_cycle_start)
+        print(current_cycle_end)
  
         # 🗓️ 3. Create monthly periods (Apr → month before current)
         months = []
@@ -2335,6 +2356,8 @@ def weekly_monthly_dashboard_view(request):
                 end = dtime(start.year, start.month + 1, 25).date()
             months.append((start, end))
             start = end + timedelta(days=1)
+            
+        print(months)
  
         # 🗓️ 4. Create weekly periods for current month
         weeks = []
@@ -2384,6 +2407,8 @@ def weekly_monthly_dashboard_view(request):
         ]
  
         data = []
+        
+        print("5-----------------------------------")
         
         for milestone in milestones:
             
@@ -2490,7 +2515,7 @@ def weekly_monthly_dashboard_view(request):
         return Response({'message': 'Weekly and Monthly Dashboard created successfully !!!', "download_link": download_link, "unique_data": unique_data, "months_data": month_json_data, "week_data": week_json_data}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
-    
+ 
 
 @api_view(['GET', 'POST'])
 def gap_view(request):
@@ -5124,6 +5149,7 @@ def ms2_weekly_monthly_waterfall(request):
     new_toco_name = request.data.get('new_toco_name', [])
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
+    year2 = request.data.get('year2')
     view = request.data.get('view')
  
     # Default to 'ALL' if not provided
@@ -5131,6 +5157,9 @@ def ms2_weekly_monthly_waterfall(request):
     site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
+    
+    if year2:
+        year2 = int(year2)
     
     if month_filtered and year_filtered:
         month_filtered = int(month_filtered)
@@ -5203,12 +5232,18 @@ def ms2_weekly_monthly_waterfall(request):
                
         today = dtime.today().date()
  
-        if today.month >= 4:
-            fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
-            fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+        if year2:
+            fy_start = dtime(year2, 3, 26).date()   # 26-Apr current year start
+            fy_end = dtime(year2 + 1, 3, 25).date() # 25-Mar next year end
         else:
-            fy_start = dtime(today.year - 1, 3, 26).date()
-            fy_end = dtime(today.year, 3, 25).date()
+            if today.month >= 4:
+                fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
+                fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+            else:
+                fy_start = dtime(today.year - 1, 3, 26).date()
+                fy_end = dtime(today.year, 3, 25).date()
+                
+        print("2.5-------------------------------------------------------------")
  
         # 🧩 2. Determine current cycle (26th prev → 25th curr)
         if today.day >= 26:
@@ -5224,6 +5259,10 @@ def ms2_weekly_monthly_waterfall(request):
             else:
                 current_cycle_start = dtime(today.year, today.month - 1, 26).date()
             current_cycle_end = dtime(today.year, today.month, 25).date()
+            
+        if year2:
+            current_cycle_start = min(dtime(year2+1, 2, 26).date(), current_cycle_start)
+            current_cycle_end = min(dtime(year2+1, 3, 25).date(), current_cycle_end)
  
         # 🗓️ 3. Create monthly periods (Apr → month before current)
         months = []
@@ -5378,7 +5417,7 @@ def ms2_weekly_monthly_waterfall(request):
         return Response({'message': 'Weekly and Monthly Dashboard created successfully !!!', "download_link": download_link, "unique_data": unique_data, "months_data": month_json_data, "week_data": week_json_data}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
-    
+   
 
 @api_view(['GET', 'POST'])
 def monthly_graph(request):
@@ -7759,6 +7798,7 @@ def dismantle_weekly_monthly_dashboard_view(request):
     new_toco_name = request.data.get('new_toco_name', [])
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
+    year2 = request.data.get('year2')
     view = request.data.get('view')
  
     # Default to 'ALL' if not provided
@@ -7766,6 +7806,9 @@ def dismantle_weekly_monthly_dashboard_view(request):
     site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
+    
+    if year2:
+        year2 = int(year2)
     
     if month_filtered and year_filtered:
         month_filtered = int(month_filtered)
@@ -7832,7 +7875,7 @@ def dismantle_weekly_monthly_dashboard_view(request):
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
         
-        # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
+        # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
        
         for col in df.columns:
             if "Date" in col:
@@ -7840,12 +7883,18 @@ def dismantle_weekly_monthly_dashboard_view(request):
                
         today = dtime.today().date()
  
-        if today.month >= 4:
-            fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
-            fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+        if year2:
+            fy_start = dtime(year2, 3, 26).date()   # 26-Apr current year start
+            fy_end = dtime(year2 + 1, 3, 25).date() # 25-Mar next year end
         else:
-            fy_start = dtime(today.year - 1, 3, 26).date()
-            fy_end = dtime(today.year, 3, 25).date()
+            if today.month >= 4:
+                fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
+                fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+            else:
+                fy_start = dtime(today.year - 1, 3, 26).date()
+                fy_end = dtime(today.year, 3, 25).date()
+                
+        print("2.5-------------------------------------------------------------")
  
         # 🧩 2. Determine current cycle (26th prev → 25th curr)
         if today.day >= 26:
@@ -7861,6 +7910,10 @@ def dismantle_weekly_monthly_dashboard_view(request):
             else:
                 current_cycle_start = dtime(today.year, today.month - 1, 26).date()
             current_cycle_end = dtime(today.year, today.month, 25).date()
+            
+        if year2:
+            current_cycle_start = min(dtime(year2+1, 2, 26).date(), current_cycle_start)
+            current_cycle_end = min(dtime(year2+1, 3, 25).date(), current_cycle_end)
  
         # 🗓️ 3. Create monthly periods (Apr → month before current)
         months = []
@@ -8014,7 +8067,7 @@ def dismantle_weekly_monthly_dashboard_view(request):
         return Response({'message': 'Weekly and Monthly Dashboard created successfully !!!', "download_link": download_link, "unique_data": unique_data, "months_data": month_json_data, "week_data": week_json_data}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
-   
+  
    
 @api_view(['GET', 'POST'])
 def dismantle_ageing_dashboard_table1(request):
