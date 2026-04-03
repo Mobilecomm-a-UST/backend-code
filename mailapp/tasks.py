@@ -34,26 +34,29 @@ import requests
  
 #         # mail.Send()
 #         # print("✅ Email sent via Outlook.")
-
-
-        
+ 
+ 
+       
  
 #     except Exception as e:
 #         return f"Error sending email: {str(e)}"
-    
-
+   
+ 
 def send_email(to_address, cc_mails, subject, body, attachment_path=None, is_html=False):
     ELASTIC_API_KEY = "BB168477599BBAA81CC0ECDF3871C290653CCA3AD2CD1FBA3A585A1071F511ED597B9FD34980D4093D9C1CC310B4BCFB"
     sender_email = "noreply@mcpspmis.com"
-
+ 
     all_recipients = to_address
     if cc_mails:
         all_recipients = f"{to_address};{cc_mails}"
  
-
+ 
+    print(all_recipients,"final_all_recipients")
+ 
+ 
  
     url = "https://api.elasticemail.com/v2/email/send"
-
+ 
     data = {
         "apikey": ELASTIC_API_KEY,
         "from": sender_email,
@@ -61,7 +64,7 @@ def send_email(to_address, cc_mails, subject, body, attachment_path=None, is_htm
         "subject": subject,
         "isTransactional": False
     }
-
+ 
     if is_html:
         data["bodyHtml"] = body
     else:
