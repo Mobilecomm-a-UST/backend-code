@@ -32,7 +32,6 @@ def on_rm_error(func, path, exc_info):
       os.chmod(path, stat.S_IWRITE)
       func(path)
       
-
 def explode_data_from_log(command, start_pattern, row_pattern, end_pattern, file_content):
       command_found = False
       header_found = False
@@ -116,50 +115,30 @@ def delete_existing_files(folder_path):
                   except Exception as e:
                         print(f"Error deleting {file_path}: {e}")
 
+
 def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
-      """Apply formatting to an Excel sheet with adjustable start positions."""
       workbook = writer.book
       worksheet = writer.sheets[sheet_name]
 
-      header_format = workbook.add_format(
-            {
-                  "bold": True,
-                  "bg_color": "#0E034D",
-                  "border": 2,
-                  "font_color": "#ffffff",
-                  "align": "center",
-                  "valign": "vcenter",
-            }
-            )
-      center_format = workbook.add_format(
-            {
-                  "align": "center",
-                  "valign": "center",
-                  "border": 1,
-                  "border_color": "#000000",
-                  "bold": True,
-            }
-            )
-      ok_format = workbook.add_format(
-            {
-                  "bg_color": "#90EE90",
-                  "font_color": "#000000",
-                  "align": "center",
-                  "valign": "center",
-            }
-            )
-      not_ok_format = workbook.add_format(
-            {
-                  "bg_color": "#FF0000",
-                  "font_color": "#FFFFFF",
-                  "align": "center",
-                  "valign": "center",
-            }
-            )
+      YELLOW = "#FFC000"
+      SKY_BLUE = "#94DCF8"
 
       worksheet.set_row(startrow, 23)
 
+      # ---------- HEADER ----------
       for col_num, col_name in enumerate(df.columns):
+            block = (col_num // 4) % 2
+            header_bg = YELLOW if block == 0 else SKY_BLUE
+
+            header_format = workbook.add_format({
+                  "bold": True,
+                  "bg_color": header_bg,
+                  "border": 2,
+                  "font_color": "#000000",
+                  "align": "center",
+                  "valign": "vcenter",
+            })
+
             worksheet.write(startrow, startcol + col_num, str(col_name), header_format)
 
             column_series = df[col_name]
@@ -167,61 +146,73 @@ def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
                   column_series = column_series.iloc[:, 0]
 
             max_length = max(
-            column_series.fillna("").astype(str).str.len().max(skipna=True) or 0,
-            len(str(col_name)),
+                  column_series.fillna("").astype(str).str.len().max(skipna=True) or 0,
+                  len(str(col_name)),
             )
-            max_length = min(max_length, 255)
             worksheet.set_column(startcol + col_num, startcol + col_num, max_length + 5)
+
+      # ---------- BODY ----------
+      center_format = workbook.add_format({
+            "align": "center",
+            "valign": "center",
+            "border": 1,
+            "border_color": "#000000",
+            "bold": True,
+      })
+
+      ok_format = workbook.add_format({
+            "bg_color": "#90EE90",
+            "font_color": "#000000",
+            "align": "center",
+            "valign": "center",
+      })
+
+      not_ok_format = workbook.add_format({
+            "bg_color": "#FF0000",
+            "font_color": "#FFFFFF",
+            "align": "center",
+            "valign": "center",
+      })
 
       for row_num in range(len(df)):
             worksheet.set_row(startrow + row_num + 1, 15)
 
             for col_num in range(len(df.columns)):
-                  cell_value = str(df.iloc[row_num, col_num])
+                  cell_raw = df.iloc[row_num, col_num]
+                  cell_value = "" if pd.isna(cell_raw) else str(cell_raw)
+
                   format_style = center_format
+
                   if cell_value == "OK":
                         format_style = ok_format
-                  elif cell_value == "NOT OK" or cell_value == "NOK":
+                  elif cell_value in ["NOT OK", "NOK"]:
                         format_style = not_ok_format
-                  elif cell_value == "Missing" or cell_value == "Missing in Post":
-                        format_style = workbook.add_format(
-                              {
-                              "bg_color": "#E78978",
-                              "font_color": "#FFFFFF",
-                              "align": "center",
-                              "valign": "center",
-                              "bold": True,
-                              "border": 1,
-                              }
-                        )
-                  elif cell_value == "nan":
-                        format_style = workbook.add_format(
-                              {
-                                    "bg_color": "#C21D1D",
-                                    "font_color": "#222831",
-                                    "align": "center",
-                                    "valign": "center",
-                                    "bold": True,
-                                    "border": 1,
-                              }
-                  )
+                  elif cell_value in ["Missing", "Missing in Post"]:
+                        format_style = workbook.add_format({
+                        "bg_color": "#E78978",
+                        "font_color": "#FFFFFF",
+                        "align": "center",
+                        "valign": "center",
+                        "bold": True,
+                        "border": 1,
+                  })
                   elif "|" in cell_value:
-                        format_style = workbook.add_format(
-                              {
-                                    "font_color": "#FF0000",
-                                    "align": "center",
-                                    "valign": "center",
-                                    "bold": True,
-                                    "border": 1,
-                                    "border_color": "#000000",
-                              }
-                  )
+                        format_style = workbook.add_format({
+                        "font_color": "#FF0000",
+                        "align": "center",
+                        "valign": "center",
+                        "bold": True,
+                        "border": 1,
+                        "border_color": "#000000",
+                  })
 
                   worksheet.write(
-                        startrow + row_num + 1, startcol + col_num, cell_value, format_style
+                  startrow + row_num + 1,
+                  startcol + col_num,
+                  cell_value,
+                  format_style
                   )
 
-                  # workbook.__save()
 
 
 @api_view(["POST", "GET"])
@@ -351,7 +342,8 @@ def soft_at_5G_Summary_Ericsson(request):
             invxr_df = explode_data_from_log(
                   r'[A-Z0-9_-]+>\s+invxr',
                   r'(ID)\s+(LINK)\s+(RiL)\s+(WL1)\s+(TEMP1)\s+(TXbs1)\s+(TXdBm1)\s+(RXdBm1)\s+(BER1)\s+(WL2)\s+(TEMP2)\s+(TXbs2)\s+(TXdBm2)\s+(RXdBm2)\s+(BER2)\s+(DlLoss)\s+(UlLoss)\s+(LENGTH)\s+(TT)',
-                  r'^\s*(\d+)\s+(\w+)\s+(S\d+_N1-1)?\s+(\d+\.\d+)\s+(\d+C)\s+(\d+%)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)?\s*(\d+\.\d+)?\s+(\d+\.\d+)\s+(\d+C)\s+(\d+%)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)?\s+(-?\d+\.\d+)?\s+(-?\d+\.\d+)?\s+(-?\d+\.\d+)?\s+(\d+m)\s+(\d+)\s*$',
+                  # r'^\s*(\d+)\s+(\w+)\s+(S\d+_N1-1)?\s+(\d+\.\d+)\s+(\d+C)\s+(\d+%)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)?\s*(\d+\.\d+)?\s+(\d+\.\d+)\s+(\d+C)\s+(\d+%)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)?\s+(-?\d+\.\d+)?\s+(-?\d+\.\d+)?\s+(-?\d+\.\d+)?\s+(\d+m)\s+(\d+)\s*$',
+                  r'^\s*(\d+)\s+(\S+)\s+(S\d+_N1(?:-1)?)\s+(\d+\.\d+)\s+(\d+C)\s+(\d+%)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s*(-?\d+\.\d+)?\s*(\d+\.\d+)\s+(\d+C)\s+(\d+%)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s*(-?\d+\.\d+)?\s*(-?\d+\.\d+|\d+)?\s+(-?\d+\.\d+|\d+)?\s+(\d+m)\s+(\d+)\s*$',
                   r'^-+$',
                   file_content 
             )
@@ -377,13 +369,21 @@ def soft_at_5G_Summary_Ericsson(request):
             hget_field_prod_df = explode_data_from_log(
                   r'[A-Z0-9_-]+>\shget\sfield\sprod',
                   r'MO\s+productName\s+productNumber\s+productRevision\s+productionDate\s+serialNumber',
-                  r'^\s*(FieldReplaceableUnit=\w+-S\d+_N\d+)\s+(\w+\s+\d+\s+\w+)\s+(\w+\s+\d+\s+\d+\/\d+)\s+(\w+)\s+(\d+)\s+(\S+)\s*$',  
+                  r'^\s*(FieldReplaceableUnit=\S+)\s+(.+?)\s+([A-Z]{3}\s+\d+\s+\d+\/\d+)\s+([A-Z0-9\/]+)\s+(\d{8})\s+(\S+)\s*$',
                   r'^Total:\s\d+',
                   file_content
             )
 
+            hget_amf_add_df = explode_data_from_log(
+                  r'[A-Z0-9_-]+>\s*hget\s+amf\s+add',
+                  r'MO\s+ipv4Address1\s+ipv4Address2\s+ipv6Address1\s+ipv6Address2\s+usedIpAddress',
+                  r'^\s*(TermPointToAmf=1)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*$',
+                  r'^Total:\s*\d+',
+                  file_content
+            )
 
-            print("st termpointtoenode_df:- ", termpointtoenode_df)
+
+            print("invxr_df================:- ", invxr_df)
             sheets = {
                   'St cell': St_cell_df,
                   'get . Latitude': Latitude_df,
@@ -398,6 +398,7 @@ def soft_at_5G_Summary_Ericsson(request):
                   'invl_basic': invl_basic_df,
                   'get . Enroll': Enroll_df,
                   "hget field prod": hget_field_prod_df,
+                  "hget amf add": hget_amf_add_df,
 
             }
             df_list = sheets.values()
@@ -407,7 +408,7 @@ def soft_at_5G_Summary_Ericsson(request):
             with pd.ExcelWriter(excel_filename, engine="xlsxwriter") as writer:
                   for sheet_name, df in sheets.items():
                         df.to_excel(writer, sheet_name=sheet_name, index=False)
-                        format_excel_sheet(writer, sheet_name, df)
+                        # format_excel_sheet(writer, sheet_name, df)
 
 ################################## Making the template file path and template file existance #######################################
             template_file_path = os.path.join(base_media_url, "template_file")
@@ -427,10 +428,17 @@ def soft_at_5G_Summary_Ericsson(request):
             base_name = os.path.basename(file).split('_')[0]
             print("Base Name:", base_name)
             xls = pd.ExcelFile(file)
+            # template_path = os.path.join(template_file_path, "5G_template.xlsx")
+            # SA_5G_df : pd.DataFrame = pd.ExcelFile(template_path,).parse("5G SA")
+            # enbid_df : pd.DataFrame = pd.ExcelFile(template_path,).parse("Anchor Node ENBID")
+            # template_df : pd.DataFrame = pd.ExcelFile(template_path,).parse("Summary")
             template_path = os.path.join(template_file_path, "5G_template.xlsx")
-            template_df : pd.DataFrame = pd.ExcelFile(template_path,).parse("Summary")
-            enbid_df : pd.DataFrame = pd.ExcelFile(template_path,).parse("Anchor Node ENBID")
-            # enbid_df : pd.DataFrame = pd.ExcelFile(template_path,).parse()
+            tpl_xls = pd.ExcelFile(template_path)
+
+            SA_5G_df = tpl_xls.parse("5G SA")
+            enbid_df = tpl_xls.parse("Anchor Node ENBID")
+            template_df = tpl_xls.parse("Summary")
+
 
             print(xls.sheet_names)
             for  sheet_name in xls.sheet_names:
@@ -448,6 +456,7 @@ def soft_at_5G_Summary_Ericsson(request):
                               else:
                                     circle_value = "NA"
                               template_df.loc[0, "Circle"] = circle_value
+                              SA_5G_df.loc[0, "Circle"] = circle_value
                               layer = df["MO"].str.extract(r"NRCellDU=\w+_(F\d|T\d)")[0]
                               layer_value = '_'.join(layer.dropna().unique()) if not layer.dropna().empty else "NA"
                               print("Layer Value:", layer_value)
@@ -463,49 +472,93 @@ def soft_at_5G_Summary_Ericsson(request):
                               print("Technology:", l_layers)
                               
                               site_ids = (
-                                    df["MO"].str.extract(r"EUtranCell(?:FDD|TDD)=([\w_]+)")[0].dropna()
+                              df["MO"]
+                              .str.extract(r"NRCellDU=([\w_]+)")[0]
+                              .dropna()
                               )
+
                               for site_value in site_ids:
                                     parts = site_value.split("_")
-                                    if len(parts) >= 5:
-                                          site = parts[4]
-                                          if site.startswith("X"):
-                                          # or site.startswith("X"):
-                                                site = site[1:]
-                                          if site[-1].isalpha():
-                                                site = site[:-1]
+                                    if len(parts) >= 7:
+                                          raw_site = parts[6]          
+                                          site = raw_site.lstrip("x") 
+
+                                          # safety cleanup
+                                          site = site.rstrip("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
                                           template_df.loc[0, "Site ID (2G)"] = site
-                                          # print("2G SiteID:",site)
+                                          print("2G SiteID:", site)
+                                          SA_5G_df.loc[0, "Site ID"] = site
+
 
                               cell_name_series = df["MO"].str.extract(r"NRCellDU=([\w_]+)")[0].dropna()
                               print("Cell names :", cell_name_series)
                               template_df.loc[0, "5G Cell name A"] = "NA"
                               template_df.loc[0, "5G Cell name B"] = "NA"
                               template_df.loc[0, "5G Cell name C"] = "NA"
+                              SA_5G_df.loc[0, "5G Cell name A"] = "NA"
+                              SA_5G_df.loc[0, "5G Cell name B"] = "NA"
+                              SA_5G_df.loc[0, "5G Cell name C"] = "NA"
+                              SA_5G_df.loc[0, "5G Cell name D"] = "NA"
+                              SA_5G_df.loc[0, "5G Cell name E"] = "NA"
+                              SA_5G_df.loc[0, "5G Cell name F"] = "NA"
+                              SA_5G_df.loc[0, "5G Cell name G"] = "NA"
+                              SA_5G_df.loc[0, "5G Cell name H"] = "NA"
+                              SA_5G_df.loc[0, "5G Cell name I"] = "NA"
                               for cn in cell_name_series:
+
                                     if cn.endswith("A"):
                                           template_df.loc[0, "5G Cell name A"] = cn 
+                                          SA_5G_df.loc[0, "5G Cell name A"] = cn
                                           # print("5G Cell name A:", cn)
                                     elif cn.endswith("B"):
                                           template_df.loc[0, "5G Cell name B"] = cn
+                                          SA_5G_df.loc[0, "5G Cell name B"] = cn
                                     elif cn.endswith("C"):
-                                          template_df.loc[0, "5G Cell name C"] = cn 
+                                          template_df.loc[0, "5G Cell name C"] = cn
+                                          SA_5G_df.loc[0, "5G Cell name C"] = cn
+                                    elif cn.endswith("D"):
+                                          SA_5G_df.loc[0, "5G Cell name D"] = cn
+                                    elif cn.endswith("E"):
+                                          SA_5G_df.loc[0, "5G Cell name E"] = cn
+                                    elif cn.endswith("F"):
+                                          SA_5G_df.loc[0, "5G Cell name F"] = cn
+                                    elif cn.endswith("G"):
+                                          SA_5G_df.loc[0, "5G Cell name G"] = cn
+                                    elif cn.endswith("H"):
+                                          SA_5G_df.loc[0, "5G Cell name H"] = cn
+                                    elif cn.endswith("I"):
+                                          SA_5G_df.loc[0, "5G Cell name I"] = cn
                                     
                                     else:
                                           template_df.loc[0, "5G Cell name A"] = "NA"
                                           template_df.loc[0, "5G Cell name B"] = "NA"
                                           template_df.loc[0, "5G Cell name C"] = "NA"
-                              
+                                          SA_5G_df.loc[0, "5G Cell name A"] = "NA"
+                                          SA_5G_df.loc[0, "5G Cell name B"] = "NA"
+                                          SA_5G_df.loc[0, "5G Cell name C"] = "NA"
+                                          SA_5G_df.loc[0, "5G Cell name D"] = "NA"
+                                          SA_5G_df.loc[0, "5G Cell name E"] = "NA"
+                                          SA_5G_df.loc[0, "5G Cell name F"] = "NA"
+                                          SA_5G_df.loc[0, "5G Cell name G"] = "NA"
+                                          SA_5G_df.loc[0, "5G Cell name H"] = "NA"
+                                          SA_5G_df.loc[0, "5G Cell name I"] = "NA"
+
                               BB_config = df["MO"].str.extract(r"(?:NRCellDU|EUtranCell(?:FDD|TDD))=\w+_(F\d|T\d)")[0]
                               # print("BB_config:", BB_config)
                               if BB_config.str.contains(r"F1|F2|F3|T1|T2", na=False).any():
-                                    template_df.loc[0, "BB Conf."] = "LTE+NR"
-                              elif BB_config.str.contains(r"T1|T2", na=False).any():
-                                    template_df.loc[0, "BB Conf."] = "NR"
+                                    SA_5G_df.loc[0, "5G BB Config"] = "LTE+NR"
+                                    template_df.loc[0, "5G BB Config"] = "LTE+NR"
+                              elif BB_config.str.contains(r"5_EE_T1", na=False).any():
+                                    SA_5G_df.loc[0, "5G BB Config"] = "NR+NR"
+                                    template_df.loc[0, "5G BB Config."] = "NR"
                               
                               cell_count = df['MO'].str.extract(r'(GNBDUFunction)')
                               # print("Cell Count:", cell_count)
-                              template_df.loc[0, 'No. Of Cells'] = cell_count.count()[0] if cell_count.count()[0] else "NA"
+                              SA_5G_df.loc[0, "No. Of Cells"] = cell_count.count()[0] if cell_count.count()[0] else "NA"
+                              SA_5G_df.loc[0, "No Of RRU"] = cell_count.count()[0] if cell_count.count()[0] else "NA"
+
+                              template_df.loc[0, 'No of Cell'] = cell_count.count()[0] if cell_count.count()[0] else "NA"
                               template_df.loc[0, 'No Of RRU'] = cell_count.count()[0] if cell_count.count()[0] else "NA"
 
                         else:
@@ -515,7 +568,7 @@ def soft_at_5G_Summary_Ericsson(request):
                               template_df.loc[0, [
                                     "Technology", "Site ID (2G)", 
                                     "5G Cell name A", "5G Cell name B", "5G Cell name C",
-                                    "BB Conf.", "No. Of Cells", "No Of RRU"
+                                    "5G BB Config", "No of Cell","No. Of Cells", "No Of RRU"
                               ]] = "NA"
                         
                   if sheet_name == "get . Latitude":
@@ -527,6 +580,7 @@ def soft_at_5G_Summary_Ericsson(request):
                               print(f"'Value' column not found in sheet '{sheet_name}' for file: {file}")
                               latitude = "NA"
                         template_df.loc[0, "Site Latitude"] = latitude
+
                   
                   if sheet_name == "get . Longitude":
                         df = xls.parse(sheet_name)
@@ -537,6 +591,8 @@ def soft_at_5G_Summary_Ericsson(request):
                               longitude = "NA"
                         # print("Longitude:", longitude)
                         template_df.loc[0, "Site Longitude"] = longitude
+
+                        SA_5G_df.loc[0, "Site Lat/Long"] = f"{latitude}, {longitude}"
                         
                   if sheet_name == "Nrtac":
                         df = xls.parse(sheet_name)
@@ -546,6 +602,7 @@ def soft_at_5G_Summary_Ericsson(request):
                               print(f"'Value' column not found in sheet '{sheet_name}' for file: {file}")
                               tac = "NA"
                         # print("TAC:", tac)
+                        SA_5G_df.loc[0, "TAC"] = tac
                         template_df.loc[0, "TAC"] = tac
 
                   
@@ -557,37 +614,87 @@ def soft_at_5G_Summary_Ericsson(request):
                               print(f"'Value' column not found in sheet '{sheet_name}' for file: {file}")
                               gnb_id = "NA"
                         # print("GNB ID:", gnb_id)
-                        template_df.loc[0, "GNBID"] = gnb_id
+                        template_df.loc[0, "GNodebID"] = gnb_id
 
-                  
                   if sheet_name == "st termpointtoenode":
                         df = xls.parse(sheet_name)
-                        df.columns = df.columns.astype(str).str.strip()  # Clean column names
+                        df.columns = df.columns.astype(str).str.strip()
 
                         required_cols = {"Adm State", "Op. State", "MO"}
                         if required_cols.issubset(df.columns):
+
                               filtered_df = df[
                                     df["Adm State"].str.contains("UNLOCKED", na=False) &
                                     df["Op. State"].str.contains("ENABLED", na=False)
                               ].copy()
 
                               if not filtered_df.empty:
-                                    filtered_df["enodeid"] = filtered_df["MO"].str.extract(
-                                    r'ExternalENodeBFunction=auto404_\d+_\d+_(\d+)')
-                                    filtered_df.dropna(subset=["enodeid"], inplace=True)
 
-                                    # Take 15 random enodeids
-                                    result_df = (filtered_df.sample(
-                                    n=min(15, len(filtered_df)), random_state=1)["enodeid"].astype(int).sort_values().tolist())
+                                    # ---- Extract ENBID ----
+                                    filtered_df["Enbid"] = filtered_df["MO"].str.extract(
+                                    r'ExternalENodeBFunction=auto404_\d+_\d+_(\d+)'
+                                    ).astype(int)
 
-                                    print("Random ENBIDs:", result_df)
+                                    # ---- COUNT CELLS PER ENBID ----
+                                    enbid_count_df = (
+                                    filtered_df
+                                    .groupby("Enbid")
+                                    .size()
+                                    .reset_index(name="Count")
+                                    )
 
-                                    for idx, enbid in enumerate(result_df):
-                                          enbid_df.loc[idx, "Anchor node (EnbId)"] = enbid
+                                    # ---- Take max 15 ENBIDs randomly ----
+                                    enbid_count_df = (
+                                    enbid_count_df
+                                    .sample(n=min(15, len(enbid_count_df)), random_state=1)
+                                    .sort_values("Enbid")
+                                    .reset_index(drop=True) 
+                                    )
+
+                                    print(enbid_count_df)
+
+                                    # ---- Fill enbid_df ----
+                                    for idx, row in enbid_count_df.iterrows():
+                                          enbid_df.loc[idx, "Enbid"] = row["Enbid"]
+                                          enbid_df.loc[idx, "Count"] = row["Count"]
+
                               else:
                                     print(f"No matching unlocked/enabled ENBs in {file}")
                         else:
                               print(f"Missing required columns in 'st termpointtoenode' for file: {file}")
+
+
+                  
+                  # if sheet_name == "st termpointtoenode":
+                  #       df = xls.parse(sheet_name)
+                  #       df.columns = df.columns.astype(str).str.strip()  # Clean column names
+
+                  #       required_cols = {"Adm State", "Op. State", "MO"}
+                  #       if required_cols.issubset(df.columns):
+                  #             filtered_df = df[
+                  #                   df["Adm State"].str.contains("UNLOCKED", na=False) &
+                  #                   df["Op. State"].str.contains("ENABLED", na=False)
+                  #             ].copy()
+
+                  #             if not filtered_df.empty:
+                  #                   filtered_df["Enbid"] = filtered_df["MO"].str.extract(
+                  #                   r'ExternalENodeBFunction=auto404_\d+_\d+_(\d+)')
+                  #                   filtered_df.dropna(subset=["Enbid"], inplace=True)
+
+                  #                   # Take 15 random enbids
+                  #                   result_df = (filtered_df.sample(
+                  #                   n=min(15, len(filtered_df)), random_state=1)["Enbid"].astype(int).sort_values().tolist())
+
+                  #                   print("Random ENBIDs:", result_df)
+
+
+                  #                   for idx, enbid in enumerate(result_df):
+                  #                         enbid_df.loc[idx, "Enbid"] = enbid
+
+                  #             else:
+                  #                   print(f"No matching unlocked/enabled ENBs in {file}")
+                  #       else:
+                  #             print(f"Missing required columns in 'st termpointtoenode' for file: {file}")
 
 
 
@@ -627,16 +734,21 @@ def soft_at_5G_Summary_Ericsson(request):
                                     OSS = OSS_match.dropna().iloc[0, 0].strip().upper()
                                     OSS = OSS.replace("ENM", " ENM") if "ENM" in OSS else OSS
                                     OSS = OSS.replace("DEL", "DL") if "DEL" in OSS else OSS
-                                    template_df["OSS Name"] = template_df["OSS Name"].astype(object)
-                                    template_df.loc[0, "OSS Name"] = OSS
+                                    SA_5G_df.loc[0, "OSS Name"] = OSS
+                                    template_df["OSS/ENM Name"] = template_df["OSS/ENM Name"].astype(object)
+                                    template_df.loc[0, "OSS/ENM Name"] = OSS
                               else:
-                                    template_df["OSS Name"] = template_df["OSS Name"].astype(object)
-                                    template_df.loc[0, "OSS Name"] = "NA"
+                                    SA_5G_df.loc[0, "OSS Name"] = SA_5G_df.loc["OSS Name"].astype(object)
+                                    SA_5G_df.loc[0, "OSS Name"] = "NA"
+                                    template_df["OSS/ENM Name"] = template_df["OSS/ENM Name"].astype(object)
+                                    template_df.loc[0, "OSS/ENM Name"] = "NA"
                         else:
                               print(f"'Value' column not found in sheet 'get . Enroll' for file: {file}")
-                              template_df["OSS Name"] = template_df["OSS Name"].astype(object)
-                              template_df.loc[0, "OSS Name"] = "NA"
-                  
+                              # SA_5G_df.loc[0, "OSS Name"] = SA_5G_df.loc["OSS Name"].astype(object)
+                              SA_5G_df.loc[0, "OSS Name"] = "NA"
+                              template_df["OSS/ENM Name"] = template_df["OSS/ENM Name"].astype(object)
+                              template_df.loc[0, "OSS/ENM Name"] = "NA"
+
                   if "get 0" in xls.sheet_names:
                         df_0 = xls.parse("get 0", header=None)
 
@@ -647,26 +759,38 @@ def soft_at_5G_Summary_Ericsson(request):
                                     for cell in df_0.iloc[0]
                                     if isinstance(cell, str) and "ManagedElement=" in cell
                               )
+                              SA_5G_df.loc[0, "Site ID (5G/)/MRBTS ID"] = MO_name_0
+                              SA_5G_df.loc[0, "MO Name"] = MO_name_0
                               template_df.loc[0, "MO Name"] = MO_name_0
                               template_df.loc[0, "SiteID(5G/)/MRBTSID"] = MO_name_0
-                              enbid_df.loc[0, "5G Site ID"] = MO_name_0
+                              enbid_df["5G Site Id"] = (
+                                    MO_name_0 if isinstance(MO_name_0, str)
+                                    else MO_name_0.dropna().iloc[0] if not MO_name_0.dropna().empty
+                                    else "NA"
+                              )
+                              enbid_df["5G Site Id"] = enbid_df["5G Site Id"].ffill()
 
                               # Find SW Version
                               sw_version_rows = df_0[df_0.iloc[:, 0] == "swVersion"]
                               if not sw_version_rows.empty:
                                     sw_version = "L" + str(sw_version_rows.iloc[0, 1])
+                                    SA_5G_df.loc[0, "SW Version"] = sw_version
                                     template_df.loc[0, "SW Version"] = sw_version
                               else:
+                                    SA_5G_df.loc[0, "SW Version"] = "NA"
                                     template_df.loc[0, "SW Version"] = "NA"
                         else:
                               print(f"'get 0' sheet is empty in file: {file}")
                               template_df.loc[0, "MO Name"] = "NA"
                               template_df.loc[0, "SiteID(5G/)/MRBTSID"] = "NA"
-                              enbid_df.loc[0, "5G Site ID"] = "NA"
+                              enbid_df.loc[0, "5G Site Id"] = "NA"
+                              SA_5G_df.loc[0, "5G Site Id"] = "NA"
                               template_df.loc[0, "SW Version"] = "NA"
                   else:
                         template_df.loc[0, "MO Name"] = "NA"
                         template_df.loc[0, "SiteID(5G/)/MRBTSID"] = "NA"
+                        enbid_df.loc[0, "5G Site Id"] = "NA"
+                        SA_5G_df.loc[0, "5G Site Id"] = "NA"
                         template_df.loc[0, "SW Version"] = "NA"
 
             if sheet_name == "hget field prod":
@@ -683,17 +807,57 @@ def soft_at_5G_Summary_Ericsson(request):
                         print(f"'productName' column missing or sheet is empty in file: {file}")
                         template_df.loc[0, "Other Hardware Related Additional Information"] = "NA"
 
+            if sheet_name == "hget amf add":
+                  df = xls.parse(sheet_name)
+                  df.columns = df.columns.astype(str).str.strip()
+
+                  amf_ip = " , ".join(
+                        pd.concat([
+                              df.get("ipv6Address1", pd.Series()),
+                              df.get("ipv6Address2", pd.Series())
+                        ])
+                        .dropna()
+                        .astype(str)
+                        .tolist()
+                  )
+
+                  SA_5G_df.loc[0, "AMF IP"] = amf_ip if amf_ip else "NA"
+
+
 
                   today = datetime.date.today()
                   template_df.loc[0, "Offer Date"] = today.strftime("%d-%m-%Y")
                   df.columns = df.columns.astype(str).str.strip()  # Clean column names
                   if "IP_Addr" in df.columns:
                         ip_values = df["IP_Addr"].dropna()
+                        print("IP Values:", ip_values)
+                        SA_5G_df.loc[0, "5G Node IP"] = ip_values.iloc[0] if not ip_values.empty else "NA"
                         template_df.loc[0, "5G Node IP"] = ip_values.iloc[0] if not ip_values.empty else "NA"
+
                   else:
                         print(f"'IP_Addr' column not found in sheet for file: {file}")
+                        SA_5G_df.loc[0, "5G Node IP"] = "NA"
                         template_df.loc[0, "5G Node IP"] = "NA"
-                  template_df.loc[0, "AT Type"] = "Soft"
+                  SA_5G_df.loc[0,"AT Type"] = "Soft"
+                  SA_5G_df.loc[0,"OEM"] = "Ericsson"
+                  SA_5G_df.loc[0,"TSP"] = "Mobilecomm"
+                  SA_5G_df.loc[0,"Technology"] = "5G - Standalone"
+                  SA_5G_df.loc[0,"Ping command"] = "mcc Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR "
+                  SA_5G_df.loc[0,"Integration Date"] = datetime.date.today().strftime("%d-%m-%Y")
+                  SA_5G_df.loc[0,"On-Air Date"] = datetime.date.today().strftime("%d-%m-%Y")
+                  SA_5G_df.loc[0,"Offer Date"] = datetime.date.today().strftime("%d-%m-%Y")
+                  SA_5G_df.loc[0,"5G cell name nomenclature compliance"] = "YES"
+                  SA_5G_df.loc[0,"QIA Alarms : No active alarm ( except external alarm)/No false alarm in  iOMS or OSS Monitor"] = "NO"
+                  SA_5G_df.loc[0,"Xn interface Configuration check "] = "YES"
+                  SA_5G_df.loc[0, "Site should be on Latest Software release"] = "YES"
+                  SA_5G_df.loc[0, "5G should be properly configured and  should be enabled and unlocked in core nodes"] = "YES"
+                  SA_5G_df.loc[0, "Ping test towards AMF"] = "YES"
+                  SA_5G_df.loc[0, "Ping test towards UPF"] = "YES"
+                  SA_5G_df.loc[0, "CCTR / EBS Profile validation"] = "YES"
+                  SA_5G_df.loc[0, "SCTP Association should be UP"] = "YES"
+                  
+                  
+                  template_df.loc[0,"AT Type"] = "Soft"
                   template_df.loc[0, "Project Remarks"] = "On-Air"
                   template_df.loc[0, "MME IP"] = "Given in Separate Sheet"
                   template_df.loc[0, "SGW IP"] = "Given in Separate Sheet"
@@ -772,12 +936,23 @@ def soft_at_5G_Summary_Ericsson(request):
             output_filename = f"_{base_name}_OUTPUT_{timestamp}.xlsx"
             output_path = os.path.join(output_path, output_filename)
 
-            with pd.ExcelWriter(output_path, engine="xlsxwriter") as writer:
+            # with pd.ExcelWriter(output_path, engine="xlsxwriter") as writer:
                   
-                  template_df.to_excel(writer, sheet_name="Detail", index=False)
-                  format_excel_sheet(writer, "Detail", template_df)
+            #       SA_5G_df.to_excel(writer, sheet_name="5G SA", index=False)
+            #       format_excel_sheet(writer, "5G SA", SA_5G_df)
+            #       enbid_df.to_excel(writer, sheet_name="Anchor Node ENBID", index=False)
+            #       format_excel_sheet(writer, "Anchor Node ENBID", enbid_df)
+            #       template_df.to_excel(writer, sheet_name="Detail", index=False)
+            #       format_excel_sheet(writer, "Detail", template_df)
+            
+            with pd.ExcelWriter(output_path, engine="xlsxwriter") as writer:
+                  SA_5G_df.to_excel(writer, sheet_name="5G SA", index=False)
+                  format_excel_sheet(writer, "5G SA", SA_5G_df)
                   enbid_df.to_excel(writer, sheet_name="Anchor Node ENBID", index=False)
                   format_excel_sheet(writer, "Anchor Node ENBID", enbid_df)
+                  template_df.to_excel(writer, sheet_name="Detail", index=False)
+                  format_excel_sheet(writer, "Detail", template_df)
+
 
 
 
@@ -912,7 +1087,137 @@ def soft_at_5G_checkpoint(request):
                   r'^Total:\s\d+',
                   file_content
             )
-            print("invl_basic_df:- ", invl_basic_df)
+            
+            featureState_CXC4012559_df = explode_data_from_log(
+                  r'[A-Z0-9_-]+>\sget\sCXC4012559',
+                  r'^\s*(\d+)\s+([A-Za-z0-9=,]+)\s*$',
+                  r'^\s*([a-zA-Z0-9]+)\s+(.+?)\s*$',
+                  r'^Total:\s\d+\sMOs',
+                  file_content
+            )
+            # if not featureState_CXC4012559_df.empty:
+            #       expected_cols = featureState_CXC4012559_df.columns.tolist()
+            #       if len(expected_cols) >= 2:
+            #             featureState_CXC4012559_df.columns = ['MO', 'Attribute'] + expected_cols[2:]
+
+            featureState_CXC4012379_df = explode_data_from_log(
+                  r'[A-Z0-9_-]+>\sget\sCXC4012379',
+                  r'^\s*(\d+)\s+([A-Za-z0-9=,]+)\s*$',
+                  r'^\s*([a-zA-Z0-9]+)\s+(.+?)\s*$',
+                  r'^Total:\s\d+\sMOs',
+                  file_content
+            )
+
+            featureState_CXC4012475_df = explode_data_from_log(   
+                  r'[A-Z0-9_-]+>\sget\sCXC4012475',
+                  r'^\s*(\d+)\s+([A-Za-z0-9=,]+)\s*$',
+                  r'^\s*([a-zA-Z0-9]+)\s+(.+?)\s*$',
+                  r'^Total:\s\d+\sMOs',
+                  file_content
+            )
+            featureState_CXC4012531_df = explode_data_from_log(
+                  r'[A-Z0-9_-]+>\sget\sCXC4012531',
+                  r'^\s*(\d+)\s+([A-Za-z0-9=,]+)\s*$',
+                  r'^\s*([a-zA-Z0-9]+)\s+(.+?)\s*$',
+                  r'^Total:\s\d+\sMOs',
+                  file_content
+
+            )
+            featureState_CXC4012659_df = explode_data_from_log(
+                  r'[A-Z0-9_-]+>\sget\sCXC4012659',
+                  r'^\s*(\d+)\s+([A-Za-z0-9=,]+)\s*$',
+                  r'^\s*([a-zA-Z0-9]+)\s+(.+?)\s*$',
+                  r'^Total:\s\d+\sMOs',
+                  file_content
+            )
+            featureState_CXC4012729_df = explode_data_from_log(
+                  r'[A-Z0-9_-]+>\sget\sCXC4012729',
+                  r'^\s*(\d+)\s+([A-Za-z0-9=,]+)\s*$',
+                  r'^\s*([a-zA-Z0-9]+)\s+(.+?)\s*$',
+                  r'^Total:\s\d+\sMOs',
+                  file_content
+            )
+            feature_dfs = {
+                  "CXC4012559": featureState_CXC4012559_df,
+                  "CXC4012379": featureState_CXC4012379_df,
+                  "CXC4012475": featureState_CXC4012475_df,
+                  "CXC4012531": featureState_CXC4012531_df,
+                  "CXC4012659": featureState_CXC4012659_df,
+                  "CXC4012729": featureState_CXC4012729_df,
+                  }
+
+            for key, df in feature_dfs.items():
+                  if not df.empty and len(df.columns) >= 2:
+                        df.columns = ['MO', 'Attribute'] + df.columns.tolist()[2:]
+
+            # get_sNSSAIList_df = explode_data_from_log(
+            #       r'[A-Z0-9_-]+>\s*get\s+\.\s*sNSSAIList',
+            #       r'^(MO)\s+(Attribute)\s+(Value)$',
+            #       r'^\s*((?:NRCellCU|NRCellDU|GNBCUUPFunction)=[^\s]+)\s+'
+            #       r'(sNSSAIList)\s+'
+            #       r'(t\[\d+\]\s*=)',
+            #       r'^Total:\s+\d+\s+MOs',
+            #       file_content
+            #       )
+            # # -------- Struct Value Add ----------
+            # struct_text = " ".join([l.strip() for l in file_content if "Struct[" in l or ".sd" in l or ".sst" in l])
+ 
+            # struct_text = struct_text.replace(">>>","")
+            # struct_text = struct_text.replace("has 2 members:","")
+            # struct_text = struct_text.replace("1.","")
+            # struct_text = struct_text.replace("2.","")
+            # get_sNSSAIList_df["Value"] = get_sNSSAIList_df["Value"] + " " + struct_text
+            # print("get_sNSSAIList_df", get_sNSSAIList_df)
+            get_sNSSAIList_df = explode_data_from_log(
+                  r'[A-Z0-9_-]+>\s*get\s+\.\s*sNSSAIList',
+                  r'^(MO)\s+(Attribute)\s+(Value)$',
+                  r'^\s*((?:NRCellCU|NRCellDU|GNBCUUPFunction)=[^\s]+)\s+'
+                  r'(sNSSAIList)\s+'
+                  r'(t\[\d+\]\s*=)',
+                  r'^Total:\s+\d+\s+MOs',
+                  file_content
+                  )
+
+
+            if get_sNSSAIList_df is None or get_sNSSAIList_df.empty:
+                  get_sNSSAIList_df = pd.DataFrame()
+            else:
+                  if "Value" not in get_sNSSAIList_df.columns:
+                        get_sNSSAIList_df["Value"] = ""
+
+
+                  # -------- Struct Value Add ----------
+                  struct_text = " ".join(
+                  [l.strip() for l in file_content if "Struct[" in l or ".sd" in l or ".sst" in l]
+                  )
+
+                  struct_text = struct_text.replace(">>>", "")
+                  struct_text = struct_text.replace("has 2 members:", "")
+                  struct_text = struct_text.replace("1.", "")
+                  struct_text = struct_text.replace("2.", "")
+
+                  get_sNSSAIList_df["Value"] = get_sNSSAIList_df["Value"] + " " + struct_text
+
+
+                  # -------- SIMPLE CLEANING ----------
+                  get_sNSSAIList_df["Value"] = (
+                  get_sNSSAIList_df["Value"]
+                  .str.replace(r't\[\d+\]\s*=', '', regex=True)      # remove t[4] =
+                  .str.replace(r'Struct\[\d+\]', '', regex=True)    # remove Struct[3]
+                  .str.replace(r'\s+', ' ', regex=True)             # remove extra spaces
+                  .str.strip()
+                  )
+                  # keep only complete sd-sst pairs
+                  get_sNSSAIList_df["Value"] = get_sNSSAIList_df["Value"].str.findall(
+                  r'sd\s*=\s*\d+\s+sst\s*=\s*\d+'
+                  )
+
+                  # remove duplicates (keep order)
+                  get_sNSSAIList_df["Value"] = get_sNSSAIList_df["Value"].apply(
+                  lambda x: " ".join(dict.fromkeys(x))
+                  )
+                  print("get_sNSSAIList_df")
+                  print(get_sNSSAIList_df)
 
             sheets = {
                   'get . Latitude': Latitude_df,
@@ -921,7 +1226,14 @@ def soft_at_5G_checkpoint(request):
                   'get . Digitaltilt': Digitaltilt_df,
                   'invl basic': invl_basic_df,
 
-            }
+                  'get CXC4012559': featureState_CXC4012559_df,
+                  'get CXC4012379': featureState_CXC4012379_df,
+                  'get CXC4012475': featureState_CXC4012475_df,
+                  'get CXC4012531': featureState_CXC4012531_df,
+                  'get CXC4012659': featureState_CXC4012659_df,
+                  'get CXC4012729': featureState_CXC4012729_df,
+                  'get . sNSSAIList': get_sNSSAIList_df,
+                  }
             df_list = sheets.values()
             # print("df_list:- ",[df_list])
             all_files_df = pd.concat([all_files_df,*df_list], axis=0,ignore_index=True)
@@ -929,7 +1241,7 @@ def soft_at_5G_checkpoint(request):
             with pd.ExcelWriter(excel_filename, engine="xlsxwriter") as writer:
                   for sheet_name, df in sheets.items():
                         df.to_excel(writer, sheet_name=sheet_name, index=False)
-                        format_excel_sheet(writer, sheet_name, df)
+                        # format_excel_sheet(writer, sheet_name, df)
 
 ################################## Making the template file path and template file existance #######################################
             template_file_path = os.path.join(base_media_url, "template_file")
@@ -1050,13 +1362,212 @@ def soft_at_5G_checkpoint(request):
                               checklist_df.at[idx + 1, 'Remark'] = 'Missing'
                               checklist_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
+                  elif sheet_name == "get CXC4012559":
+                        df = xls.parse(sheet_name).copy()
+
+                        if required_columns_present(df, ["MO", "Attribute", "Node_ID"]):
+
+                              df.columns = df.columns.astype(str).str.strip()
+                              df["MO"] = df["MO"].astype(str).str.strip()
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+
+                              expected = {
+                                    "featureState": "1 (ACTIVATED)"
+                              }
+
+                              ok_status_list = df.apply(
+                                    lambda x: "OK" 
+                                    if x['MO'] in expected and x['Attribute'] == expected[x['MO']]
+                                    else "NOT OK" if x['MO'] in expected
+                                    else None,
+                                    axis=1
+                              ).dropna().tolist()
+
+                              site_id = df['Node_ID'].unique()[0] if 'Node_ID' in df.columns else None
+
+                              checklist_df.at[idx, 'Site_ID'] = site_id
+                              checklist_df.at[idx, 'Remark'] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              checklist_df.at[idx, 'Checkpoint'] = str(sheet_name)
+
+                        else:
+                              checklist_df.at[idx + 1, 'Remark'] = 'Missing'
+                              checklist_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                  
+                  
+                  elif sheet_name == "get CXC4012379":
+                        df = xls.parse(sheet_name).copy()
+
+                        if required_columns_present(df, ["MO", "Attribute", "Node_ID"]):
+
+                              df.columns = df.columns.astype(str).str.strip()
+                              df["MO"] = df["MO"].astype(str).str.strip()
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+
+                              expected = {
+                                    "featureState": "1 (ACTIVATED)"
+                              }
+
+                              ok_status_list = df.apply(
+                                    lambda x: "OK" 
+                                    if x['MO'] in expected and x['Attribute'] == expected[x['MO']]
+                                    else "NOT OK" if x['MO'] in expected
+                                    else None,
+                                    axis=1
+                              ).dropna().tolist()
+
+                              site_id = df['Node_ID'].unique()[0] if 'Node_ID' in df.columns else None
+
+                              checklist_df.at[idx, 'Site_ID'] = site_id
+                              checklist_df.at[idx, 'Remark'] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              checklist_df.at[idx, 'Checkpoint'] = str(sheet_name)
+
+                        else:
+                              checklist_df.at[idx + 1, 'Remark'] = 'Missing'
+                              checklist_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                  
+                  
+                  elif sheet_name == "get CXC4012475":
+                        df = xls.parse(sheet_name).copy()
+
+                        if required_columns_present(df, ["MO", "Attribute", "Node_ID"]):
+
+                              df.columns = df.columns.astype(str).str.strip()
+                              df["MO"] = df["MO"].astype(str).str.strip()
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+
+                              expected = {
+                                    "featureState": "1 (ACTIVATED)"
+                              }
+
+                              ok_status_list = df.apply(
+                                    lambda x: "OK" 
+                                    if x['MO'] in expected and x['Attribute'] == expected[x['MO']]
+                                    else "NOT OK" if x['MO'] in expected
+                                    else None,
+                                    axis=1
+                              ).dropna().tolist()
+
+                              site_id = df['Node_ID'].unique()[0] if 'Node_ID' in df.columns else None
+
+                              checklist_df.at[idx, 'Site_ID'] = site_id
+                              checklist_df.at[idx, 'Remark'] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              checklist_df.at[idx, 'Checkpoint'] = str(sheet_name)
+
+                        else:
+                              checklist_df.at[idx + 1, 'Remark'] = 'Missing'
+                              checklist_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                  
+                  
+                  elif sheet_name == "get CXC4012531":
+                        df = xls.parse(sheet_name).copy()
+
+                        if required_columns_present(df, ["MO", "Attribute", "Node_ID"]):
+
+                              df.columns = df.columns.astype(str).str.strip()
+                              df["MO"] = df["MO"].astype(str).str.strip()
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+
+                              expected = {
+                                    "featureState": "1 (ACTIVATED)"
+                              }
+
+                              ok_status_list = df.apply(
+                                    lambda x: "OK" 
+                                    if x['MO'] in expected and x['Attribute'] == expected[x['MO']]
+                                    else "NOT OK" if x['MO'] in expected
+                                    else None,
+                                    axis=1
+                              ).dropna().tolist()
+
+                              site_id = df['Node_ID'].unique()[0] if 'Node_ID' in df.columns else None
+
+                              checklist_df.at[idx, 'Site_ID'] = site_id
+                              checklist_df.at[idx, 'Remark'] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              checklist_df.at[idx, 'Checkpoint'] = str(sheet_name)
+
+                        else:
+                              checklist_df.at[idx + 1, 'Remark'] = 'Missing'
+                              checklist_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                  
+                  
+                  elif sheet_name == "get CXC4012659":
+                        df = xls.parse(sheet_name).copy()
+
+                        if required_columns_present(df, ["MO", "Attribute", "Node_ID"]):
+
+                              df.columns = df.columns.astype(str).str.strip()
+                              df["MO"] = df["MO"].astype(str).str.strip()
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+
+                              expected = {
+                                    "featureState": "1 (ACTIVATED)"
+                              }
+
+                              ok_status_list = df.apply(
+                                    lambda x: "OK" 
+                                    if x['MO'] in expected and x['Attribute'] == expected[x['MO']]
+                                    else "NOT OK" if x['MO'] in expected
+                                    else None,
+                                    axis=1
+                              ).dropna().tolist()
+
+                              site_id = df['Node_ID'].unique()[0] if 'Node_ID' in df.columns else None
+
+                              checklist_df.at[idx, 'Site_ID'] = site_id
+                              checklist_df.at[idx, 'Remark'] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              checklist_df.at[idx, 'Checkpoint'] = str(sheet_name)
+
+                        else:
+                              checklist_df.at[idx + 1, 'Remark'] = 'Missing'
+                              checklist_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
+                  
+                  
+                  elif sheet_name == "get . sNSSAIList":
+
+                        df = xls.parse(sheet_name).copy()
+                        if required_columns_present(df, ["MO", "Attribute","Value", "Node_ID"]):
+                              df.columns = df.columns.str.strip()
+                              print("=======", df.columns.tolist())
+                              
+                              df["MO"] = df["MO"].astype(str).str.strip()
+                              df["Attribute"] = df["Attribute"].astype(str).str.strip()
+                              df["Value"] = df["Value"].astype(str).str.strip()
+
+                              # Expected SD/SST combinations per MO
+                              expected = {
+                                    "NRCellDU": ["sd = 1 sst = 1", "sd = 2 sst = 1", "sd = 3 sst = 1", "sd = 4 sst = 1"],
+                                    "NRCellCU": ["sd = 1 sst = 1", "sd = 2 sst = 1", "sd = 3 sst = 1", "sd = 4 sst = 1"],
+                                    "GNBCUUPFunction": ["sd = 1 sst = 1", "sd = 2 sst = 1", "sd = 3 sst = 1", "sd = 4 sst = 1"]
+                              }
+
+                              # Function to determine status per row
+                              def check_status(row):
+                                    mo_base = row['MO'].split('=')[0]
+                                    if mo_base in expected:
+                                          return "OK" if all(ev in row['Value'] for ev in expected[mo_base]) else "NOT OK"
+                                    else:
+                                          return "UNKNOWN"
+
+                              ok_status_list = df.apply(check_status, axis=1).tolist()
+
+                              # Get unique site ID
+                              site_id = df['Node_ID'].unique()[0] if 'Node_ID' in df.columns else None
+
+                              # Update checklist_df
+                              checklist_df.at[idx, 'Site_ID'] = site_id
+                              checklist_df.at[idx, 'Remark'] = 'OK' if any(status == 'OK' for status in ok_status_list) else 'NOT OK'
+                              checklist_df.at[idx, 'Checkpoint'] = str(sheet_name)
+
+                        else:
+                              checklist_df.at[idx + 1, 'Remark'] = 'Missing'
+                              checklist_df.at[idx + 1, 'Checkpoint'] = str(sheet_name)
 
                   ####################################### getting folders for final output #########################################
             output_path = os.path.join(base_media_url, "OUTPUT")
 
             os.makedirs(output_path, exist_ok=True)
 
-            output_filename = f"_{base_name}_OUTPUT_{timestamp}.xlsx"
+            output_filename = f"_{base_name}{timestamp}.xlsx"
             output_path = os.path.join(output_path, output_filename)
 
             with pd.ExcelWriter(output_path, engine="xlsxwriter") as writer:

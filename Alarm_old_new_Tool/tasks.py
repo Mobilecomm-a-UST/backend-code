@@ -1,9 +1,9 @@
 from mailapp.tasks import send_email
 import pandas as pd
-
+ 
 def send_email_for_Alarm(df_combined_dict, output_path):
     """Sends a detailed alarm email showing Locked/Unlocked cells per Circle."""
-
+ 
     df_combined = pd.DataFrame(df_combined_dict)
     def extract_matched_cells(val):
         if pd.isna(val) or val == "":
@@ -12,12 +12,11 @@ def send_email_for_Alarm(df_combined_dict, output_path):
         if len(parts) == 2:
             return parts[0], parts[1]
         return ("", "")
-
+ 
     df_combined[["Matched_old", "Matched_new"]] = df_combined["Matched_Cells"].apply(
         lambda x: pd.Series(extract_matched_cells(x))
     )
-    # print(df_combined[["Matched_old", "Matched_new"]].head())
-
+ 
     circle_to_emails = {
         "KK": [
             'Karamalla.Valli@ust.com','Rahul.Charak@ust.com',
@@ -27,52 +26,46 @@ def send_email_for_Alarm(df_combined_dict, output_path):
             'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Pankaj.Singh@ust.com','Ramesh.ThodaDurga@ust.com',
             'SattaChandra.Shekar@ust.com','LingisettyVenkata.Kumar@ust.com','RudraHari.Krishna@ust.com'
         ],
-        "NESA": [
+        "NESA" or "AS": [
             'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Mohit.Kumar@ust.com','Manoj.Kumar3@ust.com'
         ],
-        "DL": [
+        "DEL": [
             'Nishant.Sharma2@ust.com','Vijay.Kumar2@ust.com',
             'Prateek.Saxena@ust.com','Harsh.Rajender@ust.com','Deepu.Sharma@ust.com'
         ],
         "JK" :['Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Manik.Mahajan@ust.com',
             'Lalit.Kaul@ust.com','Suman.Raman@ust.com','Namandeep.Singh@ust.com'
         ],
-        "CHN": ['S.Ramanathan@ust.com','A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
-
+        "ROTN" or "CHN": ['A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
+ 
         "HRY": ['Manoj.Kumar5@ust.com',"Umair.Wali@ust.com","Anil.Sharma@ust.com","Somnath.OmParkash@ust.com"],
-        "UPW" :['Sanjay.Pandey2@ust.com','Shivam.Mittal@ust.com','Shubham.Gupta2@ust.com']
+        "UPW" :['Sanjay.Pandey2@ust.com','Shivam.Mittal@ust.com','Shubham.Gupta2@ust.com'],
+        "RAJ" :['Raju.Maheshwari@ust.com','Manoj.Vishwakarma@ust.com','Pushkar.VimaljaKantShukla@ust.com']
     }
-
+ 
     cc_mails = [
-        'Abhinav.Verma@ust.com','Prerna.PramodKumar@ust.com','Mohit.Batra@ust.com',
+        'Prerna.PramodKumar@ust.com','Mohit.Batra@ust.com',
         'Deepak.KumarYadav@ust.com','Amit.rai@ust.com','Lalit.Namdev2@ust.com','Shashank.Rai@ust.com',
-        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com'
+        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com',"Vishal.Yadav@ust.com"
     ]
-    # circle_to_emails = {
-    #     "KK": ["Abhinav.Verma@ust.com"],
-    #     "AP": ["Abhinav.Verma@ust.com"],
-    #     "JK": ["Abhinav.Verma@ust.com"],
-    #     "DL": ["Abhinav.Verma@ust.com"],
-    # }
-
-    # cc_mails = ["Abhinav.Verma@ust.com", "Prerna.PramodKumar@ust.com"]
+ 
     cc_email = ";".join(cc_mails)
-
-
+ 
+ 
     def get_remark(row):
         old_state = str(row.get("4G Cell Status - Adm State_old", "")).strip().lower()
         new_state = str(row.get("4G Cell Status - Adm State_new", "")).strip().lower()
-
+ 
         matched_old = str(row.get("Matched_old", "")).strip()
         matched_new = str(row.get("Matched_new", "")).strip()
-
+ 
         if matched_old != "" and matched_new != "":
             if old_state == "locked" and new_state == "locked":
                 return "old/new locked"
             if old_state == "unlocked" and new_state == "unlocked":
                 return "old/new unlocked"
             return ""
-
+ 
         if old_state == "" and new_state == "locked":
             return "old down/new locked"
         if old_state == "" and new_state == "unlocked":
@@ -82,20 +75,20 @@ def send_email_for_Alarm(df_combined_dict, output_path):
         if old_state == "unlocked" and new_state == "":
             return "old unlocked/new down"
         return ""
-
+ 
     df_combined["Remark"] = df_combined.apply(get_remark, axis=1)
-
+ 
     # df_combined.to_excel("debug_combined.xlsx", index=False)
-
-
+ 
+ 
     # SUMMARY TABLE (Matched only)
-
+ 
     df_matched = df_combined[df_combined["Remark"].isin(["old/new locked", "old/new unlocked"])].copy()
-
+ 
     # Circles that actually exist in the dataframe
     circles_in_data = df_combined["Circle"].unique().tolist()
     full_summary = pd.DataFrame({"Circle": circles_in_data})
-
+ 
     if not df_matched.empty:
         matched_summary = (
             df_matched.groupby("Circle")["Remark"]
@@ -103,29 +96,29 @@ def send_email_for_Alarm(df_combined_dict, output_path):
             .unstack(fill_value=0)
             .reset_index()
         )
-
+ 
     # Ensure both columns exist
         for col in ["old/new locked", "old/new unlocked"]:
             if col not in matched_summary.columns:
                 matched_summary[col] = 0
-
+ 
     # Total impacted sites
         total_sites = (
             df_matched.groupby("Circle")["Site ID_old"]
             .nunique()
             .reset_index(name="Total Impacted Sites")
         )
-
+ 
         matched_summary = matched_summary.merge(total_sites, on="Circle", how="left")
-
+ 
     else:
         # If no matched rows, create an empty summary
         matched_summary = pd.DataFrame(columns=[
             "Circle", "old/new locked", "old/new unlocked", "Total Impacted Sites"
         ])
-
+ 
 # Final merge ensuring only data circles are shown
-
+ 
     matched_summary = (
         full_summary.merge(matched_summary, on="Circle", how="left")
         .fillna({
@@ -134,9 +127,9 @@ def send_email_for_Alarm(df_combined_dict, output_path):
             "Total Impacted Sites": 0
         })
     )
-
+ 
 # DOWN/UP CASES TABLE
-
+ 
     down_cases_list = [
         "old down/new locked", "old down/new unlocked",
         "old locked/new down", "old unlocked/new down",
@@ -144,9 +137,9 @@ def send_email_for_Alarm(df_combined_dict, output_path):
         "new locked/old down", "new unlocked/old down"
     ]
     df_down_cases = df_combined[df_combined["Remark"].isin(down_cases_list)].copy()
-
+ 
 # HTML TABLES
-
+ 
     def generate_matched_summary_html(df):
         if df.empty:
             return """
@@ -160,7 +153,7 @@ def send_email_for_Alarm(df_combined_dict, output_path):
                 </p>
             </div>
         """
-
+ 
         html = """
         <h3> Alarm Summary</h3>
         <table border="1" style="border-collapse: collapse; width:50%;">
@@ -189,9 +182,9 @@ def send_email_for_Alarm(df_combined_dict, output_path):
     table_df = df_combined[
         df_combined["Remark"].isin(valid_remarks)
     ][["Circle", "Site ID_old", "Cells_old", "Site ID_new", "Cells_new", "Remark"]].copy()
-
+ 
     # table_df.to_excel("debug_table_df.xlsx", index=False)
-    
+   
     def generate_matched_details_html(df):
         if table_df.empty:
             return """
@@ -231,7 +224,7 @@ def send_email_for_Alarm(df_combined_dict, output_path):
             """
         html += "</tbody></table>"
         return html
-
+ 
     def generate_down_cases_html(df_rows):
         if df_rows.empty:
             return "<p><b>No Down/Up cases found.</b></p>"
@@ -265,19 +258,17 @@ def send_email_for_Alarm(df_combined_dict, output_path):
             """
         html += "</tbody></table>"
         return html
-
+ 
     Summary_html = generate_matched_summary_html(matched_summary)
     Alarm_details_html = generate_matched_details_html(df_matched)
     down_cases_html = generate_down_cases_html(df_down_cases)
-
-    # EMAIL SENDING
-    print("Email Sending 274")
-
+ 
+ 
     for circle, circle_df in df_combined.groupby("Circle"):
         if circle not in circle_to_emails:
             continue
         subject = f"🔔 4G Alarm Summary Report - {circle}"
-
+ 
         to_email = ";".join(circle_to_emails[circle])
         body = f"""
         <html>
@@ -314,17 +305,17 @@ def send_email_for_Alarm(df_combined_dict, output_path):
         """
         try:
             print(f"📧 Sending email for {circle} → {to_email} (cc: {cc_email})")
-            send_email.delay(to_email, cc_email, subject, body, attachment_path=output_path, is_html=True)
+            send_email(to_email, cc_email, subject, body, attachment_path=output_path, is_html=True)
             print(f"✅ Email sent successfully for {circle}")
         except Exception as e:
             print(f"❌ Failed to send email for {circle}: {e}")
-        
-
+       
+ 
 # -------------------------------------------5G Alarm email function--------------------------------------------------
-
+ 
 def send_email_for_5G_Alarm(df_combined_dict, output_path):
     """Sends a detailed alarm email showing Locked/Unlocked cells per Circle."""
-
+ 
     df_combined = pd.DataFrame(df_combined_dict)
     def extract_matched_cells(val):
         if pd.isna(val) or val == "":
@@ -333,12 +324,11 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
         if len(parts) == 2:
             return parts[0], parts[1]
         return ("", "")
-
+ 
     df_combined[["Matched_old", "Matched_new"]] = df_combined["Matched_Cells"].apply(
         lambda x: pd.Series(extract_matched_cells(x))
     )
-    # print(df_combined[["Matched_old", "Matched_new"]].head())
-
+ 
     circle_to_emails = {
         "KK": [
             'Karamalla.Valli@ust.com','Rahul.Charak@ust.com',
@@ -348,55 +338,46 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
             'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Pankaj.Singh@ust.com','Ramesh.ThodaDurga@ust.com',
             'SattaChandra.Shekar@ust.com','LingisettyVenkata.Kumar@ust.com','RudraHari.Krishna@ust.com'
         ],
-        "NESA": [
+        "NESA" or "AS": [
             'Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Mohit.Kumar@ust.com','Manoj.Kumar3@ust.com'
         ],
-        "DL": [
+        "DEL": [
             'Nishant.Sharma2@ust.com','Vijay.Kumar2@ust.com',
             'Prateek.Saxena@ust.com','Harsh.Rajender@ust.com','Deepu.Sharma@ust.com'
         ],
         "JK" :['Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Manik.Mahajan@ust.com',
             'Lalit.Kaul@ust.com','Suman.Raman@ust.com','Namandeep.Singh@ust.com'
- 
         ],
-        "CHN": ['S.Ramanathan@ust.com','A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
+        "ROTN" or "CHN": ['A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
  
         "HRY": ['Manoj.Kumar5@ust.com',"Umair.Wali@ust.com","Anil.Sharma@ust.com","Somnath.OmParkash@ust.com"],
-        "UPW" :['Sanjay.Pandey2@ust.com','Shivam.Mittal@ust.com','Shubham.Gupta2@ust.com']
+        "UPW" :['Sanjay.Pandey2@ust.com','Shivam.Mittal@ust.com','Shubham.Gupta2@ust.com'],
+        "RAJ" :['Raju.Maheshwari@ust.com','Manoj.Vishwakarma@ust.com','Pushkar.VimaljaKantShukla@ust.com']
     }
  
     cc_mails = [
-        'Abhinav.Verma@ust.com','Prerna.PramodKumar@ust.com','Mohit.Batra@ust.com',
+        'Prerna.PramodKumar@ust.com','Mohit.Batra@ust.com',
         'Deepak.KumarYadav@ust.com','Amit.rai@ust.com','Lalit.Namdev2@ust.com','Shashank.Rai@ust.com',
-        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com'
+        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com',"Vishal.Yadav@ust.com"
     ]
-
-
-    # circle_to_emails = {
-    #     "KK": ["Abhinav.Verma@ust.com"],
-    #     "AP": ["Abhinav.Verma@ust.com"],
-    #     "JK": ["Abhinav.Verma@ust.com"],
-    #     "DL": ["Abhinav.Verma@ust.com"],
-    # }
-
-    # cc_mails = ["Abhinav.Verma@ust.com", "Prerna.PramodKumar@ust.com"]
+ 
     cc_email = ";".join(cc_mails)
-
-
+ 
+ 
     def get_remark(row):
         old_state = str(row.get("5G Cell Status - Adm State_old", "")).strip().lower()
         new_state = str(row.get("5G Cell Status - Adm State_new", "")).strip().lower()
-
+ 
         matched_old = str(row.get("Matched_old", "")).strip()
         matched_new = str(row.get("Matched_new", "")).strip()
-
+ 
         if matched_old != "" and matched_new != "":
             if old_state == "locked" and new_state == "locked":
                 return "old/new locked"
             if old_state == "unlocked" and new_state == "unlocked":
                 return "old/new unlocked"
             return ""
-
+ 
         if old_state == "" and new_state == "locked":
             return "old down/new locked"
         if old_state == "" and new_state == "unlocked":
@@ -406,19 +387,19 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
         if old_state == "unlocked" and new_state == "":
             return "old unlocked/new down"
         return ""
-
+ 
     df_combined["Remark"] = df_combined.apply(get_remark, axis=1)
-
+ 
     # df_combined.to_excel("debug_combined.xlsx", index=False)
-
+ 
     # SUMMARY TABLE (Matched only)
-
+ 
     df_matched = df_combined[df_combined["Remark"].isin(["old/new locked", "old/new unlocked"])].copy()
-
+ 
     # Circles that actually exist in the dataframe
     circles_in_data = df_combined["Circle"].unique().tolist()
     full_summary = pd.DataFrame({"Circle": circles_in_data})
-
+ 
     if not df_matched.empty:
         matched_summary = (
             df_matched.groupby("Circle")["Remark"]
@@ -426,27 +407,27 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
             .unstack(fill_value=0)
             .reset_index()
         )
-
+ 
         # Ensure both columns exist
         for col in ["old/new locked", "old/new unlocked"]:
             if col not in matched_summary.columns:
                 matched_summary[col] = 0
-
+ 
         # Total impacted sites
         total_sites = (
             df_matched.groupby("Circle")["Site ID_old"]
             .nunique()
             .reset_index(name="Total Impacted Sites")
         )
-
+ 
         matched_summary = matched_summary.merge(total_sites, on="Circle", how="left")
-
+ 
     else:
         # If no matched rows, create an empty summary
         matched_summary = pd.DataFrame(columns=[
             "Circle", "old/new locked", "old/new unlocked", "Total Impacted Sites"
         ])
-
+ 
     # Final merge ensuring only data circles are shown
     matched_summary = (
         full_summary.merge(matched_summary, on="Circle", how="left")
@@ -456,9 +437,9 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
             "Total Impacted Sites": 0
         })
     )
-
+ 
     # DOWN/UP CASES TABLE
-
+ 
     down_cases_list = [
         "old down/new locked", "old down/new unlocked",
         "old locked/new down", "old unlocked/new down",
@@ -466,9 +447,9 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
         "new locked/old down", "new unlocked/old down"
     ]
     df_down_cases = df_combined[df_combined["Remark"].isin(down_cases_list)].copy()
-
+ 
     # HTML TABLES
-
+ 
     def generate_matched_summary_html(df):
         if df.empty:
             return """
@@ -510,9 +491,9 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
     table_df = df_combined[
         df_combined["Remark"].isin(valid_remarks)
     ][["Circle", "Site ID_old", "Cells_old", "Site ID_new", "Cells_new", "Remark"]].copy()
-
+ 
     # table_df.to_excel("debug_table_df.xlsx", index=False)
-    
+   
     def generate_matched_details_html(df):
         if table_df.empty:
             return """
@@ -552,7 +533,7 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
             """
         html += "</tbody></table>"
         return html
-
+ 
     def generate_down_cases_html(df_rows):
         if df_rows.empty:
             return "<p><b>There has no Down Sites .</b></p>"
@@ -586,18 +567,18 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
             """
         html += "</tbody></table>"
         return html
-
+ 
     Summary_html = generate_matched_summary_html(matched_summary)
     Alarm_details_html = generate_matched_details_html(df_matched)
     down_cases_html = generate_down_cases_html(df_down_cases)
-
+ 
     # EMAIL SENDING
-
+ 
     for circle, circle_df in df_combined.groupby("Circle"):
         if circle not in circle_to_emails:
             continue
         subject = f"🔔 5G Alarm Summary Report  - {circle}"
-
+ 
         to_email = ";".join(circle_to_emails[circle])
         body = f"""
         <html>
@@ -613,11 +594,11 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
                 ">
                     🔔 Alarm Status Report — <span style="color:#333;">{circle}</span>
                 </h2>
-
+ 
                 {Summary_html}
                 {Alarm_details_html}
                 {down_cases_html}
-
+ 
                 <div style="
                     margin-top:35px;
                     padding:15px;
@@ -636,9 +617,7 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
         """
         try:
             print(f"📧 Sending email for {circle} → {to_email} (cc: {cc_email})")
-            send_email.delay(to_email, cc_email, subject, body, attachment_path=output_path, is_html=True)
+            send_email(to_email, cc_email, subject, body, attachment_path=output_path, is_html=True)
             print(f"✅ Email sent successfully for {circle}")
         except Exception as e:
             print(f"❌ Failed to send email for {circle}: {e}")
-
-
