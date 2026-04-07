@@ -2093,7 +2093,7 @@ def daily_dashboard_view(request):
                     # CF → before month_start
                     cf_count = SiteStatus.objects.filter(date__lt=month_start) \
                         .exclude(status__in=excluded_statuses) \
-                        .count()
+                        .values('site_id').distinct().count()
 
                     # AOP → before month_start (same logic here)
                     aop_count = cf_count
@@ -2107,7 +2107,7 @@ def daily_dashboard_view(request):
                 else:
                     aop_count = SiteStatus.objects.filter(date__lt=start_date) \
                         .exclude(status__in=excluded_statuses) \
-                        .count()
+                        .values('site_id').distinct().count()
 
                     cumulative = aop_count
                     row = {
@@ -2118,7 +2118,7 @@ def daily_dashboard_view(request):
                 for d in date_range:
                     count = SiteStatus.objects.filter(date=d) \
                         .exclude(status__in=excluded_statuses) \
-                        .count()
+                        .values('site_id').distinct().count()
 
                     cumulative += count
 
