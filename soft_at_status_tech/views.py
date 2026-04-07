@@ -889,6 +889,26 @@ def extract_data_from_log(request):
                     print("Formatted LTE Config:", formatted_config)
                     combined_config = formatted_config  # default to formatted_config
 
+                    nr_cells = df["MO"].str.extract(r"(?:EUtranCellTDD)=.*?(T\d)")[0]
+                    if not nr_cells.dropna().empty:
+ 
+                        t_counts = nr_cells.value_counts().sort_index()
+ 
+                        t_parts = "".join([f"{t}({c})" for t, c in t_counts.items()])
+ 
+                        formatted_config = "+".join(
+                            part for part in formatted_config.split("+")
+                            if not part.startswith("L23")
+                        )
+ 
+                        formatted_config = formatted_config + f"L23({t_parts})"
+ 
+ 
+                    print("Formatted LTE+NR Config:", formatted_config)
+ 
+                    combined_config = formatted_config
+
+ 
 
                 if "st trx" in xls.sheet_names:
                     trx_df = xls.parse("st trx")
@@ -952,50 +972,121 @@ def extract_data_from_log(request):
                 
                 else:
                     template_df.loc[0, "Layers(Other Tech Info)"] = "_".join(sorted(set(l_layers))) if l_layers else "NA"
-
+                
                 MO_name_0 = "NA"
-
                 MO_names = []
 
                 if "get 0" in xls.sheet_names:
                     df_0 = xls.parse("get 0", header=None)
 
-                    MO_name_0 = "/".join(
-                        cell.split("=")[-1]
-                        for cell in df_0.iloc[0]
-                        if isinstance(cell, str) and "ManagedElement=" in cell
-                    )
+                    # First try with ManagedElement=
+                    first_row_values = [cell for cell in df_0.iloc[0] if isinstance(cell, str)]
+
+                    managed_element_values = [
+                        cell.split("=")[-1].strip()
+                        for cell in first_row_values
+                        if "ManagedElement=" in cell
+                    ]
+
+                    if managed_element_values:
+                        MO_name_0 = "/".join(managed_element_values)
+
+                    else:
+                        # If ManagedElement not found, try ManagedElementId=
+                        managed_element_id_values = [
+                            cell.split("=")[-1].strip()
+                            for cell in first_row_values
+                            if "ManagedElementId=" in cell
+                        ]
+
+                        if managed_element_id_values:
+                            MO_name_0 = "/".join(managed_element_id_values)
+
                     MO_names.append(MO_name_0)
                     print("MO Name 0:", MO_name_0)
                     template_df.loc[0, "MO Name"] = MO_name_0
 
+                    # SW Version
+                    sw_row = df_0[df_0.iloc[:, 1] == "swVersion"]
+                    template_df.loc[0, "SW Version"] = sw_row.iloc[0, 2] if not sw_row.empty else "NA"
 
-                    template_df.loc[0, "SW Version"] = df_0[df_0.iloc[:, 1] == "swVersion"].iloc[0, 2]
-                    physical_site = df_0[df_0.iloc[:, 1] == "userLabel"].iloc[0, 2]
-                    template_df.loc[0, "Physical Site Id"] = physical_site
+                    # Physical Site Id
+                    site_row = df_0[df_0.iloc[:, 1] == "userLabel"]
+                    template_df.loc[0, "Physical Site Id"] = site_row.iloc[0, 2] if not site_row.empty else "NA"
 
-                    # Check for GSMSEC data
+                    # GSMSEC logic
                     if "get . gsmsec" in xls.sheet_names:
-                        if template_df.loc[0, "Circle"] == "DL":
+                        if str(template_df.loc[0, "Circle"]).strip().upper() == "DL":
                             df_gsmsec = xls.parse("get . gsmsec")
-                            sector_names = df_gsmsec[df_gsmsec["Attribute"] == "gsmSectorName"]["Value"]
 
-                            prefixes = (
-                                sector_names.dropna()
-                                .str.extract(r"([A-Z]+\d+)")[0]
-                                .dropna()
-                                .unique()
-                            )
+                            if "Attribute" in df_gsmsec.columns and "Value" in df_gsmsec.columns:
+                                sector_names = df_gsmsec[df_gsmsec["Attribute"] == "gsmSectorName"]["Value"]
 
-                            MO_name_gsmsec = ",".join(prefixes)
-                            MO_names.append(MO_name_gsmsec)
+                                prefixes = (
+                                    sector_names.dropna()
+                                    .astype(str)
+                                    .str.extract(r"([A-Z]+\d+)")[0]
+                                    .dropna()
+                                    .unique()
+                                )
+
+                                if len(prefixes) > 0:
+                                    MO_name_gsmsec = ",".join(prefixes)
+                                    MO_names.append(MO_name_gsmsec)
 
                             final_MO_name = " / ".join(filter(None, MO_names))
                             print("Final MO Name:", final_MO_name)
-
                             template_df.loc[0, "MO Name"] = final_MO_name
+                        else:
+                            template_df.loc[0, "MO Name"] = MO_name_0
                 else:
-                    template_df.loc[0, "MO Name"] = MO_name_0
+                    template_df.loc[0, "MO Name"] = "NA"
+
+                # MO_name_0 = "NA"
+
+                # MO_names = []
+
+                # if "get 0" in xls.sheet_names:
+                #     df_0 = xls.parse("get 0", header=None)
+
+                #     MO_name_0 = "/".join(
+                #         cell.split("=")[-1]
+                #         for cell in df_0.iloc[0]
+                #         if isinstance(cell, str) and "ManagedElement=" in cell
+                #     )
+                #     MO_names.append(MO_name_0)
+                #     print("MO Name 0:", MO_name_0)
+                #     template_df.loc[0, "MO Name"] = MO_name_0
+
+
+                #     template_df.loc[0, "SW Version"] = df_0[df_0.iloc[:, 1] == "swVersion"].iloc[0, 2]
+                #     physical_site = df_0[df_0.iloc[:, 1] == "userLabel"].iloc[0, 2]
+                #     template_df.loc[0, "Physical Site Id"] = physical_site
+
+                #     # Check for GSMSEC data
+                #     if "get . gsmsec" in xls.sheet_names:
+                #         if template_df.loc[0, "Circle"] == "DL":
+                #             df_gsmsec = xls.parse("get . gsmsec")
+                #             sector_names = df_gsmsec[df_gsmsec["Attribute"] == "gsmSectorName"]["Value"]
+
+                #             prefixes = (
+                #                 sector_names.dropna()
+                #                 .str.extract(r"([A-Z]+\d+)")[0]
+                #                 .dropna()
+                #                 .unique()
+                #             )
+
+                #             MO_name_gsmsec = ",".join(prefixes)
+                #             MO_names.append(MO_name_gsmsec)
+
+                #             final_MO_name = " / ".join(filter(None, MO_names))
+                #             print("Final MO Name:", final_MO_name)
+
+                #             template_df.loc[0, "MO Name"] = final_MO_name
+                #         else :
+                #             template_df.loc[0, "MO Name"] = "NA"
+                # else:
+                #     template_df.loc[0, "MO Name"] = MO_name_0
 
                 
                         
@@ -1136,8 +1227,8 @@ def extract_data_from_log(request):
 
                     cpri_length_as_per_mo = "/".join(
                         [
-                            str(round_to_nearest_5(int(value)))
-                            for i, value in enumerate(cprilength)
+                    str(round_to_nearest_5(int(float(value)))) 
+                    for i, value in enumerate(cprilength)
                         ]
                     )
                     
@@ -1369,7 +1460,7 @@ def extract_data_from_log(request):
 
                 os.makedirs(output_path, exist_ok=True)
 
-                output_filename = f"_{base_name}_OUTPUT_{timestamp}.xlsx"
+                output_filename = f"{base_name}.xlsx"
                 output_path = os.path.join(output_path, output_filename)
 
                 with pd.ExcelWriter(output_path, engine="xlsxwriter") as writer:

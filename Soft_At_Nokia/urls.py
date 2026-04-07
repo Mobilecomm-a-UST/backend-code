@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from Soft_At_Nokia.views import *
+from .views import *
 
 
 urlpatterns = [
@@ -16,4 +16,7 @@ urlpatterns = [
     path('get_summary/', get_summary_data, name="get_summary_data"),
     path('upload_summary_xml_files/', upload_summary_xml_files, name="upload_summary_xml_files"),
     path('user_count/', user_count, name="user_count"),
+    #---------------------------------------------------5G Api---------------------------------------------------
+    path("5G_Summary_nokia/", upload_summary_xml_files_5G, name="upload_summary_xml_files_5G"),
+    path("5G_Checklist_nokia/", upload_checklist_xml_files_5G, name="upload_checklist_xml_files_5G"),
 ]

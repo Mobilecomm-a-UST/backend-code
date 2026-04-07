@@ -9,11 +9,34 @@ from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 from rest_framework import status
 import shutil
 from datetime import datetime
- 
- 
- 
- 
- 
+
+
+#function for clean alarm data
+Remove_alarm = {"external", "security", "xnc"}
+Piu_eternet = re.compile(r"ethernetport=tn_[a-z]_piu", re.IGNORECASE)
+
+def specific_problem(val, mo_val):
+    if pd.isna(val):
+        return val
+
+    parts = [p.strip() for p in val.split("/")]
+
+    if (
+        any(p.lower() == "ethernet" for p in parts)
+        and isinstance(mo_val, str)
+        and Piu_eternet.search(mo_val)
+    ):
+        return "No Alarm"
+
+    if all(p.lower() in Remove_alarm for p in parts):
+        return "No Alarm"
+    cleaned = [p for p in parts if p.lower() not in Remove_alarm]
+
+    if not cleaned:
+        return "No Alarm"
+
+    return "/".join(cleaned)
+
  
 def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
     """Apply formatting to an Excel sheet with adjustable start positions."""
@@ -54,6 +77,7 @@ def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
             "valign": "center",
         }
     )
+
  
     worksheet.set_row(startrow, 23)
  
@@ -143,15 +167,76 @@ def upload_5g_log_file(request):
             for chunk in file.chunks():
                 destination.write(chunk)
  
-    def extract_sync_status(content):
-        sync_ok = False
-        sync_lines = []
-        for line in content.splitlines():
-            if "TimeSyncIO=1" in line and "1 (ENABLED)" in line:
-                sync_ok = True
-                sync_lines.append(line.strip())
-        return "OK" if sync_ok else "NOT OK"
+    # def extract_sync_status(content):
+    #     sync_ok = False
+    #     sync_lines = []
+    #     for line in content.splitlines():
+    #         if "TimeSyncIO=1" in line and "1 (ENABLED)" in line:
+    #             sync_ok = True
+    #             sync_lines.append(line.strip())
+    #     return "OK" if sync_ok else "NOT OK"
+
+
  
+    def extract_time_phase_status(content):
+        match = re.search(r'timeAndPhaseSynchAlignment\s+(true|false)', content, re.IGNORECASE)
+
+        if match and match.group(1).lower() == "true":
+            return "OK"
+        else:
+            return "NOT OK"
+    
+    def extract_amf_status(content):
+        pattern = re.compile(
+            r'\d+\s+\d+\s+\((UNLOCKED|LOCKED)\)\s+\d+\s+\((ENABLED|DISABLED)\)\s+GNBCUCPFunction=\d+,TermPointToAmf=\d+',
+            re.IGNORECASE
+        )
+
+        matches = pattern.findall(content)
+
+        if not matches:
+            return "NOT OK"
+
+        for adm, op in matches:
+            if adm.upper() != "UNLOCKED" or op.upper() != "ENABLED":
+                return "NOT OK"
+
+        return "OK"
+    
+
+    def extract_snssai_status(content):
+
+        # Extract NRCellCU / NRCellDU blocks containing sNSSAIList
+        blocks = re.findall(
+            r'(NRCellC[UD][\s\S]*?sNSSAIList[\s\S]*?)(?=\nNRCellC[UD]|$)',
+            content
+        )
+
+        if not blocks:
+            return "NOT OK"
+
+        required_sd = {'1', '2', '3', '4'}
+        required_sst = {'1'}
+
+        for block in blocks:
+
+            # extract sd values
+            sd_values = re.findall(r'\.\s*sd\s*=\s*(\d+)', block)
+
+            # extract sst values
+            sst_values = re.findall(r'\.\s*sst\s*=\s*(\d+)', block)
+
+            sd_set = set(sd_values)
+            sst_set = set(sst_values)
+
+            if not required_sd.issubset(sd_set):
+                return "NOT OK"
+
+            if not required_sst.issubset(sst_set):
+                return "NOT OK"
+
+        return "OK"
+    
     def extract_site_id_from_cell_name(cell_name):
         match = re.search(r'_([A-Za-z0-9]{5,12})[A-Z]_', cell_name)
         return match.group(1) if match else ""
@@ -159,7 +244,8 @@ def upload_5g_log_file(request):
     def extract_circle_from_cell_name(cell_name):
         match = re.match(r'([A-Z]+)_', cell_name)
         return match.group(1) if match else "Unknown"
- 
+    
+
     def parse_cell_block(content):
         pattern = re.compile(
             r'\d+\s+\d+ \((?P<adm_state>UNLOCKED|LOCKED)\)\s+'
@@ -187,6 +273,29 @@ def upload_5g_log_file(request):
             })
         return cells
  
+    def site_down_5g(content, site_id="Unknown"):
+        site_down = []
+
+        ip_match = re.search(
+            r'Logging to file .*?/([\w\.]+)\.log',
+            content
+        )
+
+        ip_address = ip_match.group(1) if ip_match else "IP Not Found"
+
+        if "Checking ip contact...Not OK" in content:
+            status = "Unable to connect"
+        elif "Checking ip contact...OK" in content:
+            status = "OK"
+        else:
+            status = "NOT OK"
+
+        site_down.append({
+            "IP Address": ip_address,
+            "Status": status
+        })
+        return site_down
+    
     def extract_alarms_from_alt(content, site_id="Unknown"):
         alarms = []
         node_id_match = re.search(r'(\S+)>[\s]*alt', content)
@@ -198,7 +307,7 @@ def upload_5g_log_file(request):
         alarm_pattern = re.compile(r'''
             ^\s*
             (?P<dt>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})
-            \s+(?P<sev>[Mm])
+            \s+(?P<sev>[A-Za-z])
             \s+(?P<prob>.+?)
             \s+(?P<mo>[^()]+?)
             (?:\s*\(\s*(?P<add>.*?)\))?
@@ -220,6 +329,7 @@ def upload_5g_log_file(request):
  
     all_rows = []
     all_alarms = []
+    site_down = []
  
     for log_file in os.listdir(log_folder):
         log_file_path = os.path.join(log_folder, log_file)
@@ -231,11 +341,64 @@ def upload_5g_log_file(request):
  
         node_match = re.search(r'([\w:-]+)(?=>\s*alt)', content_5g)
         node_id = node_match.group(1) if node_match else "No ID found"
- 
-        sync_status = extract_sync_status(content_5g)
+        
+        def extract_plmnr_cellwise(content_5g):
+            results = {}
+
+            # 4G cells
+            pattern_4g = re.compile(
+                r"(EUtranCellFDD=\S+|EUtranCellTDD=\S+)\s+(?:additionalPlmnReservedList.*?=\s*(.+?)\s|primaryPlmnReserved\s+(true|false))",
+                re.IGNORECASE
+            )
+            for match in pattern_4g.finditer(content_5g):
+                mo = match.group(1).strip()
+                values = []
+                if match.group(2):
+                    values.extend(match.group(2).split())
+                if match.group(3):
+                    values.append(match.group(3))
+                results[mo] = "true" if any(v.lower() == "true" for v in values) else "false"
+
+            # 5G cells (NRCellCU)
+            pattern_5g = re.compile(
+                r"NRCellCU=(\S+?),NRFreqRelation=.*?plmnRestriction\s+(true|false)",
+                re.IGNORECASE
+            )
+            for match in pattern_5g.finditer(content_5g):
+                mo = f"NRCellCU={match.group(1).strip()}"
+                val = match.group(2).lower()
+                results[mo] = "true" if val == "true" else "false"
+
+            return results
+
+
+
+
+        
+        
+        plmnr_status = extract_plmnr_cellwise(content_5g)
+        sync_status = extract_time_phase_status(content_5g)
+        amf_status = extract_amf_status(content_5g)
+        snssai_status = extract_snssai_status(content_5g)
         cells_5g = parse_cell_block(content_5g)
  
         for cell in cells_5g:
+            cell_name = cell['Cell Name']
+            possible_keys = [
+                f"EUtranCellFDD={cell_name}",
+                f"EUtranCellTDD={cell_name}",
+                f"NRCellCU={cell_name}"
+            ]
+
+            # Default false, update if any match found
+            plmnr_value = "NA"
+            for key in possible_keys:
+                if key in plmnr_status:
+                    plmnr_value = plmnr_status[key]
+                    break
+        
+            # print(f"cell_name:{cell_name}---------plmnr_value:{plmnr_value}")
+          
             row = {
                 ("Circle", ""): cell['Circle'],
                 ("2G Site ID", ""): cell['Site ID'],
@@ -246,20 +409,39 @@ def upload_5g_log_file(request):
                 ("5G Cell Status", "Op. State"): cell['Op. State'],
                 ("Cells", ""): cell['Cell Name'],
                 ("SYNC", "Status"): sync_status,
-                ("Cell Type", ""): cell["Cell Type"]
+                ("AMF", "Status"): amf_status,
+                ("sNSSAI", "Status"): snssai_status,
+                ("Cell Type", ""): cell["Cell Type"],
+                ("PLMNR_Status", ""): plmnr_value
             }
             all_rows.append(row)
+            # site_id = cell['Site ID']
+            # alarms = extract_alarms_from_alt(content_5g, site_id)
+            # all_alarms.extend(alarms)
+        # alarms cell wise
+        for cell in cells_5g:
             site_id = cell['Site ID']
             alarms = extract_alarms_from_alt(content_5g, site_id)
             all_alarms.extend(alarms)
- 
+        # site down always check
+        site_down.extend(site_down_5g(content_5g))
+        
     columns = [
         ("Circle", ""), ("2G Site ID", ""), ("5G Site ID", ""), ("5G Node IP", ""),
         ("5G Node ID", ""), ("5G Cell Status", "Adm State"), ("5G Cell Status", "Op. State"),
-        ("Cells", ""), ("SYNC", "Status"), ("Cell Type", "")
+        ("Cells", ""),
+        ("SYNC", "Status"), 
+        ("AMF", "Status"),
+        ("sNSSAI", "Status"),
+        ("Cell Type", ""),("PLMNR_Status", "")
     ]
     multi_index = pd.MultiIndex.from_tuples(columns)
-    df_5g = pd.DataFrame(all_rows, columns=multi_index)
+    if all_rows:
+        df_5g = pd.DataFrame(all_rows)
+    else:
+        df_5g = pd.DataFrame(columns=multi_index) 
+
+    # df_5g = pd.DataFrame(all_rows, columns=multi_index)
     df_5g.columns = [' - '.join(filter(None, col)).strip() for col in df_5g.columns.values]
  
     df_alarms = pd.DataFrame(all_alarms)
@@ -287,24 +469,49 @@ def upload_5g_log_file(request):
             "IP", "Site ID", "Node ID", "Date & Time", "Severity",
             "Specific Problem", "MO", "Additional"
         ])
- 
+
+    if site_down:
+        site_down_df = pd.DataFrame(site_down).drop_duplicates()
+    else:
+        site_down_df = pd.DataFrame(columns=["IP Address", "Status"])
+    
+    # df_alarms["Specific Problem"] = df_alarms.apply(
+    #     lambda r: specific_problem(r["Specific Problem"], r["MO"]),
+    #     axis=1
+    # )     
+    
  
     circles = sorted(set(
         row[('Circle', '')].strip().upper().replace(" ", "_")
         for row in all_rows if row.get(('Circle', ''))
     ))
-    circle_name = "".join(circles) if len(circles) > 1 else circles[0]
+
+    if not circles:
+        circle_name = circle.upper().replace(" ", "_")
+    elif len(circles) > 1:
+        circle_name = "".join(circles)
+    else:
+        circle_name = circles[0]    
+
     output_filename = f"5G_Alarm_Logs_{circle}.xlsx"
     output_path = os.path.join(circle_based_output_path, output_filename)
  
     with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
-        df_5g.to_excel(writer, index=False, sheet_name="5G Cells")
+        df_5g["Cells"] = df_5g["Cells"].astype(str)
+        df_5g = df_5g[df_5g["Cells"].str.contains("_5_", na=False)]
+        df_5g["5G Site ID"] =df_5g["5G Node ID"].astype(str).str.split("-").str[1]
+        df_5g.drop(columns=["2G Site ID"], inplace=True)
         df_alarms.to_excel(writer, index=False, sheet_name="Alarms")
+        site_down_df.to_excel(writer, index=False, sheet_name="Site Down")
+        df_5g.to_excel(writer, index=False, sheet_name="5G Cells")
+
+        format_excel_sheet(writer, 'Site Down', site_down_df)
         format_excel_sheet(writer, '5G Cells', df_5g)
         format_excel_sheet(writer, 'Alarms', df_alarms)
- 
-    relative_path = os.path.join("media", "Universal_alarm", output_filename)
-    download_link = request.build_absolute_uri("/" + relative_path.replace("\\", "/"))
+    # After saving Excel:
+    relative_path = os.path.relpath(output_path, MEDIA_ROOT)
+    download_link = request.build_absolute_uri("/media/" + relative_path.replace("\\", "/"))
+
  
     print("✅ Excel saved:", output_path)
     return Response({
@@ -312,19 +519,15 @@ def upload_5g_log_file(request):
         "download_link": download_link,
         "status": True
     })
- 
+
 ############################################################################################################################
- 
- 
+
 def delete_existing_files(upload_files):  # noqa: F811
     for file_name in os.listdir(upload_files):
         file_path = os.path.join(upload_files, file_name)
         if os.path.isfile(file_path):
             os.remove(file_path)
- 
- 
- 
- 
+
 @api_view(['POST'])
 def upload_4g_log_file(request):
     if request.method != 'POST':
@@ -383,18 +586,27 @@ def upload_4g_log_file(request):
             band_code = match.group(1)
             return band_map.get(band_code, "")
         return ""
-    def extract_4g_sync_status(content_4g):
-        sync_ok = False
-        sync_lines = []
+    # def extract_4g_sync_status(content_4g):
+    #     sync_ok = False
+    #     sync_lines = []
  
-        for line in content_4g.splitlines():
-            if "TimeSyncIO=1" in line and "1 (ENABLED)" in line:
-                sync_ok = True
-                sync_lines.append(line.strip())
+    #     for line in content_4g.splitlines():
+    #         if "TimeSyncIO=1" in line and "1 (ENABLED)" in line:
+    #             sync_ok = True
+    #             sync_lines.append(line.strip())
  
-        print("🧪 Sync lines found:", sync_lines)
+    #     print("🧪 Sync lines found:", sync_lines)
  
-        return "OK" if sync_ok else "NOT OK"
+    #     return "OK" if sync_ok else "NOT OK"
+
+    def extract_time_phase_status(content_4g):
+        match = re.search(r'timeAndPhaseSynchAlignment\s+(true|false)', content_4g, re.IGNORECASE)
+
+        if match and match.group(1).lower() == "true":
+            return "OK"
+        else:
+            return "NOT OK"
+    
     def extract_4g_site_id_from_cell_name(cell_name):
    
         match = re.search(r'_([A-Za-z0-9]{5,12})[A-Z]_', cell_name)
@@ -408,27 +620,51 @@ def upload_4g_log_file(request):
 
  
  
+    # def site_down_4g(content_4g, site_id="Unknown"):
+       
+    # #   def site_down_4g(content_4g, site_id="Unknown"):
+    #     site_down=[]
+    #     ip_match = re.search(
+    #     # r'\d{6}-\d{2}:\d{2}:\d{2}[+|-]\d{4}\s+([a-fA-F0-9:.]+)',
+    #      r'Logging to file .+?/([a-fA-F0-9:.]+)\.log',
+       
+    #     content_4g)
+    #     ip_address = ip_match.group(1) if ip_match else "IP Not Found"
+    #     status = "OK" if "Checking ip contact...OK" in content_4g else "NOT OK"
+       
+    #     site_down.append(
+    #         {
+    #             "Status": status,
+    #             "IP Address": ip_address,
+        
+    #         }
+    #     )
+    #     return site_down
+
     def site_down_4g(content_4g, site_id="Unknown"):
-       
-    #   def site_down_4g(content_4g, site_id="Unknown"):
-        site_down=[]
+        site_down = []
+
         ip_match = re.search(
-        # r'\d{6}-\d{2}:\d{2}:\d{2}[+|-]\d{4}\s+([a-fA-F0-9:.]+)',
-         r'Logging to file .+?/([a-fA-F0-9:.]+)\.log',
-       
-        content_4g)
-        ip_address = ip_match.group(1) if ip_match else "IP Not Found"
-        status = "OK" if "Checking ip contact...OK" in content_4g else "NOT OK"
-       
-        site_down.append(
-            {
-                "Status": status,
-                "IP Address": ip_address,
-           
-            }
+            r'Logging to file .*?/([\w\.]+)\.log',
+            content_4g
         )
+
+        ip_address = ip_match.group(1) if ip_match else "IP Not Found"
+
+        if "Checking ip contact...Not OK" in content_4g:
+            status = "Unable to connect"
+        elif "Checking ip contact...OK" in content_4g:
+            status = "OK"
+        else:
+            status = "NOT OK"
+
+        site_down.append({
+            "IP Address": ip_address,
+            "Status": status
+        })
+
         return site_down
-   
+
     def extract_4galarms_from_alt(content, site_id="Unknown"):
         alarms = []
  
@@ -446,7 +682,7 @@ def upload_4g_log_file(request):
         alarm_pattern = re.compile(r'''
             ^\s*
             (?P<dt>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})  
-            \s+(?P<sev>[Mm])                              
+            \s+(?P<sev>[A-Za-z])                              
             \s+(?P<prob>.+?)                              
             \s+(?P<mo>[^()]+?)                            
             (?:\s*\(\s*(?P<add>.*?)\))?                  
@@ -468,25 +704,24 @@ def upload_4g_log_file(request):
         print(f"✅ Extracted {len(alarms)} alarms for IP: {ip}")
         return alarms
     ##############################################################
- 
+
+    import re
+
     def extract_all_2g_trx_status(content):
+
         pattern = re.compile(
             r'GsmSector=\d+,Trx=([A-Z0-9-]+)\s+abisTsState\s+i\[\d+\]\s*=\s*[\d\s]+\(([A-Z\s]+)\)',
-            # r'GsmSector=\d+,Trx=([A-Z0-9-]+)\s+abisTsState\s+i\[\d+\]\s*=\s*[\d\s]+\(([A-Z\s]+)\)',
             re.IGNORECASE
         )
- 
-        # trx_status_list = []
+
         trx_status_dict = {}
- 
+
         for match in pattern.finditer(content):
             trx_name = match.group(1)
             raw_statuses = match.group(2).split()
- 
-            # Assume majority value or just pick first (can adjust logic here)
-            # unique_statuses = set(s.upper() for s in raw_statuses)
-            unique_statuses = set(s.upper() for s in raw_statuses)
- 
+
+            unique_statuses = {s.upper() for s in raw_statuses}
+
             if "ENABLED" in unique_statuses:
                 final_status = "UNLOCKED"
             elif "DISABLED" in unique_statuses:
@@ -495,15 +730,51 @@ def upload_4g_log_file(request):
                 final_status = "DOWN"
             else:
                 final_status = "UNKNOWN"
- 
-            # trx_status_list.append((trx_name, final_status))
+
             trx_status_dict[trx_name] = final_status
-        trx_status_list = [(trx_name, status) for trx_name, status in trx_status_dict.items()]
-        # trx_status_str = "\n".join([f"{trx} - {status}" for trx, status in trx_status_dict.items()])
-       
+
+        # 🔹 If all TRX are UNLOCKED
+        if trx_status_dict and all(v == "UNLOCKED" for v in trx_status_dict.values()):
+            return [("", "UNLOCKED")]
+
+        # 🔹 Return normal list
+        return [(trx, status) for trx, status in trx_status_dict.items()]
+        
+    # def extract_all_2g_trx_status(content):
+    #     pattern = re.compile(
+    #         r'GsmSector=\d+,Trx=([A-Z0-9-]+)\s+abisTsState\s+i\[\d+\]\s*=\s*[\d\s]+\(([A-Z\s]+)\)',
+    #         # r'GsmSector=\d+,Trx=([A-Z0-9-]+)\s+abisTsState\s+i\[\d+\]\s*=\s*[\d\s]+\(([A-Z\s]+)\)',
+    #         re.IGNORECASE
+    #     )
+ 
+    #     # trx_status_list = []
+    #     trx_status_dict = {}
+ 
+    #     for match in pattern.finditer(content):
+    #         trx_name = match.group(1)
+    #         raw_statuses = match.group(2).split()
+ 
+    #         # Assume majority value or just pick first (can adjust logic here)
+    #         # unique_statuses = set(s.upper() for s in raw_statuses)
+    #         unique_statuses = set(s.upper() for s in raw_statuses)
+ 
+    #         if "ENABLED" in unique_statuses:
+    #             final_status = "UNLOCKED"
+    #         elif "DISABLED" in unique_statuses:
+    #             final_status = "LOCKED"
+    #         elif "RESET" in unique_statuses:
+    #             final_status = "DOWN"
+    #         else:
+    #             final_status = "UNKNOWN"
+ 
+    #         # trx_status_list.append((trx_name, final_status))
+    #         trx_status_dict[trx_name] = final_status
+    #     trx_status_list = [(trx_name, status) for trx_name, status in trx_status_dict.items()]
+    #     # trx_status_str = "\n".join([f"{trx} - {status}" for trx, status in trx_status_dict.items()])
+#============================================
         # trx_status_str = "\n".join(trx_status_list)
  
-        return trx_status_list
+        # return trx_status_list
         # print("2G TRX Status Extracted ➤", extract_all_2g_trx_status(content_4g))
        
  
@@ -513,6 +784,9 @@ def upload_4g_log_file(request):
             r'\d+ \((?P<op_state>ENABLED|DISABLED)\)\s+'
             r'(ENodeBFunction|GNBDUFunction)=\d+,(?:EUtranCellFDD|EUtranCellTDD)=(?P<cell_name>[\w\-]+)'
         )
+ 
+ 
+ 
  
         cells= []
         for match in pattern.finditer(content_4g):
@@ -552,12 +826,60 @@ def upload_4g_log_file(request):
  
         node_match = re.search(r'([\w:-]+)(?=>\s*alt)', content_4g)
         node_id = node_match.group(1) if node_match else "No ID found"
- 
-        sync_status = extract_4g_sync_status(content_4g)
+        
+        # Extract PLMNR status cell-wise
+        # --- Extract PLMNR cell-wise ---
+        def extract_plmnr_cellwise(content_4g):
+            """
+            Extracts PLMNR status for each cell (EUtranCellFDD, EUtranCellTDD, NRCellCU).
+            Returns dict {full_mo: "true"/"false"}
+            """
+            results = {}
+
+            # Pattern to capture MO and value
+            pattern = re.compile(
+                r"(EUtranCellFDD=\S+|EUtranCellTDD=\S+|NRCellCU=\S+).*?\s(true|false)",
+                re.IGNORECASE
+            )
+
+            for match in pattern.finditer(content_4g):
+                mo = match.group(1).strip()
+                value = match.group(2).lower()
+
+                if mo not in results:
+                    results[mo] = []
+                results[mo].append(value)
+
+            # Finalize → if any "true" then true else false
+            for mo, vals in results.items():
+                results[mo] = "true" if "true" in vals else "false"
+
+            return results
+
+
+        plmm_status = extract_plmnr_cellwise(content_4g)
+        sync_status = extract_time_phase_status(content_4g)
         cells_4g = parse_4g_st_cell_output(content_4g)
+      
         trx_status_list = extract_all_2g_trx_status(content_4g)
         trx_status_str = "; ".join([f"{trx} - {status}" for trx, status in trx_status_list])
         for cell in cells_4g:
+            cell_name = cell['Cell Name']
+
+            # Possible MO keys for this cell
+            possible_keys = [
+                f"EUtranCellFDD={cell_name}",
+                f"EUtranCellTDD={cell_name}",
+                f"NRCellCU={cell_name}"
+            ]
+
+            # Default false, update if any match found
+            plmm_value = "NA"
+            for key in possible_keys:
+                if key in plmm_status:
+                    plmm_value = plmm_status[key]
+                    break
+                
             row = {
                 ('Circle', ''): cell['Circle'],
                 ('2G Site ID', ''): cell['Site ID'],
@@ -567,19 +889,29 @@ def upload_4g_log_file(request):
                 ('4G Cell Status', 'Adm State'): cell[('4G Cell Status', 'Adm State')],
                 ('4G Cell Status', 'Op. State'): cell[('4G Cell Status', 'Op. State')],
                 ('Cells', ''): cell['Cell Name'],
+                ('PLMNR Status',''): plmm_value,
                 # ('2G Cell(TRX) Status', ''): [extract_all_2g_trx_status(content_4g)] ,
                 ("2G Cell(TRX) Status", "Status"): trx_status_str,
                 # ('2G Cell(TRX) Status', ''): "; ".join([f"{trx} - {status}" for trx, status in extract_all_2g_trx_status(content_4g)]),
-                ('SYNC', 'Status'): sync_status,  
-                ('Band', ''): cell['Band']
+                ('SYNC', 'Status'): sync_status,
+                ('Band', ''): cell['Band'],
+            
             }
             all_rows.append(row)
- 
+
+        # alarms cell wise
         for cell in cells_4g:
             site_id = cell['Site ID']
             alarms = extract_4galarms_from_alt(content_4g, site_id)
             all_alarms.extend(alarms)
-            site_down.extend(site_down_4g(content_4g, site_id))
+
+        # site down always check
+        site_down.extend(site_down_4g(content_4g))
+        # for cell in cells_4g:
+        #     site_id = cell['Site ID']
+        #     alarms = extract_4galarms_from_alt(content_4g, site_id)
+        #     all_alarms.extend(alarms)
+        #     site_down.extend(site_down_4g(content_4g, site_id))
  
     columns = [
         ("Circle", ""),
@@ -590,13 +922,18 @@ def upload_4g_log_file(request):
         ("4G Cell Status", "Adm State"),
         ("4G Cell Status", "Op. State"),
         ("Cells", ""),
-        ("2G Cell(TRX) Status", "Status"),
+        ("2G Cell(TRX)", "Status"),
         ("SYNC", "Status"),
         ("Band", ""),
+        ("Plmmr Status", "")
+        
     ]
     multi_index = pd.MultiIndex.from_tuples(columns)
-    df_4g = pd.DataFrame(all_rows, columns=multi_index)
- 
+    if all_rows:
+        df_4g = pd.DataFrame(all_rows)
+    else:
+        df_4g = pd.DataFrame(columns=multi_index) 
+
 # ❗ Flatten before saving to Excel
     df_4g.columns = [' - '.join(filter(None, col)).strip() for col in df_4g.columns.values]
  
@@ -614,16 +951,33 @@ def upload_4g_log_file(request):
         }).reset_index()
         df_alarms = agg_alarms
     else:
-        df_alarms = pd.DataFrame()
-    site_down_df = pd.DataFrame(site_down).drop_duplicates()
- 
+        df_alarms = pd.DataFrame(columns=[
+            "IP", "Site ID", "Node ID", "Date & Time", "Severity",
+            "Specific Problem", "MO", "Additional"
+        ])
+
+    if site_down:
+        site_down_df = pd.DataFrame(site_down).drop_duplicates()
+    else:
+        site_down_df = pd.DataFrame(columns=["IP Address", "Status"])
+        
+    # df_alarms["Specific Problem"] = df_alarms.apply(
+    #     lambda r: specific_problem(r["Specific Problem"], r["MO"]),
+    #     axis=1)
+
     circles = sorted(set(
     row[('Circle', '')].strip().upper().replace(" ", "_")
     for row in all_rows if row.get(('Circle', ''))
     ))
  
         # Join all circle names (like TNCH or TN_ORI_CH)
-    circle_name = "".join(circles) if len(circles) > 1 else circles[0]
+ 
+    if not circles:
+        circle_name = circle.upper().replace(" ", "_")
+    elif len(circles) > 1:
+        circle_name = "".join(circles)
+    else:
+        circle_name = circles[0]    
     output_filename = f"4G_Alarm_Logs_{circle}.xlsx"
     output_path = os.path.join(circle_based_output_path, output_filename)
     ##################################
@@ -634,8 +988,10 @@ def upload_4g_log_file(request):
         site_down_df.to_excel(writer, sheet_name="Site Down", index=False)
         format_excel_sheet(writer, 'Alarms', df_alarms ,)
  
-    relative_path = os.path.join("media", "Universal_alarm", output_filename)
-    download_link = request.build_absolute_uri("/" + relative_path.replace("\\", "/"))
+    # After saving Excel:
+    relative_path = os.path.relpath(output_path, MEDIA_ROOT)
+    download_link = request.build_absolute_uri("/media/" + relative_path.replace("\\", "/"))
+
  
     wb = load_workbook(output_path)
     ws = wb.active
