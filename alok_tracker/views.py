@@ -2079,26 +2079,27 @@ def daily_dashboard_view(request):
 
         unique_data.update(**{"Milestone": milestones})
         
-        excluded_statuses = [
+        included_statuses = [
             'MO WIP',
             'On Air Done',
-            'Onair WIP',
-            'Drop/Database Correction',
-            'drop data base correction'
+            'Onair WIP'
         ]
 
         for milestone in milestones:
             if milestone == 'Workable Sites':
                 if month_start and month_end:
                     # CF → before month_start
-                    cf_count = SiteStatus.objects.filter(date__lt=month_start) \
-                        .exclude(status__in=excluded_statuses) \
+                    aop_count = SiteStatus.objects.filter(date__lt=month_start) \
+                        .filter(status__in=included_statuses) \
                         .values('site_id').distinct().count()
 
                     # AOP → before month_start (same logic here)
-                    aop_count = cf_count
+                    cf_count = SiteStatus.objects.filter(date__lt=month_start) \
+                        .filter(status__in=['Onair WIP', 'MO WIP']) \
+                        .values('site_id').distinct().count()
+                        
+                    prevCount = cf_count
 
-                    cumulative = cf_count
                     row = {
                         "Milestone Track/Site Count": milestone,
                         "AOP": aop_count,
@@ -2106,10 +2107,11 @@ def daily_dashboard_view(request):
                     }
                 else:
                     aop_count = SiteStatus.objects.filter(date__lt=start_date) \
-                        .exclude(status__in=excluded_statuses) \
+                        .filter(status__in=included_statuses) \
                         .values('site_id').distinct().count()
+                        
+                    prevCount = aop_count
 
-                    cumulative = aop_count
                     row = {
                         "Milestone Track/Site Count": milestone,
                         "AOP": aop_count
@@ -2117,15 +2119,15 @@ def daily_dashboard_view(request):
 
                 for d in date_range:
                     count = SiteStatus.objects.filter(date=d) \
-                        .exclude(status__in=excluded_statuses) \
+                        .filter(status__in=included_statuses) \
                         .values('site_id').distinct().count()
 
-                    cumulative += count
-
                     if view == "Cumulative":
-                        row[d.strftime("%d-%b-%y")] = cumulative
-                    else:
                         row[d.strftime("%d-%b-%y")] = count
+                    else:
+                        row[d.strftime("%d-%b-%y")] = count-prevCount
+                    
+                    prevCount = count
 
                 result.loc[len(result)] = row
                 continue
