@@ -2021,7 +2021,7 @@ def daily_dashboard_view(request):
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
         
-        # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
+        # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
 
         for col in df.columns:
             if "Date" in col:
@@ -2060,6 +2060,7 @@ def daily_dashboard_view(request):
             "Allocation Date",
             "RFAI Date",
             "RFAI Survey Date",
+            "Workable Sites",
             "MO Punch Date",
             "Material Dispatch Date",
             "Material Delivered Date",
@@ -2077,8 +2078,58 @@ def daily_dashboard_view(request):
         ]
 
         unique_data.update(**{"Milestone": milestones})
+        
+        excluded_statuses = [
+            'MO WIP',
+            'On Air Done',
+            'Onair WIP',
+            'Drop/Database Correction',
+            'drop data base correction'
+        ]
 
         for milestone in milestones:
+            if milestone == 'Workable Sites':
+                if month_start and month_end:
+                    # CF → before month_start
+                    cf_count = SiteStatus.objects.filter(date__lt=month_start) \
+                        .exclude(status__in=excluded_statuses) \
+                        .count()
+
+                    # AOP → before month_start (same logic here)
+                    aop_count = cf_count
+
+                    cumulative = cf_count
+                    row = {
+                        "Milestone Track/Site Count": milestone,
+                        "AOP": aop_count,
+                        "CF": cf_count
+                    }
+                else:
+                    aop_count = SiteStatus.objects.filter(date__lt=start_date) \
+                        .exclude(status__in=excluded_statuses) \
+                        .count()
+
+                    cumulative = aop_count
+                    row = {
+                        "Milestone Track/Site Count": milestone,
+                        "AOP": aop_count
+                    }
+
+                for d in date_range:
+                    count = SiteStatus.objects.filter(date=d) \
+                        .exclude(status__in=excluded_statuses) \
+                        .count()
+
+                    cumulative += count
+
+                    if view == "Cumulative":
+                        row[d.strftime("%d-%b-%y")] = cumulative
+                    else:
+                        row[d.strftime("%d-%b-%y")] = count
+
+                result.loc[len(result)] = row
+                continue
+                
             milestone_df_format = (
                 milestone.lower()
                 .replace(" ", "_")
