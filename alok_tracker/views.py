@@ -5429,6 +5429,7 @@ def monthly_graph(request):
     milestone2 = request.data.get('milestone2')
     view = request.data.get('view')
     type = request.data.get('type')
+    year_filtered = request.data.get('year2')
     
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
     site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
@@ -5436,6 +5437,8 @@ def monthly_graph(request):
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
     milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
     milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
+    
+    
     
     all_unique_circles = list(
         AlokTrackerModel.objects.exclude(circle__isnull=True)
@@ -5469,6 +5472,8 @@ def monthly_graph(request):
     }
     
     try:
+        year_filtered = int(year_filtered)
+        
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
@@ -5534,7 +5539,7 @@ def monthly_graph(request):
         ).dt.strftime("%b-%y")
 
         # 5️⃣ Current FY
-        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
+        current_fy = year_filtered
 
         # 6️⃣ CF logic
         df.loc[df["year1"] < current_fy, "month_name1"] = "CF"
@@ -5566,7 +5571,7 @@ def monthly_graph(request):
         ).dt.strftime('%b-%y')
 
         # 6️⃣ Current financial year
-        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
+        current_fy = year_filtered
 
         # 7️⃣ Carry Forward (only where year2 exists)
         df.loc[df['year2'].notna() & (df['year2'] < current_fy), 'month_name2'] = 'CF'
@@ -5579,11 +5584,17 @@ def monthly_graph(request):
         print(df['month_name2'])
         
         print(df['year2'])
+        
+        df.loc[df['year1'].notna() & (df['year1'] > current_fy), ["month_name1"]] = "Future"
+        df.loc[df['year2'].notna() & (df['year2'] > current_fy), ["month_name2"]] = "Future"
 
         def sort_financial_year(summary):
             # Extract sorted unique Month-Year (excluding CF)
-            months = [m for m in summary['month_name'].unique() if m != "CF"]
-
+            months = [
+                m for m in summary['month_name'].unique()
+                if m not in ["CF", "Future"] and pd.notna(m)
+            ]
+            
             # Convert to datetime to sort correctly
             months_sorted = sorted(
                 months,
@@ -5591,8 +5602,16 @@ def monthly_graph(request):
             )
 
             # CF should always be first
-            ordered = ["CF"] + months_sorted if "CF" in summary['month_name'].values else months_sorted
+            ordered = []
 
+            if "CF" in summary['month_name'].values:
+                ordered.append("CF")
+
+            ordered += months_sorted
+
+            if "Future" in summary['month_name'].values:
+                ordered.append("Future")
+            
             # Convert into ordered categorical for final sort
             summary['month_name'] = pd.Categorical(summary['month_name'], ordered, ordered=True)
 
@@ -5678,7 +5697,7 @@ def monthly_graph(request):
     
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
-    
+   
     
 @api_view(['GET', 'POST'])
 def lifecycle_display(request):
@@ -7057,6 +7076,7 @@ def ms2_monthly_graph(request):
     milestone2 = request.data.get('milestone2')
     view = request.data.get('view')
     type = request.data.get('type')
+    year_filtered = request.data.get('year2')
     
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
     site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
@@ -7113,6 +7133,9 @@ def ms2_monthly_graph(request):
     }
     
     try:
+        
+        year_filtered = int(year_filtered)
+        
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
@@ -7162,7 +7185,7 @@ def ms2_monthly_graph(request):
         ).dt.strftime("%b-%y")
 
         # 5️⃣ Current FY
-        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
+        current_fy = year_filtered
 
         # 6️⃣ CF logic
         df.loc[df["year1"] < current_fy, "month_name1"] = "CF"
@@ -7194,7 +7217,7 @@ def ms2_monthly_graph(request):
         ).dt.strftime('%b-%y')
 
         # 6️⃣ Current financial year
-        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
+        current_fy = year_filtered
 
         # 7️⃣ Carry Forward (only where year2 exists)
         df.loc[df['year2'].notna() & (df['year2'] < current_fy), 'month_name2'] = 'CF'
@@ -7207,11 +7230,16 @@ def ms2_monthly_graph(request):
         print(df['month_name2'])
         
         print(df['year2'])
+        
+        df.loc[df['year1'].notna() & (df['year1'] > current_fy), ["month_name1"]] = "Future"
+        df.loc[df['year2'].notna() & (df['year2'] > current_fy), ["month_name2"]] = "Future"
 
         def sort_financial_year(summary):
             # Extract sorted unique Month-Year (excluding CF)
-            months = [m for m in summary['month_name'].unique() if m != "CF"]
-
+            months = [
+                m for m in summary['month_name'].unique()
+                if m not in ["CF", "Future"] and pd.notna(m)
+            ]
             # Convert to datetime to sort correctly
             months_sorted = sorted(
                 months,
@@ -7219,7 +7247,15 @@ def ms2_monthly_graph(request):
             )
 
             # CF should always be first
-            ordered = ["CF"] + months_sorted if "CF" in summary['month_name'].values else months_sorted
+            ordered = []
+
+            if "CF" in summary['month_name'].values:
+                ordered.append("CF")
+
+            ordered += months_sorted
+
+            if "Future" in summary['month_name'].values:
+                ordered.append("Future")
 
             # Convert into ordered categorical for final sort
             summary['month_name'] = pd.Categorical(summary['month_name'], ordered, ordered=True)
@@ -8620,6 +8656,7 @@ def dismantle_monthly_graph(request):
     milestone2 = request.data.get('milestone2')
     view = request.data.get('view')
     type = request.data.get('type')
+    year_filtered = request.data.get('year2')
     
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
     site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
@@ -8672,6 +8709,9 @@ def dismantle_monthly_graph(request):
     }
     
     try:
+        
+        year_filtered = int(year_filtered)
+        
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
@@ -8721,8 +8761,8 @@ def dismantle_monthly_graph(request):
         ).dt.strftime("%b-%y")
 
         # 5️⃣ Current FY
-        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
-
+        current_fy = year_filtered
+        
         # 6️⃣ CF logic
         df.loc[df["year1"] < current_fy, "month_name1"] = "CF"
 
@@ -8753,8 +8793,8 @@ def dismantle_monthly_graph(request):
         ).dt.strftime('%b-%y')
 
         # 6️⃣ Current financial year
-        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
-
+        current_fy = year_filtered
+        
         # 7️⃣ Carry Forward (only where year2 exists)
         df.loc[df['year2'].notna() & (df['year2'] < current_fy), 'month_name2'] = 'CF'
         
@@ -8766,11 +8806,17 @@ def dismantle_monthly_graph(request):
         print(df['month_name2'])
         
         print(df['year2'])
+        
+        df.loc[df['year1'].notna() & (df['year1'] > current_fy), ["month_name1"]] = "Future"
+        df.loc[df['year2'].notna() & (df['year2'] > current_fy), ["month_name2"]] = "Future"
 
         def sort_financial_year(summary):
             # Extract sorted unique Month-Year (excluding CF)
-            months = [m for m in summary['month_name'].unique() if m != "CF"]
-
+            months = [
+                m for m in summary['month_name'].unique()
+                if m not in ["CF", "Future"] and pd.notna(m)
+            ]
+            
             # Convert to datetime to sort correctly
             months_sorted = sorted(
                 months,
@@ -8778,8 +8824,17 @@ def dismantle_monthly_graph(request):
             )
 
             # CF should always be first
-            ordered = ["CF"] + months_sorted if "CF" in summary['month_name'].values else months_sorted
+            ordered = []
 
+            if "CF" in summary['month_name'].values:
+                ordered.append("CF")
+
+            ordered += months_sorted
+
+            if "Future" in summary['month_name'].values:
+                ordered.append("Future")
+            
+            
             # Convert into ordered categorical for final sort
             summary['month_name'] = pd.Categorical(summary['month_name'], ordered, ordered=True)
 
