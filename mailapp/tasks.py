@@ -69,9 +69,20 @@ def send_email(to_address, cc_mails, subject, body, attachment_path=None, is_htm
         data["bodyHtml"] = body
     else:
         data["bodyText"] = body
+
+    files=None
+
+    # ✅ Attachment logic
+    if attachment_path and os.path.exists(attachment_path):
+        files = {
+            "file": (
+                os.path.basename(attachment_path),
+                open(attachment_path, "rb")
+            )
+        }
  
     try:
-        response = requests.post(url, data=data)
+        response = requests.post(url, data=data, files=files)
         if response.status_code == 200:
             print("✅ Email sent successfully!")
         else:
