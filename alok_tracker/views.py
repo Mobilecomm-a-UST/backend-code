@@ -2097,8 +2097,15 @@ def daily_dashboard_view(request):
                     cf_count = SiteStatus.objects.filter(date__lt=month_start) \
                         .filter(status__in=['Onair WIP', 'MO WIP']) \
                         .values('site_id').distinct().count()
-                        
-                    prevCount = cf_count
+                    
+                    prev_date = month_start - timedelta(days=1)
+                    
+                    
+                    
+                    prevCount = SiteStatus.objects.filter(date=prev_date) \
+                                .filter(status__in=included_statuses) \
+                                .values('site_id').distinct().count()
+                            
 
                     row = {
                         "Milestone Track/Site Count": milestone,
@@ -2110,7 +2117,11 @@ def daily_dashboard_view(request):
                         .filter(status__in=included_statuses) \
                         .values('site_id').distinct().count()
                         
-                    prevCount = aop_count
+                    prev_date = start_date - timedelta(days=1)
+                        
+                    prevCount = SiteStatus.objects.filter(date=prev_date) \
+                                .filter(status__in=included_statuses) \
+                                .values('site_id').distinct().count()
 
                     row = {
                         "Milestone Track/Site Count": milestone,
@@ -2118,6 +2129,9 @@ def daily_dashboard_view(request):
                     }
 
                 for d in date_range:
+                    if d == today:
+                        row[d.strftime("%d-%b-%y")] = '-'
+                        continue
                     count = SiteStatus.objects.filter(date=d) \
                         .filter(status__in=included_statuses) \
                         .values('site_id').distinct().count()
