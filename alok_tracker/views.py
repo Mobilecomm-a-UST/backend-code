@@ -1293,8 +1293,8 @@ def download_tracker_data_view(request):
     try:
         year = int(year)
         
-        fy_start = pd.Timestamp(year=year, month=3, day=26)
-        fy_end   = pd.Timestamp(year=year + 1, month=3, day=25)
+        fy_start = pd.Timestamp(year=year, month=3, day=26).date()
+        fy_end   = pd.Timestamp(year=year + 1, month=3, day=25).date()
         
         # obj = []
         # if 'CENTRAL' in circles:
@@ -1304,15 +1304,24 @@ def download_tracker_data_view(request):
         #     obj = AlokTrackerModel.objects.filter(circle=circle)
         #     issue_obj = RelocationIssue.objects.filter(circle=circle)
         
+        today = dtime.today().date()
+
+        # condition for FY range
+        fy_filter = Q(site_onair_date__range=(fy_start, fy_end))
+        null_filter = Q(site_onair_date__isnull=True)
+
+        if fy_start <= today <= fy_end:
+            final_filter = fy_filter | null_filter
+        else:
+            final_filter = fy_filter
+        
         if 'CENTRAL' in circles:
-            obj = AlokTrackerModel.objects.filter(
-                site_onair_date__range=(fy_start, fy_end)
-            )
+            obj = AlokTrackerModel.objects.filter(final_filter)
             issue_obj = RelocationIssue.objects.all()
         else:
             obj = AlokTrackerModel.objects.filter(
-                circle__in=circles,
-                site_onair_date__range=(fy_start, fy_end)
+                final_filter,
+                circle__in=circles
             )
             issue_obj = RelocationIssue.objects.filter(circle__in=circles)
 
