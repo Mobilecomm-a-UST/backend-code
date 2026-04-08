@@ -1291,38 +1291,40 @@ def download_tracker_data_view(request):
     #     return Response({'error': 'userId and circle are required.'}, status=400)
 
     try:
-        year = int(year)
+        if year:
+            year = int(year)
         
-        fy_start = pd.Timestamp(year=year, month=3, day=26).date()
-        fy_end   = pd.Timestamp(year=year + 1, month=3, day=25).date()
+            fy_start = pd.Timestamp(year=year, month=3, day=26).date()
+            fy_end   = pd.Timestamp(year=year + 1, month=3, day=25).date()
         
-        # obj = []
-        # if 'CENTRAL' in circles:
-        #     obj = AlokTrackerModel.objects.all()
-        #     issue_obj = RelocationIssue.objects.all()
-        # else:
-        #     obj = AlokTrackerModel.objects.filter(circle=circle)
-        #     issue_obj = RelocationIssue.objects.filter(circle=circle)
         
-        today = dtime.today().date()
+            today = dtime.today().date()
 
-        # condition for FY range
-        fy_filter = Q(site_onair_date__range=(fy_start, fy_end))
-        null_filter = Q(site_onair_date__isnull=True)
+            # condition for FY range
+            fy_filter = Q(site_onair_date__range=(fy_start, fy_end))
+            null_filter = Q(site_onair_date__isnull=True)
 
-        if fy_start <= today <= fy_end:
-            final_filter = fy_filter | null_filter
-        else:
-            final_filter = fy_filter
+            if fy_start <= today <= fy_end:
+                final_filter = fy_filter | null_filter
+            else:
+                final_filter = fy_filter
         
         if 'CENTRAL' in circles:
-            obj = AlokTrackerModel.objects.filter(final_filter)
+            if year:
+                obj = AlokTrackerModel.objects.filter(final_filter)
+            else:
+                obj = AlokTrackerModel.objects.all()
             issue_obj = RelocationIssue.objects.all()
         else:
-            obj = AlokTrackerModel.objects.filter(
-                final_filter,
-                circle__in=circles
-            )
+            if year:
+                obj = AlokTrackerModel.objects.filter(
+                    final_filter,
+                    circle__in=circles
+                )
+            else:
+                obj = AlokTrackerModel.objects.filter(
+                    circle__in=circles
+                )
             issue_obj = RelocationIssue.objects.filter(circle__in=circles)
 
         df = pd.DataFrame(obj.values())
