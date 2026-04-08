@@ -1277,6 +1277,7 @@ def issue_summary(request):
 @api_view(['POST'])
 def download_tracker_data_view(request):
     userId = request.data.get('userId')
+    year = request.data.get('year')
     
     try:
         user = RelocationUser.objects.filter(email=userId.lower()).first()
@@ -1290,6 +1291,11 @@ def download_tracker_data_view(request):
     #     return Response({'error': 'userId and circle are required.'}, status=400)
 
     try:
+        year = int(year)
+        
+        fy_start = pd.Timestamp(year=year, month=3, day=26)
+        fy_end   = pd.Timestamp(year=year + 1, month=3, day=25)
+        
         # obj = []
         # if 'CENTRAL' in circles:
         #     obj = AlokTrackerModel.objects.all()
@@ -1299,13 +1305,22 @@ def download_tracker_data_view(request):
         #     issue_obj = RelocationIssue.objects.filter(circle=circle)
         
         if 'CENTRAL' in circles:
-            obj = AlokTrackerModel.objects.all()
+            obj = AlokTrackerModel.objects.filter(
+                site_onair_date__range=(fy_start, fy_end)
+            )
             issue_obj = RelocationIssue.objects.all()
         else:
-            obj = AlokTrackerModel.objects.filter(circle__in=circles)
+            obj = AlokTrackerModel.objects.filter(
+                circle__in=circles,
+                site_onair_date__range=(fy_start, fy_end)
+            )
             issue_obj = RelocationIssue.objects.filter(circle__in=circles)
 
         df = pd.DataFrame(obj.values())
+        
+        if df.empty:
+            return Response({"message": "No Data Found"}, status=404)
+        
         issue_df = pd.DataFrame(issue_obj.values())
         
         rename_map = {
