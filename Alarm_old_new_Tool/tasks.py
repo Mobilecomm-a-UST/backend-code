@@ -31,7 +31,7 @@ def send_email_for_Alarm(df_combined_dict, output_path):
         ],
         "DEL": [
             'Nishant.Sharma2@ust.com','Vijay.Kumar2@ust.com',
-            'Prateek.Saxena@ust.com','Harsh.Rajender@ust.com','Deepu.Sharma@ust.com'
+            'Prateek.Saxena@ust.com','Deepu.Sharma@ust.com'
         ],
         "JK" :['Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Manik.Mahajan@ust.com',
             'Lalit.Kaul@ust.com','Suman.Raman@ust.com','Namandeep.Singh@ust.com'
@@ -46,7 +46,8 @@ def send_email_for_Alarm(df_combined_dict, output_path):
     cc_mails = [
         'Prerna.PramodKumar@ust.com','Mohit.Batra@ust.com',
         'Deepak.KumarYadav@ust.com','Amit.rai@ust.com','Lalit.Namdev2@ust.com','Shashank.Rai@ust.com',
-        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com',"Vishal.Yadav@ust.com"
+        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com',"Vishal.Yadav@ust.com",'Praveen.lakra@ust.com',
+        'Chirag.bohra@ust.com','Gulafsha.Bano@ust.com','Priyanshi.sharma@ust.com','Deepu.Sharma@ust.com'
     ]
  
     cc_email = ";".join(cc_mails)
