@@ -212,6 +212,8 @@ def upload_mobinet_dumps(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
    
     #Api to upload and manage RFS(CATS) ends here-----------
+
+
 @api_view(['POST', 'GET', 'DELETE'])
 def upload_rfs_data(request):
     try:
@@ -306,6 +308,8 @@ def upload_msmf_data(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  
    
     #api for locator file  data ends here-----------
+
+
 @api_view(['POST', 'GET', 'DELETE'])
 def upload_locator_data(request):
     try:
@@ -673,15 +677,15 @@ def rfs_dump(request):
         print(locator_df.columns)
            
      
-    #    # Unmatched Sites...
-    #     unmatched_sites = request.POST.getlist('unmatched_sites')
-    #     if not unmatched_sites:
-    #         return Response({"error": "unmatched_sites not provided"}, status=400)
-    #     if len(unmatched_sites) == 1 and "\n" in unmatched_sites[0]:
-    #      unmatched_sites = unmatched_sites[0].strip().split("\n")
-    #     print("Aarry of unmatched_sites:",unmatched_sites)
-    #     unmatched_sites_df = pd.DataFrame(unmatched_sites, columns=["Unmatched Sites"])
-    #     print(unmatched_sites_df.head())
+        #    # Unmatched Sites...
+        #     unmatched_sites = request.POST.getlist('unmatched_sites')
+        #     if not unmatched_sites:
+        #         return Response({"error": "unmatched_sites not provided"}, status=400)
+        #     if len(unmatched_sites) == 1 and "\n" in unmatched_sites[0]:
+        #      unmatched_sites = unmatched_sites[0].strip().split("\n")
+        #     print("Aarry of unmatched_sites:",unmatched_sites)
+        #     unmatched_sites_df = pd.DataFrame(unmatched_sites, columns=["Unmatched Sites"])
+        #     print(unmatched_sites_df.head())
        
         # Mobinet Dump File--------------------------------------------
         mobinet_dump_file = request.FILES.get("mobinet_dump_file")
@@ -760,7 +764,7 @@ def rfs_dump(request):
  
    
        
-########for RFS file#######################################
+        ########for RFS file#######################################
         # Circle Mapping ....
         circle_map_code = {
             151: 'AP', 132: 'BR',152: 'CN',111: 'DL',113: 'HR', 114: 'JK',
@@ -868,7 +872,7 @@ def rfs_dump(request):
         rfs_matched_sn_merege.drop_duplicates(inplace=True)
        
          
- # Merge with stock report file if provided-----------------------------------
+        # Merge with stock report file if provided-----------------------------------
         if stock_report_df is not None and not stock_report_df.empty:
             rfs_finally =merged_site_df.copy()
             rfs_with_stock_report = pd.merge(
@@ -887,7 +891,7 @@ def rfs_dump(request):
     
        
        
-# summary_df for RFS file------
+        # summary_df for RFS file------
         summary_df = (
             merged_site_df.groupby("Site+Module", as_index=False)
             .agg({
@@ -904,10 +908,10 @@ def rfs_dump(request):
         )
        
         print(summary_df)
-    #######################################################################################
+        #######################################################################################
    
    
-    #######for MS-MF file####################
+        #######for MS-MF file####################
         msmf_df["Patner"] = "Other TSP"
         msmf_df.loc[msmf_df["MS_CREATED_BY"].isin(olm_id_df["OLM ID"]), "Patner"] = "Mobliecomm"
  
@@ -1025,7 +1029,7 @@ def rfs_dump(request):
        
         print("ms_mf_summary_df",ms_mf_summary_df)
      
-    #merge summary_df and ms_mf_summary_df
+        #merge summary_df and ms_mf_summary_df
         final_summary_df=pd.merge(
             summary_df,
             ms_mf_summary_df,
@@ -1043,7 +1047,7 @@ def rfs_dump(request):
            
         )
         merged_find_summary['Unique ID'] = merged_find_summary['Site+Module'].str.split('_', expand=True)[0] + "_" + merged_find_summary['Site+Module'].str.split('_', expand=True)[1]
-     #site wise summay----------------------------------------------
+        #site wise summay----------------------------------------------
         site_wise_summary = (
         merged_find_summary
         .groupby('Unique ID', as_index=False)
@@ -1068,8 +1072,7 @@ def rfs_dump(request):
         .rename(columns={
             'Unique ID': 'Site ID',
             'Serial Number_count': 'Mobinet_Count(Serial Number)',
-        })
-    )
+        }))
         print(site_wise_summary)
        
         #Circle wise summary----------------------------------------------
@@ -1590,6 +1593,8 @@ def ms_mf_site_mapping(request):
 
     #new api------ site+searial match
     #here the logic is to match the serial number from mobinet dump file with rfs and ms-mf file------
+
+
 @api_view(['GET','POST'])
 def mobinet_sitecircle_match(request):
     mobinet_log_folder = os.path.join(main_folder, 'mobinet_dump_data')

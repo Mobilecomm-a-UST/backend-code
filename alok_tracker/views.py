@@ -122,13 +122,14 @@ ALL_COLUMNS = [
     'I-Deploy ONAIR Date',
     'Current Status',
     'Detailed Remarks',
-    'Manual History',
     'RFAI Rejected Date',
-    'Re-RFAI Date',
+    'Clear RFAI Date',
     'PRI Count',
     'PRI Issue Ageing',
-    'Other Issue Ageing',
+    'Other UST Issue Ageing',
+    'Other Airtel Issue Ageing',
     'Total Issue Ageing',
+    'Clear RFAI to MS1 Ageing',
     'RFAI to MS1 Ageing',
     'RAN PAT Accepted Date',
     'RAN SAT Accepted Date',
@@ -217,64 +218,125 @@ def compute_union_ageing(rows):
 
 def update_ageing(df, issue_df):
     pri_ageing_list = []
-    other_issue_ageing_list = []
+    other_airtel_issue_ageing_list = []
+    other_ust_issue_ageing_list = []
     total_issue_ageing_list = []
     pri_count_list = []
 
+    # Ensure datetime
+    issue_df["Start Date"] = pd.to_datetime(issue_df["Start Date"], errors="coerce")
+    issue_df["Close Date"] = pd.to_datetime(issue_df["Close Date"], errors="coerce")
+
     for site in df["new_site_id"]:
 
-        print(issue_df)
-
         site_rows = issue_df[issue_df["Site ID"] == site]
-        
-        print("B")
 
-        # PRI rows only
         pri_rows = site_rows[site_rows["Issue Name"] == "PRI"]
 
-        # Other issue rows
-        other_rows = site_rows[site_rows["Issue Name"] != "PRI"]
+        other_rows_airtel = site_rows[
+            (site_rows["Issue Name"] != "PRI") &
+            (site_rows["Issue Owner"] == 'Airtel')
+        ]
 
-        # ALL issue rows
+        other_rows_ust = site_rows[
+            (site_rows["Issue Name"] != "PRI") &
+            (site_rows["Issue Owner"] == 'UST')
+        ]
+
         all_rows = site_rows
 
-        # Compute ageings
         pri_ageing = compute_union_ageing(pri_rows)
-        other_issue_ageing = compute_union_ageing(other_rows)
+        other_airtel_issue_ageing = compute_union_ageing(other_rows_airtel)
+        other_ust_issue_ageing = compute_union_ageing(other_rows_ust)
         total_issue_ageing = compute_union_ageing(all_rows)
 
         pri_count = len(pri_rows)
 
         pri_ageing_list.append(pri_ageing)
-        other_issue_ageing_list.append(other_issue_ageing)
+        other_airtel_issue_ageing_list.append(other_airtel_issue_ageing)
+        other_ust_issue_ageing_list.append(other_ust_issue_ageing)
         total_issue_ageing_list.append(total_issue_ageing)
         pri_count_list.append(pri_count)
 
     df["pri_issue_ageing"] = pri_ageing_list
-    df["other_issue_ageing"] = other_issue_ageing_list
+    df["other_airtel_issue_ageing"] = other_airtel_issue_ageing_list
+    df["other_ust_issue_ageing"] = other_ust_issue_ageing_list
     df["total_issue_ageing"] = total_issue_ageing_list
     df["pri_count"] = pri_count_list
-    
+
+    # Convert dates
     df['site_onair_date'] = pd.to_datetime(df['site_onair_date'], errors='coerce')
-    df['re_rfai_date'] = pd.to_datetime(df['re_rfai_date'], errors='coerce')
+    df['clear_rfai_date'] = pd.to_datetime(df['clear_rfai_date'], errors='coerce')
     df['rfai_date'] = pd.to_datetime(df['rfai_date'], errors='coerce')
 
-    print("3")
- 
-    def calculate_rfai_to_ms1(row):
+    # 🔥 NEW LOGIC
+    def calculate_adjusted_issue_ageing(site, clear_rfai):
+        if pd.isna(clear_rfai):
+            return None
+
+        site_rows = issue_df[issue_df["Site ID"] == site]
+
+        total_days = 0
+
+        for _, issue in site_rows.iterrows():
+            start = issue["Start Date"]
+            end = issue["Close Date"]
+
+            if pd.isna(start):
+                continue
+
+            if pd.isna(end):
+                end = datetime.today()
+
+            # Case 1: starts after clear_rfai
+            if start >= clear_rfai:
+                total_days += (end - start).days
+
+            # Case 2: overlaps clear_rfai
+            elif start < clear_rfai and end > clear_rfai:
+                total_days += (end - clear_rfai).days
+
+        return total_days
+
+    def calculate_clear_rfai_to_ms1(row):
+        site = row["new_site_id"]
         site_onair = row['site_onair_date']
-        rfai = row['re_rfai_date'] if pd.notna(row['re_rfai_date']) else row['rfai_date']
-        issue_ageing = row['total_issue_ageing'] if pd.notna(row['total_issue_ageing']) else 0
- 
+        rfai = row['clear_rfai_date'] if pd.notna(row['clear_rfai_date']) else row['rfai_date']
+
         if pd.isna(rfai):
             return "-"
-        
+
+        # 🔥 use adjusted ageing if clear_rfai present
+        if pd.notna(row['clear_rfai_date']):
+            issue_ageing = calculate_adjusted_issue_ageing(site, row['clear_rfai_date'])
+        else:
+            issue_ageing = row['total_issue_ageing'] if pd.notna(row['total_issue_ageing']) else 0
+
+        if issue_ageing is None:
+            issue_ageing = 0
+
         if pd.isna(site_onair):
             today = datetime.today()
             return (today - rfai).days - issue_ageing
- 
+
         return (site_onair - rfai).days - issue_ageing
- 
+
+    df['clear_rfai_to_ms1_ageing'] = df.apply(calculate_clear_rfai_to_ms1, axis=1)
+    
+    def calculate_rfai_to_ms1(row):
+        site = row["new_site_id"]
+        site_onair = row['site_onair_date']
+        rfai = row['rfai_date']
+
+        if pd.isna(rfai):
+            return "-"
+
+        if pd.isna(site_onair):
+            today = datetime.today()
+            return (today - rfai).days
+
+        return (site_onair - rfai).days
+    
     df['rfai_to_ms1_ageing'] = df.apply(calculate_rfai_to_ms1, axis=1)
 
     return df
@@ -312,8 +374,6 @@ def update_ageing_new(circle, site_id):
         "created_by": "Created_by",
         "created_at": "Created_at"
     }
-
-    print(issue_df)
     
     issue_df = issue_df.rename(columns=rename_map)
 
@@ -339,28 +399,29 @@ def update_ageing_new(circle, site_id):
 
     # Convert dates
     site_onair = pd.to_datetime(data_obj.site_onair_date, errors="coerce")
-    re_rfai = pd.to_datetime(data_obj.re_rfai_date, errors="coerce")
+    clear_rfai = pd.to_datetime(data_obj.clear_rfai_date, errors="coerce")
     rfai = pd.to_datetime(data_obj.rfai_date, errors="coerce")
 
-    rfai_final = re_rfai if pd.notna(re_rfai) else rfai
+    rfai_final = clear_rfai if pd.notna(clear_rfai) else rfai
 
-    # Calculate rfai_to_ms1_ageing
+    # Calculate clear_rfai_to_ms1_ageing
     if pd.isna(rfai_final):
-        data_obj.rfai_to_ms1_ageing = "-"
+        data_obj.clear_rfai_to_ms1_ageing = "-"
     else:
         issue_ageing = total_issue_ageing or 0
 
         if pd.isna(site_onair):
             today = datetime.today()
-            data_obj.rfai_to_ms1_ageing = (today - rfai_final).days - issue_ageing
+            data_obj.clear_rfai_to_ms1_ageing = (today - rfai_final).days - issue_ageing
         else:
-            data_obj.rfai_to_ms1_ageing = (site_onair - rfai_final).days - issue_ageing
+            data_obj.clear_rfai_to_ms1_ageing = (site_onair - rfai_final).days - issue_ageing
 
     # Save changes
     data_obj.save()
 
     return
- 
+
+
 def get_ftr_month(date):
     if pd.isna(date):
         return None
@@ -401,6 +462,11 @@ def month_sort_key(label):
     # label like "Apr'25"
     month = label.split("'")[0]
     year = int(label.split("'")[1])
+
+    # Adjust year for FY (Jan–Mar should belong to previous year)
+    if month in ["Jan", "Feb", "Mar"]:
+        year -= 1
+
     return (year, MONTH_ORDER[month])
 
 def build_circlewise_ftr(df, status_col, reject_col):
@@ -779,6 +845,21 @@ def upload_tracker_data_view(request):
 
                     if "date" in col.lower():
                         val = safe_datetime(val)
+                        if val and val.date() > timezone.localdate():
+                            return Response(
+                                {
+                                    "status": False,
+                                    "error": f"Future date found in column '{col}'",
+                                    "details": {
+                                        "circle": circle_val,
+                                        "new_site_id": new_site_id_val,
+                                        "column": col,
+                                        "value": val
+                                    }
+                                },
+                                
+                                status=400
+                            )
                     elif "ageing" in col.lower() or "count" in col.lower():
                         val = safe_int(val)
 
@@ -838,11 +919,365 @@ def upload_tracker_data_view(request):
     except Exception as e:
         return Response({"status": False, "error": str(e)}, status=500)
 
+
+@api_view(["POST"])
+def upload_issues_data_view(request):
+    file = request.data.get("tracker_file")
+
+    try:
+        df = pd.read_csv(file) if file.name.endswith('.csv') else pd.read_excel(file)
+        
+        # Clean dataframe safely
+        # df.columns = df.columns.astype(str).str.strip()
+
+        # Convert NaN properly
+        df = df.replace({pd.NA: None, "NaN": None})
+
+        # DO NOT convert everything to ""
+        # This breaks datetime columns
+        # print(df.columns.tolist())
+        # Rename columns
+        df.columns = [
+            str(col).strip().lower().replace(" ", "_")
+            for col in df.columns
+        ]
+
+        df = df[
+            [
+                "circle",
+                "site_id",
+                "issue_owner",
+                "milestone",
+                "issue_name",
+                "start_date",
+                "close_date",
+                "remarks",
+            ]
+        ]
+
+        user_email = "devansh.jain@ust.com"
+        today = date.today()
+
+        issues_to_create = []
+        
+        def safe_strip(val):
+            if val is None:
+                return None
+            return str(val).strip()
+
+        for _, row in df.iterrows():
+            try:
+                # Required fields check
+                if not all([
+                    row["circle"],
+                    row["site_id"],
+                    row["issue_owner"],
+                    row["milestone"],
+                    row["issue_name"],
+                    row["start_date"]
+                ]):
+                    continue  # skip invalid row
+
+                # Parse dates
+                try:
+                    start_date = pd.to_datetime(row["start_date"]).date()
+                except:
+                    continue
+
+                close_date = None
+                if row["close_date"] not in [None, "-", "nan", "undefined"]:
+                    try:
+                        close_date = pd.to_datetime(row["close_date"]).date()
+                    except:
+                        close_date = None
+
+                # Status + duration
+                if close_date:
+                    status_val = "Closed"
+                    duration = (close_date - start_date).days
+                else:
+                    status_val = "Open"
+                    duration = (today - start_date).days
+
+                # Duplicate check (same as your API)
+                filters = {
+                    "circle": row["circle"],
+                    "site_id": row["site_id"],
+                    "issue_owner": row["issue_owner"],
+                    "milestone": row["milestone"],
+                    "issue_name": row["issue_name"],
+                    "status": "Open"
+                }
+
+                if RelocationIssue.objects.filter(**filters).exists():
+                    continue  # skip duplicate open issue
+
+                issues_to_create.append(
+                    RelocationIssue(
+                        circle = safe_strip(row["circle"]),
+                        site_id = safe_strip(row["site_id"]),
+                        issue_owner = safe_strip(row["issue_owner"]),
+                        milestone = safe_strip(row["milestone"]),
+                        issue_name = safe_strip(row["issue_name"]),
+                        start_date=start_date,
+                        close_date=close_date,
+                        status=status_val,
+                        duration=duration,
+                        remarks= safe_strip(row["remarks"]),
+                        created_by=user_email,
+                        updated_by=user_email,
+                    )
+                )
+
+            except Exception:
+                print("EXCEPTION----------------------------------------------------------------------------------------")
+                continue  # skip bad rows safely
+
+        # ✅ Bulk insert (important for performance)
+        RelocationIssue.objects.bulk_create(issues_to_create)
+
+        # # Optional: update ageing per unique site
+        # unique_sites = df[["circle", "site_id"]].drop_duplicates()
+        for _, row in df.iterrows():
+            update_ageing_new(row["circle"], row["site_id"])
+
+        return Response({
+            "message": f"{len(issues_to_create)} issues uploaded successfully!"
+        }, status=200)
+
+    except Exception as e:
+        return Response({"status": False, "error": str(e)}, status=500)
+
+@api_view(["POST"])
+def fetch_sites(request):
+    circle = request.data.get("circle")
+    siteId = request.data.get("siteId")
+
+    try:
+        queryset = AlokTrackerModel.objects.all()
+
+        # Filter by circle if provided
+        if circle:
+            queryset = queryset.filter(circle__iexact=circle)
+
+        # Filter by siteId (partial match) if provided
+        if siteId:
+            queryset = queryset.filter(new_site_id__icontains=siteId)
+
+        # Get top 10 results (latest or just first 10)
+        sites = queryset.values_list("new_site_id", flat=True).distinct()[:10]
+
+        return Response({
+            "status": True,
+            "data": list(sites),
+            "message": "Sites fetched"
+        }, status=200)
+
+    except Exception as e:
+        return Response({
+            "status": False,
+            "error": str(e)
+        }, status=500)
+   
+
+@api_view(["POST"])
+def issue_summary(request):
+    try:
+        # ---------------- 0️⃣ Input Handling ----------------
+        status = request.data.get('status', 'ALL')
+        milestone = request.data.get('milestone', '')
+        owner = request.data.get('owner', '')
+        duration_start = request.data.get('duration_start')
+        duration_end = request.data.get('duration_end')
+        site_on_air = request.data.get('is_on_air')
+
+        # # Ensure list type
+        # if isinstance(milestone, str):
+        #     milestone = [milestone]
+        # if isinstance(owner, str):
+        #     owner = [owner]
+
+        # Convert duration safely
+        duration_start = int(duration_start) if duration_start not in [None, ""] else None
+        duration_end = int(duration_end) if duration_end not in [None, ""] else None
+
+        # ---------------- 1️⃣ Fetch Data ----------------
+        qs = RelocationIssue.objects.all().values(
+            "circle",
+            "issue_name",
+            "issue_owner",
+            "milestone",
+            "site_id",
+            "status",
+            "duration",   # ✅ added
+            "start_date",
+            "close_date"
+        )
+
+        df = pd.DataFrame(list(qs))
+
+        if df.empty:
+            return Response({"message": "No data found"}, status=200)
+
+        # ---------------- 2️⃣ Clean Data ----------------
+        df["circle"] = df["circle"].astype(str).str.strip()
+        df["issue_name"] = df["issue_name"].astype(str).str.strip()
+        df["site_id"] = df["site_id"].astype(str).str.strip()
+        
+        # ---------------- Site ON AIR Filtering ----------------
+        if site_on_air in ["Yes", "No"]:
+            qs1 = AlokTrackerModel.objects.all().values(
+                "circle", "new_site_id", "site_onair_date"
+            )
+
+            df1 = pd.DataFrame(list(qs1))
+
+            if not df1.empty:
+                # Clean
+                df1["circle"] = df1["circle"].fillna("").astype(str).str.strip()
+                df1["new_site_id"] = df1["new_site_id"].fillna("").astype(str).str.strip()
+
+                # Rename for merge
+                df1 = df1.rename(columns={"new_site_id": "site_id"})
+
+                # 🔥 Mark ON AIR sites
+                df1["is_on_air"] = df1["site_onair_date"].notna()
+
+                # Merge
+                df = df.merge(
+                    df1[["circle", "site_id", "is_on_air"]],
+                    on=["circle", "site_id"],
+                    how="left"
+                )
+
+                # If site not found in df1 → treat as NOT ON AIR
+                df["is_on_air"] = df["is_on_air"].fillna(False)
+
+                # 🎯 Apply filter
+                if site_on_air == "No":
+                    # Keep only NOT ON AIR
+                    df = df[df["is_on_air"] == False]
+
+                elif site_on_air == "Yes":
+                    # Keep only ON AIR
+                    df = df[df["is_on_air"] == True]
+
+                # Cleanup
+                df = df.drop(columns=["is_on_air"])
+
+                if df.empty:
+                    return Response({"message": "No data found"}, status=200)
+                
+
+        # ---------------- 3️⃣ Filters ----------------
+        
+        milestone = [c.strip() for c in milestone.split(',')] if milestone else ["ALL"]
+        owner = [c.strip() for c in owner.split(',')] if owner else ["ALL"]
+        
+        if status != 'ALL':
+            df = df[df['status'] == status]
+
+        if duration_start is not None:
+            df = df[df['duration'] >= duration_start]
+
+        if duration_end is not None:
+            df = df[df['duration'] <= duration_end]
+
+        if 'ALL' not in milestone:
+            df = df[df['milestone'].isin(milestone)]
+
+        if 'ALL' not in owner:
+            df = df[df['issue_owner'].isin(owner)]
+
+        # ---------------- 4️⃣ Deduplicate (IMPORTANT) ----------------
+        df = df.drop_duplicates(subset=["circle", "issue_name", "site_id", 'issue_owner', 'milestone'])
+        
+        all_unique_milestones = list(
+            RelocationIssue.objects.exclude(milestone__isnull=True)
+            .distinct("milestone")
+            .values_list("milestone", flat=True)
+        )
+        
+        all_unique_owners = list(
+            RelocationIssue.objects.exclude(issue_owner__isnull=True)
+            .distinct("issue_owner")
+            .values_list("issue_owner", flat=True)
+        )
+        
+        unique_data = {
+            "unique_milestone": sorted(all_unique_milestones),
+            "unique_owners": sorted(all_unique_owners),
+        }
+        
+
+        # ---------------- 5️⃣ Pivot ----------------
+        pivot_df = pd.pivot_table(
+            df,
+            index="issue_name",
+            columns="circle",
+            values="site_id",
+            aggfunc="size",
+            fill_value=0
+        )
+
+        # ---------------- 6️⃣ Totals ----------------
+        # Existing row-wise total (keep this)
+        pivot_df["Total"] = pivot_df.sum(axis=1)
+
+        # 🔥 NEW: Unique site count per circle
+        circle_unique_sites = (
+            df.groupby("circle")["site_id"]
+            .nunique()
+        )
+
+        # Convert to row format
+        total_row = circle_unique_sites.to_dict()
+
+        # Add overall total (unique sites across all circles)
+        total_row["Total"] = df["site_id"].nunique()
+
+        # Convert to DataFrame row
+        total_row_df = pd.DataFrame([total_row], index=["Total"])
+
+        # Append
+        pivot_df = pd.concat([pivot_df, total_row_df])
+
+        # ---------------- 7️⃣ Column Order ----------------
+        circle_order = [
+            "AP","ASM","BIH","CHN","DEL","HRY","JK","JRK",
+            "KK","KOL","MAH","MP","MUM","NE","ORI","PUN",
+            "RAJ","ROTN","UPE","UPW","WB"
+        ]
+
+        existing_cols = [c for c in circle_order if c in pivot_df.columns]
+
+        pivot_df = pivot_df.reindex(columns=existing_cols + ["Total"], fill_value=0)
+
+        # ---------------- 8️⃣ Sort ----------------
+        pivot_df = pivot_df.sort_values(by="Total", ascending=False)
+
+        # ---------------- 9️⃣ Final Format ----------------
+        pivot_df = pivot_df.reset_index().rename(columns={"index": "Issue"})
+
+        return Response({
+            "message": "Success",
+            "data": pivot_df.to_dict(orient="records"),
+            "unique_data": unique_data
+        }, status=200)
+
+    except Exception as e:
+        return Response({
+            "message": "Error",
+            "error": str(e)
+        }, status=500)
+
+
 ############################################################ DOWNLOAD DATA ###################################################################
 
 @api_view(['POST'])
 def download_tracker_data_view(request):
     userId = request.data.get('userId')
+    year = request.data.get('year')
     
     try:
         user = RelocationUser.objects.filter(email=userId.lower()).first()
@@ -856,22 +1291,47 @@ def download_tracker_data_view(request):
     #     return Response({'error': 'userId and circle are required.'}, status=400)
 
     try:
-        # obj = []
-        # if 'CENTRAL' in circles:
-        #     obj = AlokTrackerModel.objects.all()
-        #     issue_obj = RelocationIssue.objects.all()
-        # else:
-        #     obj = AlokTrackerModel.objects.filter(circle=circle)
-        #     issue_obj = RelocationIssue.objects.filter(circle=circle)
+        if year:
+            year = int(year)
+        
+            fy_start = pd.Timestamp(year=year, month=3, day=26).date()
+            fy_end   = pd.Timestamp(year=year + 1, month=3, day=25).date()
+        
+        
+            today = dtime.today().date()
+
+            # condition for FY range
+            fy_filter = Q(site_onair_date__range=(fy_start, fy_end))
+            null_filter = Q(site_onair_date__isnull=True)
+
+            if fy_start <= today <= fy_end:
+                final_filter = fy_filter | null_filter
+            else:
+                final_filter = fy_filter
         
         if 'CENTRAL' in circles:
-            obj = AlokTrackerModel.objects.all()
+            if year:
+                obj = AlokTrackerModel.objects.filter(final_filter)
+            else:
+                obj = AlokTrackerModel.objects.all()
             issue_obj = RelocationIssue.objects.all()
         else:
-            obj = AlokTrackerModel.objects.filter(circle__in=circles)
+            if year:
+                obj = AlokTrackerModel.objects.filter(
+                    final_filter,
+                    circle__in=circles
+                )
+            else:
+                obj = AlokTrackerModel.objects.filter(
+                    circle__in=circles
+                )
             issue_obj = RelocationIssue.objects.filter(circle__in=circles)
 
         df = pd.DataFrame(obj.values())
+        
+        if df.empty:
+            return Response({"message": "No Data Found"}, status=404)
+        
         issue_df = pd.DataFrame(issue_obj.values())
         
         rename_map = {
@@ -905,6 +1365,7 @@ def download_tracker_data_view(request):
             if col in issue_df.columns:
                 issue_df[col] = pd.to_datetime(issue_df[col], errors='coerce')
         
+        print("1.1")
         df = update_ageing(df, issue_df)
 
         print("2")
@@ -931,13 +1392,15 @@ def download_tracker_data_view(request):
         
         print(status_df)
         
-        print(status_df['date'].dropna().unique().tolist())
-        
-
         required_cols = ["site_id", "date", "status"]
         for col in required_cols:
             if col not in status_df.columns:
                 status_df[col] = None
+        
+        print(status_df['date'].dropna().unique().tolist())
+        
+
+        
 
         print("4")
         # Ensure datetime
@@ -993,9 +1456,9 @@ def download_tracker_data_view(request):
                  'integration_date', 'emf_submission_date', 'ran_lkf_status', 'alarm_status', 'alarm_rectification_done_date',
                  'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
-                 'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'manual_history', 'rfai_rejected_date', 
-                 're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
-                  'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
+                 'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
+                 'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
+                 'clear_rfai_to_ms1_ageing', 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
                  "dismantle_date", "material_pickup_date", "material_submission_date", "oci_done_date", "sign_off_date", "dismantling_status", 
@@ -1343,7 +1806,7 @@ def sync_alok_tracker_to_site_status(request):
 #         if df.empty:
 #             return Response({'error': 'No data found for given filters'}, status=404)
         
-#         # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
+#         # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
 
 #         for col in df.columns:
 #             if "Date" in col:
@@ -1623,6 +2086,7 @@ def daily_dashboard_view(request):
             "Allocation Date",
             "RFAI Date",
             "RFAI Survey Date",
+            "Workable Sites",
             "MO Punch Date",
             "Material Dispatch Date",
             "Material Delivered Date",
@@ -1640,8 +2104,74 @@ def daily_dashboard_view(request):
         ]
 
         unique_data.update(**{"Milestone": milestones})
+        
+        included_statuses = [
+            'MO WIP',
+            'On Air Done',
+            'Onair WIP'
+        ]
 
         for milestone in milestones:
+            if milestone == 'Workable Sites':
+                if month_start and month_end:
+                    # CF → before month_start
+                    aop_count = SiteStatus.objects.filter(date__lt=month_start) \
+                        .filter(status__in=included_statuses) \
+                        .values('site_id').distinct().count()
+
+                    # AOP → before month_start (same logic here)
+                    cf_count = SiteStatus.objects.filter(date__lt=month_start) \
+                        .filter(status__in=['Onair WIP', 'MO WIP']) \
+                        .values('site_id').distinct().count()
+                    
+                    prev_date = month_start - timedelta(days=1)
+                    
+                    
+                    
+                    prevCount = SiteStatus.objects.filter(date=prev_date) \
+                                .filter(status__in=included_statuses) \
+                                .values('site_id').distinct().count()
+                            
+
+                    row = {
+                        "Milestone Track/Site Count": milestone,
+                        "AOP": aop_count,
+                        "CF": cf_count
+                    }
+                else:
+                    aop_count = SiteStatus.objects.filter(date__lt=start_date) \
+                        .filter(status__in=included_statuses) \
+                        .values('site_id').distinct().count()
+                        
+                    prev_date = start_date - timedelta(days=1)
+                        
+                    prevCount = SiteStatus.objects.filter(date=prev_date) \
+                                .filter(status__in=included_statuses) \
+                                .values('site_id').distinct().count()
+
+                    row = {
+                        "Milestone Track/Site Count": milestone,
+                        "AOP": aop_count
+                    }
+
+                for d in date_range:
+                    if d == today:
+                        row[d.strftime("%d-%b-%y")] = '-'
+                        continue
+                    count = SiteStatus.objects.filter(date=d) \
+                        .filter(status__in=included_statuses) \
+                        .values('site_id').distinct().count()
+
+                    if view == "Cumulative":
+                        row[d.strftime("%d-%b-%y")] = count
+                    else:
+                        row[d.strftime("%d-%b-%y")] = count-prevCount
+                    
+                    prevCount = count
+
+                result.loc[len(result)] = row
+                continue
+                
             milestone_df_format = (
                 milestone.lower()
                 .replace(" ", "_")
@@ -1786,12 +2316,16 @@ def weekly_monthly_dashboard_view(request):
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
     view = request.data.get('view')
+    year2 = request.data.get('year2')
  
     # Default to 'ALL' if not provided
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
     site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
+    
+    if year2:
+        year2 = int(year2)
     
     if month_filtered and year_filtered:
         month_filtered = int(month_filtered)
@@ -1850,10 +2384,11 @@ def weekly_monthly_dashboard_view(request):
             filters["current_status__in"] = current_status
         if "ALL" not in new_toco_name:
             filters["new_toco_name__in"] = new_toco_name
- 
+            
         # 🔹 Fetch data
         obj = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
         df = pd.DataFrame(obj.values())
+        
  
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
@@ -1863,15 +2398,22 @@ def weekly_monthly_dashboard_view(request):
         for col in df.columns:
             if "Date" in col:
                 df[col] = pd.to_datetime(df[col], format="%d-%b-%y", errors="coerce")
+                
                
         today = dtime.today().date()
- 
-        if today.month >= 4:
-            fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
-            fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+        
+        if year2:
+            fy_start = dtime(year2, 3, 26).date()   # 26-Apr current year start
+            fy_end = dtime(year2 + 1, 3, 25).date() # 25-Mar next year end
         else:
-            fy_start = dtime(today.year - 1, 3, 26).date()
-            fy_end = dtime(today.year, 3, 25).date()
+            if today.month >= 4:
+                fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
+                fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+            else:
+                fy_start = dtime(today.year - 1, 3, 26).date()
+                fy_end = dtime(today.year, 3, 25).date()
+                
+        print("2.5-------------------------------------------------------------")
  
         # 🧩 2. Determine current cycle (26th prev → 25th curr)
         if today.day >= 26:
@@ -1887,6 +2429,15 @@ def weekly_monthly_dashboard_view(request):
             else:
                 current_cycle_start = dtime(today.year, today.month - 1, 26).date()
             current_cycle_end = dtime(today.year, today.month, 25).date()
+            
+        if year2:
+            current_cycle_start = min(dtime(year2+1, 2, 26).date(), current_cycle_start)
+            current_cycle_end = min(dtime(year2+1, 3, 25).date(), current_cycle_end)
+            
+        print(fy_start)
+        print(fy_end)    
+        print(current_cycle_start)
+        print(current_cycle_end)
  
         # 🗓️ 3. Create monthly periods (Apr → month before current)
         months = []
@@ -1898,6 +2449,8 @@ def weekly_monthly_dashboard_view(request):
                 end = dtime(start.year, start.month + 1, 25).date()
             months.append((start, end))
             start = end + timedelta(days=1)
+            
+        print(months)
  
         # 🗓️ 4. Create weekly periods for current month
         weeks = []
@@ -1947,6 +2500,8 @@ def weekly_monthly_dashboard_view(request):
         ]
  
         data = []
+        
+        print("5-----------------------------------")
         
         for milestone in milestones:
             
@@ -2053,7 +2608,7 @@ def weekly_monthly_dashboard_view(request):
         return Response({'message': 'Weekly and Monthly Dashboard created successfully !!!', "download_link": download_link, "unique_data": unique_data, "months_data": month_json_data, "week_data": week_json_data}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
-    
+ 
 
 @api_view(['GET', 'POST'])
 def gap_view(request):
@@ -2263,9 +2818,9 @@ def gap_view(request):
                  'integration_date', 'emf_submission_date', 'ran_lkf_status', 'alarm_status', 'alarm_rectification_done_date',
                  'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
-                 'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'manual_history', 'rfai_rejected_date', 
-                 're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
-                  'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
+                 'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
+                 'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
+                 'clear_rfai_to_ms1_ageing', 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
                  "dismantle_date", "material_pickup_date", "material_submission_date", "oci_done_date", "sign_off_date", "dismantling_status", 
@@ -2516,7 +3071,7 @@ def ageing_dashboard_view(request):
         def generate_done_summary(df, start_label, end_label, start_col, end_col, breakpoint1, breakpoint2):
             temp = df.copy()
             # if start_col == 'rfai_date' and end_col == 'site_onair_date':
-            #     temp['rfai_date'] = temp['rfai_date'].where(temp['re_rfai_date'].isna(), temp['re_rfai_date'])
+            #     temp['rfai_date'] = temp['rfai_date'].where(temp['clear_rfai_date'].isna(), temp['clear_rfai_date'])
             # if issue == 'considered':
             #     temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
             #     temp['days_diff'] = (temp[end_col] - temp[start_col]).dt.days - temp['total_issue_ageing']
@@ -2656,7 +3211,7 @@ def ageing_dashboard_view(request):
             temp = df.copy()
             
             # if start_col == 'rfai_date' and end_col == 'site_onair_date':
-            #     temp['rfai_date'] = temp['rfai_date'].where(temp['re_rfai_date'].isna(), temp['re_rfai_date'])
+            #     temp['rfai_date'] = temp['rfai_date'].where(temp['clear_rfai_date'].isna(), temp['clear_rfai_date'])
             
             # if issue == 'considered':
             #     temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
@@ -2955,10 +3510,11 @@ def ageing_dashboard_view_issues(request):
         def generate_done_summary(df, start_label, end_label, start_col, end_col, breakpoint1, breakpoint2):
             temp = df.copy()
             if start_col == 'rfai_date' and end_col == 'site_onair_date' and issue == 'considered':
-                temp['rfai_date'] = temp['rfai_date'].where(temp['re_rfai_date'].isna(), temp['re_rfai_date'])
+                temp['rfai_date'] = temp['rfai_date'].where(temp['clear_rfai_date'].isna(), temp['clear_rfai_date'])
             if issue == 'considered':
-                temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
-                temp['days_diff'] = (temp[end_col] - temp[start_col]).dt.days - temp['total_issue_ageing']
+                # temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
+                # temp['days_diff'] = (temp[end_col] - temp[start_col]).dt.days - temp['total_issue_ageing']
+                temp['days_diff'] = temp['clear_rfai_to_ms1_ageing']
             else:
                 temp["days_diff"] = (temp[end_col] - temp[start_col]).dt.days
             
@@ -3095,11 +3651,12 @@ def ageing_dashboard_view_issues(request):
             temp = df.copy()
             
             if start_col == 'rfai_date' and end_col == 'site_onair_date' and issue == 'considered':
-                temp['rfai_date'] = temp['rfai_date'].where(temp['re_rfai_date'].isna(), temp['re_rfai_date'])
+                temp['rfai_date'] = temp['rfai_date'].where(temp['clear_rfai_date'].isna(), temp['clear_rfai_date'])
             
             if issue == 'considered':
-                temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
-                temp['days_diff'] = (today - temp[start_col]).dt.days - temp['total_issue_ageing']
+                # temp['total_issue_ageing'] = temp['total_issue_ageing'].fillna(0)
+                # temp['days_diff'] = (today - temp[start_col]).dt.days - temp['total_issue_ageing']
+                temp['days_diff'] = temp['clear_rfai_to_ms1_ageing']
             else:
                 temp["days_diff"] = (today - temp[start_col]).dt.days
 
@@ -3443,9 +4000,9 @@ def frontend_editing_display_view(request):
                  'integration_date', 'emf_submission_date', 'ran_lkf_status', 'alarm_status', 'alarm_rectification_done_date',
                  'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
-                 'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'manual_history', 'rfai_rejected_date', 
-                 're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
-                  'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
+                 'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
+                 'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
+                 'clear_rfai_to_ms1_ageing', 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
                  "dismantle_date", "material_pickup_date", "material_submission_date", "oci_done_date", "sign_off_date", "dismantling_status", 
@@ -4425,7 +4982,7 @@ def ms2_daily_waterfall(request):
     view = request.data.get('view')
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
-    
+
     if month_filtered and year_filtered:
         month_filtered = int(month_filtered)
         year_filtered = int(year_filtered)
@@ -4495,29 +5052,25 @@ def ms2_daily_waterfall(request):
 
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
-        
-        # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
 
         for col in df.columns:
-            if "Date" in col:
-                df[col] = pd.to_datetime(df[col], format="%d-%b-%y", errors="coerce")
+            if "Date" in col or "date" in col:
+                df[col] = pd.to_datetime(df[col], errors="coerce")
 
         today = dtime.today().date()
 
         if (not month_start or not month_end) and (not start_date or not end_date):
             if today.day >= 26:
                 start_date = today.replace(day=26)
-                if today.month == 12:
-                    end_date = today.replace(year=today.year + 1, month=1, day=25)
-                else:
-                    end_date = today.replace(month=today.month + 1, day=25)
+                end_date = (today.replace(month=today.month + 1, day=25)
+                            if today.month != 12
+                            else today.replace(year=today.year + 1, month=1, day=25))
             else:
-                if today.month == 1:
-                    start_date = today.replace(year=today.year - 1, month=12, day=26)
-                else:
-                    start_date = today.replace(month=today.month - 1, day=26)
+                start_date = (today.replace(month=today.month - 1, day=26)
+                              if today.month != 1
+                              else today.replace(year=today.year - 1, month=12, day=26))
                 end_date = today.replace(day=25)
-                
+
         if month_start and month_end:
             date_range = pd.date_range(start=month_start, end=min(month_end, today)).date
         else:
@@ -4529,6 +5082,7 @@ def ms2_daily_waterfall(request):
             result_columns = ["Milestone Track/Site Count", "AOP", "CF"] + formatted_dates
         else:
             result_columns = ["Milestone Track/Site Count", "AOP"] + formatted_dates
+
         result = pd.DataFrame(columns=result_columns)
 
         milestones = [
@@ -4541,69 +5095,67 @@ def ms2_daily_waterfall(request):
             'SCFT Accepted Date',
             'KPI AT offer Date',
             'KPI AT Accepted Date',
-            '4G MS2 Date',
-            '5G MS2 Date',
-            'Final MS2 Date'
+            'MS2 Status'
         ]
 
-        unique_data.update(**{"Milestone": milestones})
+        unique_data.update({"Milestone": milestones})
 
         for milestone in milestones:
-            milestone_df_format = (
-                milestone.lower()
-                .replace(" ", "_")
-                .replace("-", "_")
-                .replace("(", "")
-                .replace(")", "")
-            )
+
+            if milestone == "MS2 Status":
+                milestone_df_format = "final_ms2_date"
+            else:
+                milestone_df_format = (
+                    milestone.lower()
+                    .replace(" ", "_")
+                    .replace("-", "_")
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace("4", "four_")
+                    .replace("5", "five_")
+                )
 
             if milestone_df_format not in df.columns:
                 continue
 
-            df[milestone_df_format] = pd.to_datetime(df[milestone_df_format], errors="coerce").dt.date
-            if month_start and month_end:
-                mask = df['site_onair_date'].isna()
-                valid_dates_cf = df.loc[mask, milestone_df_format].dropna()
-            # else:
-            #     valid_dates = df[milestone_df_format].dropna()
-            
-            valid_dates_aop = df[milestone_df_format].dropna()
+            df[milestone_df_format] = pd.to_datetime(
+                df[milestone_df_format], errors="coerce"
+            ).dt.date
 
-            if valid_dates_aop.empty:
+            valid_dates = df[milestone_df_format].dropna()
+
+            if valid_dates.empty:
+                row = {
+                    "Milestone Track/Site Count": milestone,
+                    "AOP": "-"
+                }
                 if month_start and month_end:
-                    row = {
-                        "Milestone Track/Site Count": milestone,
-                        "AOP": "-",
-                        "CF": "-",
-                        **{d.strftime("%d-%b-%y"): "-" for d in date_range}
-                    }
-                else:
-                    row = {
-                        "Milestone Track/Site Count": milestone,
-                        "AOP": "-",
-                        **{d.strftime("%d-%b-%y"): "-" for d in date_range}
-                    }
-                
+                    row["CF"] = "-"
+
+                for d in date_range:
+                    row[d.strftime("%d-%b-%y")] = "-"
+
                 result.loc[len(result)] = row
                 continue
-            
-            if month_start and month_end:
-                cf_count = (valid_dates_cf < month_start).sum()
-                aop_count = (valid_dates_aop < month_start).sum()
-            else:
-            #     cf_count = (valid_dates < start_date).sum()
-                aop_count = (valid_dates_aop < start_date).sum()
-            
-            if month_start and month_end:
-                cumulative = cf_count
-                row = {"Milestone Track/Site Count": milestone,"AOP": aop_count, "CF": cf_count}
-            else:
-                cumulative = aop_count
-                row = {"Milestone Track/Site Count": milestone,"AOP": aop_count}
 
+            if month_start and month_end:
+                aop_count = (valid_dates < month_start).sum()
+                cumulative = aop_count
+                row = {
+                    "Milestone Track/Site Count": milestone,
+                    "AOP": aop_count,
+                    "CF": aop_count
+                }
+            else:
+                aop_count = (valid_dates < start_date).sum()
+                cumulative = aop_count
+                row = {
+                    "Milestone Track/Site Count": milestone,
+                    "AOP": aop_count
+                }
 
             for d in date_range:
-                count = (valid_dates_aop == d).sum()
+                count = (valid_dates == d).sum()
                 cumulative += count
 
                 if view == "Cumulative":
@@ -4613,30 +5165,26 @@ def ms2_daily_waterfall(request):
 
             result.loc[len(result)] = row
 
-        result.columns = [
-            col.strftime("%d-%b-%y") if isinstance(col, (dtime,)) or hasattr(col, "strftime") else col
-            for col in result.columns
-        ]
-        if month_start and month_end:
-            result = result[["Milestone Track/Site Count", "AOP" , "CF"] + formatted_dates]
-        else:
-            result = result[["Milestone Track/Site Count", "AOP"] + formatted_dates]
- 
+        # -------- GAP CALCULATION FROM SITE ONAIR --------
+
         last_col = formatted_dates[-1]
-        dash_mask = result[last_col] == '-'
 
         result[last_col] = pd.to_numeric(result[last_col], errors='coerce')
-        result['Gap'] = -result[last_col].diff()
 
-        nan_mask = result['Gap'].isna()
+        site_onair_value = result.loc[
+            result['Milestone Track/Site Count'] == 'Site ONAIR Date',
+            last_col
+        ]
 
-        result[last_col] = result[last_col].fillna(0).astype(int)
+        if not site_onair_value.empty:
+            site_onair_value = site_onair_value.values[0]
+            result['Gap'] = site_onair_value - result[last_col]
+        else:
+            result['Gap'] = 0
+
         result['Gap'] = result['Gap'].fillna(0).astype(int)
+        result[last_col] = result[last_col].fillna(0).astype(int)
 
-        result.loc[dash_mask, last_col] = '-'
-        result.loc[nan_mask, 'Gap'] = '-'
-
-        result['Gap'] = result['Gap'].astype(str)
         result = result.astype(str).reset_index(drop=True)
 
         result['Milestone Track/Site Count'] = result['Milestone Track/Site Count'].apply(
@@ -4669,7 +5217,10 @@ def ms2_daily_waterfall(request):
         with pd.ExcelWriter(dashboard_file_path, engine='xlsxwriter') as writer:
             result.to_excel(writer, index=False, sheet_name='Daily Waterfall MS2')
 
-        dashboard_file_path = dashboard_file_path.replace(settings.MEDIA_ROOT, settings.MEDIA_URL).replace("\\", "/")
+        dashboard_file_path = dashboard_file_path.replace(
+            settings.MEDIA_ROOT, settings.MEDIA_URL
+        ).replace("\\", "/")
+
         download_link = request.build_absolute_uri(dashboard_file_path)
 
         return Response({
@@ -4683,7 +5234,6 @@ def ms2_daily_waterfall(request):
     except Exception as e:
         return Response({"error": f"{str(e)}"}, status=500)
 
-
 @api_view(['GET','POST'])
 def ms2_weekly_monthly_waterfall(request):
     circle = request.data.get('circle', [])
@@ -4692,6 +5242,7 @@ def ms2_weekly_monthly_waterfall(request):
     new_toco_name = request.data.get('new_toco_name', [])
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
+    year2 = request.data.get('year2')
     view = request.data.get('view')
  
     # Default to 'ALL' if not provided
@@ -4699,6 +5250,9 @@ def ms2_weekly_monthly_waterfall(request):
     site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
+    
+    if year2:
+        year2 = int(year2)
     
     if month_filtered and year_filtered:
         month_filtered = int(month_filtered)
@@ -4771,12 +5325,18 @@ def ms2_weekly_monthly_waterfall(request):
                
         today = dtime.today().date()
  
-        if today.month >= 4:
-            fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
-            fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+        if year2:
+            fy_start = dtime(year2, 3, 26).date()   # 26-Apr current year start
+            fy_end = dtime(year2 + 1, 3, 25).date() # 25-Mar next year end
         else:
-            fy_start = dtime(today.year - 1, 3, 26).date()
-            fy_end = dtime(today.year, 3, 25).date()
+            if today.month >= 4:
+                fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
+                fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+            else:
+                fy_start = dtime(today.year - 1, 3, 26).date()
+                fy_end = dtime(today.year, 3, 25).date()
+                
+        print("2.5-------------------------------------------------------------")
  
         # 🧩 2. Determine current cycle (26th prev → 25th curr)
         if today.day >= 26:
@@ -4792,6 +5352,10 @@ def ms2_weekly_monthly_waterfall(request):
             else:
                 current_cycle_start = dtime(today.year, today.month - 1, 26).date()
             current_cycle_end = dtime(today.year, today.month, 25).date()
+            
+        if year2:
+            current_cycle_start = min(dtime(year2+1, 2, 26).date(), current_cycle_start)
+            current_cycle_end = min(dtime(year2+1, 3, 25).date(), current_cycle_end)
  
         # 🗓️ 3. Create monthly periods (Apr → month before current)
         months = []
@@ -4845,7 +5409,7 @@ def ms2_weekly_monthly_waterfall(request):
         data = []
         for milestone in milestones:
             
-            milestone_df_format = milestone.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_")
+            milestone_df_format = milestone.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_").replace("5", "five_")
             if milestone_df_format not in df.columns:
                 continue
             
@@ -4946,7 +5510,7 @@ def ms2_weekly_monthly_waterfall(request):
         return Response({'message': 'Weekly and Monthly Dashboard created successfully !!!', "download_link": download_link, "unique_data": unique_data, "months_data": month_json_data, "week_data": week_json_data}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
-    
+   
 
 @api_view(['GET', 'POST'])
 def monthly_graph(request):
@@ -4958,6 +5522,7 @@ def monthly_graph(request):
     milestone2 = request.data.get('milestone2')
     view = request.data.get('view')
     type = request.data.get('type')
+    year_filtered = request.data.get('year2')
     
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
     site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
@@ -4965,6 +5530,8 @@ def monthly_graph(request):
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
     milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
     milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
+    
+    
     
     all_unique_circles = list(
         AlokTrackerModel.objects.exclude(circle__isnull=True)
@@ -4998,6 +5565,8 @@ def monthly_graph(request):
     }
     
     try:
+        year_filtered = int(year_filtered)
+        
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
@@ -5063,7 +5632,7 @@ def monthly_graph(request):
         ).dt.strftime("%b-%y")
 
         # 5️⃣ Current FY
-        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
+        current_fy = year_filtered
 
         # 6️⃣ CF logic
         df.loc[df["year1"] < current_fy, "month_name1"] = "CF"
@@ -5095,7 +5664,7 @@ def monthly_graph(request):
         ).dt.strftime('%b-%y')
 
         # 6️⃣ Current financial year
-        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
+        current_fy = year_filtered
 
         # 7️⃣ Carry Forward (only where year2 exists)
         df.loc[df['year2'].notna() & (df['year2'] < current_fy), 'month_name2'] = 'CF'
@@ -5108,11 +5677,17 @@ def monthly_graph(request):
         print(df['month_name2'])
         
         print(df['year2'])
+        
+        df.loc[df['year1'].notna() & (df['year1'] > current_fy), ["month_name1"]] = "Future"
+        df.loc[df['year2'].notna() & (df['year2'] > current_fy), ["month_name2"]] = "Future"
 
         def sort_financial_year(summary):
             # Extract sorted unique Month-Year (excluding CF)
-            months = [m for m in summary['month_name'].unique() if m != "CF"]
-
+            months = [
+                m for m in summary['month_name'].unique()
+                if m not in ["CF", "Future"] and pd.notna(m)
+            ]
+            
             # Convert to datetime to sort correctly
             months_sorted = sorted(
                 months,
@@ -5120,8 +5695,16 @@ def monthly_graph(request):
             )
 
             # CF should always be first
-            ordered = ["CF"] + months_sorted if "CF" in summary['month_name'].values else months_sorted
+            ordered = []
 
+            if "CF" in summary['month_name'].values:
+                ordered.append("CF")
+
+            ordered += months_sorted
+
+            if "Future" in summary['month_name'].values:
+                ordered.append("Future")
+            
             # Convert into ordered categorical for final sort
             summary['month_name'] = pd.Categorical(summary['month_name'], ordered, ordered=True)
 
@@ -5207,7 +5790,7 @@ def monthly_graph(request):
     
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
-    
+   
     
 @api_view(['GET', 'POST'])
 def lifecycle_display(request):
@@ -6458,6 +7041,398 @@ def ms2_ageing_dashboard_table2(request):
         return Response({'message': 'request processed successfully !!!', "download_link": download_link, "json_data": json_data, "unique_data": unique_data, "breakpoint1" : breakpoint1, "breakpoint2" : breakpoint2}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
+    
+
+@api_view(['GET', 'POST'])
+def ms2_graphs_view(request):
+    site_tagging = request.data.get('site_tagging', [])
+    current_status = request.data.get('current_status', [])
+    milestone1 = request.data.get('milestone1')
+    milestone2 = request.data.get('milestone2')
+    month_filtered = request.data.get('month')
+    year_filtered = request.data.get('year')
+
+    all_unique_site_tagging = list(
+        AlokTrackerModel.objects.exclude(site_tagging__isnull=True)
+        .distinct("site_tagging")
+        .values_list("site_tagging", flat=True)
+    )
+
+    all_unique_current_status = list(
+        AlokTrackerModel.objects.exclude(current_status__isnull=True)
+        .distinct("current_status")
+        .values_list("current_status", flat=True)
+    )
+    
+    milestones = [
+        "Site ONAIR",
+        "I-Deploy ONAIR",
+        'RAN PAT Accepted',
+        'RAN SAT Accepted',
+        'MW PAT Accepted',
+        'MW SAT Accepted',
+        'SCFT Accepted',
+        'KPI AT offer',
+        'KPI AT Accepted',
+        '4G MS2',
+        '5G MS2',
+        'Final MS2'
+    ]
+    
+    unique_data = {
+        "unique_site_tagging": sorted(all_unique_site_tagging),
+        "unique_current_status": sorted(all_unique_current_status),
+        "milestones": milestones
+    }
+
+    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
+    
+    try:
+
+        if month_filtered and year_filtered:
+            month_filtered = int(month_filtered)
+            year_filtered = int(year_filtered)
+
+            month_end = date(year_filtered, month_filtered, 25)
+
+            if month_filtered == 1:
+                month_start = date(year_filtered - 1, 12, 26)
+            else:
+                month_start = date(year_filtered, month_filtered - 1, 26)
+        else:
+            month_start = None
+            month_end = None
+        
+        filters = {}
+        if site_tagging and "ALL" not in site_tagging:
+            filters["site_tagging__in"] = site_tagging
+        if current_status and "ALL" not in current_status:
+            filters["current_status__in"] = current_status
+        if month_start and month_end:
+            filters[f"{milestone1.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_").replace("5", "five_") + '_date'}__range"] = (month_start, month_end)
+
+        obj = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
+        df = pd.DataFrame(obj.values())
+        
+        df['Circle'] = df['circle']
+
+        def generate_summary(df, start_label, end_label, start_col, end_col):
+            temp = df.copy()
+            summary = (
+                temp.groupby("Circle").apply(lambda g: pd.Series({
+                    f"{start_label} Done Count": g[start_col].notna().sum(),
+                    f"{end_label} Done Count": ((g[end_col].notna()) & (g[start_col].notna())).sum(),
+                    f"{end_label} Pending Count": ((g[end_col].isna()) & (g[start_col].notna())).sum(),
+                }))
+                .reset_index()
+            )
+
+            summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].round(0).astype("Int64")
+
+            summary = summary[
+                ["Circle", f"{start_label} Done Count", f"{end_label} Done Count", f"{end_label} Pending Count"]
+            ]
+
+            return summary
+
+        start_label = milestone1 if milestones.index(milestone1) < milestones.index(milestone2) else milestone2
+        end_label = milestone2 if milestones.index(milestone1) < milestones.index(milestone2) else milestone1
+
+        start_col = start_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+        end_col = end_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+        
+        graph_summary = generate_summary(df, start_label, end_label, start_col, end_col)
+
+        graph_summary = graph_summary.applymap(lambda x: str(x) if pd.notna(x) else "")   
+
+        result_json = graph_summary.to_dict(orient="records")
+        json_data1 = json.dumps(result_json)
+
+        json_data = {
+            "graph_summary": json_data1,
+        }
+
+        return Response({'message': 'request processed successfully !!!', 'json_data': json_data, "unique_data": unique_data}, status=200)
+
+    except Exception as e:
+        return Response({"error": f"{str(e)}"}, status=500)
+ 
+
+@api_view(['GET', 'POST'])
+def ms2_monthly_graph(request):
+    circle = request.data.get('circle', [])
+    site_tagging = request.data.get('site_tagging', [])
+    current_status = request.data.get('relocation_method', [])
+    new_toco_name = request.data.get('new_toco_name', [])
+    milestone1 = request.data.get('milestone1')
+    milestone2 = request.data.get('milestone2')
+    view = request.data.get('view')
+    type = request.data.get('type')
+    year_filtered = request.data.get('year2')
+    
+    circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
+    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
+    new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
+    milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+    milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+    
+    all_unique_circles = list(
+        AlokTrackerModel.objects.exclude(circle__isnull=True)
+        .distinct("circle")
+        .values_list("circle", flat=True)
+    )
+
+    all_unique_site_tagging = list(
+        AlokTrackerModel.objects.exclude(site_tagging__isnull=True)
+        .distinct("site_tagging")
+        .values_list("site_tagging", flat=True)
+    )
+
+    all_unique_current_status = list(
+        AlokTrackerModel.objects.exclude(current_status__isnull=True)
+        .distinct("current_status")
+        .values_list("current_status", flat=True)
+    )
+
+    all_unique_new_toco_name = list(
+        AlokTrackerModel.objects.exclude(new_toco_name__isnull=True)
+        .distinct("new_toco_name")
+        .values_list("new_toco_name", flat=True)
+    )
+    
+    milestones = [
+        "Site ONAIR",
+        "I-Deploy ONAIR",
+        'RAN PAT Accepted',
+        'RAN SAT Accepted',
+        'MW PAT Accepted',
+        'MW SAT Accepted',
+        'SCFT Accepted',
+        'KPI AT offer',
+        'KPI AT Accepted',
+        '4G MS2',
+        '5G MS2',
+        'Final MS2'
+    ]
+    
+    unique_data = {
+        "unique_circle": sorted(all_unique_circles),
+        "unique_site_tagging": sorted(all_unique_site_tagging),
+        "unique_relocation_method": sorted(all_unique_current_status),
+        "unique_new_toco_name": sorted(all_unique_new_toco_name),
+        "milestones": milestones
+    }
+    
+    try:
+        
+        year_filtered = int(year_filtered)
+        
+        filters = {}
+        if "ALL" not in circle:
+            filters["circle__in"] = circle
+        if "ALL" not in site_tagging:
+            filters["site_tagging__in"] = site_tagging
+        if "ALL" not in current_status:
+            filters["current_status__in"] = current_status
+        if "ALL" not in new_toco_name:
+            filters["new_toco_name__in"] = new_toco_name
+        
+            
+            
+        obj = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
+        df = pd.DataFrame(obj.values())
+        
+        # print(df)
+ 
+        if df.empty:
+            return Response({'error': 'No data found for given filters'}, status=404)
+        
+        df = df[[milestone1_col, milestone2_col]]
+       
+        for col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
+        
+        today = dtime.today().date()
+        
+        df["month_num1"] = (
+            df[milestone1_col].dt.month + (df[milestone1_col].dt.day >= 26)
+        ).replace({13: 1}).astype("Int64")
+
+        df["year1"] = (
+            df[milestone1_col].dt.year - (
+                (df[milestone1_col].dt.month < 3) |
+                ((df[milestone1_col].dt.month == 3) & (df[milestone1_col].dt.day < 26))
+            )
+        ).astype("Int64")
+
+        # 3️⃣ Display year
+        df["display_year"] = df["year1"] + (df["month_num1"] <= 3)
+
+        # 4️⃣ Month label
+        df["month_name1"] = pd.to_datetime(
+            df["month_num1"].astype(str) + "-" + df["display_year"].astype(str),
+            format="%m-%Y",
+            errors="coerce"
+        ).dt.strftime("%b-%y")
+
+        # 5️⃣ Current FY
+        current_fy = year_filtered
+
+        # 6️⃣ CF logic
+        df.loc[df["year1"] < current_fy, "month_name1"] = "CF"
+
+
+
+        df['month_num2'] = df[milestone2_col].dt.month + (df[milestone2_col].dt.day >= 26)
+        df['month_num2'] = df['month_num2'].replace({13: 1})
+
+        # 2️⃣ Financial year (derived ONLY from original date)
+        df['year2'] = df[milestone2_col].dt.year - (
+            (df[milestone2_col].dt.month < 3) |
+            ((df[milestone2_col].dt.month == 3) & (df[milestone2_col].dt.day < 26))
+        )
+
+        # 3️⃣ Safe numeric conversion (IMPORTANT)
+        df['month_num2'] = pd.to_numeric(df['month_num2'], errors='coerce')
+        df['year2'] = pd.to_numeric(df['year2'], errors='coerce')
+
+        # 4️⃣ Display year
+        df['display_year2'] = df['year2'] + (df['month_num2'] <= 3)
+
+        # 5️⃣ Month label (NaT-safe)
+        df['month_name2'] = pd.to_datetime(
+            df['month_num2'].astype('Int64').astype(str) + '-' +
+            df['display_year2'].astype('Int64').astype(str),
+            format='%m-%Y',
+            errors='coerce'
+        ).dt.strftime('%b-%y')
+
+        # 6️⃣ Current financial year
+        current_fy = year_filtered
+
+        # 7️⃣ Carry Forward (only where year2 exists)
+        df.loc[df['year2'].notna() & (df['year2'] < current_fy), 'month_name2'] = 'CF'
+        
+        print(df['month_name1'].dropna().unique().tolist())
+
+        
+        print(df['year1'])
+        
+        print(df['month_name2'])
+        
+        print(df['year2'])
+        
+        df.loc[df['year1'].notna() & (df['year1'] > current_fy), ["month_name1"]] = "Future"
+        df.loc[df['year2'].notna() & (df['year2'] > current_fy), ["month_name2"]] = "Future"
+
+        def sort_financial_year(summary):
+            # Extract sorted unique Month-Year (excluding CF)
+            months = [
+                m for m in summary['month_name'].unique()
+                if m not in ["CF", "Future"] and pd.notna(m)
+            ]
+            # Convert to datetime to sort correctly
+            months_sorted = sorted(
+                months,
+                key=lambda x: pd.to_datetime(x, format='%b-%y')
+            )
+
+            # CF should always be first
+            ordered = []
+
+            if "CF" in summary['month_name'].values:
+                ordered.append("CF")
+
+            ordered += months_sorted
+
+            if "Future" in summary['month_name'].values:
+                ordered.append("Future")
+
+            # Convert into ordered categorical for final sort
+            summary['month_name'] = pd.Categorical(summary['month_name'], ordered, ordered=True)
+
+            return summary.sort_values('month_name')
+        
+        def generate_type1_summary(df, start_label, end_label, start_col, end_col):
+            temp = df.copy()
+
+            # Start counts by month_name
+            start_counts = (
+                temp[temp[start_col].notna()]
+                .groupby("month_name1")
+                .size()
+                .reset_index(name=f"{start_label} Done Count")
+                .rename(columns={"month_name1": "month_name"})
+            )
+
+            # End counts by month_name2
+            end_counts = (
+                temp[temp[end_col].notna()]
+                .groupby("month_name2")
+                .size()
+                .reset_index(name=f"{end_label} Done Count")
+                .rename(columns={"month_name2": "month_name"})
+            )
+
+            # Merge both results
+            summary = pd.merge(start_counts, end_counts, on="month_name", how="outer")
+
+            # Convert to Int64 nullable type
+            summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].astype("Int64")
+            summary[f"{end_label} Done Count"] = summary[f"{end_label} Done Count"].astype("Int64")
+
+            summary = sort_financial_year(summary)
+
+            if view == "Cumulative":
+                summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].cumsum()
+                summary[f"{end_label} Done Count"] = summary[f"{end_label} Done Count"].cumsum()
+
+            return summary.reset_index(drop=True)
+        
+        def generate_type2_summary(df, start_label, end_label, start_col, end_col):
+            temp = df.copy()
+            summary = (
+                temp.groupby("month_name1").apply(lambda g: pd.Series({
+                    f"{start_label} Done Count": g[start_col].notna().sum(),
+                    f"{end_label} Done Count": ((g[end_col].notna()) & (g[start_col].notna())).sum(),
+                    # f"{end_label} Pending Count": ((g[end_col].isna()) & (g[start_col].notna())).sum(),
+                }))
+                .reset_index()
+                .rename(columns={"month_name1": "month_name"})
+            )
+
+            summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].astype("Int64")
+
+            summary = summary[
+                ["month_name", f"{start_label} Done Count", f"{end_label} Done Count"]
+            ]
+
+            summary = sort_financial_year(summary)
+
+            if view == "Cumulative":
+                summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].cumsum()
+                summary[f"{end_label} Done Count"] = summary[f"{end_label} Done Count"].cumsum()
+
+            return summary.reset_index(drop=True)
+        
+        summary = generate_type1_summary(df, milestone1, milestone2, milestone1_col, milestone2_col) if type == 'type1' else generate_type2_summary(df, milestone1, milestone2, milestone1_col, milestone2_col)
+
+        numeric_cols = [col for col in summary.columns if "Done Count" in col]
+
+        summary[numeric_cols] = summary[numeric_cols].apply(pd.to_numeric, errors="coerce")
+        summary[numeric_cols] = summary[numeric_cols].fillna(0).astype(int)
+
+        
+        result_json = summary.to_dict(orient = "records")
+        json_data = json.dumps(result_json)
+        
+        return Response({"message" : "request processed successfully ! ", "json_data": json_data, "unique_data": unique_data}, status=200)
+    
+    except Exception as e:
+        return Response({"error": f"{str(e)}"},status=500)
+    
 
 
 # @api_view(['GET', 'POST'])
@@ -6526,7 +7501,7 @@ def ms2_ageing_dashboard_table2(request):
 #         if df.empty:
 #             return Response({'error': 'No data found for given filters'}, status=404)
         
-#         # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
+#         # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
 
 #         for col in df.columns:
 #             if "Date" in col:
@@ -6759,7 +7734,7 @@ def dismantle_daily_dashboard_view(request):
         if df.empty:
             return Response({'error': 'No data found for given filters'}, status=404)
         
-        # df['rfai_date'] = df['re_rfai_date'].where(df["re_rfai_date"].notna(), df['rfai_date'])
+        # df['rfai_date'] = df['clear_rfai_date'].where(df["clear_rfai_date"].notna(), df['rfai_date'])
 
         for col in df.columns:
             if "Date" in col:
@@ -6952,6 +7927,7 @@ def dismantle_weekly_monthly_dashboard_view(request):
     new_toco_name = request.data.get('new_toco_name', [])
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
+    year2 = request.data.get('year2')
     view = request.data.get('view')
  
     # Default to 'ALL' if not provided
@@ -6959,6 +7935,9 @@ def dismantle_weekly_monthly_dashboard_view(request):
     site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
+    
+    if year2:
+        year2 = int(year2)
     
     if month_filtered and year_filtered:
         month_filtered = int(month_filtered)
@@ -7033,12 +8012,18 @@ def dismantle_weekly_monthly_dashboard_view(request):
                
         today = dtime.today().date()
  
-        if today.month >= 4:
-            fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
-            fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+        if year2:
+            fy_start = dtime(year2, 3, 26).date()   # 26-Apr current year start
+            fy_end = dtime(year2 + 1, 3, 25).date() # 25-Mar next year end
         else:
-            fy_start = dtime(today.year - 1, 3, 26).date()
-            fy_end = dtime(today.year, 3, 25).date()
+            if today.month >= 4:
+                fy_start = dtime(today.year, 3, 26).date()   # 26-Apr current year start
+                fy_end = dtime(today.year + 1, 3, 25).date() # 25-Mar next year end
+            else:
+                fy_start = dtime(today.year - 1, 3, 26).date()
+                fy_end = dtime(today.year, 3, 25).date()
+                
+        print("2.5-------------------------------------------------------------")
  
         # 🧩 2. Determine current cycle (26th prev → 25th curr)
         if today.day >= 26:
@@ -7054,6 +8039,10 @@ def dismantle_weekly_monthly_dashboard_view(request):
             else:
                 current_cycle_start = dtime(today.year, today.month - 1, 26).date()
             current_cycle_end = dtime(today.year, today.month, 25).date()
+            
+        if year2:
+            current_cycle_start = min(dtime(year2+1, 2, 26).date(), current_cycle_start)
+            current_cycle_end = min(dtime(year2+1, 3, 25).date(), current_cycle_end)
  
         # 🗓️ 3. Create monthly periods (Apr → month before current)
         months = []
@@ -7207,7 +8196,7 @@ def dismantle_weekly_monthly_dashboard_view(request):
         return Response({'message': 'Weekly and Monthly Dashboard created successfully !!!', "download_link": download_link, "unique_data": unique_data, "months_data": month_json_data, "week_data": week_json_data}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
-   
+  
    
 @api_view(['GET', 'POST'])
 def dismantle_ageing_dashboard_table1(request):
@@ -7630,6 +8619,397 @@ def dismantle_ageing_dashboard_table2(request):
         return Response({'message': 'request processed successfully !!!', "download_link": download_link, "json_data": json_data, "unique_data": unique_data, "breakpoint1" : breakpoint1, "breakpoint2" : breakpoint2}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
+ 
+   
+
+@api_view(['GET', 'POST'])
+def dismantle_graphs_view(request):
+    site_tagging = request.data.get('site_tagging', [])
+    current_status = request.data.get('current_status', [])
+    milestone1 = request.data.get('milestone1')
+    milestone2 = request.data.get('milestone2')
+    month_filtered = request.data.get('month')
+    year_filtered = request.data.get('year')
+
+    all_unique_site_tagging = list(
+        AlokTrackerModel.objects.exclude(site_tagging__isnull=True)
+        .distinct("site_tagging")
+        .values_list("site_tagging", flat=True)
+    )
+
+    all_unique_current_status = list(
+        AlokTrackerModel.objects.exclude(current_status__isnull=True)
+        .distinct("current_status")
+        .values_list("current_status", flat=True)
+    )
+    
+    milestones = [
+        "Site ONAIR",
+        "Dismantling Survey",
+        "SREQ/CREQ Raised",
+        "Dismantle",
+        "Material Pickup",
+        "Material Submission",
+        "OCI Done",
+        "Sign-off",
+    ]
+    
+    unique_data = {
+        "unique_site_tagging": sorted(all_unique_site_tagging),
+        "unique_current_status": sorted(all_unique_current_status),
+        "milestones": milestones
+    }
+
+    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
+    
+    try:
+
+        if month_filtered and year_filtered:
+            month_filtered = int(month_filtered)
+            year_filtered = int(year_filtered)
+
+            month_end = date(year_filtered, month_filtered, 25)
+
+            if month_filtered == 1:
+                month_start = date(year_filtered - 1, 12, 26)
+            else:
+                month_start = date(year_filtered, month_filtered - 1, 26)
+        else:
+            month_start = None
+            month_end = None
+        
+        filters = {}
+        if site_tagging and "ALL" not in site_tagging:
+            filters["site_tagging__in"] = site_tagging
+        if current_status and "ALL" not in current_status:
+            filters["current_status__in"] = current_status
+        if month_start and month_end:
+            filters[f"{milestone1.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_").replace("5", "five_") + '_date'}__range"] = (month_start, month_end)
+
+        obj = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
+        df = pd.DataFrame(obj.values())
+        
+        
+        
+        
+        print(list(df.columns))
+        df['Circle'] = df['circle']
+        print("2")
+
+        def generate_summary(df, start_label, end_label, start_col, end_col):
+            temp = df.copy()
+            summary = (
+                temp.groupby("Circle").apply(lambda g: pd.Series({
+                    f"{start_label} Done Count": g[start_col].notna().sum(),
+                    f"{end_label} Done Count": ((g[end_col].notna()) & (g[start_col].notna())).sum(),
+                    f"{end_label} Pending Count": ((g[end_col].isna()) & (g[start_col].notna())).sum(),
+                }))
+                .reset_index()
+            )
+
+            summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].round(0).astype("Int64")
+
+            summary = summary[
+                ["Circle", f"{start_label} Done Count", f"{end_label} Done Count", f"{end_label} Pending Count"]
+            ]
+
+            return summary
+
+        start_label = milestone1 if milestones.index(milestone1) < milestones.index(milestone2) else milestone2
+        end_label = milestone2 if milestones.index(milestone1) < milestones.index(milestone2) else milestone1
+
+        start_col = start_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+        end_col = end_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+        
+        graph_summary = generate_summary(df, start_label, end_label, start_col, end_col)
+
+        graph_summary = graph_summary.applymap(lambda x: str(x) if pd.notna(x) else "")   
+
+        result_json = graph_summary.to_dict(orient="records")
+        json_data1 = json.dumps(result_json)
+
+        json_data = {
+            "graph_summary": json_data1,
+        }
+
+        return Response({'message': 'request processed successfully !!!', 'json_data': json_data, "unique_data": unique_data}, status=200)
+
+    except Exception as e:
+        return Response({"error": f"{str(e)}"}, status=500)
+ 
+
+@api_view(['GET', 'POST'])
+def dismantle_monthly_graph(request):
+    circle = request.data.get('circle', [])
+    site_tagging = request.data.get('site_tagging', [])
+    current_status = request.data.get('relocation_method', [])
+    new_toco_name = request.data.get('new_toco_name', [])
+    milestone1 = request.data.get('milestone1')
+    milestone2 = request.data.get('milestone2')
+    view = request.data.get('view')
+    type = request.data.get('type')
+    year_filtered = request.data.get('year2')
+    
+    circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
+    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
+    new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
+    milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+    milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+    
+    all_unique_circles = list(
+        AlokTrackerModel.objects.exclude(circle__isnull=True)
+        .distinct("circle")
+        .values_list("circle", flat=True)
+    )
+
+    all_unique_site_tagging = list(
+        AlokTrackerModel.objects.exclude(site_tagging__isnull=True)
+        .distinct("site_tagging")
+        .values_list("site_tagging", flat=True)
+    )
+
+    all_unique_current_status = list(
+        AlokTrackerModel.objects.exclude(current_status__isnull=True)
+        .distinct("current_status")
+        .values_list("current_status", flat=True)
+    )
+
+    all_unique_new_toco_name = list(
+        AlokTrackerModel.objects.exclude(new_toco_name__isnull=True)
+        .distinct("new_toco_name")
+        .values_list("new_toco_name", flat=True)
+    )
+    
+    milestones = [
+        "Site ONAIR",
+        "Dismantling Survey",
+        "SREQ/CREQ Raised",
+        "Dismantle",
+        "Material Pickup",
+        "Material Submission",
+        "OCI Done",
+        "Sign-off",
+    ]
+    
+    unique_data = {
+        "unique_circle": sorted(all_unique_circles),
+        "unique_site_tagging": sorted(all_unique_site_tagging),
+        "unique_relocation_method": sorted(all_unique_current_status),
+        "unique_new_toco_name": sorted(all_unique_new_toco_name),
+        "milestones": milestones
+    }
+    
+    try:
+        
+        year_filtered = int(year_filtered)
+        
+        filters = {}
+        if "ALL" not in circle:
+            filters["circle__in"] = circle
+        if "ALL" not in site_tagging:
+            filters["site_tagging__in"] = site_tagging
+        if "ALL" not in current_status:
+            filters["current_status__in"] = current_status
+        if "ALL" not in new_toco_name:
+            filters["new_toco_name__in"] = new_toco_name
+        
+            
+            
+        obj = AlokTrackerModel.objects.filter(**filters)  # noqa: F405
+        df = pd.DataFrame(obj.values())
+        
+        # print(df)
+ 
+        if df.empty:
+            return Response({'error': 'No data found for given filters'}, status=404)
+        
+        df = df[[milestone1_col, milestone2_col]]
+       
+        for col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
+        
+        today = dtime.today().date()
+        
+        df["month_num1"] = (
+            df[milestone1_col].dt.month + (df[milestone1_col].dt.day >= 26)
+        ).replace({13: 1}).astype("Int64")
+
+        df["year1"] = (
+            df[milestone1_col].dt.year - (
+                (df[milestone1_col].dt.month < 3) |
+                ((df[milestone1_col].dt.month == 3) & (df[milestone1_col].dt.day < 26))
+            )
+        ).astype("Int64")
+
+        # 3️⃣ Display year
+        df["display_year"] = df["year1"] + (df["month_num1"] <= 3)
+
+        # 4️⃣ Month label
+        df["month_name1"] = pd.to_datetime(
+            df["month_num1"].astype(str) + "-" + df["display_year"].astype(str),
+            format="%m-%Y",
+            errors="coerce"
+        ).dt.strftime("%b-%y")
+
+        # 5️⃣ Current FY
+        current_fy = year_filtered
+        
+        # 6️⃣ CF logic
+        df.loc[df["year1"] < current_fy, "month_name1"] = "CF"
+
+
+
+        df['month_num2'] = df[milestone2_col].dt.month + (df[milestone2_col].dt.day >= 26)
+        df['month_num2'] = df['month_num2'].replace({13: 1})
+
+        # 2️⃣ Financial year (derived ONLY from original date)
+        df['year2'] = df[milestone2_col].dt.year - (
+            (df[milestone2_col].dt.month < 3) |
+            ((df[milestone2_col].dt.month == 3) & (df[milestone2_col].dt.day < 26))
+        )
+
+        # 3️⃣ Safe numeric conversion (IMPORTANT)
+        df['month_num2'] = pd.to_numeric(df['month_num2'], errors='coerce')
+        df['year2'] = pd.to_numeric(df['year2'], errors='coerce')
+
+        # 4️⃣ Display year
+        df['display_year2'] = df['year2'] + (df['month_num2'] <= 3)
+
+        # 5️⃣ Month label (NaT-safe)
+        df['month_name2'] = pd.to_datetime(
+            df['month_num2'].astype('Int64').astype(str) + '-' +
+            df['display_year2'].astype('Int64').astype(str),
+            format='%m-%Y',
+            errors='coerce'
+        ).dt.strftime('%b-%y')
+
+        # 6️⃣ Current financial year
+        current_fy = year_filtered
+        
+        # 7️⃣ Carry Forward (only where year2 exists)
+        df.loc[df['year2'].notna() & (df['year2'] < current_fy), 'month_name2'] = 'CF'
+        
+        print(df['month_name1'].dropna().unique().tolist())
+
+        
+        print(df['year1'])
+        
+        print(df['month_name2'])
+        
+        print(df['year2'])
+        
+        df.loc[df['year1'].notna() & (df['year1'] > current_fy), ["month_name1"]] = "Future"
+        df.loc[df['year2'].notna() & (df['year2'] > current_fy), ["month_name2"]] = "Future"
+
+        def sort_financial_year(summary):
+            # Extract sorted unique Month-Year (excluding CF)
+            months = [
+                m for m in summary['month_name'].unique()
+                if m not in ["CF", "Future"] and pd.notna(m)
+            ]
+            
+            # Convert to datetime to sort correctly
+            months_sorted = sorted(
+                months,
+                key=lambda x: pd.to_datetime(x, format='%b-%y')
+            )
+
+            # CF should always be first
+            ordered = []
+
+            if "CF" in summary['month_name'].values:
+                ordered.append("CF")
+
+            ordered += months_sorted
+
+            if "Future" in summary['month_name'].values:
+                ordered.append("Future")
+            
+            
+            # Convert into ordered categorical for final sort
+            summary['month_name'] = pd.Categorical(summary['month_name'], ordered, ordered=True)
+
+            return summary.sort_values('month_name')
+        
+        def generate_type1_summary(df, start_label, end_label, start_col, end_col):
+            temp = df.copy()
+
+            # Start counts by month_name
+            start_counts = (
+                temp[temp[start_col].notna()]
+                .groupby("month_name1")
+                .size()
+                .reset_index(name=f"{start_label} Done Count")
+                .rename(columns={"month_name1": "month_name"})
+            )
+
+            # End counts by month_name2
+            end_counts = (
+                temp[temp[end_col].notna()]
+                .groupby("month_name2")
+                .size()
+                .reset_index(name=f"{end_label} Done Count")
+                .rename(columns={"month_name2": "month_name"})
+            )
+
+            # Merge both results
+            summary = pd.merge(start_counts, end_counts, on="month_name", how="outer")
+
+            # Convert to Int64 nullable type
+            summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].astype("Int64")
+            summary[f"{end_label} Done Count"] = summary[f"{end_label} Done Count"].astype("Int64")
+
+            summary = sort_financial_year(summary)
+
+            if view == "Cumulative":
+                summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].cumsum()
+                summary[f"{end_label} Done Count"] = summary[f"{end_label} Done Count"].cumsum()
+
+            return summary.reset_index(drop=True)
+        
+        def generate_type2_summary(df, start_label, end_label, start_col, end_col):
+            temp = df.copy()
+            summary = (
+                temp.groupby("month_name1").apply(lambda g: pd.Series({
+                    f"{start_label} Done Count": g[start_col].notna().sum(),
+                    f"{end_label} Done Count": ((g[end_col].notna()) & (g[start_col].notna())).sum(),
+                    # f"{end_label} Pending Count": ((g[end_col].isna()) & (g[start_col].notna())).sum(),
+                }))
+                .reset_index()
+                .rename(columns={"month_name1": "month_name"})
+            )
+
+            summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].astype("Int64")
+
+            summary = summary[
+                ["month_name", f"{start_label} Done Count", f"{end_label} Done Count"]
+            ]
+
+            summary = sort_financial_year(summary)
+
+            if view == "Cumulative":
+                summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].cumsum()
+                summary[f"{end_label} Done Count"] = summary[f"{end_label} Done Count"].cumsum()
+
+            return summary.reset_index(drop=True)
+        
+        summary = generate_type1_summary(df, milestone1, milestone2, milestone1_col, milestone2_col) if type == 'type1' else generate_type2_summary(df, milestone1, milestone2, milestone1_col, milestone2_col)
+
+        numeric_cols = [col for col in summary.columns if "Done Count" in col]
+
+        summary[numeric_cols] = summary[numeric_cols].apply(pd.to_numeric, errors="coerce")
+        summary[numeric_cols] = summary[numeric_cols].fillna(0).astype(int)
+
+        
+        result_json = summary.to_dict(orient = "records")
+        json_data = json.dumps(result_json)
+        
+        return Response({"message" : "request processed successfully ! ", "json_data": json_data, "unique_data": unique_data}, status=200)
+    
+    except Exception as e:
+        return Response({"error": f"{str(e)}"},status=500)
    
  
 
@@ -7804,7 +9184,7 @@ def dismantle_ageing_dashboard_table2(request):
 #                  'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
 #                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
 #                  'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'manual_history', 'rfai_rejected_date', 
-#                  're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
+#                  'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
 #                   'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
 #                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
 #                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
@@ -9186,7 +10566,7 @@ def dismantle_ageing_dashboard_table2(request):
 #                      'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
 #                      'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
 #                      'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'manual_history', 'rfai_rejected_date', 
-#                      're_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
+#                      'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_issue_ageing', 'total_issue_ageing', 
 #                       'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
 #                      'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
 #                      'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', 'last_updated_date', 'last_updated_by']]

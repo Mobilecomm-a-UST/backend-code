@@ -36,6 +36,13 @@ urlpatterns = [
     path("dismantle_weekly_monthly_dashboard/", dismantle_weekly_monthly_dashboard_view, name="dismantle_weekly_monthly_dashboard"),
     path("ms2_ageing_dashboard_table1/", ms2_ageing_dashboard_table1, name="ms2_ageing_dashboard_table1"),
     path("ms2_ageing_dashboard_table2/", ms2_ageing_dashboard_table2, name="ms2_ageing_dashboard_table2"),
+    path("ms2_graphs/", ms2_graphs_view, name="graphs"),
+    path("ms2_monthly_graph/", ms2_monthly_graph, name="monthly_graph"),
     path("dismantle_ageing_dashboard_table1/", dismantle_ageing_dashboard_table1, name="dismantle_ageing_dashboard_table1"),
     path("dismantle_ageing_dashboard_table2/", dismantle_ageing_dashboard_table2, name="dismantle_ageing_dashboard_table2"),
+    path("dismantle_graphs/", dismantle_graphs_view, name="graphs"),
+    path("dismantle_monthly_graph/", dismantle_monthly_graph, name="monthly_graph"),
+    path("upload_issues_data_view/", upload_issues_data_view, name="upload_issues_data_view"),
+    path("fetch_sites/", fetch_sites, name="fetch_sites"),
+    path("issue_summary/", issue_summary, name="issue_summary"),
 ]

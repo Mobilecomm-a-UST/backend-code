@@ -1,3 +1,4 @@
+
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
@@ -14,13 +15,33 @@ from .models import MicrowaveAviat
 from django.db import transaction
 from zipfile import BadZipFile
 import numpy as np
-from django.views.decorators.csrf import csrf_exempt
-import html
 from rest_framework import status
-
-
+import html
 
  
+def get_col(df, col, default=None):
+    if col not in df.columns:
+        return pd.Series([default]*len(df), index=df.index)
+    s = df[col]
+    if isinstance(s, pd.DataFrame):
+        s = s.iloc[:, 0]
+    return s
+
+def to_bool(s):
+    return (
+        s.astype(str)
+        .str.strip()
+        .str.lower()
+        .map({
+            "true": True, "1": True, "yes": True, "ok": True, "pass": True,
+            "false": False, "0": False, "no": False, "fail": False,
+            "nan": False, "none": False, "": False
+        })
+        .fillna(False)
+    )
+
+def num(s):
+    return pd.to_numeric(s, errors="coerce")
 
 
 def to_float(val):
@@ -270,6 +291,7 @@ def microwave_upload(request):
         radio_report_df.columns=radio_report_df.columns.str.strip()
         radio_report_file_list.append(radio_report_df)
         radio_report_df = pd.concat(radio_report_file_list, ignore_index=True)
+        print(radio_report_df.head())
 
     
 
@@ -292,6 +314,7 @@ def microwave_upload(request):
         link_report_df.columns=link_report_df.columns.str.strip()
         link_report_file_list.append(link_report_df)
         link_report_df = pd.concat(link_report_file_list, ignore_index=True) 
+        print(link_report_df.head())
 
     
 
@@ -344,6 +367,19 @@ def microwave_upload(request):
 
 # make Logic and get requried cloumn in the Radio Report file----
     radio_report_df["Radio-Reference-key"]=radio_report_df["Interface"].str.extract(r"^(\S+)")
+    rename_map = {
+        "RSL Min (dB)": "RSL Min (dBm)",
+        "RSL Max (dB)": "RSL Max (dBm)",
+        "Tx Power Max (dB)": "Tx Power Max (dBm)",
+        "XPD Min (dB)": "XPD Min (dBm)",
+        "XPD Max (dB)": "XPD Max (dBm)",
+        "SNR Min (dBm)": "SNR Min (dB)"
+    }
+
+    radio_report_df.rename(
+        columns={k: v for k, v in rename_map.items() if k in radio_report_df.columns},
+        inplace=True
+    )
     radio_report_df["Polarization(Radio)"] = radio_report_df["Interface"].apply(get_polarization)
     radio_report_df=radio_report_df[[
         "Interface",
@@ -535,173 +571,129 @@ def microwave_upload(request):
 
     final_df.loc[mask, reverse_matched.columns] = reverse_matched.values
     final_df.drop(columns=["Link Name","reverse_key"], errors="ignore", inplace=True) 
-    # final_df.to_excel("abhinav.xlsx")
+    final_df.to_excel("abhinav.xlsx")
 
 
     # all condtion to make remark -----------------------------------------
 
-    final_df["Tx Frequency (MHz)"] = (
-    pd.to_numeric(final_df["Tx Frequency (MHz)"], errors="coerce")
-    .round(0)
-    .astype("Int64")
-)
+    final_df.columns = final_df.columns.astype(str).str.strip()
+    final_df = final_df.loc[:, ~final_df.columns.duplicated()]
 
-    final_df["Rx Frequency (MHz)"] = (
-        pd.to_numeric(final_df["Rx Frequency (MHz)"], errors="coerce")
-        .round(0)
-        .astype("Int64")
-    )
+    final_df["Tx Frequency (MHz)"] = num(get_col(final_df,"Tx Frequency (MHz)")).round().astype("Int64")
+    final_df["Rx Frequency (MHz)"] = num(get_col(final_df,"Rx Frequency (MHz)")).round().astype("Int64")
+    final_df["FREQ TX"] = num(get_col(final_df,"FREQ TX")).round().astype("Int64")
+    final_df["FREQ RX"] = num(get_col(final_df,"FREQ RX")).round().astype("Int64")
 
-    final_df["FREQ TX"] = (
-        pd.to_numeric(final_df["FREQ TX"], errors="coerce")
-        .round(0)
-        .astype("Int64")
-    )
-
-    final_df["FREQ RX"] = (
-        pd.to_numeric(final_df["FREQ RX"], errors="coerce")
-        .round(0)
-        .astype("Int64")
-    )
-
-
-    final_df["feq_RX"] =final_df["FREQ RX"] == final_df["Rx Frequency (MHz)"]
+    final_df["feq_RX"] = final_df["FREQ RX"] == final_df["Rx Frequency (MHz)"]
     final_df["feq_TX"] = final_df["FREQ TX"] == final_df["Tx Frequency (MHz)"]
 
 
-    final_df["RSL_Status"] = np.where(
-        (final_df["BER10e6 Rx Level (dBm)"] >= final_df["RSL Min (dBm)"] - 3) &
-        (final_df["BER10e6 Rx Level (dBm)"] <= final_df["RSL Max (dBm)"] + 3),
-        True,
-        False
-    )
-    
-    final_df["curret_rsl_status_A"]=np.where(
-          (final_df["BER10e6 Rx Level (dBm)"] >= final_df["Site A Current RSL"] - 3) &
-          (final_df["BER10e6 Rx Level (dBm)"] <= final_df["Site A Current RSL"] + 3),
-        True,
-        False
-    )
+   
+    rx = num(get_col(final_df,"BER10e6 Rx Level (dBm)"))
 
-    final_df["curret_rsl_status_Z"]=np.where(
-          (final_df["BER10e6 Rx Level (dBm)"] >= final_df["Site Z Current RSL"] - 3) &
-          (final_df["BER10e6 Rx Level (dBm)"] <= final_df["Site Z Current RSL"] + 3),
-        True,
-        False
-    )
+    rsl_min = num(get_col(final_df,"RSL Min (dBm)"))
+    rsl_max = num(get_col(final_df,"RSL Max (dBm)"))
 
-    final_df["Xpd_satus"] = np.where(
-    final_df["XPD Min (dBm)"].between(22, 36) &
-    final_df["XPD Max (dBm)"].between(22, 36),
-    True,
-    False
-)
-    
-    
+    final_df["RSL_Status"] = (rx >= rsl_min-3) & (rx <= rsl_max+3)
 
-    atpc = pd.to_numeric(final_df["ATPC MAX"], errors="coerce")
-    txmax = pd.to_numeric(final_df["Tx Power Max (dBm)"], errors="coerce")
+    siteA = num(get_col(final_df,"Site A Current RSL"))
+    siteZ = num(get_col(final_df,"Site Z Current RSL"))
 
-    final_df["Tx_power_status"] = (
-        atpc.notna() &
-        txmax.notna() &
-        (np.floor(atpc) == np.floor(txmax))
-    )
-
-
-    final_df["SNR_Status"]=np.where(
-        final_df["SNR Min (dB)"] > 40,
-        True,
-        False
-    )
-    
-    final_df["polarization_status"]=np.where(
-        final_df["Polarization(Radio)"] == final_df["Polarization"],
-        True,
-        False
-    )
-    
-    mod_clo = [
-        "Site A Min Modulation Last 24h",
-        "Site Z Min Modulation Last 24h",
-        "Site A Max Modulation Last 24h",
-        "Site Z Max Modulation Last 24h",
-        "Site A Max Configured Modulation",
-        "Site Z Max Configured Modulation"
-    ]
-    # acm=extract_qam(final_df["ACM Max QAM"])
-
-    # Compare ACM Max QAM with all these columns row-wise
-    final_df["Modulation_status"] = final_df.apply(
-    lambda row: True if any(
-        re.sub(r"\D", "", str(row["ACM Max QAM"])) ==
-        re.sub(r"\D", "", str(row[col]))
-        for col in mod_clo
-    ) else False,
-    axis=1
-)
-
-    mod_cofig=[
-        "Site A Min Configured Modulation",
-        "Site Z Min Configured Modulation",
-
-    ]
-    final_df["Modulation_config_status"] = final_df.apply(
-        lambda row: True if row["ACM Min QAM"].lower() in row[mod_cofig].astype(str).str.lower().values else False,
-        axis=1
-    )
-
-    mod_moud = ["Site A Modulation Mode", "Site Z Modulation Mode"]
-    final_df["Modulation_moud_status"] = final_df.apply(
-        lambda row: True if any(
-            (str(row["ATPC Status"]).lower() == "enable" and str(row[col]).lower() == "adaptive") or
-            (str(row["ATPC Status"]).lower() == "disable" and str(row[col]).lower() == "fixed")
-            for col in mod_moud
-        ) else False,
-        axis=1
-    )
+    final_df["curret_rsl_status_A"] = (rx >= siteA-3) & (rx <= siteA+3)
+    final_df["curret_rsl_status_Z"] = (rx >= siteZ-3) & (rx <= siteZ+3)
 
 
 
-    Field_Action_Required=[
-        "feq_RX","feq_TX",
-        "RSL_Status","curret_rsl_status_A",
-        "curret_rsl_status_Z",
-        "Xpd_satus"
+    xpd_min = num(get_col(final_df,"XPD Min (dBm)"))
+    xpd_max = num(get_col(final_df,"XPD Max (dBm)"))
+
+    final_df["Xpd_satus"] = xpd_min.between(22,36) & xpd_max.between(22,36)
+
+
+
+    atpc = num(get_col(final_df,"ATPC MAX"))
+    txmax = num(get_col(final_df,"Tx Power Max (dBm)"))
+
+    final_df["Tx_power_status"] = atpc.notna() & txmax.notna() & (np.floor(atpc)==np.floor(txmax))
+
+
+  
+    final_df["SNR_Status"] = num(get_col(final_df,"SNR Min (dB)")) > 40
+    final_df["polarization_status"] = get_col(final_df,"Polarization(Radio)").astype(str) == get_col(final_df,"Polarization").astype(str)
+
+
+
+    mod_cols = [
+        "Site A Min Modulation Last 24h","Site Z Min Modulation Last 24h",
+        "Site A Max Modulation Last 24h","Site Z Max Modulation Last 24h",
+        "Site A Max Configured Modulation","Site Z Max Configured Modulation"
     ]
 
-    final_df["FAR_Remark"] = np.where(
-    final_df[Field_Action_Required].eq(True).all(axis=1),
-    pd.NA,
-    "Field Action Required"
-)
+    def mod_status(row):
+        acm = re.sub(r"\D","",str(row.get("ACM Max QAM","")))
+        for c in mod_cols:
+            v=row.get(c,None)
+            if isinstance(v,pd.Series): v=v.iloc[0]
+            if acm and acm==re.sub(r"\D","",str(v)): return True
+        return False
 
-    Backend_Action_Required=[
-     "Tx_power_status","SNR_Status",
-     "polarization_status","Modulation_status",
-     "Modulation_config_status","Modulation_moud_status"]
-    
-    
-    final_df["BAR_Remark"] = np.where(
-    final_df[Backend_Action_Required].eq(True).all(axis=1),
-    pd.NA,
-    "Backend Action Required"
-)
-    
-    final_df["oem_remark"] = np.where(
-    final_df["Equipment Make"].str.upper() == "AVIAT",
-    pd.NA,
-    "OEM Mismatch"
-)
-    
+    final_df["Modulation_status"] = final_df.apply(mod_status,axis=1)
 
-    final_df["Remark"] = (
-    final_df[["BAR_Remark", "FAR_Remark", "oem_remark"]]
-    .fillna("")
-    .agg(",".join, axis=1)
-    .str.strip(",")
-    .replace("", "Ready to offer")
-)
+
+    mod_config_cols=["Site A Min Configured Modulation","Site Z Min Configured Modulation"]
+
+    def mod_config(row):
+        acm=str(row.get("ACM Min QAM","")).lower()
+        for c in mod_config_cols:
+            v=row.get(c,None)
+            if isinstance(v,pd.Series): v=v.iloc[0]
+            if pd.notna(v) and acm in str(v).lower(): return True
+        return False
+
+    final_df["Modulation_config_status"]=final_df.apply(mod_config,axis=1)
+
+
+    mod_mode_cols=["Site A Modulation Mode","Site Z Modulation Mode"]
+
+    def mod_mode(row):
+        atpc=str(row.get("ATPC Status","")).lower()
+        for c in mod_mode_cols:
+            v=str(row.get(c,"")).lower()
+            if (atpc=="enable" and v=="adaptive") or (atpc=="disable" and v=="fixed"):
+                return True
+        return False
+
+    final_df["Modulation_moud_status"]=final_df.apply(mod_mode,axis=1)
+
+
+
+    far_cols=["feq_RX","feq_TX","RSL_Status",
+              "curret_rsl_status_A",
+              "curret_rsl_status_Z",
+              "Xpd_satus"]
+    far_df=pd.DataFrame({c:to_bool(get_col(final_df,c)) for c in far_cols})
+    final_df["FAR_Remark"]=np.where(far_df.all(axis=1),pd.NA,"Field Action Required")
+
+
+    bar_cols=["Tx_power_status","SNR_Status",
+              "polarization_status",
+              "Modulation_status","Modulation_config_status",
+              "Modulation_moud_status"]
+    bar_df=pd.DataFrame({c:to_bool(get_col(final_df,c)) for c in bar_cols})
+    final_df["BAR_Remark"]=np.where(bar_df.all(axis=1),pd.NA,"Backend Action Required")
+
+
+   
+    equip=get_col(final_df,"Equipment Make").astype(str).str.upper()
+    final_df["oem_remark"]=np.where(equip=="AVIAT",pd.NA,"OEM Mismatch")
+
+
+ 
+    def join_remark(row):
+        vals=[str(v).strip() for v in row if pd.notna(v) and str(v).strip()!=""]
+        return ", ".join(vals) if vals else "Ready to offer"
+
+    final_df["Remark"]=final_df[["BAR_Remark","FAR_Remark","oem_remark"]].apply(join_remark,axis=1)
     
 #-------------------------------------------------------------------------------------------------------------
             
@@ -890,7 +882,6 @@ def microwave_upload(request):
     })  
 
 
-
 #function for add data in database.......
 @transaction.atomic
 def add_to_db(df):
@@ -941,7 +932,6 @@ def add_to_db(df):
             }
         )  
 
-
 # # api to get and delete data in databse...
 # @api_view(['GET'])
 # def final_excel_indb(request):
@@ -968,15 +958,20 @@ def add_to_db(df):
 #     }, status=200)
 
 
+from django.views.decorators.csrf import csrf_exempt
+
 @csrf_exempt
 @api_view(['GET', 'POST'])
 def final_excel_indb(request):
     queryset = MicrowaveAviat.objects.all()
-    #----------
+
+   
     if request.method == 'POST':
         site_id = request.data.get("site_id")
         circle = request.data.get("circle")
         equipment = request.data.get("equipment_make")
+
+    # (Optional) GET support bhi rehne do
     else:
         site_id = request.GET.get("site_id")
         circle = request.GET.get("circle")
@@ -999,8 +994,9 @@ def final_excel_indb(request):
         "data": data
     }, status=200)
 
-#---------
 
+
+#---------
 @api_view(["GET", "DELETE"])
 def get_delete_file(request):
     folder_path = os.path.join(main_folder, "MW_Final_Output")

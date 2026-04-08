@@ -21,4 +21,6 @@ urlpatterns = [
     path("monthly_graph/", monthly_graph, name="monthly_graph"),
     path("ms2_ageing_dashboard_table1/", ms2_ageing_dashboard_table1, name="ms2_ageing_dashboard_table1"),
     path("ms2_ageing_dashboard_table2/", ms2_ageing_dashboard_table2, name="ms2_ageing_dashboard_table2"),
+    path("ms2_graphs/", ms2_graphs_view, name="graphs"),
+    path("ms2_monthly_graph/", ms2_monthly_graph, name="monthly_graph"),
 ]

@@ -115,7 +115,8 @@ INSTALLED_APPS = [
     "Nokia_SA_NSA",
     "Micro_wave_Tool",
     "nt_site_tracker",
-    "upgrade_tracker"
+    "upgrade_tracker",
+    "Noika_Slicing",
 ]
 
 MIDDLEWARE = [
