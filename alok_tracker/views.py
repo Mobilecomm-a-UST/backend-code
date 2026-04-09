@@ -6240,7 +6240,27 @@ def delete_dropped_sites(request):
         {"message": f"{deleted_count} records deleted successfully"},
         status=status.HTTP_200_OK
     )
+
+
+@api_view(['DELETE'])
+def delete_sites_by_detailed_remarks(request):
+
+    qs = AlokTrackerModel.objects.filter(detailed_remarks="database correction need to remove from tracker")
+
+    if not qs.exists():
+        return Response(
+            {"message": "No records found with detailed_remarks = 'database correction need to remove from tracker'"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    deleted_count, _ = qs.delete()
+
+    return Response(
+        {"message": f"{deleted_count} records deleted successfully"},
+        status=status.HTTP_200_OK
+    )
     
+
 
 @api_view(['DELETE'])
 def delete_specific_site(request):
