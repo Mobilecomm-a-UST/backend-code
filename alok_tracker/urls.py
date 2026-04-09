@@ -45,4 +45,5 @@ urlpatterns = [
     path("upload_issues_data_view/", upload_issues_data_view, name="upload_issues_data_view"),
     path("fetch_sites/", fetch_sites, name="fetch_sites"),
     path("issue_summary/", issue_summary, name="issue_summary"),
+    path("delete_sites_by_detailed_remarks/", delete_sites_by_detailed_remarks, name="delete_sites_by_detailed_remarks")
 ]
