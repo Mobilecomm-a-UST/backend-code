@@ -46,3 +46,24 @@ class DismantleCircleData(models.Model):
 
     def __str__(self):
         return f"{self.circle} - {self.site_id}"
+    
+    
+class EmailList(models.Model):
+    email = models.EmailField(unique=True)
+    email_type = models.CharField(max_length=10, choices=[('TO', 'TO'), ('CC', 'CC')])
+
+    class Meta:
+        db_table = "Servy_done_mail_list"
+
+    def __str__(self):
+        return f"{self.email} ({self.email_type})"  
+      
+    
+class AddModel(models.Model):
+    model_name=models.CharField(max_length=300,blank=True)
+
+    class Meta:
+        db_table ='Model_list'
+
+    def __str__(self):
+        return  f"{self.model_name}"

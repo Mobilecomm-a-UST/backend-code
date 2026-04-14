@@ -13,13 +13,15 @@ from datetime import date
 import json
 from django.db.models import F, Count, Q
 import shutil
-
+from .utils import format_excel
+from .tasks import send_survey_done_email
 
 
 
 #--main folder in media folder--------------------
 main_folder = os.path.join(MEDIA_ROOT, 'degrow_dismantle')
 os.makedirs(main_folder, exist_ok=True)
+
 
 
 @api_view(["GET"])
@@ -1157,6 +1159,8 @@ def mobinet_data_submit_by_circle(request):
             is_surveyed=date.today() if remark == "Survey done" else None,
             remarks=remark
         )
+        if remark.strip().lower() == "survey done":
+          send_survey_done_email(circle, siteId)
         
         # if not records:
         #     return Response({"message" : "Site not surveyed"})
@@ -1202,6 +1206,7 @@ def mobinet_data_submit_by_circle(request):
                 }
             )
 
+       
         return Response({
             "status": "success",
             "message": "Data saved successfully"
@@ -1209,7 +1214,33 @@ def mobinet_data_submit_by_circle(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+    
+@api_view(['POST'])   
+def delete_site_in_sitelist(request):
+    site_id=request.data.get("site_id")
+    if not site_id:
+        return Response({"status":True,"message":"Site id is required"})
 
+    try:
+        obj = DismantleCircleData.objects.get(site_id=site_id)
+        obj.delete()
+
+        return Response(
+            {
+                "status": True,
+                "message": "Deleted successfully"
+            },
+            status=status.HTTP_200_OK
+        )
+
+    except DismantleCircleData.DoesNotExist:
+        return Response(
+            {
+                "status": False,
+                "message": "Record not found for this ID"
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
 
 @api_view(['POST'])
 def fetch_model_name(request):
@@ -1268,7 +1299,7 @@ def fetch_model_name(request):
 
 @api_view(['POST'])
 def master_file_download(request):
-    # 1️⃣ Fetch circle data
+ 
     circle_qs = DismantleCircleData.objects.all().values(
         "circle",
         "site_id",
@@ -1280,7 +1311,7 @@ def master_file_download(request):
         "remarks"
     )
 
-    # 2️⃣ Fetch model data
+ 
     model_qs = DismantleModelData.objects.all().values(
         "zone",
         "site_id",
@@ -1293,11 +1324,10 @@ def master_file_download(request):
         "srn_number"
     )
 
-    # 3️⃣ Convert to DataFrames
     circle_df = pd.DataFrame(list(circle_qs))
     model_df = pd.DataFrame(list(model_qs))
 
-    # 4️⃣ Merge both tables
+  
     df = pd.merge(
         circle_df,
         model_df,
@@ -1306,7 +1336,7 @@ def master_file_download(request):
         how="left"
     )
 
-    # 5️⃣ Rename columns to required output
+ 
     df = df.rename(columns={
         "circle": "Circle",
         "site_id": "Site ID",
@@ -1324,7 +1354,7 @@ def master_file_download(request):
         "remarks": "Current Status"
     })
 
-    # 6️⃣ Select only required columns
+
     df = df[
         [
             "Circle",
@@ -1354,7 +1384,7 @@ def master_file_download(request):
         False: "Additional"
     })
 
-    # 7️⃣ Replace NaN values
+ 
     df = df.fillna("")
     
     BASE_URL = os.path.join(settings.MEDIA_ROOT, "degrow_dismantle")
@@ -1371,6 +1401,7 @@ def master_file_download(request):
 
     with pd.ExcelWriter(dashboard_file_path, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='DISMANTLE_MASTER_FILE')
+    format_excel(dashboard_file_path)
 
     dashboard_file_path = dashboard_file_path.replace(
         settings.MEDIA_ROOT, settings.MEDIA_URL
@@ -1378,7 +1409,7 @@ def master_file_download(request):
 
     download_link = request.build_absolute_uri(dashboard_file_path)
     
-    # 8️⃣ Convert to JSON
+  
     data = df.to_dict(orient="records")
 
     return Response({
@@ -1386,7 +1417,7 @@ def master_file_download(request):
         "data": data
     }, status=200)
 
-
+# fatch Site list in mobinate file and Database---
 @api_view(["POST"])
 def fetch_sites(request):
     circle = request.data.get("circle")
@@ -1468,3 +1499,140 @@ def fetch_sites(request):
             "status": False,
             "error": str(e)
         }, status=500)
+    
+
+# api for  add mail----------------------------------------
+@api_view(["POST"])
+def add_mail(request):
+    mail_type = request.data.get("mail_type")  
+    mail_id = request.data.get("mailid")       
+
+    if not mail_type or not mail_id:
+        return Response(
+            {"status": False, "message": "mail_type and mailid required"},)
+
+    if mail_type not in ["TO", "CC"]:
+        return Response(
+            {"status": False, "message": "mail_type must be TO or CC"}, )
+    
+
+    if EmailList.objects.filter(email=mail_id).exists():
+        return Response(
+            {"status": False, "message": "Email already exists"},)
+            
+    EmailList.objects.create(
+        email=mail_id,
+        email_type=mail_type
+    )
+
+    return Response(
+        {"status": True,
+        "message": "Email added successfully"},
+        status=status.HTTP_201_CREATED
+    )
+
+
+@api_view(["GET"])
+def get_to_mails(request):
+    email_type = request.data.get("email_type", "TO")
+
+    mails = EmailList.objects.filter(email_type=email_type).values("id", "email_type", "email")
+
+    return Response({
+        "status": True,
+        "data": list(mails)
+    })
+
+
+@api_view(["GET"])
+def get_cc_mails(request):
+    email_type = request.data.get("email_type", "CC")
+    mails = EmailList.objects.filter(email_type=email_type).values("id", "email_type", "email")
+    return Response({
+        "status": True,
+        "data": list(mails)
+    })
+
+
+
+@api_view(["POST"])
+def delete_mail_id(request):
+    mail_id = request.data.get("mailid")  
+
+    if not mail_id:
+        return Response(
+            {"status": False, "message": "mailid required"},
+            status=400
+        )
+
+    try:
+        obj = EmailList.objects.get(email=mail_id)
+        obj.delete()
+
+        return Response({
+            "status": True,
+            "message": "Email deleted successfully"
+        })
+
+    except EmailList.DoesNotExist:
+        return Response(
+            {"status": False, "message": "Email not found"},
+            status=404
+        )
+
+
+        
+# api for add model------------------------------------
+@api_view(["POST"])
+def add_model(request):
+    model_name = request.data.get("model")
+    if not model_name:
+        return Response(
+            {"status": False, "message": "model_name required"},)
+        
+    if AddModel.objects.filter(model_name=model_name).exists():
+            return Response(
+                {"status": False, "message": "Model already exists"},)
+
+    AddModel.objects.create(model_name=model_name)
+    return Response({
+            "status": True,
+            "message": "Model added successfully"
+        })
+
+
+@api_view(["GET"])
+def get_model(request):
+
+    models = AddModel.objects.all().values("id", "model_name")
+
+    return Response({
+        "status": True,
+        "data": list(models)
+    })
+
+
+
+@api_view(["POST"])
+def delete_model(request):
+    model_name = request.data.get("model")
+    if not model_name:
+        return Response(
+            {"status": False, "message": "model_name required"},
+            
+        )
+
+    try:
+        obj = AddModel.objects.get(model_name=model_name)
+        obj.delete()
+
+        return Response({
+            "status": True,
+            "message": "Model deleted successfully"
+        })
+
+    except AddModel.DoesNotExist:
+        return Response(
+            {"status": False, "message": "Model not found"},
+            
+        )

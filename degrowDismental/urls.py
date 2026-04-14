@@ -16,9 +16,21 @@ urlpatterns = [
     path("mobinet_data_submit_central/", mobinet_data_submit_by_central, name="mobinet_data_submit_central"),
     path("mobinet_data_submit_circle/", mobinet_data_submit_by_circle, name="mobinet_data_submit_circle"),
     path("fetch_site_status/", fetch_site_status, name="fetch site status"),
+
     path("fetch_all_site_status/", fetch_circle_summary, name="fetch_all_site_status"),
     path("empty_my_model/", empty_my_model, name="empty_my_model"),
     path("fetch_model_name/", fetch_model_name, name="fetch_model_name"),
     path("fetch_sites/", fetch_sites, name="fetch_sites"),
     path("master_file_download/", master_file_download, name="master_file_download"),
+
+    path("site_delete/",delete_site_in_sitelist,name="delete_site_in_sitelist"),
+
+    path("add_mail/",add_mail),
+    path("get_to_mails/",get_to_mails),
+    path("get_cc_mails/",get_cc_mails),
+    path("delete_mail/",delete_mail_id),
+
+    path("add_model/",add_model),
+    path("get_model/",get_model),
+    path("delete_model/",delete_model)
 ]
