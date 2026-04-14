@@ -6383,6 +6383,24 @@ def upload_ftr_dump(request):
         )
 
 
+# =========================
+# ✅ Dynamic Financial Year
+# =========================
+def get_financial_year_dates(year=None):
+    today = datetime.today()
+
+    if not year:
+        if today.month >= 4:
+            year = today.year
+        else:
+            year = today.year - 1
+
+    fy_start = pd.Timestamp(year=year, month=4, day=1)
+    fy_end   = pd.Timestamp(year=year + 1, month=3, day=31)
+
+    return fy_start, fy_end
+
+
 @api_view(['POST'])
 def ftr_table(request):
     year = request.data.get("year")  # e.g. "2025"
@@ -6394,11 +6412,11 @@ def ftr_table(request):
     try:
         year = int(year)
 
-        fy_start = pd.Timestamp(year=year, month=3, day=29)
-        fy_end   = pd.Timestamp(year=year + 1, month=3, day=28)
+        # ✅ Dynamic FY
+        fy_start, fy_end = get_financial_year_dates(year)
         
-        
-        # 1️⃣ Fetch data
+        print(f"Financial Year Start: {fy_start}, Financial Year End: {fy_end}")
+
         qs = ATDumpData.objects.all().values(
             'site_id',
             'on_air_date',
@@ -6417,47 +6435,40 @@ def ftr_table(request):
         if df.empty:
             return Response({"message": "No data found"}, status=200)
         
+        relocation_sites = (
+            AlokTrackerModel.objects
+            .values_list('new_site_id', flat=True)
+            .distinct()
+        )
+
         if type == "Relocation":
-            relocation_sites = (
-                AlokTrackerModel.objects
-                .values_list('new_site_id', flat=True)
-                .distinct()
-            )
             df = df[df['site_id'].isin(relocation_sites)]
         elif type != 'Overall':
-            relocation_sites = (
-                AlokTrackerModel.objects
-                .values_list('new_site_id', flat=True)
-                .distinct()
-            )
             df = df[~df['site_id'].isin(relocation_sites)]
 
-        # 2️⃣ Date handling
         df['on_air_date'] = pd.to_datetime(df['on_air_date'], errors='coerce')
-        
+
         df = df[
             (df['on_air_date'] >= fy_start) &
             (df['on_air_date'] <= fy_end)
         ]
-        
-        df['FTR_Month'] = df['on_air_date'].apply(get_ftr_month)
 
+        print(df['on_air_date'], "----------on_air_date---------")
+
+        df['FTR_Month'] = df['on_air_date'].apply(get_ftr_month)
         df = df[df['FTR_Month'].notna()]
 
-        # 3️⃣ Total sites per month
         total = (
             df.groupby('FTR_Month')['site_id']
-              .count()
-              .rename('Total')
+            .count()
+            .rename('Total')
         )
 
-        # 4️⃣ FTR counts
         phy_ftr  = ftr_count(df, 'physical_at_status', 'physical_at_rejection_counter')
         soft_ftr = ftr_count(df, 'soft_at_status', 'soft_at_rejection_counter')
         scft_ftr = ftr_count(df, 'scft_at_status', 'scft_at_rejection_counter')
         perf_ftr = ftr_count(df, 'performance_at_status', 'performance_at_rejection_counter')
 
-        # 5️⃣ Combine
         report = pd.concat(
             [
                 total,
@@ -6469,17 +6480,16 @@ def ftr_table(request):
             axis=1
         ).fillna(0)
 
-        # 6️⃣ Percentages
-        report['Phy AT FTR %'] = (report['Phy AT FTR Count'] / report['Total'] * 100).round().astype(int)
+        report['Phy AT FTR %']  = (report['Phy AT FTR Count']  / report['Total'] * 100).round().astype(int)
         report['Soft AT FTR %'] = (report['Soft AT FTR Count'] / report['Total'] * 100).round().astype(int)
         report['SCFT AT FTR %'] = (report['SCFT AT FTR Count'] / report['Total'] * 100).round().astype(int)
         report['Perf AT FTR %'] = (report['Perf AT FTR Count'] / report['Total'] * 100).round().astype(int)
-        
+
+
         report = report.sort_index(
             key=lambda idx: idx.map(month_sort_key)
         )
-        
-        # Sum counts
+
         overall_total = report['Total'].sum()
 
         overall_phy  = report['Phy AT FTR Count'].sum()
@@ -6487,7 +6497,6 @@ def ftr_table(request):
         overall_scft = report['SCFT AT FTR Count'].sum()
         overall_perf = report['Perf AT FTR Count'].sum()
 
-        # Calculate percentages
         overall = {
             'Total': overall_total,
             'Phy AT FTR Count': overall_phy,
@@ -6499,20 +6508,18 @@ def ftr_table(request):
             'Perf AT FTR Count': overall_perf,
             'Perf AT FTR %': round(overall_perf / overall_total * 100) if overall_total else 0,
         }
-        
+
         report.loc['Overall'] = overall
 
-        # 7️⃣ Final shape (rows → columns like screenshot)
+
         final_table = report.T
-        
         print(final_table)
-        
+
         final_table = final_table.reset_index()
         final_table = final_table.rename(columns={"index": "FTR"})
-        
+
         def format_percentage_rows(df):
             percent_rows = df['FTR'].str.contains('%', regex=False)
-
             month_cols = df.columns.drop('FTR')
 
             df.loc[percent_rows, month_cols] = (
@@ -6537,6 +6544,161 @@ def ftr_table(request):
             {"error": str(e)},
             status=500
         )
+
+# @api_view(['POST'])
+# def ftr_table(request):
+#     year = request.data.get("year")  # e.g. "2025"
+#     type = request.data.get("type")
+
+#     if not year or not type:
+#         return Response({"error": "type and year are required"}, status=400)
+    
+#     try:
+#         year = int(year)
+
+#         fy_start = pd.Timestamp(year=year, month=3, day=29)
+#         fy_end   = pd.Timestamp(year=year + 1, month=3, day=28)
+        
+        
+#         # 1️⃣ Fetch data
+#         qs = ATDumpData.objects.all().values(
+#             'site_id',
+#             'on_air_date',
+#             'physical_at_status',
+#             'physical_at_rejection_counter',
+#             'performance_at_status',
+#             'performance_at_rejection_counter',
+#             'soft_at_status',
+#             'soft_at_rejection_counter',
+#             'scft_at_status',
+#             'scft_at_rejection_counter',
+#         )
+
+#         df = pd.DataFrame(qs)
+
+#         if df.empty:
+#             return Response({"message": "No data found"}, status=200)
+        
+#         if type == "Relocation":
+#             relocation_sites = (
+#                 AlokTrackerModel.objects
+#                 .values_list('new_site_id', flat=True)
+#                 .distinct()
+#             )
+#             df = df[df['site_id'].isin(relocation_sites)]
+#         elif type != 'Overall':
+#             relocation_sites = (
+#                 AlokTrackerModel.objects
+#                 .values_list('new_site_id', flat=True)
+#                 .distinct()
+#             )
+#             df = df[~df['site_id'].isin(relocation_sites)]
+
+#         # 2️⃣ Date handling
+#         df['on_air_date'] = pd.to_datetime(df['on_air_date'], errors='coerce')
+        
+#         df = df[
+#             (df['on_air_date'] >= fy_start) &
+#             (df['on_air_date'] <= fy_end)
+#         ]
+        
+#         df['FTR_Month'] = df['on_air_date'].apply(get_ftr_month)
+
+#         df = df[df['FTR_Month'].notna()]
+
+#         # 3️⃣ Total sites per month
+#         total = (
+#             df.groupby('FTR_Month')['site_id']
+#               .count()
+#               .rename('Total')
+#         )
+
+#         # 4️⃣ FTR counts
+#         phy_ftr  = ftr_count(df, 'physical_at_status', 'physical_at_rejection_counter')
+#         soft_ftr = ftr_count(df, 'soft_at_status', 'soft_at_rejection_counter')
+#         scft_ftr = ftr_count(df, 'scft_at_status', 'scft_at_rejection_counter')
+#         perf_ftr = ftr_count(df, 'performance_at_status', 'performance_at_rejection_counter')
+
+#         # 5️⃣ Combine
+#         report = pd.concat(
+#             [
+#                 total,
+#                 phy_ftr.rename('Phy AT FTR Count'),
+#                 soft_ftr.rename('Soft AT FTR Count'),
+#                 scft_ftr.rename('SCFT AT FTR Count'),
+#                 perf_ftr.rename('Perf AT FTR Count')
+#             ],
+#             axis=1
+#         ).fillna(0)
+
+#         # 6️⃣ Percentages
+#         report['Phy AT FTR %'] = (report['Phy AT FTR Count'] / report['Total'] * 100).round().astype(int)
+#         report['Soft AT FTR %'] = (report['Soft AT FTR Count'] / report['Total'] * 100).round().astype(int)
+#         report['SCFT AT FTR %'] = (report['SCFT AT FTR Count'] / report['Total'] * 100).round().astype(int)
+#         report['Perf AT FTR %'] = (report['Perf AT FTR Count'] / report['Total'] * 100).round().astype(int)
+        
+#         report = report.sort_index(
+#             key=lambda idx: idx.map(month_sort_key)
+#         )
+        
+#         # Sum counts
+#         overall_total = report['Total'].sum()
+
+#         overall_phy  = report['Phy AT FTR Count'].sum()
+#         overall_soft = report['Soft AT FTR Count'].sum()
+#         overall_scft = report['SCFT AT FTR Count'].sum()
+#         overall_perf = report['Perf AT FTR Count'].sum()
+
+#         # Calculate percentages
+#         overall = {
+#             'Total': overall_total,
+#             'Phy AT FTR Count': overall_phy,
+#             'Phy AT FTR %': round(overall_phy / overall_total * 100) if overall_total else 0,
+#             'Soft AT FTR Count': overall_soft,
+#             'Soft AT FTR %': round(overall_soft / overall_total * 100) if overall_total else 0,
+#             'SCFT AT FTR Count': overall_scft,
+#             'SCFT AT FTR %': round(overall_scft / overall_total * 100) if overall_total else 0,
+#             'Perf AT FTR Count': overall_perf,
+#             'Perf AT FTR %': round(overall_perf / overall_total * 100) if overall_total else 0,
+#         }
+        
+#         report.loc['Overall'] = overall
+
+#         # 7️⃣ Final shape (rows → columns like screenshot)
+#         final_table = report.T
+        
+#         print(final_table)
+        
+#         final_table = final_table.reset_index()
+#         final_table = final_table.rename(columns={"index": "FTR"})
+        
+#         def format_percentage_rows(df):
+#             percent_rows = df['FTR'].str.contains('%', regex=False)
+
+#             month_cols = df.columns.drop('FTR')
+
+#             df.loc[percent_rows, month_cols] = (
+#                 df.loc[percent_rows, month_cols]
+#                 .applymap(lambda x: f"{x}%" if pd.notna(x) else x)
+#             )
+
+#             return df
+        
+#         final_table = format_percentage_rows(final_table)
+
+#         return Response(
+#             {
+#                 "data": final_table.to_dict(orient="records"),
+#                 "months": list(final_table.columns)
+#             },
+#             status=200
+#         )
+
+#     except Exception as e:
+#         return Response(
+#             {"error": str(e)},
+#             status=500
+#         )
 
 
 @api_view(['POST'])
