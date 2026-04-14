@@ -1504,33 +1504,46 @@ def fetch_sites(request):
 # api for  add mail----------------------------------------
 @api_view(["POST"])
 def add_mail(request):
-    mail_type = request.data.get("mail_type")  
-    mail_id = request.data.get("mailid")       
-
-    if not mail_type or not mail_id:
+    mail_type = request.data.get("mail_type")
+    mail_input = request.data.get("mailid")  
+ 
+    if not mail_type or not mail_input:
         return Response(
-            {"status": False, "message": "mail_type and mailid required"},)
-
+            {"status": False, "message": "mail_type and mailids required"},
+            status=400
+        )
+ 
     if mail_type not in ["TO", "CC"]:
         return Response(
-            {"status": False, "message": "mail_type must be TO or CC"}, )
-    
-
-    if EmailList.objects.filter(email=mail_id).exists():
-        return Response(
-            {"status": False, "message": "Email already exists"},)
-            
-    EmailList.objects.create(
-        email=mail_id,
-        email_type=mail_type
-    )
-
-    return Response(
-        {"status": True,
-        "message": "Email added successfully"},
-        status=status.HTTP_201_CREATED
-    )
-
+            {"status": False, "message": "mail_type must be TO or CC"},
+            status=400
+        )
+ 
+    if isinstance(mail_input, str):
+        mail_ids = mail_input.replace(",", " ").split()
+    else:
+        mail_ids = mail_input
+ 
+    added = []
+    already_exists = []
+ 
+    for mail in mail_ids:
+        mail = mail.strip()
+ 
+        if EmailList.objects.filter(email=mail).exists():
+            already_exists.append(mail)
+            continue
+ 
+        EmailList.objects.create(email=mail, email_type=mail_type)
+        added.append(mail)
+ 
+    return Response({
+    "status": True,
+    "message": f"{len(added)} mail(s) added successfully and {len(already_exists)} already exist",
+    "added_emails": added,
+    "already_exists": already_exists
+})
+ 
 
 @api_view(["GET"])
 def get_to_mails(request):
@@ -1585,21 +1598,39 @@ def delete_mail_id(request):
 # api for add model------------------------------------
 @api_view(["POST"])
 def add_model(request):
-    model_name = request.data.get("model")
-    if not model_name:
+    model_input = request.data.get("model")
+ 
+    if not model_input:
         return Response(
-            {"status": False, "message": "model_name required"},)
-        
-    if AddModel.objects.filter(model_name=model_name).exists():
-            return Response(
-                {"status": False, "message": "Model already exists"},)
-
-    AddModel.objects.create(model_name=model_name)
+            {"status": False, "message": "model required"},
+            status=400
+        )
+ 
+    if isinstance(model_input, str):
+        model_list = model_input.replace(",", " ").split()
+    else:
+        model_list = model_input
+ 
+    added = []
+    already_exists = []
+ 
+    for model_name in model_list:
+        model_name = model_name.strip()
+ 
+        if AddModel.objects.filter(model_name__iexact=model_name).exists():
+            already_exists.append(model_name)
+            continue
+ 
+        AddModel.objects.create(model_name=model_name)
+        added.append(model_name)
+ 
     return Response({
-            "status": True,
-            "message": "Model added successfully"
-        })
-
+        "status": True,
+        "message": f"{len(added)} added & {len(already_exists)} already exist",
+        "added_models": added,
+        "already_exists": already_exists
+    })
+ z
 
 @api_view(["GET"])
 def get_model(request):
