@@ -276,35 +276,35 @@ def find_2G_audit_PNB( DUMP_2G , BSC_SITE ,GPL_2G,output_file_save_name):
 def monitor_task_status(user_name,task_id, task_pk,output_file_save_name,circle):
     # Get the Celery task result object
     result = AsyncResult(task_id)
-
+ 
     # Update the task status in the database
     task = Task.objects.get(pk=task_pk)
     task.status = result.status  # Update status based on Celery task status
     task.save()
-
+ 
     # Check if the task has been completed
     if result.ready():
         # Additional logic to handle completion of the task, if needed
         if circle == "HRY":
             file_link=os.path.join(MEDIA_URL, "Audit_ZTE_HR", "2G_AUDIT","HRY_outputs", output_file_save_name+".xlsx")
             subject = "2G Audit Report/ circle: HRY"
-            
-        if circle == "KOL":
+           
+        elif circle == "KOL":
              file_link=os.path.join(MEDIA_URL, "Audit_ZTE_HR", "2G_AUDIT","KOL_outputs", output_file_save_name+".xlsx")
              subject = "2G Audit Report / circle: KOL"
-        if circle == "PNB":
+        elif circle == "PNB":
             file_link=os.path.join(MEDIA_URL, "Audit_ZTE_HR", "2G_AUDIT","PB_outputs", output_file_save_name+".xlsx")
             subject = "2G Audit Report / circle: PB"
         task.file_link = file_link
         task.circle = circle
         task.save()
         to_address = user_name
-        cc_mails = "Manoj.Kumar@ust.com;Mohit.Batra@ust.com"
+        cc_mails = "Manoj.Kumar@ust.com;Mohit.Batra@ust.com;Vishal.Yadav@ust.com;Prerna.PramodKumar@ust.com"
         # subject = "2G Audit Report"
-        body = "Your 2G Audit Report is ready. Please download the report from the below link. \n\n"+ str("http://122.176.141.197:8000") + str(file_link)
-        send_email.delay(to_address, cc_mails ,subject, body)
-        
-        
+        body = "Your 2G Audit Report is ready. Please download the report from the below link. \n\n"+ str("https://commtoolapi.mcpspmis.com") + str(file_link)
+        send_email(to_address, cc_mails ,subject, body)
+       
+       
     else:
         # If the task is not yet completed, schedule this task to run again after a certain interval
-        monitor_task_status.apply_async((task_id, task_pk), countdown=10)  # Retry after 10 seconds
+        monitor_task_status.apply_async((user_name, task_id, task_pk, output_file_save_name, circle),countdown=10)

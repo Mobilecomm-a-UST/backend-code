@@ -1,7 +1,6 @@
 from django.apps import AppConfig
 
 
-class SoftAtNokiaConfig(AppConfig):
+class Ms2PhysicalSiteConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'Soft_At_Nokia'
-
+    name = 'ms2_physical_site'

@@ -12,7 +12,7 @@ import json
 from rest_framework.exceptions import ValidationError
 from asgiref.sync import sync_to_async
 import os
-
+from django.db import transaction
 from django.conf import settings
 
 from .serializers import IntegrationDataSerializer
@@ -554,7 +554,7 @@ def hyperlink_datewise_integration_data(request):
         filters[f"{activity_field_map[activity_name]}__isnull"] = False
 
     # Final queryset
-    objs = IntegrationDataVI.objects.filter(**filters)
+    objs = IntegrationDataVI.objects.filter(**filters).order_by('Integration_Date')
 
     serializer = IntegrationDataSerializer(objs, many=True)
     return Response({"data": serializer.data})
@@ -894,7 +894,7 @@ def hyperlink_date_range_integration_data(request):
         filters["Activity_Name"] = activity_name
 
     # Final queryset
-    objs = IntegrationDataVI.objects.filter(**filters)
+    objs = IntegrationDataVI.objects.filter(**filters).order_by('Integration_Date')
 
     serializer = IntegrationDataSerializer(objs, many=True)
     return Response({"data": serializer.data})
@@ -1261,7 +1261,7 @@ def hyperlink_monthwise_integration_data(request):
         filters["Activity_Name"] = activity_name
 
     # Final queryset
-    objs = IntegrationDataVI.objects.filter(**filters)
+    objs = IntegrationDataVI.objects.filter(**filters).order_by('Integration_Date')
 
     serializer = IntegrationDataSerializer(objs, many=True)
     return Response({"data": serializer.data})

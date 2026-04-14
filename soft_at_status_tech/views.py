@@ -13,7 +13,6 @@ import stat
 import datetime
 import json
 import zipfile
-from django.conf import settings
 
 
 ###################### TAKING ENM VALUES ####################################################
@@ -268,7 +267,7 @@ def extract_data_from_log(request):
                     "st rru",
                     "get . maxtx",
                     "get . nooftx",
-                    "invxgr",
+                    "invxgr" or "invxr",
                     "st sync",
                     "st trx",
                     "get . gsmsec",
@@ -361,9 +360,9 @@ def extract_data_from_log(request):
                                 node,
                             )
 
-                        elif command == "invxgr":
+                        elif command == "invxgr" or command == "invxr":
                             header_line, values_lines, ip_address = get_data_from_log(
-                                r"^[A-Z0-9_-]+>\sinvxgr",
+                                r"^[A-Z0-9_-]+>\sinvxgr|^[A-Z0-9_-]+>\sinvxr",
                                 r"^ID\s+LINK\s+RiL\s+WL1\s+TEMP1\s+TXbs1\sTXdBm1\s+RXdBm1\s+BER1\s+WL2\s+TEMP2\s+TXbs2\s+TXdBm2\s+RXdBm2\s+BER2\s+DlLoss\s+UlLoss\s+LENGTH\s+TT",
                                 r"---{2,}+",
                                 node,
@@ -444,7 +443,7 @@ def extract_data_from_log(request):
                                 values = command_info[command].get("values_lines", [])
                                 ip_address = command_info[command].get("ip_address", "")
 
-                                if command != "invxgr":
+                                if command != "invxgr" and command != "invxr":
                                     if command == "hget field prod":
                                         header_split = (
                                             re.split(r"\s{1,}", header)
@@ -544,7 +543,7 @@ def extract_data_from_log(request):
                                         if value.startswith(">>>"):
                                             continue
 
-                                        if command == "invxgr":
+                                        if command == "invxgr" or command == "invxr":
                                             value_split = re.split(r"\s+", value)
                                         else:
                                             value_split = re.split(r"\s{2,}", value)
@@ -618,7 +617,8 @@ def extract_data_from_log(request):
                                                 val[1] if len(val) > 1 else ""
                                             )
                                     df = df[df["MO"].str.startswith(r"SectorCarrier=")]
-        
+                                    df["ip address"] = ip_address
+
                                 if command == "get . sectorc" and not df.empty:
                                     df = df[
                                         df["MO"].str.contains(
@@ -639,7 +639,7 @@ def extract_data_from_log(request):
                                         lambda x: (str(x).split(",")[1] if "," in str(x) else x)
                                     )
                                     df = df.drop_duplicates(subset=["Node", "MO", "Attribute"])
-
+                                    df["ip address"] = ip_address
 
                                 if command == "hget field prod" and not df.empty:
                                     if "productName" in df.columns:
@@ -649,7 +649,7 @@ def extract_data_from_log(request):
                                             | df["productName"].str.startswith("Baseband", na=False)
                                             | df["productName"].str.startswith("RAN Processor", na=False)
                                         ]
-
+                                    df["ip address"] = ip_address
 
                                 if command == "get . nooftx" and not df.empty:
                                     for idx, row in df.iterrows():
@@ -662,6 +662,8 @@ def extract_data_from_log(request):
                                                 0
                                             ]
                                     df = df[df["MO"].str.startswith(r"SectorCarrier=")]
+                                    df["ip address"] = ip_address
+
 
                                 if command == "get . enroll" and not df.empty:
                                     if "MO" in df.columns:
@@ -682,6 +684,7 @@ def extract_data_from_log(request):
                                                 df.at[idx, "MO"] = row["MO"].split(
                                                     " ", 1
                                                 )[0]
+                                    df["ip address"] = ip_address
 
                                 if command == "st sync" and not df.empty:
                                     if "Adm State" in df.columns:
@@ -743,11 +746,12 @@ def extract_data_from_log(request):
                                                 df.at[idx, "Attribute"] = row[
                                                     "MO"
                                                 ].split(" ", 1)[0]
-                                
-                                if command == "invxgr":
+
+                                if command == "invxgr" or command == "invxr":
                                     # df = df[df["RiL"].str.match(r"^\d+", na=False)]
-                                    df = df[~df["RiL"].str.match(r"S[0-9]_N1-1", na=False)]
-                                
+                                    df = df[~df["RiL"].str.match(r"S[0-9]_N1-1|S[0-9]_N1", na=False)]
+                                    df["ip address"] = ip_address
+
                                 if command == "get . fing":
                                     df = df[df["Attribute"].str.contains("fingerprint", na=False)]
                                 # print(df)
@@ -787,7 +791,7 @@ def extract_data_from_log(request):
             os.path.join(log_excel_folder, file)
             for file in os.listdir(log_excel_folder)
         ]
-        print(excel_files_paths)
+        # print("File Path",excel_files_paths)
 
         for file in excel_files_paths:
             base_name = os.path.basename(file).split('_')[0]
@@ -837,8 +841,10 @@ def extract_data_from_log(request):
                     }
                     l_layers = [layer_mapping.get(l, l) for l in layer_value.split("_")]
                     l_layers = list(set(l_layers))
+                    # l_layers = set(l_layers)
                     template_df.loc[0, "Layers(Other Tech Info)"] = "_".join(l_layers)
-                    print("Layer Value:", l_layers)
+                    print("==================",template_df.loc[0, "Layers(Other Tech Info)"])
+                    print("Layer Value=================:", l_layers)
 
                     # Extract site IDs
                     site_ids = df["MO"].str.extract(r"EUtranCell(?:FDD|TDD)=([\w_]+)")[0].dropna()
@@ -862,14 +868,15 @@ def extract_data_from_log(request):
                     print("Antenna:", template_df.loc[0, "Antenna"])
 
                     # Extract cell config
-                    cell_config = df["MO"].str.extract(r"EUtranCell(?:FDD|TDD)=\w+([FT]\d)")[0]
+                    cell_config = df["MO"].str.extract(r"EUtranCell(?:FDD|TDD)=\w+(_[FT]\d)")[0]
+                    print("Cell Config:", cell_config)
                     cell_mapping = {
-                        "F1": "L21",
-                        "F3": "L18",
-                        "F8": "L9",
-                        "T1": "L23",
-                        "T2": "L23",
-                        "F5": "L85",
+                        "_F1": "L21",
+                        "_F3": "L18",
+                        "_F8": "L9",
+                        "_T1": "L23",
+                        "_T2": "L23",
+                        "_F5": "L85",
                     }
                     source_counts = cell_config.dropna().value_counts()
                     band_counts_df = pd.DataFrame({
@@ -882,6 +889,26 @@ def extract_data_from_log(request):
                     print("Formatted LTE Config:", formatted_config)
                     combined_config = formatted_config  # default to formatted_config
 
+                    nr_cells = df["MO"].str.extract(r"(?:EUtranCellTDD)=.*?(T\d)")[0]
+                    if not nr_cells.dropna().empty:
+ 
+                        t_counts = nr_cells.value_counts().sort_index()
+ 
+                        t_parts = "".join([f"{t}({c})" for t, c in t_counts.items()])
+ 
+                        formatted_config = "+".join(
+                            part for part in formatted_config.split("+")
+                            if not part.startswith("L23")
+                        )
+ 
+                        formatted_config = formatted_config + f"L23({t_parts})"
+ 
+ 
+                    print("Formatted LTE+NR Config:", formatted_config)
+ 
+                    combined_config = formatted_config
+
+ 
 
                 if "st trx" in xls.sheet_names:
                     trx_df = xls.parse("st trx")
@@ -891,9 +918,9 @@ def extract_data_from_log(request):
                     if not trx_data.empty:
                         # TRX exists → perform replacement
                         combined_config = formatted_config.replace("L18", "GL18").replace("L9", "GL9")
-
-                template_df.loc[0, "Cells Configuration"] = combined_config if combined_config else "NA"
-
+                    template_df.loc[0, "Cells Configuration"] = combined_config
+                else:
+                    template_df.loc[0, "Cells Configuration"] ="NA"
 
                 if "st trx" in xls.sheet_names:
                     df = xls.parse("st trx")
@@ -941,54 +968,125 @@ def extract_data_from_log(request):
                     # Final output to template
                     combined_layers = "_".join(sorted(set(l_layers_replaced))) if l_layers_replaced else "NA"
                     template_df.loc[0, "Layers(Other Tech Info)"] = combined_layers
-                    print("Layers(Other Tech Info):", combined_layers)
+                    print("Layers(Other Tech Info)--------------:", combined_layers)
                 
                 else:
-                    template_df.loc[0, "Layers(Other Tech Info)"] = "NA"
-
+                    template_df.loc[0, "Layers(Other Tech Info)"] = "_".join(sorted(set(l_layers))) if l_layers else "NA"
+                
                 MO_name_0 = "NA"
-
                 MO_names = []
 
                 if "get 0" in xls.sheet_names:
                     df_0 = xls.parse("get 0", header=None)
 
-                    MO_name_0 = "/".join(
-                        cell.split("=")[-1]
-                        for cell in df_0.iloc[0]
-                        if isinstance(cell, str) and "ManagedElement=" in cell
-                    )
+                    # First try with ManagedElement=
+                    first_row_values = [cell for cell in df_0.iloc[0] if isinstance(cell, str)]
+
+                    managed_element_values = [
+                        cell.split("=")[-1].strip()
+                        for cell in first_row_values
+                        if "ManagedElement=" in cell
+                    ]
+
+                    if managed_element_values:
+                        MO_name_0 = "/".join(managed_element_values)
+
+                    else:
+                        # If ManagedElement not found, try ManagedElementId=
+                        managed_element_id_values = [
+                            cell.split("=")[-1].strip()
+                            for cell in first_row_values
+                            if "ManagedElementId=" in cell
+                        ]
+
+                        if managed_element_id_values:
+                            MO_name_0 = "/".join(managed_element_id_values)
+
                     MO_names.append(MO_name_0)
                     print("MO Name 0:", MO_name_0)
                     template_df.loc[0, "MO Name"] = MO_name_0
 
+                    # SW Version
+                    sw_row = df_0[df_0.iloc[:, 1] == "swVersion"]
+                    template_df.loc[0, "SW Version"] = sw_row.iloc[0, 2] if not sw_row.empty else "NA"
 
-                    template_df.loc[0, "SW Version"] = df_0[df_0.iloc[:, 1] == "swVersion"].iloc[0, 2]
-                    physical_site = df_0[df_0.iloc[:, 1] == "userLabel"].iloc[0, 2]
-                    template_df.loc[0, "Physical Site Id"] = physical_site
+                    # Physical Site Id
+                    site_row = df_0[df_0.iloc[:, 1] == "userLabel"]
+                    template_df.loc[0, "Physical Site Id"] = site_row.iloc[0, 2] if not site_row.empty else "NA"
 
-                    # Check for GSMSEC data
+                    # GSMSEC logic
                     if "get . gsmsec" in xls.sheet_names:
-                        if template_df.loc[0, "Circle"] == "DL":
+                        if str(template_df.loc[0, "Circle"]).strip().upper() == "DL":
                             df_gsmsec = xls.parse("get . gsmsec")
-                            sector_names = df_gsmsec[df_gsmsec["Attribute"] == "gsmSectorName"]["Value"]
 
-                            prefixes = (
-                                sector_names.dropna()
-                                .str.extract(r"([A-Z]+\d+)")[0]
-                                .dropna()
-                                .unique()
-                            )
+                            if "Attribute" in df_gsmsec.columns and "Value" in df_gsmsec.columns:
+                                sector_names = df_gsmsec[df_gsmsec["Attribute"] == "gsmSectorName"]["Value"]
 
-                            MO_name_gsmsec = ",".join(prefixes)
-                            MO_names.append(MO_name_gsmsec)
+                                prefixes = (
+                                    sector_names.dropna()
+                                    .astype(str)
+                                    .str.extract(r"([A-Z]+\d+)")[0]
+                                    .dropna()
+                                    .unique()
+                                )
+
+                                if len(prefixes) > 0:
+                                    MO_name_gsmsec = ",".join(prefixes)
+                                    MO_names.append(MO_name_gsmsec)
 
                             final_MO_name = " / ".join(filter(None, MO_names))
                             print("Final MO Name:", final_MO_name)
-
                             template_df.loc[0, "MO Name"] = final_MO_name
+                        else:
+                            template_df.loc[0, "MO Name"] = MO_name_0
                 else:
-                    template_df.loc[0, "MO Name"] = MO_name_0
+                    template_df.loc[0, "MO Name"] = "NA"
+
+                # MO_name_0 = "NA"
+
+                # MO_names = []
+
+                # if "get 0" in xls.sheet_names:
+                #     df_0 = xls.parse("get 0", header=None)
+
+                #     MO_name_0 = "/".join(
+                #         cell.split("=")[-1]
+                #         for cell in df_0.iloc[0]
+                #         if isinstance(cell, str) and "ManagedElement=" in cell
+                #     )
+                #     MO_names.append(MO_name_0)
+                #     print("MO Name 0:", MO_name_0)
+                #     template_df.loc[0, "MO Name"] = MO_name_0
+
+
+                #     template_df.loc[0, "SW Version"] = df_0[df_0.iloc[:, 1] == "swVersion"].iloc[0, 2]
+                #     physical_site = df_0[df_0.iloc[:, 1] == "userLabel"].iloc[0, 2]
+                #     template_df.loc[0, "Physical Site Id"] = physical_site
+
+                #     # Check for GSMSEC data
+                #     if "get . gsmsec" in xls.sheet_names:
+                #         if template_df.loc[0, "Circle"] == "DL":
+                #             df_gsmsec = xls.parse("get . gsmsec")
+                #             sector_names = df_gsmsec[df_gsmsec["Attribute"] == "gsmSectorName"]["Value"]
+
+                #             prefixes = (
+                #                 sector_names.dropna()
+                #                 .str.extract(r"([A-Z]+\d+)")[0]
+                #                 .dropna()
+                #                 .unique()
+                #             )
+
+                #             MO_name_gsmsec = ",".join(prefixes)
+                #             MO_names.append(MO_name_gsmsec)
+
+                #             final_MO_name = " / ".join(filter(None, MO_names))
+                #             print("Final MO Name:", final_MO_name)
+
+                #             template_df.loc[0, "MO Name"] = final_MO_name
+                #         else :
+                #             template_df.loc[0, "MO Name"] = "NA"
+                # else:
+                #     template_df.loc[0, "MO Name"] = MO_name_0
 
                 
                         
@@ -1040,36 +1138,59 @@ def extract_data_from_log(request):
 
                 if sheet_name == "hget field prod":
                     df = xls.parse(sheet_name)
+
+                    # ---- FORCE STRING TYPES (CRITICAL FIX) ----
+                    df["productName"] = df["productName"].astype("string")
+                    df["productNumber"] = df["productNumber"].astype("string")
+
+                    # ---- BASEBAND ----
                     baseband = (
                         df["productName"]
                         .str.extract(r"Baseband\s+(\d+)", expand=False)
                         .dropna()
                     )
+
+                    # ---- RAN PROCESSOR ----
                     RAN_Processor = (
                         df["productName"]
                         .str.extract(r"RAN Processor\s+(\w+)", expand=False)
                         .dropna()
                     )
+
                     BB_count = baseband.count()
-                    bb_str = f"BB{baseband.iloc[0]}*{BB_count}" if BB_count > 1 else (
-                        f"BB{baseband.iloc[0]}" if not baseband.empty else ""
+                    bb_str = (
+                        f"BB{baseband.iloc[0]}*{BB_count}"
+                        if BB_count > 1
+                        else f"BB{baseband.iloc[0]}" if not baseband.empty else ""
                     )
                     print("BB str:", bb_str)
 
                     ran_count = RAN_Processor.count()
-                    ran_str = f"BB{RAN_Processor.iloc[0]}*{ran_count}" if ran_count > 1 else (
-                        f"BB{RAN_Processor.iloc[0]}" if not RAN_Processor.empty else ""
+                    ran_str = (
+                        f"BB{RAN_Processor.iloc[0]}*{ran_count}"
+                        if ran_count > 1
+                        else f"BB{RAN_Processor.iloc[0]}" if not RAN_Processor.empty else ""
                     )
                     print("ran str:", ran_str)
 
                     combined_str = " / ".join(filter(None, [bb_str, ran_str])) or "NA"
-                    print(combined_str)
+                    print("Combined BBU:", combined_str)
+
+                    # ---- FIX DTYPE WARNING BEFORE ASSIGNMENT ----
+                    template_df["Hardware/BBU"] = template_df["Hardware/BBU"].astype("object")
                     template_df.loc[0, "Hardware/BBU"] = combined_str
 
-                    radio = df["productName"].str.extract(r"(?:Radio|RRUS)\s+(\d+\w+)", expand=False)
+                    # ---- RADIO & BAND ----
+                    radio = df["productName"].str.extract(
+                        r"(?:Radio|RRUS)\s+(\d+\w+)", expand=False
+                    )
                     print("radio:", radio)
-                    band = df["productNumber"].str.extract(r"(B\d+[A-Z]?)", expand=False)
+
+                    band = df["productNumber"].str.extract(
+                        r"(B\d+[A-Z]?)", expand=False
+                    )
                     print("band:", band)
+
                     combined = (radio + " " + band).dropna()
                     print("combined:", combined)
 
@@ -1078,7 +1199,9 @@ def extract_data_from_log(request):
                         f"{item}*{count}" for item, count in countRRU.items()
                     )
 
-                    print("Grouped Radios:\n", result)
+                    print("Grouped Radios:", result)
+
+                    template_df["Hardware/RRU"] = template_df["Hardware/RRU"].astype("object")
                     template_df.loc[0, "Hardware/RRU"] = result if result else "NA"
 
 
@@ -1086,11 +1209,14 @@ def extract_data_from_log(request):
                 #     df = xls.parse(sheet_name)
                 #     template_df.loc[0, "CPRI"] = len(df)
 
-                elif sheet_name == "invxgr":
+                elif sheet_name == "invxgr" or sheet_name == "invxr":
                     df = xls.parse(sheet_name)
                     template_df.loc[0, "CPRI"] = df["LENGTH"].count()
                     cprilength = df['LENGTH'].dropna().astype(str).str.replace('m', '')
                     template_df.loc[0, 'CPRI length as per Actual'] = '/'.join(cprilength)
+                    ip_address = df["ip address"].unique()
+                    template_df.loc[0, "4G Node IP"] = " / ".join(ip_address)
+
 
                     def round_to_nearest_5(n):
                         remainder = n % 5
@@ -1101,11 +1227,11 @@ def extract_data_from_log(request):
 
                     cpri_length_as_per_mo = "/".join(
                         [
-                            str(round_to_nearest_5(int(value)))
-                            for i, value in enumerate(cprilength)
+                    str(round_to_nearest_5(int(float(value)))) 
+                    for i, value in enumerate(cprilength)
                         ]
                     )
-
+                    
                     template_df.loc[0, "CPRI length as per MO"] = cpri_length_as_per_mo
                     template_df.loc[0, "CPRI length as per Survey"] = (
                         cpri_length_as_per_mo
@@ -1213,6 +1339,56 @@ def extract_data_from_log(request):
                     template_df.loc[0, "RET Configuration (Cell Name)"] = "NA"
                     template_df.loc[0, "RET Configured on (Layer)"] = "NA"
 
+
+                #     if MO:
+                #         # Group MOs by base name (excluding last 3 characters)
+                #         grouped = {}
+                #         for mo in MO:
+                #             base = mo[:-3]
+                #             suffix = mo[-3:]
+                #             if base not in grouped:
+                #                 grouped[base] = [suffix]
+                #             else:
+                #                 grouped[base].append(suffix)
+
+                #         # Reconstruct MOs with grouped suffixes
+                #         result_list = [base + "&".join(suffixes) for base, suffixes in grouped.items()]
+                #         result = ",".join(result_list)
+                #         template_df.loc[0, "RET Configuration (Cell Name)"] = result
+                #     else:
+                #         result = "NA"
+                #         template_df.loc[0, 'RET Configuration (Cell Name)'] = result
+
+                #     print("RET Configuration (Cell Name):", result)
+
+                #     RTT_map = {
+                #         "F1": "L2100",
+                #         "F3": "L1800",
+                #         "F8": "L900",
+                #         "T1": "L2300",
+                #         "T2": "L2300",
+                #         "F5": "L850",
+                #     }
+                #     # Extract unique layer types from grouped result
+                #     layers_found = set()
+                #     for base in grouped.keys():
+                #         for key in RTT_map:
+                #             if key in base:
+                #                 layers_found.add(RTT_map[key])
+                #                 break
+
+                #     if layers_found:
+                #         RTT_cell = "_".join(sorted(layers_found))
+                #     else:
+                #         RTT_cell = "NA"
+
+                #     template_df.loc[0, "RET Configured on (Layer)"] = RTT_cell
+                #     print("RET Configured on (Layer):", RTT_cell)
+
+                # else:
+                #     template_df.loc[0, "RET Configured on (Layer)"] = "NA"
+                #     template_df.loc[0, "RET Configuration (Cell Name)"] = "NA"
+
                 required_sheets = ["get . maxtx", "get . nooftx", "get . sectorc"]
                 if all(sheet in xls.sheet_names for sheet in required_sheets):
                     df_maxtx = xls.parse("get . maxtx")
@@ -1284,7 +1460,7 @@ def extract_data_from_log(request):
 
                 os.makedirs(output_path, exist_ok=True)
 
-                output_filename = f"_{base_name}_OUTPUT_{timestamp}.xlsx"
+                output_filename = f"{base_name}.xlsx"
                 output_path = os.path.join(output_path, output_filename)
 
                 with pd.ExcelWriter(output_path, engine="xlsxwriter") as writer:
@@ -1306,7 +1482,7 @@ def extract_data_from_log(request):
 
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        zip_filename = os.path.join(base_media_url, f"SUMMARY_OUTPUT_{timestamp}.zip")
+        zip_filename = os.path.join(base_media_url, f"4g_OUTPUT_{timestamp}.zip")
         # Create zip file with all Excel files
         with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
             logs_excel_folder = os.path.join(base_media_url, "OUTPUT")
@@ -1317,12 +1493,7 @@ def extract_data_from_log(request):
                         arcname = os.path.relpath(file_path, base_media_url)
                         zipf.write(file_path, arcname)
         
-        relative_path = zip_filename.replace(settings.MEDIA_ROOT + "/", "")
-        download_link = request.build_absolute_uri(settings.MEDIA_URL + relative_path)
-        
-        # download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
-
-        print(download_link,"download_linkdownload_link")
+        download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
         print(f"Output file created: {output_path}")
         print(f"Zip file created: {zip_filename}")
         ###########################################################################################################################

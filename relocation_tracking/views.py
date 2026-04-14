@@ -93,6 +93,7 @@ prefix_parsers = {
     ),
     "NE-ik-": lambda sn: parse_neik(sn, "NE-ik-"),
     "EWB_": lambda sn: sn.split("_")[-2],
+    "MH_": lambda sn: cut_if_alpha(sn.split("_")[-2]), 
 }
 
 def extract_site_name(sn):
@@ -209,7 +210,7 @@ def referenceView(request):
         
         hs_data = new_df[
             (new_df['Short name'].str.contains("_HS_")) &
-            (new_df['Circle'].isin(['AS', 'MU', 'NE', 'BH','OD','OR']))
+            (new_df['Circle'].isin(['AS', 'MU', 'NE', 'BH','OD','OR', 'DL']))
         ].copy()
         
         all_data_clean = all_data[~all_data['Short name'].str.contains("_HS_")]

@@ -324,7 +324,7 @@ def soft_at_checkpoint(request):
             )
 
             st_mme_df = explode_data_from_log(
-                  r'[A-Z0-9_-]+>\sst\scell',
+                  r'[A-Z0-9_-]+>\sst\smme',
                   r'(Proxy)\s+(Adm\sState)\s+(Op\.\sState)\s+(MO)',
                   r'\s*(\d+)\s+(\d+\s+\((?:UNLOCKED|LOCKED)\))\s+(\d+\s+\((?:ENABLED|DISABLED)\))\s+(.*)$',
                   r'^Total:\s\d+',

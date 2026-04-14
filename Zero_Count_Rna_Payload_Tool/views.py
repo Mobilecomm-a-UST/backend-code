@@ -549,7 +549,7 @@ def kpi_trend_2g_api(request):
 
 def cleaned_data(df):
     condition_nokia = df["Short_name"].str.startswith("@Nokia")
-    print(condition_nokia)
+    # print(condition_nokia)
     removed_nokia_df = df[~condition_nokia]
 
     condition_NE_ik = removed_nokia_df["Short_name"].str.startswith("NE-ik")
@@ -582,7 +582,7 @@ def get_circle(short_name):
 
 
 def get_last_five_days_of_week(df):
-    print(df)
+    # print(df)
     df["Date"] = pd.to_datetime(df["Date"])
     df["Week_Number"] = df["Date"].dt.isocalendar().week
     df["Day_of_Week"] = df["Date"].dt.dayofweek
@@ -632,7 +632,7 @@ def latest_date_to_past_7_days(objs):
     latest_date = objs["Date"].max()
     latest_date = latest_date
     # latest_date = latest_date["latest_date"]
-    print(latest_date)
+    # print(latest_date)
     d1 = latest_date
     d2 = latest_date - timedelta(1)
     d3 = latest_date - timedelta(2)
@@ -646,6 +646,30 @@ def latest_date_to_past_7_days(objs):
 
     return date_list
 
+def latest_date_to_past_5_days(objs):
+    # latest_date = objs.aggregate(latest_date=Max("Date"))
+    latest_date = objs["Date"].max()
+    latest_date = latest_date
+    # latest_date = latest_date["latest_date"]
+    # print(latest_date)
+    d1 = latest_date
+    d2 = latest_date - timedelta(1)
+    d3 = latest_date - timedelta(2)
+    d4 = latest_date - timedelta(3)
+    d5 = latest_date - timedelta(4)
+    date_list = [d1, d2, d3, d4, d5]
+
+    return date_list
+
+def delete_existing_files(folder_path):
+    if os.path.exists(folder_path):
+        for file in os.listdir(folder_path):
+                file_path = os.path.join(folder_path, file)
+                try:
+                    if os.path.isfile(file_path):
+                            os.unlink(file_path)
+                except Exception as e:
+                    print(f"Error deleting {file_path}: {e}")
 
 def latest_date_to_past_4_days(objs):
     latest_date = objs.aggregate(latest_date=Max("Date"))
@@ -833,7 +857,7 @@ def mark_rows_vectorized(df):
 def process_remove_duplicates(data):
     # data = data.drop(columns=["id"], axis=1)
 
-    print(data.columns[7:])
+    # print(data.columns[7:])
 
     columns_to_convert = data.columns[7:]
     data[columns_to_convert] = data[columns_to_convert].apply(
@@ -1017,12 +1041,13 @@ def get_LTE_download_link(df):
 
     df.insert(2, ("", "Site_ID"), site_id_Column)
 
-    filename = f"{uuid.uuid4()}.csv"
+    filename = f"LTE_KPI_Trend.csv"
 
     # Ensure the media/excels/ directory exists
     excel_directory = os.path.join(settings.MEDIA_ROOT, "csvs")
     os.makedirs(excel_directory, exist_ok=True)
 
+    delete_existing_files(excel_directory)
     # Create the full path for the file
     file_path = os.path.join(excel_directory, filename)
 
@@ -1127,7 +1152,8 @@ def kpi_trend_4g_api(request):
             "MV_DL_User_Throughput_Kbps_CUBH", 
             "Sams_Average_UE_Distance_KM",
             "MV_VoLTE_Packet_Loss_UL_CBBH", 
-            "MV_VoLTE_Packet_Loss_DL_CBBH"
+            "MV_VoLTE_Packet_Loss_DL_CBBH",
+            "UL_RSSI_CDBH"
         FROM public."RCA_TOOL_daily_4g_kpi"
         WHERE "Date" BETWEEN '{from_required_date}' AND '{to_required_date}';
     """
@@ -1136,7 +1162,7 @@ def kpi_trend_4g_api(request):
     print("start app:- ", datetime.now())
     objs = get_data_from_table(query)
     print("end app:- ", datetime.now())
-    print(objs)
+    # print(objs)
 
     # objs.drop(columns=["id"], inplace=True)
 
@@ -1151,10 +1177,10 @@ def kpi_trend_4g_api(request):
     annual_weeks = objs[["Week", "year"]].drop_duplicates()
     week_numbers = annual_weeks["Week"].tolist()
 
-    print(week_numbers)
+    # print(week_numbers)
 
-    date_list = latest_date_to_past_7_days(objs)
-    print(date_list)
+    date_list = latest_date_to_past_5_days(objs)
+    # print(date_list)
 
     filtered_obj = objs[objs["Date"].isin(date_list)]
 
@@ -1202,6 +1228,7 @@ def kpi_trend_4g_api(request):
         "MV_Packet_Loss_DL",
         "MV_Packet_Loss_UL",
         "MV_CSFB_Redirection_Success_Rate",
+        "UL_RSSI_CDBH"
     ]
 
     current_dates = current_df["Date"].unique()
@@ -1226,7 +1253,7 @@ def kpi_trend_4g_api(request):
     week1_data = objs[objs["Week"] == week_numbers[-2]]
     week2_data = objs[objs["Week"] == week_numbers[-3]]
 
-    print("Week-1 data:- ", week1_data)
+    # print("Week-1 data:- ", week1_data)
     week1_data = get_last_five_days_of_week(week1_data)
     week2_data = get_last_five_days_of_week(week2_data)
 
@@ -1353,7 +1380,6 @@ def kpi_trend_4g_api(request):
     """
     download_df = result_df.copy()
     download_link = get_LTE_download_link(download_df)
-
     print(download_link)
 
     result_df.columns = [
@@ -1383,8 +1409,8 @@ def kpi_trend_4g_api(request):
     # paginator = CustomPagination()
     # paginated_result = paginator.paginate_queryset(result_df.to_dict('records'), request)
 
-    json_data = result_df.to_json(orient="records")
-    new_json = json.loads(json_data)
+    # json_data = result_df.to_json(orient="records")
+    # new_json = json.loads(json_data)
 
     return Response(
         {
@@ -1395,7 +1421,7 @@ def kpi_trend_4g_api(request):
             "message": "successfully submitted.....",
             "Download_Link": download_link,
             "dates": date_format,
-            "data": new_json,
+            # "data": new_json,
         }
     )
 
