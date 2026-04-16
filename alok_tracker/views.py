@@ -6722,6 +6722,8 @@ def ftr_table_circlewise(request):
             'soft_at_rejection_counter',
             'physical_at_status',
             'physical_at_rejection_counter',
+            'scft_at_status',                 
+            'scft_at_rejection_counter'
         )
 
         df = pd.DataFrame(qs)
@@ -6767,20 +6769,29 @@ def ftr_table_circlewise(request):
             'physical_at_status',
             'physical_at_rejection_counter'
         )
+        scft_table = build_circlewise_ftr(
+            df,
+            'scft_at_status',
+            'scft_at_rejection_counter'
+        )
         
         print(soft_table)
         
         print(phy_table)
+        print(scft_table,"--------------")
         
         soft_table = soft_table.reset_index()
         soft_table = soft_table.rename(columns={"circle": "Circle"})
         phy_table = phy_table.reset_index()
         phy_table = phy_table.rename(columns={"circle": "Circle"})
+        scft_table = scft_table.reset_index()
+        scft_table = scft_table.rename(columns={"circle": "Circle"})
 
         return Response(
             {
                 "soft_at": soft_table.to_dict(orient="records"),
                 "physical_at": phy_table.to_dict(orient="records"),
+                "scft_at": scft_table.to_dict(orient="records"),
                 "months": list(soft_table.columns)
             },
             status=200

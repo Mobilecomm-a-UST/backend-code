@@ -1144,6 +1144,7 @@ def soft_at_checkpoint(request):
                               arcname = os.path.relpath(file_path, base_media_url)
                               zipf.write(file_path, arcname)
 
+            zip_filename = f"soft_at_checkpoint_Ericsson/CHECKLIST_OUTPUT_{timestamp}.zip"
             download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
             print(f"Output file created: {output_path}")
             print(f"Zip file created: {zip_filename}")
