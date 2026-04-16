@@ -1630,7 +1630,6 @@ def add_model(request):
         "added_models": added,
         "already_exists": already_exists
     })
- z
 
 @api_view(["GET"])
 def get_model(request):

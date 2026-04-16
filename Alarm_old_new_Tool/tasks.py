@@ -16,6 +16,10 @@ def send_email_for_Alarm(df_combined_dict, output_path):
     df_combined[["Matched_old", "Matched_new"]] = df_combined["Matched_Cells"].apply(
         lambda x: pd.Series(extract_matched_cells(x))
     )
+
+    for i in ['Site ID_old','Cells_old']:
+        if i not in df_combined.columns:
+            df_combined[i] = ""
  
     circle_to_emails = {
         "KK": [
@@ -180,9 +184,7 @@ def send_email_for_Alarm(df_combined_dict, output_path):
         html += "</tbody></table>"
         return html
     valid_remarks = ["old/new locked", "old/new unlocked"]
-    table_df = df_combined[
-        df_combined["Remark"].isin(valid_remarks)
-    ][["Circle", "Site ID_old", "Cells_old", "Site ID_new", "Cells_new", "Remark"]].copy()
+    table_df = df_combined[df_combined["Remark"].isin(valid_remarks)][["Circle", "Site ID_old", "Cells_old", "Site ID_new", "Cells_new", "Remark"]].copy()
  
     # table_df.to_excel("debug_table_df.xlsx", index=False)
    
@@ -329,6 +331,10 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
     df_combined[["Matched_old", "Matched_new"]] = df_combined["Matched_Cells"].apply(
         lambda x: pd.Series(extract_matched_cells(x))
     )
+
+    for i in ['Site ID_old','Cells_old']:
+        if i not in df_combined.columns:
+            df_combined[i] = ""
  
     circle_to_emails = {
         "KK": [
