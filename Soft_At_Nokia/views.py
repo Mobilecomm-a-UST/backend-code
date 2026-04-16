@@ -2135,16 +2135,24 @@ def upload_checklist_xml_files_5G(request):
     # Save Excel report
     report_folder = os.path.join(settings.MEDIA_ROOT, "reports")
     os.makedirs(report_folder, exist_ok=True)
-
-    filepath = os.path.join(report_folder, "5G-AT_Checklist.xlsx")
-
-    with pd.ExcelWriter(filepath, engine="xlsxwriter") as writer:
+ 
+    file_name = "5G-AT_Checklist.xlsx"
+    file_path = os.path.join(report_folder, file_name)
+ 
+ 
+    file_url = request.build_absolute_uri(
+        os.path.join(settings.MEDIA_URL, "reports", file_name).replace('\\', '/')
+    )
+ 
+    # Write Excel
+    with pd.ExcelWriter(file_path, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name="Comparison")
         format_excel_sheet(writer, "Comparison", df)
-
+ 
     return Response({
         "status": True,
         "message": "XML parsed successfully",
         "rows_generated": len(df),
-        "file_path": filepath
+        "file_path": file_url
     })
+ 

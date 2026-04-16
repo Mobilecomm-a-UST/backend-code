@@ -1493,9 +1493,12 @@ def extract_data_from_log(request):
                         arcname = os.path.relpath(file_path, base_media_url)
                         zipf.write(file_path, arcname)
         
+        zip_filename = f"soft_at_status/4g_OUTPUT_{timestamp}.zip"
         download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
+        print("=========",MEDIA_ROOT,zip_filename)
         print(f"Output file created: {output_path}")
         print(f"Zip file created: {zip_filename}")
+        
         ###########################################################################################################################
         return Response(
             {
