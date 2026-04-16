@@ -922,27 +922,30 @@ def mobinet_data_fetch_from_file(request):
             ))
         ]
 
-        board_list = [
-            "DPLX-1",
-            "SFP_R",
-            "MN1",
-            "FTLF1436W5BTD-SJ",
-            "MRSB-OC",
-            "RTXM228-702",
-            "DuraRET2-AirT20",
-            "SPP10ELRIDFRSEC",
-            "RTXM228-702-C30",
-            "FTLX1370W4BTL-SM",
-            "RTXM191-404",
-            "COMMRET2S",
-            "RTXL185-210",
-            "MTRS-1E21-01",
-            "SFP24-IS3LC-IAA",
-            "LX1801INA-CER",
-            "LTF1303-BH+",
-            "ECU-005L",
-            "ACCURET1"
-        ]
+        # board_list = [
+        #     "DPLX-1",
+        #     "SFP_R",
+        #     "MN1",
+        #     "FTLF1436W5BTD-SJ",
+        #     "MRSB-OC",
+        #     "RTXM228-702",
+        #     "DuraRET2-AirT20",
+        #     "SPP10ELRIDFRSEC",
+        #     "RTXM228-702-C30",
+        #     "FTLX1370W4BTL-SM",
+        #     "RTXM191-404",
+        #     "COMMRET2S",
+        #     "RTXL185-210",
+        #     "MTRS-1E21-01",
+        #     "SFP24-IS3LC-IAA",
+        #     "LX1801INA-CER",
+        #     "LTF1303-BH+",
+        #     "ECU-005L",
+        #     "ACCURET1"
+        # ]
+
+        board_list= list(AddModel.objects.values_list("model_name", flat=True)
+    )
 
         filtered_mobinet = filtered_mobinet[
             ~filtered_mobinet["Board Model"].astype(str).str.strip().isin(board_list)

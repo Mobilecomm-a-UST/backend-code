@@ -117,6 +117,8 @@ INSTALLED_APPS = [
     "nt_site_tracker",
     "upgrade_tracker",
     "Noika_Slicing",
+    "noika2G_tool",
+    "payload_traffic_tool",
 ]
 
 MIDDLEWARE = [
