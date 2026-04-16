@@ -16,6 +16,10 @@ def send_email_for_Alarm(df_combined_dict, output_path):
     df_combined[["Matched_old", "Matched_new"]] = df_combined["Matched_Cells"].apply(
         lambda x: pd.Series(extract_matched_cells(x))
     )
+
+    for i in ['Site ID_old','Cells_old']:
+        if i not in df_combined.columns:
+            df_combined[i] = ""
  
     circle_to_emails = {
         "KK": [
@@ -46,7 +50,7 @@ def send_email_for_Alarm(df_combined_dict, output_path):
     cc_mails = [
         'Mohit.Batra@ust.com',
         'Deepak.KumarYadav@ust.com','Amit.rai@ust.com','Lalit.Namdev2@ust.com','Shashank.Rai@ust.com',
-        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com',"Vishal.Yadav@ust.com",'Praveen.lakra@ust.com',
+        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com','Praveen.lakra@ust.com',
         'Chirag.bohra@ust.com','Gulafsha.Bano@ust.com','Priyanshi.sharma@ust.com','Deepu.Sharma@ust.com'
     ]
  
@@ -329,6 +333,10 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
     df_combined[["Matched_old", "Matched_new"]] = df_combined["Matched_Cells"].apply(
         lambda x: pd.Series(extract_matched_cells(x))
     )
+
+    for i in ['Site ID_old','Cells_old']:
+        if i not in df_combined.columns:
+            df_combined[i] = ""
  
     circle_to_emails = {
         "KK": [
