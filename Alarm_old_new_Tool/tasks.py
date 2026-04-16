@@ -50,7 +50,7 @@ def send_email_for_Alarm(df_combined_dict, output_path):
     cc_mails = [
         'Mohit.Batra@ust.com',
         'Deepak.KumarYadav@ust.com','Amit.rai@ust.com','Lalit.Namdev2@ust.com','Shashank.Rai@ust.com',
-        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com',"Vishal.Yadav@ust.com",'Praveen.lakra@ust.com',
+        'Krishna.KantVerma@ust.com','Saurabh.Rathore@ust.com','Praveen.lakra@ust.com',
         'Chirag.bohra@ust.com','Gulafsha.Bano@ust.com','Priyanshi.sharma@ust.com','Deepu.Sharma@ust.com'
     ]
  
