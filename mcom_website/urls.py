@@ -98,7 +98,9 @@ urlpatterns = [
     path('mw_app/',include("Micro_wave_Tool.urls")),
     path("nt_tracker/", include("nt_site_tracker.urls")),
     path("upgrade_tracker/", include("upgrade_tracker.urls")),
-    path('nokia/',include("Noika_Slicing.urls"))
+    path('nokia/',include("Noika_Slicing.urls")),
+    path("noika2G/",include("noika2G_tool.urls")),
+    path("payload_traffic/",include("payload_traffic_tool.urls")),
 
 ]
 
