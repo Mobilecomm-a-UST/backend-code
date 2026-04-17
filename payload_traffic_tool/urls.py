@@ -9,6 +9,7 @@ urlpatterns = [
     path('get_history/',get_history),
 
     path('4g_delete/',delete_data_4g),
-    path('5g_delete/',delete_data_4g)
+    path('5g_delete/',delete_data_5g),
+    path('delete_history/',delete_history)
  
 ]

@@ -89,7 +89,8 @@ def excel_formate(file_path):
 
 @api_view(['POST'])
 def nokia_2g(request):
-    ref_file = request.FILES.get("ref_file")
+    circle = request.data.get("circle")
+    ref_file = request.FILES.get("file")
     if not ref_file:
         return Response({"status": False, "message": "ref_file not uploaded"}, status=400)
     
@@ -244,27 +245,130 @@ def nokia_2g(request):
     ),axis=1   
     )
     
-    # ref_sctp_df2=pd.read_excel(ref_file, sheet_name="STCP TRX 2")
-    # ref_sctp_df2.columns = ref_sctp_df2.columns.str.strip()
-    # ref_sctp_df2["Command"] = ref_sctp_df2.apply(
-    #     lambda row: (
-    #         f"ZOYS:{row['SCTP user']}:{row['SCTP association name']}:ACT;"
-    #     ),
-    #     axis=1
-    # )
+    ref_sctp_df2=pd.read_excel(ref_file, sheet_name="STCP TRX 2")
+    ref_sctp_df2.columns = ref_sctp_df2.columns.str.strip()
+    ref_sctp_df2["Command"] = ref_sctp_df2.apply(
+        lambda row: (
+            f"ZOYS:{row['SCTP user']}:{row['SCTP association name']}:ACT;"
+        ),
+        axis=1
+    )
     
 
-    # trx_df2=pd.read_excel(ref_file,sheet_name="TRX")
-    # trx_df2.columns = trx_df2.columns.str.strip()
-    # trx_df2["Command"] = trx_df2.apply(
-    # lambda row: (
-    #     f"ZERS:BTS={row['BTS_ID']},TRX={row['TRX_ID']}:U;\n"
-    #     f"ZEQS:BTS={row['BTS_ID']}:U;"
+    trx_df2=pd.read_excel(ref_file,sheet_name="TRX")
+    trx_df2.columns = trx_df2.columns.str.strip()
+    trx_df2["Command"] = trx_df2.apply(
+    lambda row: (
+        f"ZERS:BTS={row['BTS_ID']},TRX={row['TRX_ID']}:U;\n"
+        f"ZEQS:BTS={row['BTS_ID']}:U;"
 
-    # ),
-    # axis=1
-    # )
+    ),
+    axis=1
+    )
 
+    dmal_df = bts_df.copy()
+    dmal_df["Command"] = dmal_df.apply(
+        lambda row: "\n".join([
+            f"ZEQA:BTS={row['BTS_ID']}:OPE=A,DMAL=41&42&43,DUMAL=100;",
+            f"ZEQM:BTS={row['BTS_ID']}:::::DMOD=1;",
+            f"ZEQM:BTS={row['BTS_ID']}:::::DMOD=2;",
+            f"ZEQE:BTS={row['BTS_ID']}:HOP=RF;"
+        ]),
+        axis=1
+    ) 
+
+
+    trx_modification_df=pd.read_excel(ref_file,sheet_name="TRX")
+    trx_modification_df.columns=trx_modification_df.columns.str.strip()
+    trx_modification_df["DFCA"] = trx_modification_df["CH_0"].apply(
+        lambda x: "Y" if x == "TCHD" else "N"
+    )
+
+    trx_modification_df["Command"] =trx_modification_df.apply(
+    lambda row: (
+           f"ZERM:BTS={row['BTS_ID']},TRX={row['TRX_ID']}:DFCA={row['DFCA']};"
+    ),
+    axis=1
+)
+    
+    dfca_df=bts_df.copy()
+    dfca_df["Command"] = dfca_df.apply(
+    lambda row: "\n".join([
+        f"ZEUB:BTS={row['BTS_ID']}:UURH=2,UURF=2,UDRH=2,UDRF=2,LURH=3,LURF=3,LDRH=3,LDRF=3;",
+        f"ZEHB:BTS={row['BTS_ID']}:IHRF=2,IHRH=4,QDRH=5,QURH=4,QDRF=5,QURF=4;",
+        f"ZEQF:BTS={row['BTS_ID']}:DRM=1,MADR=12,MIDR=7;",
+        f"ZEQH:BTS={row['BTS_ID']}:MQL=100,MPU=Y,QPC=1,QPH=2,QPN=10;",
+        f"ZEQM:SEG={row['BTS_ID']}:BMA=2;",
+        f"ZEQM:BTS={row['BTS_ID']}:::::FAHT=14,FHR=5,FHT=0,FHH=6;",
+        f"ZEQM:BTS={row['BTS_ID']}:FRL=99,FRU=100;",
+        f"ZEHA:SEG={row['BTS_ID']}:QDW=2,QUW=2,LDW=2,LUW=2;",
+        f"ZEHG:SEG={row['BTS_ID']}:MIH=3;",
+        f"ZEHQ:SEG={row['BTS_ID']}:QDN=4,QDP=3,QDR=5,QUN=6,QUP=4,QUR=4;",
+        f"ZEHS:SEG={row['BTS_ID']}:LDR=-110,LUR=-110;",
+        f"ZEUG:SEG={row['BTS_ID']}:INT=1,RED=4;",
+        f"ZEUQ:SEG={row['BTS_ID']}:LDN=1,LDP=1,LDR=3,LUN=1,LUP=1,LUR=4,UDN=1,UDP=1,UDR=2,UUN=1,UUP=1,UUR=2;",
+        f"ZEUS:SEG={row['BTS_ID']}:LDR=-90,LUR=-95,UDR=-80,UUR=-47;"
+    ]),
+    axis=1
+)  
+      
+    gpl_df = bts_df.copy()
+
+    gpl_df["Command"] = gpl_df.apply(
+        lambda row: "\n".join([
+            f"ZEQF:SEG={row['BTS_ID']}:BAR=N,EC=N,RE=Y,DR=Y,MIDR=2,MADR=9,PLMN=0&&7,FRLTE=1;",
+            f"ZEQV:BTS={row['BTS_ID']}:ALA=Y,MCA=9,MCU=9,MBG=6,MBP=6,DLPC=Y,CS34=Y;",
+            f"ZEQM:SEG={row['BTS_ID']}:::::::::GPRIO=1,WPRIO=2,TIMEH=0;",
+            f"ZEQY:SEG={row['BTS_ID']}:URIS=10,AURIS=10,AHURIS=10,ARLT=36,AHRLT=36;",
+            f"ZEHG:SEG={row['BTS_ID']}:ESD=N,EFA=Y,EFP=Y,EFH=Y,EUM=Y,EMS=Y,HPU=6;",
+            f"ZEUG:SEG={row['BTS_ID']}:TPR=2,ALIM=6,PENA=Y;",
+            f"ZEQV:SEG={row['BTS_ID']}::::DENA=Y;",
+            f"ZEQM:BTS={row['BTS_ID']}:ISIC=0,FRL=99,FRU=100,AFRL=99,AFRU=100,BMA=2,DTX=1,RDIV=Y,STIRC=Y;",
+            f"ZEQM:SEG={row['BTS_ID']}:ESI=Y,RXLT=-102,RET=1,TRP=1,DMAX=63,PMAX2=30,FRL=99,FRU=100,AFRL=99,AFRU=100,SLO=32;",
+            f"ZEQJ:SEG={row['BTS_ID']}:PER=1.5,AG=2,MFR=4;",
+            f"ZEHB:BTS={row['BTS_ID']}:IHRF=2,IHRH=7;",
+            f"ZEHN:SEG={row['BTS_ID']}:QSRC=7;",
+            f"ZEQG:SEG={row['BTS_ID']}:RLT=32;",
+            f"ZEQV:SEG={row['BTS_ID']}:GENA=Y;",
+            f"ZEQV:BTS={row['BTS_ID']}:EGENA=Y;",
+            f"ZEQE:BTS={row['BTS_ID']}:HOP=N,AHOP=Y;",
+            f"ZEUM:BTS={row['BTS_ID']}:PCPOW=2,PCWS=4;",
+            f"ZEQM:BTS={row['BTS_ID']}::::QSRI=7,QSRP=7,FDD=N,FDM=-14;",
+            f"ZEHY:SEG={row['BTS_ID']}:EFHO=DIS;",
+            f"ZEQV:SEG={row['BTS_ID']}:::::QPEU=7;",
+            f"ZEQV:BTS={row['BTS_ID']}:CMAX=100;"
+        ]),
+        axis=1
+    )
+    
+    gpl_df2 = bts_df.copy()
+
+    gpl_df2["Command"] = gpl_df2.apply(
+        lambda row: "\n".join([
+            f"ZEQF:SEG={row['BTS_ID']}:BAR=N,EC=N,RE=Y,DR=Y,MIDR=2,MADR=9,PLMN=0&&7,FRLTE=1;",
+            f"ZEQV:BTS={row['BTS_ID']}:ALA=Y,MCA=9,MCU=9,MBG=6,MBP=6,DLPC=Y,CS34=Y;",
+            f"ZEQM:SEG={row['BTS_ID']}:::::::::GPRIO=1,WPRIO=2,TIMEH=0;",
+            f"ZEQY:SEG={row['BTS_ID']}:URIS=10,AURIS=10,AHURIS=10,ARLT=36;",
+            f"ZEHG:SEG={row['BTS_ID']}:ESD=N,EFA=Y,EFP=Y,EFH=Y,EUM=Y,EMS=Y,HPU=6;",
+            f"ZEUG:SEG={row['BTS_ID']}:TPR=2,ALIM=6,PENA=Y;",
+            f"ZEQV:SEG={row['BTS_ID']}::::DENA=Y;",
+            f"ZEQM:BTS={row['BTS_ID']}:ISIC=0,FRL=99,FRU=100,AFRL=99,AFRU=100,BMA=2,DTX=1,RDIV=Y,STIRC=Y;",
+            f"ZEQM:SEG={row['BTS_ID']}:ESI=Y,RXLT=-102,RET=1,TRP=1,DMAX=63,PMAX2=30,FRL=99,FRU=100,AFRL=99,AFRU=100,SLO=32;",
+            f"ZEQJ:SEG={row['BTS_ID']}:PER=1.5,AG=2,MFR=4;",
+            f"ZEHB:BTS={row['BTS_ID']}:IHRF=2,IHRH=7;",
+            f"ZEHN:SEG={row['BTS_ID']}:QSRC=7;",
+            f"ZEQG:SEG={row['BTS_ID']}:RLT=32;",
+            f"ZEQV:SEG={row['BTS_ID']}:GENA=Y;",
+            f"ZEQV:BTS={row['BTS_ID']}:EGENA=Y;",
+            f"ZEQE:BTS={row['BTS_ID']}:HOP=N,AHOP=Y;",
+            f"ZEUM:BTS={row['BTS_ID']}:PCPOW=2,PCWS=4;",
+            f"ZEQM:BTS={row['BTS_ID']}::::QSRI=7,QSRP=7,FDD=N,FDM=-14;",
+            f"ZEHY:SEG={row['BTS_ID']}:EFHO=DIS;",
+            f"ZEQV:SEG={row['BTS_ID']}:::::QPEU=7;",
+            f"ZEQV:BTS={row['BTS_ID']}:CMAX=100;"
+        ]),
+        axis=1
+    )
 
     
     all_commands = []
@@ -275,13 +379,18 @@ def nokia_2g(request):
     all_commands += [("TRX", cmd) for cmd in trx_df["Command"].dropna()]
     all_commands += [("LBS Data", cmd) for cmd in lbs_df["Command"].dropna()]
     all_commands += [("ADCE", cmd) for cmd in adce_df["Command"].dropna()]
-    # all_commands += [("STCP TRX 2", cmd) for cmd in ref_sctp_df2["Command"].dropna()]
-    # all_commands += [("TRX", cmd) for cmd in trx_df2["Command"].dropna()]
+    all_commands += [("DMAL DUMAL ATTACH", cmd) for cmd in dmal_df["Command"].dropna()]
+    all_commands += [("TRX MODIFICATION", cmd) for cmd in trx_modification_df["Command"].dropna()]
+    all_commands +=[("DFCA Implementation on BCF BTS", cmd) for cmd in dfca_df["Command"].dropna()]
+    all_commands +=[("GPL", cmd) for cmd in gpl_df["Command"].dropna()]
+    all_commands +=[("BSC174BHU GPL", cmd) for cmd in gpl_df2["Command"].dropna()]
+    all_commands += [("STCP TRX 2", cmd) for cmd in ref_sctp_df2["Command"].dropna()]
+    all_commands += [("TRX", cmd) for cmd in trx_df2["Command"].dropna()]
     final_df = pd.DataFrame(all_commands, columns=["Sheet Name","Command"])
     final_df["Command"] = final_df["Command"].str.replace(r"=(nan|None)\b", "=", regex=True)
     
 
-    file_name = "2G_Script.xlsx"
+    file_name = f"2G_Script_{circle}.xlsx"
     final_output_path = os.path.join(output_path, file_name)
 
     with pd.ExcelWriter(final_output_path, engine='openpyxl') as writer:

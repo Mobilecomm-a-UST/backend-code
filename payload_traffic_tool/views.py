@@ -7,16 +7,13 @@ from .models import *
 from .calculation import calculate_traffic
 import os 
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
+from .models import PayloadTraffic4G, UploadHistory,PayloadTraffic5G
 
 main_folder=os.path.join(MEDIA_ROOT, "Payload_traffic")
 output_path = os.path.join(main_folder, "Traffic_querry_output")
 os.makedirs(output_path, exist_ok=True)
 
-#--4G Payload-----------
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-import pandas as pd
-from .models import PayloadTraffic4G, UploadHistory
+
 
 
 @api_view(['POST'])
@@ -97,14 +94,13 @@ def upload_4g_payload(request):
 
 
     existing_records = PayloadTraffic4G.objects.filter(
-        traffic_date__in=[obj.traffic_date for obj in data_to_save]
-    )
+    site_id__in=[obj.site_id for obj in data_to_save]
+)
 
     existing_map = {
         (obj.site_id, obj.traffic_date, obj.short_name): obj
         for obj in existing_records
     }
-
 
     to_create = []
     to_update = []
@@ -150,11 +146,6 @@ def upload_4g_payload(request):
         "total_processed": len(data_to_save)
     })
 
-#--5G Payload-----------
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-import pandas as pd
-from .models import PayloadTraffic4G, UploadHistory
 
 
 @api_view(['POST'])
@@ -236,7 +227,7 @@ def upload_5g_payload(request):
 
    
     existing_records = PayloadTraffic5G.objects.filter(
-        traffic_date__in=[obj.traffic_date for obj in data_to_save]
+    site_id__in=[obj.site_id for obj in data_to_save]
     )
 
     existing_map = {
@@ -259,13 +250,13 @@ def upload_5g_payload(request):
 
 
     if to_create:
-        PayloadTraffic4G.objects.bulk_create(
+        PayloadTraffic5G.objects.bulk_create(
             to_create,
             batch_size=10000
         )
 
     if to_update:
-        PayloadTraffic4G.objects.bulk_update(
+        PayloadTraffic5G.objects.bulk_update(
             to_update,
             ['traffic_value'],
             batch_size=10000
@@ -344,6 +335,8 @@ def delete_data_4g(request):
         "message": f"All 4G data deleted successfully ({deleted_count} records)"
     })
 
+
+
 @api_view(['POST'])
 def delete_data_5g(request):
     deleted_count, _ = PayloadTraffic5G.objects.all().delete()
@@ -352,3 +345,12 @@ def delete_data_5g(request):
         "status": True,
         "message": f"All 5G data deleted successfully ({deleted_count} records)"
     })  
+
+@api_view(['POST'])
+def delete_history(request):
+    deleted_count, _ = UploadHistory.objects.all().delete()
+
+    return Response({
+        "status": True,
+        "message": f"All History deleted successfully ({deleted_count} records)"
+    })
