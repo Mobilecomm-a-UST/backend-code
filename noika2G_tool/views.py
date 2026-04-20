@@ -1,17 +1,16 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
-from pathlib import Path
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 import os
 import pandas as pd
-
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 
 base_media_url = os.path.join(MEDIA_ROOT, "Nokia2G_Script")
 output_path = os.path.join(base_media_url, "Output")
 os.makedirs(output_path, exist_ok=True)
+
 
 
 def excel_formate(file_path):
@@ -95,7 +94,7 @@ def nokia_2g(request):
         return Response({"status": False, "message": "ref_file not uploaded"}, status=400)
     
     # work for STCP TRX 2 for two command-------
-    ref_sctp_df=pd.read_excel(ref_file, sheet_name="STCP TRX 2")
+    ref_sctp_df=pd.read_excel(ref_file, sheet_name="SCTP")
     ref_sctp_df.columns = ref_sctp_df.columns.str.strip()
 
 
@@ -113,11 +112,11 @@ def nokia_2g(request):
         axis=1
     )
 
-    #work for LAPD------------------
-    lapd_df=pd.read_excel(ref_file,sheet_name="LAPD")
+    #work for LAPD------------------  ZDWP:OM152:BCXU,2:0,62:BCF152OMU;
+    lapd_df=ref_sctp_df.copy()
     lapd_df["Command"]=lapd_df.apply(
         lambda raw :(
-            f"ZDWP:{raw['LAPD_ID']}:{raw['unit']},{raw['index(BCSU)']}:0,{raw['SCTP parameter set']}:{raw['SCTP association name']}"
+            f"ZDWP:OM{raw['BCF_ID']}:{raw['unit']},{raw['index(BCSU)']}:0,{raw['SCTP parameter set']}:{raw['SCTP association name']}"
         ),axis=1
     )
 
@@ -143,7 +142,7 @@ def nokia_2g(request):
 
         f"ZEFM:{row['BCF_ID']}::BU1={row['BU1']},BU2={row['BU2']};\n"
 
-        f"ZEFM:{row['BCF_ID']}:CS={row['CS']};\n"
+        # f"ZEFM:{row['BCF_ID']}:CS={row['CS']};\n"
 
         f"ZEEI:BCF={row['BCF_ID']}:;"
 
@@ -151,7 +150,7 @@ def nokia_2g(request):
     )
    
     # work for BTS for command-------
-    bts_df=pd.read_excel(ref_file,sheet_name="BTS")
+    bts_df=pd.read_excel(ref_file,sheet_name="MASTER BTS")
     bts_df.columns = bts_df.columns.str.strip()
     bts_df["Command"] = bts_df.apply(
     lambda row: "\n".join([
@@ -199,7 +198,7 @@ def nokia_2g(request):
 )
    
     
-    trx_df=pd.read_excel(ref_file,sheet_name="TRX")
+    trx_df=pd.read_excel(ref_file,sheet_name="MASTER TRX")
     trx_df.columns = trx_df.columns.str.strip()
     trx_df["Command"] = trx_df.apply(
     lambda row: (
@@ -232,7 +231,7 @@ def nokia_2g(request):
     axis=1
     )
 
-    adce_df=pd.read_excel(ref_file,sheet_name="ADCE")
+    adce_df=pd.read_excel(ref_file,sheet_name="ADCE CREATION")
     adce_df.columns = adce_df.columns.str.strip()
     adce_df["Command"]=adce_df.apply(
     lambda row:(
@@ -245,7 +244,19 @@ def nokia_2g(request):
     ),axis=1   
     )
     
-    ref_sctp_df2=pd.read_excel(ref_file, sheet_name="STCP TRX 2")
+
+    adjl_df=pd.read_excel(ref_file,sheet_name="ADJL")
+    adjl_df.columns = adjl_df.columns.str.strip()
+    adjl_df["Command"]=adjl_df.apply(
+      lambda row: (
+        f"ZEAN:SEG={row['SEG ID']}::"
+        f"MCC=405,MNC=53,TAC={row['TAC']}:"
+        f"FREQ=1501,LTECP=7,LTERXM=-124,LTERLT=0,LTERUT=10;"
+    ),
+    axis=1
+)
+
+    ref_sctp_df2=pd.read_excel(ref_file, sheet_name="SCTP")
     ref_sctp_df2.columns = ref_sctp_df2.columns.str.strip()
     ref_sctp_df2["Command"] = ref_sctp_df2.apply(
         lambda row: (
@@ -255,7 +266,7 @@ def nokia_2g(request):
     )
     
 
-    trx_df2=pd.read_excel(ref_file,sheet_name="TRX")
+    trx_df2=pd.read_excel(ref_file,sheet_name="MASTER TRX")
     trx_df2.columns = trx_df2.columns.str.strip()
     trx_df2["Command"] = trx_df2.apply(
     lambda row: (
@@ -278,7 +289,7 @@ def nokia_2g(request):
     ) 
 
 
-    trx_modification_df=pd.read_excel(ref_file,sheet_name="TRX")
+    trx_modification_df=pd.read_excel(ref_file,sheet_name="MASTER TRX")
     trx_modification_df.columns=trx_modification_df.columns.str.strip()
     trx_modification_df["DFCA"] = trx_modification_df["CH_0"].apply(
         lambda x: "Y" if x == "TCHD" else "N"
@@ -341,51 +352,52 @@ def nokia_2g(request):
         axis=1
     )
     
-    gpl_df2 = bts_df.copy()
+    # gpl_df2 = bts_df.copy()
 
-    gpl_df2["Command"] = gpl_df2.apply(
-        lambda row: "\n".join([
-            f"ZEQF:SEG={row['BTS_ID']}:BAR=N,EC=N,RE=Y,DR=Y,MIDR=2,MADR=9,PLMN=0&&7,FRLTE=1;",
-            f"ZEQV:BTS={row['BTS_ID']}:ALA=Y,MCA=9,MCU=9,MBG=6,MBP=6,DLPC=Y,CS34=Y;",
-            f"ZEQM:SEG={row['BTS_ID']}:::::::::GPRIO=1,WPRIO=2,TIMEH=0;",
-            f"ZEQY:SEG={row['BTS_ID']}:URIS=10,AURIS=10,AHURIS=10,ARLT=36;",
-            f"ZEHG:SEG={row['BTS_ID']}:ESD=N,EFA=Y,EFP=Y,EFH=Y,EUM=Y,EMS=Y,HPU=6;",
-            f"ZEUG:SEG={row['BTS_ID']}:TPR=2,ALIM=6,PENA=Y;",
-            f"ZEQV:SEG={row['BTS_ID']}::::DENA=Y;",
-            f"ZEQM:BTS={row['BTS_ID']}:ISIC=0,FRL=99,FRU=100,AFRL=99,AFRU=100,BMA=2,DTX=1,RDIV=Y,STIRC=Y;",
-            f"ZEQM:SEG={row['BTS_ID']}:ESI=Y,RXLT=-102,RET=1,TRP=1,DMAX=63,PMAX2=30,FRL=99,FRU=100,AFRL=99,AFRU=100,SLO=32;",
-            f"ZEQJ:SEG={row['BTS_ID']}:PER=1.5,AG=2,MFR=4;",
-            f"ZEHB:BTS={row['BTS_ID']}:IHRF=2,IHRH=7;",
-            f"ZEHN:SEG={row['BTS_ID']}:QSRC=7;",
-            f"ZEQG:SEG={row['BTS_ID']}:RLT=32;",
-            f"ZEQV:SEG={row['BTS_ID']}:GENA=Y;",
-            f"ZEQV:BTS={row['BTS_ID']}:EGENA=Y;",
-            f"ZEQE:BTS={row['BTS_ID']}:HOP=N,AHOP=Y;",
-            f"ZEUM:BTS={row['BTS_ID']}:PCPOW=2,PCWS=4;",
-            f"ZEQM:BTS={row['BTS_ID']}::::QSRI=7,QSRP=7,FDD=N,FDM=-14;",
-            f"ZEHY:SEG={row['BTS_ID']}:EFHO=DIS;",
-            f"ZEQV:SEG={row['BTS_ID']}:::::QPEU=7;",
-            f"ZEQV:BTS={row['BTS_ID']}:CMAX=100;"
-        ]),
-        axis=1
-    )
+    # gpl_df2["Command"] = gpl_df2.apply(
+    #     lambda row: "\n".join([
+    #         f"ZEQF:SEG={row['BTS_ID']}:BAR=N,EC=N,RE=Y,DR=Y,MIDR=2,MADR=9,PLMN=0&&7,FRLTE=1;",
+    #         f"ZEQV:BTS={row['BTS_ID']}:ALA=Y,MCA=9,MCU=9,MBG=6,MBP=6,DLPC=Y,CS34=Y;",
+    #         f"ZEQM:SEG={row['BTS_ID']}:::::::::GPRIO=1,WPRIO=2,TIMEH=0;",
+    #         f"ZEQY:SEG={row['BTS_ID']}:URIS=10,AURIS=10,AHURIS=10,ARLT=36;",
+    #         f"ZEHG:SEG={row['BTS_ID']}:ESD=N,EFA=Y,EFP=Y,EFH=Y,EUM=Y,EMS=Y,HPU=6;",
+    #         f"ZEUG:SEG={row['BTS_ID']}:TPR=2,ALIM=6,PENA=Y;",
+    #         f"ZEQV:SEG={row['BTS_ID']}::::DENA=Y;",
+    #         f"ZEQM:BTS={row['BTS_ID']}:ISIC=0,FRL=99,FRU=100,AFRL=99,AFRU=100,BMA=2,DTX=1,RDIV=Y,STIRC=Y;",
+    #         f"ZEQM:SEG={row['BTS_ID']}:ESI=Y,RXLT=-102,RET=1,TRP=1,DMAX=63,PMAX2=30,FRL=99,FRU=100,AFRL=99,AFRU=100,SLO=32;",
+    #         f"ZEQJ:SEG={row['BTS_ID']}:PER=1.5,AG=2,MFR=4;",
+    #         f"ZEHB:BTS={row['BTS_ID']}:IHRF=2,IHRH=7;",
+    #         f"ZEHN:SEG={row['BTS_ID']}:QSRC=7;",
+    #         f"ZEQG:SEG={row['BTS_ID']}:RLT=32;",
+    #         f"ZEQV:SEG={row['BTS_ID']}:GENA=Y;",
+    #         f"ZEQV:BTS={row['BTS_ID']}:EGENA=Y;",
+    #         f"ZEQE:BTS={row['BTS_ID']}:HOP=N,AHOP=Y;",
+    #         f"ZEUM:BTS={row['BTS_ID']}:PCPOW=2,PCWS=4;",
+    #         f"ZEQM:BTS={row['BTS_ID']}::::QSRI=7,QSRP=7,FDD=N,FDM=-14;",
+    #         f"ZEHY:SEG={row['BTS_ID']}:EFHO=DIS;",
+    #         f"ZEQV:SEG={row['BTS_ID']}:::::QPEU=7;",
+    #         f"ZEQV:BTS={row['BTS_ID']}:CMAX=100;"
+    #     ]),
+    #     axis=1
+    # )
 
     
     all_commands = []
-    all_commands += [("STCP TRX 2", cmd) for cmd in ref_sctp_df["Command"].dropna()]
+    all_commands += [("SCTP", cmd) for cmd in ref_sctp_df["Command"].dropna()]
     all_commands += [("LAPD", cmd) for cmd in lapd_df["Command"].dropna()]
     all_commands += [("BCF", cmd) for cmd in bcf_df["Command"].dropna()]
-    all_commands += [("BTS", cmd) for cmd in bts_df["Command"].dropna()]
-    all_commands += [("TRX", cmd) for cmd in trx_df["Command"].dropna()]
+    all_commands += [("MASTER BTS", cmd) for cmd in bts_df["Command"].dropna()]
+    all_commands += [("MASTER TRX", cmd) for cmd in trx_df["Command"].dropna()]
     all_commands += [("LBS Data", cmd) for cmd in lbs_df["Command"].dropna()]
-    all_commands += [("ADCE", cmd) for cmd in adce_df["Command"].dropna()]
+    all_commands += [("ADCE CREATION", cmd) for cmd in adce_df["Command"].dropna()]
+    all_commands += [("ADJL", cmd) for cmd in adjl_df["Command"].dropna()]
     all_commands += [("DMAL DUMAL ATTACH", cmd) for cmd in dmal_df["Command"].dropna()]
     all_commands += [("TRX MODIFICATION", cmd) for cmd in trx_modification_df["Command"].dropna()]
     all_commands +=[("DFCA Implementation on BCF BTS", cmd) for cmd in dfca_df["Command"].dropna()]
     all_commands +=[("GPL", cmd) for cmd in gpl_df["Command"].dropna()]
-    all_commands +=[("BSC174BHU GPL", cmd) for cmd in gpl_df2["Command"].dropna()]
-    all_commands += [("STCP TRX 2", cmd) for cmd in ref_sctp_df2["Command"].dropna()]
-    all_commands += [("TRX", cmd) for cmd in trx_df2["Command"].dropna()]
+    # all_commands +=[("BSC174BHU GPL", cmd) for cmd in gpl_df2["Command"].dropna()]
+    all_commands += [("SCTP", cmd) for cmd in ref_sctp_df2["Command"].dropna()]
+    all_commands += [("MASTER TRX", cmd) for cmd in trx_df2["Command"].dropna()]
     final_df = pd.DataFrame(all_commands, columns=["Sheet Name","Command"])
     final_df["Command"] = final_df["Command"].str.replace(r"=(nan|None)\b", "=", regex=True)
     
@@ -405,12 +417,12 @@ def nokia_2g(request):
     excel_formate(final_output_path)
 
     relative_path = os.path.relpath(final_output_path, MEDIA_ROOT).replace("\\", "/")
-    download_url = request.build_absolute_uri(f"{MEDIA_URL}{relative_path}")
+    download_link = request.build_absolute_uri(f"{MEDIA_URL}{relative_path}")
 
     return Response({
         "status": True,
         "message": "2G Script Generated Successfully",
-        "download_url": download_url
+        "download_link": download_link
     })
  
    
