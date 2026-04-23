@@ -706,10 +706,10 @@ import asyncio
 @api_view(["POST"])
 def date_range_wise_integration_data(request):
     print("User:", request.user.username)
-
+    dashboard_type = request.data.get("dashboard_type")  # future use
     from_date = request.data.get("from_date")
     to_date = request.data.get("to_date")
-
+ 
     # ----------------------------
     # DATE PARSING
     # ----------------------------
@@ -718,14 +718,14 @@ def date_range_wise_integration_data(request):
             from_date = datetime.strptime(from_date, "%Y-%m-%d").date()
         else:
             from_date = (datetime.today() - timedelta(days=7)).date()
-
+ 
         if to_date:
             to_date = datetime.strptime(to_date, "%Y-%m-%d").date()
         else:
             to_date = datetime.today().date()
     except ValueError:
         raise ValidationError("Dates must be in YYYY-MM-DD format.")
-
+ 
     # ----------------------------
     # ACTIVITY LIST
     # ----------------------------
@@ -737,15 +737,15 @@ def date_range_wise_integration_data(request):
         "ULS_HPSC", "UPGRADE", "5G AIR SWAP", "RRU SWAP",
     ]
     activity_type = sorted(set(raw_activities))
-
+ 
     # ----------------------------
     # SQL SAFE COLUMN NAMES
     # ----------------------------
     def sql_safe(name):
         return f"D1_{name.upper().replace(' ', '_').replace('-', '_')}"
-
+ 
     activity_columns = [f'"{sql_safe(a)}" INTEGER' for a in activity_type]
-
+ 
     # ----------------------------
     # FETCH DATA
     # ----------------------------
@@ -753,7 +753,7 @@ def date_range_wise_integration_data(request):
         with connection.cursor() as cursor:
             activity_array = ",".join([f"'{a}'" for a in activity_type])
             activity_columns_def = ",\n".join(activity_columns)
-
+ 
             query = f"""
                 SELECT
                     ct.*,
@@ -763,22 +763,22 @@ def date_range_wise_integration_data(request):
                     ex."HOTO_Offered_2g_Count",
                     ex."HOTO_Accepted_2g_Count"
                 FROM crosstab($$
-                    SELECT 
+                    SELECT
                         UPPER(c."CIRCLE") AS "CIRCLE",
                         a."Activity_Name",
                         COALESCE(r.cnt, 0)::INTEGER
-                    FROM 
+                    FROM
                         (SELECT DISTINCT UPPER("CIRCLE") AS "CIRCLE"
                          FROM public."IX_Tracker_VI_integrationdatavi") c
                     CROSS JOIN
                         (SELECT unnest(ARRAY[{activity_array}]) AS "Activity_Name") a
                     LEFT JOIN (
-                        SELECT 
+                        SELECT
                             UPPER("CIRCLE") AS "CIRCLE",
                             UPPER("Activity_Name") AS "Activity_Name",
                             COUNT(id) AS cnt
                         FROM public."IX_Tracker_VI_integrationdatavi"
-                        WHERE "Integration_Date"
+                        WHERE "{dashboard_type}"
                               BETWEEN '{from_date}' AND '{to_date}'
                         GROUP BY "CIRCLE", "Activity_Name"
                     ) r
@@ -799,30 +799,30 @@ def date_range_wise_integration_data(request):
                         COUNT("HOTO_Offered_Date_2g") FILTER (WHERE "HOTO_Offered_Date_2g" IS NOT NULL) AS "HOTO_Offered_2g_Count",
                         COUNT("HOTO_Accepted_Date_2g") FILTER (WHERE "HOTO_Accepted_Date_2g" IS NOT NULL) AS "HOTO_Accepted_2g_Count"
                     FROM public."IX_Tracker_VI_integrationdatavi"
-                    WHERE "Integration_Date"
+                    WHERE "{dashboard_type}"
                           BETWEEN '{from_date}' AND '{to_date}'
                     GROUP BY UPPER("CIRCLE")
                 ) ex
                 USING (cir);
             """
-
+ 
             cursor.execute(query)
             results = cursor.fetchall()
             columns = [col[0] for col in cursor.description]
             return results, columns
-
+ 
     # ----------------------------
     # ASYNC WRAPPER
     # ----------------------------
     async def get_data_async():
         results, columns = await sync_to_async(fetch_data)()
-
+ 
         # 🔥 NONE → 0 FIX (IMPORTANT)
         rows_as_dict = [
             {col: (0 if val is None else val) for col, val in zip(columns, row)}
             for row in results
         ]
-
+ 
         objs = await sync_to_async(
             lambda: list(
                 IntegrationDataVI.objects.filter(
@@ -830,15 +830,15 @@ def date_range_wise_integration_data(request):
                 )
             )
         )()
-
+ 
         serializer = IntegrationDataSerializer(objs, many=True)
-
+ 
         return {
             "table_data": json.dumps(rows_as_dict),
             "date_range": [from_date.isoformat(), to_date.isoformat()],
             "download_data": serializer.data,
         }
-
+ 
     data = asyncio.run(get_data_async())
     return Response(data)
 

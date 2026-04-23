@@ -1496,29 +1496,32 @@ def kpi_trend_4g_api(request):
 ]
 
 #-------------------------
-     
+
     download_df = result_df.copy()
     # print(download_df.columns)
     
 
-    download_df["Site_ID"] = (
+    download_df["Site_id"] = (
     download_df.index.get_level_values("Short_name")
     .astype(str)
     .map(get_site_id)
 )
-
-    download_df = download_df.set_index("Site_ID", append=True)
-
+ 
+    download_df = download_df.set_index("Site_id", append=True)
+ 
     # Correct column reference
     download_df["IS_NOT_OK"] = download_df[("", "CellWise_REMARK")].str.contains("NOT OK")
-
-    site_status = download_df.groupby("Site_ID")["IS_NOT_OK"].any()
-
-    download_df[("", "SiteWise_REMARK")] = download_df.index.get_level_values("Site_ID").map(
-        site_status.map({True: "Site is Not-OK", False: "Site is OK"})
+ 
+    site_status = download_df.groupby("Site_id")["IS_NOT_OK"].any()
+ 
+    download_df[("", "SiteWise_REMARK")] = download_df.index.get_level_values("Site_id").map(
+        site_status.map({True: "Site is NotOK", False: "Site is OK"})
     )
-
-    download_df.drop(columns=["IS_NOT_OK"], inplace=True)
+ 
+    download_df.drop(columns=["IS_NOT_OK"], errors="ignore", inplace=True)
+    download_df = download_df.reset_index(level="Site_id", drop=True)
+ 
+ 
 
     
 
