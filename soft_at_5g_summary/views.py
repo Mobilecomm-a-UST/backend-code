@@ -981,7 +981,7 @@ def soft_at_5G_Summary_Ericsson(request):
                               arcname = os.path.relpath(file_path, base_media_url)
                               zipf.write(file_path, arcname)
 
-      zip_filename = f"soft_at_5g_summary/5gSUMMARY_OUTPUT_{timestamp}.zip"
+      zip_filename = f"soft_at_5G_Summary_Ericsson/5gSUMMARY_OUTPUT_{timestamp}.zip"
       download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
       print(f"Output file created: {output_path}")
       print(f"Zip file created: {zip_filename}")
@@ -1603,7 +1603,7 @@ def soft_at_5G_checkpoint(request):
                               arcname = os.path.relpath(file_path, base_media_url)
                               zipf.write(file_path, arcname)
       
-      zip_filename = f"soft_at_5g_summary/5gChecklist_OUTPUT_{timestamp}.zip"
+      zip_filename = f"soft_at_5G_Summary_Ericsson/5gChecklist_OUTPUT_{timestamp}.zip"
       download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
       print(f"Output file created: {output_path}")
       print(f"Zip file created: {zip_filename}")

@@ -148,7 +148,7 @@ def send_survey_done_email(circle, siteId):
  
     try:
         print(f"Sending Survey Mail → {circle} | {siteId}")
-        send_email.delay(
+        send_email(
             to_mail,
             cc_mail,
             subject,
