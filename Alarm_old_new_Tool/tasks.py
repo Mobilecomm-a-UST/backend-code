@@ -37,7 +37,7 @@ def send_email_for_Alarm(df_combined_dict, output_path):
             'Nishant.Sharma2@ust.com','Vijay.Kumar2@ust.com',
             'Prateek.Saxena@ust.com','Deepu.Sharma@ust.com'
         ],
-        "JK" :['Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Manik.Mahajan@ust.com',
+        "JK" :['Rahul.Charak@ust.com','Aashish.Sharma@ust.com',
             'Lalit.Kaul@ust.com','Suman.Raman@ust.com','Namandeep.Singh@ust.com'
         ],
         "ROTN" or "CHN": ['A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
@@ -354,7 +354,7 @@ def send_email_for_5G_Alarm(df_combined_dict, output_path):
             'Nishant.Sharma2@ust.com','Vijay.Kumar2@ust.com',
             'Prateek.Saxena@ust.com','Deepu.Sharma@ust.com'
         ],
-        "JK" :['Rahul.Charak@ust.com','Aashish.Sharma@ust.com','Manik.Mahajan@ust.com',
+        "JK" :['Rahul.Charak@ust.com','Aashish.Sharma@ust.com',
             'Lalit.Kaul@ust.com','Suman.Raman@ust.com','Namandeep.Singh@ust.com'
         ],
         "ROTN" or "CHN": ['A.Hariharasudhan@ust.com','Ajith.Thiyagarajesh@ust.com'],
