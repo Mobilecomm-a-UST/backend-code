@@ -1041,6 +1041,43 @@ def get_LTE_download_link(df):
 
     df.insert(2, ("", "Site_ID"), site_id_Column)
 
+    if ("", "Int_Date") not in df.columns:
+        df[("", "Int_Date")] = " " 
+
+    # ORDER (Remark first)
+    ordered_cols = [
+        "Int_Date",
+        "SiteWise_REMARK",
+        "CellWise_REMARK",
+        "RRC SR_COUT",
+        "DROP_COUT",
+        "ERAB SR_COUT",
+        "DL THPT_COUT",
+        "LTE Intra system HOSR_COUT",
+        "LTE Inter system HOSR_COUT",
+        "V CSSR_COUT",
+        "V DCR_COUT",
+        "Volte Intra LTE HOSR_COUT",
+        "Volte Inter Freq HOSR_COUT",
+        "CQI_COUT",
+        "VoLTE DL Packet Loss_COUT",
+        "VoLTE UL Packet Loss_COUT",
+        "RSSI_COUT"
+    ]
+
+    try:
+        ecgi_index = df.columns.get_loc(("", "ECGI_4G"))
+        insert_pos = ecgi_index + 1
+
+        for col in ordered_cols:
+            if ("", col) in df.columns:
+                col_data = df.pop(("", col))
+                df.insert(insert_pos, ("", col), col_data)
+                insert_pos += 1
+
+    except KeyError:
+        print("ECGI_4G column not found!")
+
     filename = f"LTE_KPI_Trend.csv"
 
     # Ensure the media/excels/ directory exists
@@ -1242,7 +1279,7 @@ def kpi_trend_4g_api(request):
 
     current_pivot_df = current_df.pivot_table(
         values=kpi,
-        index=["Short_name", "OEM_GGSN", "ECGI_4G"],
+        index=["Short_name", "ECGI_4G"],
         columns="Date",
         aggfunc="mean",
         dropna=True,
@@ -1378,7 +1415,114 @@ def kpi_trend_4g_api(request):
 
     #################################################################### end the new Code....... #################################################
     """
+    kpi_condition_map = {
+        "MV_RRC_Setup_Success_Rate": (">=", 99, "RRC SR_COUT"),
+        "MV_PS_Drop_Call_Rate": ("<=", 1, "DROP_COUT"),
+        "MV_ERAB_Setup_Success_Rate": (">=", 99, "ERAB SR_COUT"),
+        "MV_DL_User_Throughput_Kbps": (">=", 3000, "DL THPT_COUT"),
+        "MV_PS_handover_success_rate_LTE_INTRA_SYSTEM": (">=", 98, "LTE Intra system HOSR_COUT"),
+        "MV_PS_handover_success_rate_LTE_INTER_SYSTEM": (">=", 96, "LTE Inter system HOSR_COUT"),
+        "MV_CSFB_Redirection_Success_Rate": (">=", 99, "V CSSR_COUT"),
+        "MV_VoLTE_DCR": ("<=", 1, "V DCR_COUT"),
+        "VoLTE_Intra_LTE_Handover_Success_Ratio": (">=", 98, "Volte Intra LTE HOSR_COUT"),
+        "VoLTE_Inter_Frequency_Handover_Success_Ratio": (">=", 96, "Volte Inter Freq HOSR_COUT"),
+        "MV_E_UTRAN_Average_CQI": (">=", 8, "CQI_COUT"),
+        "MV_Packet_Loss_DL": ("<=", 1, "VoLTE DL Packet Loss_COUT"),
+        "MV_Packet_Loss_UL": ("<=", 1, "VoLTE UL Packet Loss_COUT"),
+        "UL_RSSI": ("<=", -105, "RSSI_COUT"),
+    }
+
+    # Last 5 date columns
+    date_cols = sorted([col for col in result_df.columns if isinstance(col[1], pd.Timestamp)])
+    last_5_dates = date_cols[-5:]
+    date_labels = [d[1] for d in last_5_dates]
+
+    # Apply condition
+    for kpi_name, (op, threshold, count_col) in kpi_condition_map.items():
+
+        if kpi_name in result_df.columns.get_level_values(0):
+
+            kpi_data = result_df[kpi_name][date_labels].fillna(0)
+
+            if op == ">=":
+                count_series = (kpi_data >= threshold).sum(axis=1)
+
+            elif op == "<=":
+                count_series = (kpi_data <= threshold).sum(axis=1)
+
+            result_df[("", count_col)] = count_series   
+    
+
+    count_cols = [
+        "RRC SR_COUT",
+        "DROP_COUT",
+        "ERAB SR_COUT",
+        "DL THPT_COUT",
+        "LTE Intra system HOSR_COUT",
+        "LTE Inter system HOSR_COUT",
+        "V CSSR_COUT",
+        "V DCR_COUT",
+        "Volte Intra LTE HOSR_COUT",
+        "Volte Inter Freq HOSR_COUT",
+        "CQI_COUT",
+        "VoLTE DL Packet Loss_COUT",
+        "VoLTE UL Packet Loss_COUT",
+        "RSSI_COUT"
+    ]
+    count_df = result_df[[("", col) for col in count_cols if ("", col) in result_df.columns]].copy()
+    count_df.columns = [col for col in count_cols if ("", col) in result_df.columns]
+    mask = count_df < 3
+
+    def build_remark(row):
+        failed = row.index[row].tolist()
+        failed = [c.replace("_COUT", "") for c in failed]
+
+        if not failed:
+            return "OK"
+        else:
+            return "NOT OK - " + ", ".join(failed)
+
+    # add remark column
+    result_df[("", "CellWise_REMARK")] = mask.apply(build_remark, axis=1)
+
+
+    
+    
+
+
+    #logic for remove week colum--------
+    result_df = result_df[
+    [col for col in result_df.columns if "week-" not in str(col[1])]
+]
+
+#-------------------------
+     
     download_df = result_df.copy()
+    # print(download_df.columns)
+    
+
+    download_df["Site_ID"] = (
+    download_df.index.get_level_values("Short_name")
+    .astype(str)
+    .map(get_site_id)
+)
+
+    download_df = download_df.set_index("Site_ID", append=True)
+
+    # Correct column reference
+    download_df["IS_NOT_OK"] = download_df[("", "CellWise_REMARK")].str.contains("NOT OK")
+
+    site_status = download_df.groupby("Site_ID")["IS_NOT_OK"].any()
+
+    download_df[("", "SiteWise_REMARK")] = download_df.index.get_level_values("Site_ID").map(
+        site_status.map({True: "Site is Not-OK", False: "Site is OK"})
+    )
+
+    download_df.drop(columns=["IS_NOT_OK"], inplace=True)
+
+    
+
+    
     download_link = get_LTE_download_link(download_df)
     print(download_link)
 
@@ -1389,9 +1533,14 @@ def kpi_trend_4g_api(request):
     result_df.columns = rename_columns(result_df.columns)
 
     result_df.reset_index(inplace=True)
+    result_df.columns = result_df.columns.str.strip()  # extra safety
+    cols_to_drop = [col for col in result_df.columns if "OEM_GGSN" in col]
+    result_df.drop(columns=cols_to_drop, inplace=True)
 
     result_df["Circle"] = result_df["Short_name"].astype(str).apply(get_circle)
     result_df["Site_ID"] = result_df["Short_name"].astype(str).apply(get_site_id)
+
+
 
     # for circle
     cols = result_df.columns.tolist()
@@ -1404,6 +1553,7 @@ def kpi_trend_4g_api(request):
     new_cols = [new_cols[-1]] + new_cols[:-1]
     result_df = result_df[new_cols]
 
+   
     result_df = result_df.dropna(subset=["Short_name"])
 
     # paginator = CustomPagination()
