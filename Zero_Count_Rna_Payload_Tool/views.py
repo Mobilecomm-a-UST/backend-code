@@ -1002,6 +1002,12 @@ def get_site_id(short_name):
             if re.match(r"[A-Z]", sn.split("_")[-2][-1])
             else sn.split("_")[-2]
         ),
+
+        "MH_":lambda sn:(
+            sn.split("_")[-2][:-1]
+            if re.match(r"[A-Z]", sn.split("_")[-2][-1])
+            else sn.split("_")[-2]
+        )
     }
 
     for prefix, parser in prefix_parsers.items():
@@ -1496,7 +1502,7 @@ def kpi_trend_4g_api(request):
 ]
 
 #-------------------------
-
+     
     download_df = result_df.copy()
     # print(download_df.columns)
     
@@ -1506,22 +1512,20 @@ def kpi_trend_4g_api(request):
     .astype(str)
     .map(get_site_id)
 )
- 
+
     download_df = download_df.set_index("Site_id", append=True)
- 
+
     # Correct column reference
     download_df["IS_NOT_OK"] = download_df[("", "CellWise_REMARK")].str.contains("NOT OK")
- 
+
     site_status = download_df.groupby("Site_id")["IS_NOT_OK"].any()
- 
+
     download_df[("", "SiteWise_REMARK")] = download_df.index.get_level_values("Site_id").map(
         site_status.map({True: "Site is NotOK", False: "Site is OK"})
     )
- 
+
     download_df.drop(columns=["IS_NOT_OK"], errors="ignore", inplace=True)
     download_df = download_df.reset_index(level="Site_id", drop=True)
- 
- 
 
     
 

@@ -293,20 +293,32 @@ def Daily_RAW_KPI_4G(request):
     kpi_4g = request.FILES.get("4G_raw")
     if not kpi_4g:
         return Response({"status": False, "message": "No file provided."}, status=400)
-
+ 
     try:
         df = pd.read_csv(kpi_4g)
     except Exception as e:
         return Response({"status": False, "error": str(e)}, status=500)
-
+ 
     try:
+        df.columns = df.columns.str.strip()
+ 
+        if "Date" not in df.columns:
+            df.rename(columns={df.columns[1]: "Date"}, inplace=True)
+ 
+        df["Date"] = pd.to_datetime(df["Date"], format="%d-%b-%y", errors="coerce")
+ 
+ 
+        df["Short name"] = df["Short name"].astype(str).str.strip()
+        df["ECGI"] = df["ECGI"].astype(str).str.strip()
+ 
+     
         df["Short name"] = df["Short name"].ffill()
-        df.rename(columns={"Unnamed: 1": "Date"}, inplace=True)
-        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+ 
+ 
         df["MV eCell Data BH"] = pd.to_datetime(
             df["MV eCell Data BH"], errors="coerce", format="%H:%M"
         ).dt.time
-
+ 
         required_columns = [
             "Short name",
             "Date",
@@ -349,55 +361,66 @@ def Daily_RAW_KPI_4G(request):
             "MV_VoLTE Packet Loss DL [CBBH]",
             "UL RSSI [CDBH]",
         ]
+ 
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
-            return Response(
-                {
-                    "status": False,
-                    "error": f"Missing columns: {', '.join(missing_columns)}",
-                },
-                status=400,
-            )
+            return Response({
+                "status": False,
+                "message": f"Missing columns: {', '.join(missing_columns)}",
+            }, )
+ 
     except Exception as e:
-        return Response(
-            {"status": False, "error": f"Data preparation error: {str(e)}"}, status=500
-        )
-
-    present_dates = df["Date"].unique()
-    present_dates = pd.to_datetime(present_dates).strftime("%Y-%m-%d").tolist()
-    exists = Daily_4G_KPI.objects.filter(Date__in=present_dates).values_list(
-        "Date", flat=True
+        return Response({
+            "status": False,
+            "message": f"Data preparation error: {str(e)}"
+        },)
+ 
+    # ✅ Clean numeric values
+    numeric_cols = df.select_dtypes(include=["float64", "int64"]).columns
+ 
+    for col in numeric_cols:
+        df[col] = df[col].replace(['âˆž', '∞'], np.inf)
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+        df[col] = df[col].replace([np.inf, -np.inf], 0)
+        df[col] = df[col].fillna(0)
+ 
+    # ✅ Duplicate detection (Date + ECGI)
+    present_dates = df["Date"].dropna().dt.date.unique()
+ 
+    existing_records = set(
+        Daily_4G_KPI.objects.filter(Date__in=present_dates)
+        .values_list("Date", "ECGI_4G")
     )
-    # df = clean_dataframe(df)
-    # kpiStrToZero = [
-    #     "MV_UL User Throughput_Kbps [CDBH]",
-    #     "MV_DL User Throughput_Kbps [CDBH]",
-    #     "MV_DL User Throughput_Kbps [CUBH]",
-    # ]
-    kpiStrToZero = df.select_dtypes(include=["float64", "Int64"]).columns.to_list()
-    print("list type of:- ",kpiStrToZero)
-
-    for x in kpiStrToZero:
-        df[x] = df[x].replace(['âˆž', '∞'], np.inf) 
-        df[x] = pd.to_numeric(df[x], errors="coerce")  # convert invalid strings to NaN
-        df[x] = df[x].replace([np.inf, -np.inf], 0)    # replace inf and -inf with 0
-        df[x] = df[x].fillna(0)
-  
-    if not exists:
-        objects_to_create = []
-        try:
-            for _, row in df.iterrows():
-
-                print(row["MV eCell Data BH"], type(row["MV eCell Data BH"]))
-                # print("MV_DL User Throughput_Kbps [CDBH]: ",row['MV_DL User Throughput_Kbps [CDBH]'],type(row['MV_DL User Throughput_Kbps [CDBH]']))
-                if isinstance(row["MV eCell Data BH"], time):
-                    print("here..")
-                    mv_date_bh = timezone.localize(row["MV eCell Data BH"])
-                else:
-                    mv_date_bh = None
-
-                if pd.notnull(row["Date"]):
-                    obj = Daily_4G_KPI(
+ 
+    inserted_count = 0
+    skipped_count = 0
+    objects_to_create = []
+ 
+    for _, row in df.iterrows():
+ 
+        if pd.isnull(row["Date"]):
+            skipped_count += 1
+            continue
+ 
+        record_key = (
+            pd.to_datetime(row["Date"]).date(),
+            str(row["ECGI"]).strip()
+        )
+ 
+        # ✅ Skip duplicates
+        if record_key in existing_records:
+            skipped_count += 1
+            continue
+ 
+        # ✅ Time handling
+        if isinstance(row["MV eCell Data BH"], time):
+            mv_date_bh = timezone.localize(
+                datetime.combine(row["Date"].date(), row["MV eCell Data BH"])
+            )
+        else:
+            mv_date_bh = None
+ 
+        obj = Daily_4G_KPI(
                         Short_name=row["Short name"],
                         Date=row["Date"],
                         ECGI_4G=row["ECGI"],
@@ -476,26 +499,28 @@ def Daily_RAW_KPI_4G(request):
                         UL_RSSI_CDBH=row["UL RSSI [CDBH]"],
                         # UL_RSSI_Nokia_RSSI_SINR = row["UL RSSI [RSSI-SINR]"],
                     )
-                    objects_to_create.append(obj)
-            with transaction.atomic():
-                print("finally get here...")
-                Daily_4G_KPI.objects.bulk_create(objects_to_create)
-            return Response(
-                {
-                    "status": True,
-                    "message": "Data inserted successfully.",
-                }
-            )
-        except Exception as e:
-            return Response({"status": False, "error": f"{str(e)}"}, status=500)
-
-    return Response(
-        {
+ 
+        objects_to_create.append(obj)
+        inserted_count += 1
+ 
+    # ✅ Bulk insert
+    try:
+        with transaction.atomic():
+            print("upload RCA data---")
+            Daily_4G_KPI.objects.bulk_create(objects_to_create, batch_size=1000)
+ 
+        return Response({
+            "status": True,
+            "message": f"File processed successfully. Inserted rows: {inserted_count}, Skipped rows: {skipped_count}.",
+            "inserted_rows": inserted_count,
+            "skipped_rows": skipped_count
+        })
+ 
+    except Exception as e:
+        return Response({
             "status": False,
-            "message": "Data for these dates already exists in the database.",
-            "existing_dates": exists,
-        }
-    )
+            "message": str(e)
+        },)
 
 
 timezone = pytz.timezone("UTC")

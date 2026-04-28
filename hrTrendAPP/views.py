@@ -221,7 +221,7 @@ def old_hr_trend(request):
             lnbts_id = str(cell1)[:-1]
             ecgi.append(lnbts_id)
 
-        if "-" in cell1:
+        if "-" in str(cell1):
             lncell_id = str(cell1).split("-")[-1]
             ecgi1.append(lncell_id)
         else:

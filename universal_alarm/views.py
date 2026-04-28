@@ -9,6 +9,7 @@ from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 from rest_framework import status
 import shutil
 from datetime import datetime
+from .models import *
 
 
 #function for clean alarm data
@@ -127,8 +128,115 @@ def delete_existing_files(upload_files):
         file_path = os.path.join(upload_files, file_name)
         if os.path.isfile(file_path):
             os.remove(file_path)
- 
- 
+
+
+@api_view(['GET'])
+def get_sites(request):
+    data = list(UniversalAlarm.objects.values())
+    OldvsNew_data = list(OldvsNew.objects.values())
+    return Response({"universal_alarms": data, "old_vs_new": OldvsNew_data})
+
+@api_view(['DELETE'])
+def delete_site(request):
+    try:
+        obj = UniversalAlarm.objects.all()
+        obj.delete()
+        OldvsNew.objects.all().delete()
+
+        return Response({"message": "Deleted"})
+    except UniversalAlarm.DoesNotExist:
+        return Response({"error": "Not found"}, status=404)
+
+@api_view(['POST'])
+def upload_site_list(request):
+    file = request.FILES.get('site_file')
+
+    if not file:
+        return Response({"error": "File required"}, status=400)
+
+    if not file.name.endswith('.xlsx'):
+        return Response({"error": "Only Excel file allowed"}, status=400)
+
+    try:
+        UniversalAlarm.objects.all().delete()
+        OldvsNew.objects.all().delete()
+        # Read all sheets
+        sheets = pd.read_excel(file, sheet_name=None)
+
+        # =========================
+        # Sheet1 = UniversalAlarm
+        # =========================
+        alarm_df = sheets.get("Sheet 1")
+
+        if alarm_df is not None:
+            alarm_df.columns = alarm_df.columns.str.strip().str.lower()
+
+            for _, row in alarm_df.iterrows():
+
+                UniversalAlarm.objects.update_or_create(
+                    site_id=str(row.get('site id')).strip(),
+                    defaults={
+                        "mplane_ip": str(row.get('mplane ip')).strip(),
+                        "status": str(row.get('status')).strip()
+                    }
+                )
+
+        # ======================
+        # Sheet2 = OldvsNew
+        # ======================
+        map_df = sheets.get("Sheet 2")
+
+        if map_df is not None:
+            map_df.columns = map_df.columns.str.strip().str.lower()
+
+            for _, row in map_df.iterrows():
+
+                OldvsNew.objects.update_or_create(
+                    new_site=str(row.get('newsite')).strip(),
+                    defaults={
+                        "old_site": str(row.get('oldsite')).strip()
+                    }
+                )
+
+        return Response({
+            "status": True,
+            "message": "Sheet1 + Sheet2 uploaded successfully"
+        })
+
+    except Exception as e:
+        return Response({
+            "status": False,
+            "error": str(e)
+        }, status=500)
+    
+# @api_view(['POST'])
+# def upload_site_list(request):
+#     file = request.FILES.get('site_file')
+
+#     if not file:
+#         return Response({"error": "File required"}, status=400)
+
+#     if file.name.endswith('.csv'):
+#         df = pd.read_csv(file)
+
+#     elif file.name.endswith('.xlsx'):
+#         df = pd.read_excel(file)
+
+#     else:
+#         return Response({"error": "Only CSV/Excel allowed"}, status=400)
+
+#     df.columns = df.columns.str.strip().str.lower()
+
+#     for _, row in df.iterrows():
+#         UniversalAlarm.objects.create(
+#             site_id=str(row.get('site id')).strip(),
+#             mplane_ip=str(row.get('mplane ip')).strip(),
+#             status=str(row.get('status')).strip()
+#         )
+
+
+#     return Response({"message": "Saved", "status": True})
+    
 @api_view(['POST'])
 def upload_5g_log_file(request):
     if request.method != 'POST':
@@ -281,20 +389,50 @@ def upload_5g_log_file(request):
             content
         )
 
-        ip_address = ip_match.group(1) if ip_match else "IP Not Found"
+        # ip_address = ip_match.group(1) if ip_match else "IP Not Found"
+        # if ip_address.count(".") > 3:
+        #     ip_address = ip_address.replace(".", ":")
+
+        # if "Checking ip contact...Not OK" in content:
+        #     remark = "Unable to connect"
+        # elif "Checking ip contact...OK" in content:
+        #     remark = "OK"
+        # else:
+        #     remark = "NOT OK"
+        # data = UniversalAlarm.objects.filter(mplane_ip=ip_address).first()
+        
+
+        # site_down.append({
+        # "Site ID": data.site_id if data else "Unknown",
+        # "Mplane IP": ip_address,
+        # "Remark": remark,
+        # "Status": data.status if data else ""
+        # })
+        ip_address = ip_match.group(1).strip() if ip_match else ""
+        # Sirf IPv6 dot format convert karo
+        if ip_address and ip_address.count(".") > 3:
+            ip_address = ip_address.replace(".", ":")
+        
+        ip_address = ip_address.lower()
 
         if "Checking ip contact...Not OK" in content:
-            status = "Unable to connect"
+            remark = "Unable to connect"
         elif "Checking ip contact...OK" in content:
-            status = "OK"
+            remark = "OK"
         else:
-            status = "NOT OK"
+            remark = "NOT OK"
+
+        # IP mila tabhi DB query
+        data = UniversalAlarm.objects.filter(mplane_ip__iexact=ip_address).first() if ip_address else None
 
         site_down.append({
-            "IP Address": ip_address,
-            "Status": status
+            "Site ID": data.site_id if data else "Unknown",
+            "Mplane IP": ip_address if ip_address else "IP Not Found",
+            "Remark": remark,
+            "Status": data.status if data else ""
         })
         return site_down
+    
     
     def extract_alarms_from_alt(content, site_id="Unknown"):
         alarms = []
@@ -302,7 +440,13 @@ def upload_5g_log_file(request):
         node_id = node_id_match.group(1).strip() if node_id_match else "Unknown"
  
         ip_match = re.search(r'\d{6}-\d{2}:\d{2}:\d{2}[+|-]\d{4}\s+([a-fA-F0-9:.]+)', content)
-        ip = ip_match.group(1) if ip_match else "No IP found"
+        # ip = ip_match.group(1) if ip_match else "No IP found"
+        ip = ip_match.group(1).strip() if ip_match else ""
+        # Sirf IPv6 dot format convert karo
+        if ip and ip.count(".") > 3:
+            ip = ip.replace(".", ":")
+        
+        # ip = ip.lower()
  
         alarm_pattern = re.compile(r'''
             ^\s*
@@ -313,7 +457,7 @@ def upload_5g_log_file(request):
             (?:\s*\(\s*(?P<add>.*?)\))?
             \s*$
         ''', re.MULTILINE | re.VERBOSE)
-        print("🔍 Alarm pattern compiled successfully", alarm_pattern)
+        # print("🔍 Alarm pattern compiled successfully", alarm_pattern)
 
         no_alarm_keywords = {"external", "security", "ethernet"}
 
@@ -336,7 +480,7 @@ def upload_5g_log_file(request):
             "Resource": ("GSM Sector Down", "SA", "HW ALARM", "Circle Team"),
             "Link": ("Ri link Down", "SA", "HW ALARM", "Circle Team"),
             "TimeSyncIO": ("Configuration Issue", "NSA", "Soft Alarm", "Noc Team"),
-            "Inconsistent": ("RET Down", "NSA", "HW ALARM", "Circle Team"),
+            # "Inconsistent": ("RET Down", "NSA", "HW ALARM", "Circle Team"),
             "BSC": ("2G Down", "SA", "Soft Alarm", "Noc Team"),
             "HW": ("HW Faulty", "SA", "HW ALARM", "Circle Team"),
             "Fault": ("HW Faulty", "SA", "HW ALARM", "Circle Team"),
@@ -347,6 +491,11 @@ def upload_5g_log_file(request):
             "Sync": ("GPS Alarm", "SA", "HW ALARM", "Circle Team"),
             "Clock": ("GPS Alarm", "SA", "HW ALARM", "Circle Team"),
             "Service": ("Service Alarm", "SA", "Soft Alarm", "Noc Team"),
+            "Inconsistent": ("Configuration Issue", "NSA", "Soft Alarm", "Noc Team"),
+            "Input":("Input Power alarm", "SA", "Power Alarm", "Circle Team"),
+            "Service": ("VSWR High", "SA", "HW Alarm", "Circle Team"),
+            "EC":("Configuration Issue", "NSA", "HW Alarm", "Noc Team"),
+            "Feature":("Configuration Issue", "NSA", "HW Alarm", "Circle Team"),
 
             # Special
             "RX_BRANCH": ("Rx Branch Imbalance Fault", "SA", "HW ALARM", "Circle Team"),
@@ -394,6 +543,28 @@ def upload_5g_log_file(request):
                     bucket_list.append(vals[2]); resp_list.append(vals[3])
                     continue
 
+                if "service" in part:
+                    if "eutrancelltdd" in  mo.lower():
+                        vals = ("VSWR High", "SA", "HW Alarm", "Circle Team")
+                    elif "eutrancellfdd" in  mo.lower():
+                        vals = ("Service Alarm", "SA", "HW ALARM", "Circle Team")
+                    else:
+                        vals = noc_mapping.get("Service")
+
+                    noc_list.append(vals[0]); sa_list.append(vals[1])
+                    bucket_list.append(vals[2]); resp_list.append(vals[3])
+                    continue
+
+                if "inconsistent" in part:
+                    if "ret" in  mo.lower() or "antenna" in  mo.lower():
+                        vals = ("RET Down", "NSA", "HW ALARM", "Circle Team")
+                    else:
+                        vals = noc_mapping.get("Inconsistent")
+
+                    noc_list.append(vals[0]); sa_list.append(vals[1])
+                    bucket_list.append(vals[2]); resp_list.append(vals[3])
+                    continue
+
                 # 🔥 Normal mapping
                 for key, vals in noc_mapping.items():
                     if key in ["RX_BRANCH", "RX_DIVERSITY", "VSWR_REFLECTED"]:
@@ -433,6 +604,8 @@ def upload_5g_log_file(request):
                 alarm_status = "Alarm"
                 noc_remark, sa_nsa, alarm_bucket, responsibility = map_noc_fields(prob, mo)
 
+            data = UniversalAlarm.objects.filter(mplane_ip__iexact=ip).first() if ip else None
+            status_flag = data.status if data else ""
             alarms.append({
                 "IP": ip,
                 "Site ID": site_id,
@@ -446,6 +619,7 @@ def upload_5g_log_file(request):
                 "SA/NSA": sa_nsa,
                 "Alarm Bucket": alarm_bucket,
                 "Responsibility": responsibility,
+                "Alarm Status": status_flag
             })
 
         # ✅ Filter only alarms
@@ -493,8 +667,15 @@ def upload_5g_log_file(request):
             content_5g = file.read()
  
         ip_match = re.search(r'([\w:.]+)(?=>\s*lt all)', content_5g)
-        ip_5g = ip_match.group(1) if ip_match else "No IP found"
- 
+        # ip_5g = ip_match.group(1) if ip_match else "No IP found"
+
+        ip_5g = ip_match.group(1).strip() if ip_match else ""
+        # Sirf IPv6 dot format convert karo
+        if ip_5g and ip_5g.count(".") > 3:
+            ip_5g = ip_5g.replace(".", ":")
+        
+        ip_5g = ip_5g.lower()
+
         node_match = re.search(r'([\w:-]+)(?=>\s*alt)', content_5g)
         node_id = node_match.group(1) if node_match else "No ID found"
         
@@ -537,9 +718,18 @@ def upload_5g_log_file(request):
         amf_status = extract_amf_status(content_5g)
         snssai_status = extract_snssai_status(content_5g)
         cells_5g = parse_cell_block(content_5g)
+
+        # ---------------- DB Match (ONCE per IP) ----------------
+        data = UniversalAlarm.objects.filter(mplane_ip__iexact=ip_5g).first() if ip_5g else None
+        status_flag = data.status if data else ""
+
  
         for cell in cells_5g:
             cell_name = cell['Cell Name']
+            site_id = cell['Site ID']
+            if site_id.startswith("NL"):
+                site_id = site_id[2:]
+
             possible_keys = [
                 f"EUtranCellFDD={cell_name}",
                 f"EUtranCellTDD={cell_name}",
@@ -558,7 +748,7 @@ def upload_5g_log_file(request):
             row = {
                 ("Circle", ""): cell['Circle'],
                 ("2G Site ID", ""): cell['Site ID'],
-                ("5G Site ID", ""): cell['Site ID'],
+                ("5G Site ID", ""): site_id,
                 ("5G Node IP", ""): ip_5g,
                 ("5G Node ID", ""): node_id,
                 ("5G Cell Status", "Adm State"): cell['Adm State'],
@@ -568,7 +758,8 @@ def upload_5g_log_file(request):
                 ("AMF", "Status"): amf_status,
                 ("sNSSAI", "Status"): snssai_status,
                 ("Cell Type", ""): cell["Cell Type"],
-                ("PLMNR_Status", ""): plmnr_value
+                ("PLMNR_Status", ""): plmnr_value,
+                ("Alarm Status", ""): status_flag,
             }
             all_rows.append(row)
             # site_id = cell['Site ID']
@@ -577,6 +768,8 @@ def upload_5g_log_file(request):
         # alarms cell wise
         for cell in cells_5g:
             site_id = cell['Site ID']
+            if site_id.startswith("NL"):
+                site_id = site_id[2:]
             alarms = extract_alarms_from_alt(content_5g, site_id)
             all_alarms.extend(alarms)
         # site down always check
@@ -589,7 +782,8 @@ def upload_5g_log_file(request):
         ("SYNC", "Status"), 
         ("AMF", "Status"),
         ("sNSSAI", "Status"),
-        ("Cell Type", ""),("PLMNR_Status", "")
+        ("Cell Type", ""),("PLMNR_Status", ""),
+        ("Alarm Status", "")
     ]
     multi_index = pd.MultiIndex.from_tuples(columns)
     if all_rows:
@@ -615,7 +809,9 @@ def upload_5g_log_file(request):
             "Noc Remark": lambda x: " / ".join(sorted(set(filter(None, x)))),
             "SA/NSA": lambda x: " / ".join(sorted(set(filter(None, x)))),
             "Alarm Bucket": lambda x: " / ".join(sorted(set(filter(None, x)))),
-            "Responsibility": lambda x: " / ".join(sorted(set(filter(None, x))))
+            "Responsibility": lambda x: " / ".join(sorted(set(filter(None, x)))),
+            "Alarm Status": lambda x: " / ".join(sorted(set(filter(None, x))))
+
         }).reset_index()
  
         df_alarms = agg_alarms
@@ -625,7 +821,7 @@ def upload_5g_log_file(request):
             "IP", "Site ID", "Node ID", "Date & Time", "Severity",
             "Specific Problem", "MO",
             "Alarm/No Alarm", "Noc Remark", "SA/NSA",
-            "Alarm Bucket", "Responsibility"
+            "Alarm Bucket", "Responsibility" ,"Alarm Status"
         ])
 
 
@@ -658,9 +854,9 @@ def upload_5g_log_file(request):
     #     ])
 
     if site_down:
-        site_down_df = pd.DataFrame(site_down).drop_duplicates()
+        site_down_df = pd.DataFrame(site_down)
     else:
-        site_down_df = pd.DataFrame(columns=["IP Address", "Status"])
+        site_down_df = pd.DataFrame(columns=["Site ID","Mplane IP","Remark", "Status"])
     
     
 
@@ -683,14 +879,15 @@ def upload_5g_log_file(request):
         df_5g["Cells"] = df_5g["Cells"].astype(str)
         df_5g = df_5g[df_5g["Cells"].str.contains("_5_", na=False)]
         df_5g["5G Site ID"] =df_5g["5G Node ID"].astype(str).str.split("-").str[1]
+        df_5g["5G Site ID"] = df_5g["5G Site ID"].apply(lambda x: x[2:] if x.startswith("NL") else x)
         df_5g.drop(columns=["2G Site ID"], inplace=True)
-        df_alarms.to_excel(writer, index=False, sheet_name="Alarms")
-        site_down_df.to_excel(writer, index=False, sheet_name="Site Down")
+        df_alarms.to_excel(writer, index=False, sheet_name="5G Alarms")
+        site_down_df.to_excel(writer, index=False, sheet_name="5G Site Down")
         df_5g.to_excel(writer, index=False, sheet_name="5G Cells")
 
-        format_excel_sheet(writer, 'Site Down', site_down_df)
+        format_excel_sheet(writer, '5G Site Down', site_down_df)
         format_excel_sheet(writer, '5G Cells', df_5g)
-        format_excel_sheet(writer, 'Alarms', df_alarms)
+        format_excel_sheet(writer, '5G Alarms', df_alarms)
     # After saving Excel:
     relative_path = os.path.relpath(output_path, MEDIA_ROOT)
     download_link = request.build_absolute_uri("/media/" + relative_path.replace("\\", "/"))
@@ -710,6 +907,8 @@ def delete_existing_files(upload_files):  # noqa: F811
         file_path = os.path.join(upload_files, file_name)
         if os.path.isfile(file_path):
             os.remove(file_path)
+
+
 
 @api_view(['POST'])
 def upload_4g_log_file(request):
@@ -832,21 +1031,30 @@ def upload_4g_log_file(request):
             content_4g
         )
 
-        ip_address = ip_match.group(1) if ip_match else "IP Not Found"
+        # ip_address = ip_match.group(1) if ip_match else "IP Not Found"
+        ip_address = ip_match.group(1).strip() if ip_match else ""
+        # Sirf IPv6 dot format convert karo
+        if ip_address and ip_address.count(".") > 3:
+            ip_address = ip_address.replace(".", ":")
+        
+        ip_address = ip_address.lower()
 
         if "Checking ip contact...Not OK" in content_4g:
-            status = "Unable to connect"
+            remark = "Unable to connect"
         elif "Checking ip contact...OK" in content_4g:
-            status = "OK"
+            remark = "OK"
         else:
-            status = "NOT OK"
+            remark = "NOT OK"
+        data = UniversalAlarm.objects.filter(mplane_ip__iexact=ip_address).first() if ip_address else None
 
         site_down.append({
-            "IP Address": ip_address,
-            "Status": status
+            "Site ID": data.site_id if data else "Unknown",
+            "Mplane IP": ip_address if ip_address else "IP Not Found",
+            "Remark": remark,
+            "Status": data.status if data else ""
         })
-
         return site_down
+
     def extract_4galarms_from_alt(content, site_id="Unknown"):
         alarms = []
 
@@ -857,7 +1065,13 @@ def upload_4g_log_file(request):
             r'\d{6}-\d{2}:\d{2}:\d{2}[+|-]\d{4}\s+([a-fA-F0-9:.]+)',
             content
         )
-        ip = ip_match.group(1) if ip_match else "No IP found"
+        # ip = ip_match.group(1) if ip_match else "No IP found"
+        ip = ip_match.group(1).strip() if ip_match else ""
+        # Sirf IPv6 dot format convert karo
+        if ip and ip.count(".") > 3:
+            ip = ip.replace(".", ":")
+
+        # ip = ip.lower()
 
         alarm_pattern = re.compile(r'''
             (?P<dt>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+
@@ -865,6 +1079,8 @@ def upload_4g_log_file(request):
             (?P<prob>.+?)\s+
             (?P<mo>[^()\n]+)
         ''', re.MULTILINE | re.VERBOSE)
+
+        
 
         no_alarm_keywords = {"external", "security", "ethernet"}
 
@@ -887,7 +1103,7 @@ def upload_4g_log_file(request):
             "Resource": ("GSM Sector Down", "SA", "HW ALARM", "Circle Team"),
             "Link": ("Ri link Down", "SA", "HW ALARM", "Circle Team"),
             "TimeSyncIO": ("Configuration Issue", "NSA", "Soft Alarm", "Noc Team"),
-            "Inconsistent": ("RET Down", "NSA", "HW ALARM", "Circle Team"),
+            # "Inconsistent": ("RET Down", "NSA", "HW ALARM", "Circle Team"),
             "BSC": ("2G Down", "SA", "Soft Alarm", "Noc Team"),
             "HW": ("HW Faulty", "SA", "HW ALARM", "Circle Team"),
             "Fault": ("HW Faulty", "SA", "HW ALARM", "Circle Team"),
@@ -898,6 +1114,12 @@ def upload_4g_log_file(request):
             "Sync": ("GPS Alarm", "SA", "HW ALARM", "Circle Team"),
             "Clock": ("GPS Alarm", "SA", "HW ALARM", "Circle Team"),
             "Service": ("Service Alarm", "SA", "Soft Alarm", "Noc Team"),
+            "Inconsistent": ("Configuration Issue", "NSA", "Soft Alarm", "Noc Team"),
+            "Input":("Input Power alarm", "SA", "Power Alarm", "Circle Team"),
+            "Service": ("VSWR High", "SA", "HW Alarm", "Circle Team"),
+            "EC":("Configuration Issue", "NSA", "HW Alarm", "Noc Team"),
+            "Feature":("Configuration Issue", "NSA", "HW Alarm", "Circle Team"),
+
 
             # Special
             "RX_BRANCH": ("Rx Branch Imbalance Fault", "SA", "HW ALARM", "Circle Team"),
@@ -944,8 +1166,30 @@ def upload_4g_log_file(request):
                     noc_list.append(vals[0]); sa_list.append(vals[1])
                     bucket_list.append(vals[2]); resp_list.append(vals[3])
                     continue
+                
+                if "service" in part:
+                    if "eutrancelltdd" in  mo.lower():
+                        vals = ("VSWR High", "SA", "HW Alarm", "Circle Team")
+                    elif "eutrancellfdd" in  mo.lower():
+                        vals = ("Service Alarm", "SA", "HW ALARM", "Circle Team")
+                    else:
+                        vals = noc_mapping.get("Service")
 
-                # 🔥 Normal mapping
+                    noc_list.append(vals[0]); sa_list.append(vals[1])
+                    bucket_list.append(vals[2]); resp_list.append(vals[3])
+                    continue
+
+                if "inconsistent" in part:
+                    if "ret" in  mo.lower() or "antenna" in  mo.lower():
+                        vals = ("RET Down", "NSA", "HW ALARM", "Circle Team")
+                    else:
+                        vals = noc_mapping.get("Inconsistent")
+
+                    noc_list.append(vals[0]); sa_list.append(vals[1])
+                    bucket_list.append(vals[2]); resp_list.append(vals[3])
+                    continue
+
+                
                 for key, vals in noc_mapping.items():
                     if key in ["RX_BRANCH", "RX_DIVERSITY", "VSWR_REFLECTED"]:
                         continue
@@ -976,6 +1220,9 @@ def upload_4g_log_file(request):
         for m in alarm_pattern.finditer(content):
             prob = m.group("prob").strip()
             mo = m.group("mo").strip()
+            
+            complete_mo = f"{m.group('dt')[5:]} {m.group('sev')} {prob} {mo}"
+ 
 
             if any(k in prob.lower() for k in no_alarm_keywords):
                 alarm_status = "No Alarm"
@@ -983,7 +1230,9 @@ def upload_4g_log_file(request):
             else:
                 alarm_status = "Alarm"
                 noc_remark, sa_nsa, alarm_bucket, responsibility = map_noc_fields(prob, mo)
-
+            data = UniversalAlarm.objects.filter(mplane_ip__iexact=ip).first() if ip else None
+            status_flag = data.status if data else ""
+            
             alarms.append({
                 "IP": ip,
                 "Site ID": site_id,
@@ -992,11 +1241,13 @@ def upload_4g_log_file(request):
                 "Severity": m.group("sev"),
                 "Specific Problem": prob,
                 "MO": mo,
+                "MO Alarm": complete_mo,
                 "Alarm/No Alarm": alarm_status,
                 "Noc Remark": noc_remark,
                 "SA/NSA": sa_nsa,
                 "Alarm Bucket": alarm_bucket,
                 "Responsibility": responsibility,
+                "Alarm Status": status_flag
             })
 
         # ✅ Filter only alarms
@@ -1096,8 +1347,16 @@ def upload_4g_log_file(request):
         with open(log_file_path, 'r', encoding='utf-8', errors='ignore') as file:
             content_4g = file.read()
         ip_match = re.search(r'([\w:.]+)(?=>\s*lt all)', content_4g)
-        ip_4g = ip_match.group(1) if ip_match else "No IP found"
- 
+        # ip_4g = ip_match.group(1) if ip_match else "No IP found"
+
+        ip_4g = ip_match.group(1).strip() if ip_match else ""
+        # Sirf IPv6 dot format convert karo
+        if ip_4g and ip_4g.count(".") > 3:
+            ip_4g = ip_4g.replace(".", ":")
+
+        # ip_4g = ip_4g.lower()
+        
+
         node_match = re.search(r'([\w:-]+)(?=>\s*alt)', content_4g)
         node_id = node_match.group(1) if node_match else "No ID found"
         
@@ -1137,6 +1396,14 @@ def upload_4g_log_file(request):
       
         trx_status_list = extract_all_2g_trx_status(content_4g)
         trx_status_str = "; ".join([f"{trx} - {status}" for trx, status in trx_status_list])
+
+        data = UniversalAlarm.objects.filter(mplane_ip__iexact=ip_4g).first() if ip_4g else None
+        status_flag = data.status if data else ""
+
+        print(data)
+
+
+
         for cell in cells_4g:
             cell_name = cell['Cell Name']
 
@@ -1169,6 +1436,7 @@ def upload_4g_log_file(request):
                 # ('2G Cell(TRX) Status', ''): "; ".join([f"{trx} - {status}" for trx, status in extract_all_2g_trx_status(content_4g)]),
                 ('SYNC', 'Status'): sync_status,
                 ('Band', ''): cell['Band'],
+                ('Alarm Status', ''): status_flag
             
             }
             all_rows.append(row)
@@ -1199,7 +1467,9 @@ def upload_4g_log_file(request):
         ("2G Cell(TRX)", "Status"),
         ("SYNC", "Status"),
         ("Band", ""),
-        ("Plmmr Status", "")
+        ("Plmmr Status", ""),
+        ("Alarm Status", "")
+
         
     ]
     multi_index = pd.MultiIndex.from_tuples(columns)
@@ -1221,13 +1491,15 @@ def upload_4g_log_file(request):
             "Severity": lambda x: " / ".join(sorted(set(x))),
             "Specific Problem": lambda x: " / ".join(sorted(set(x))),
             "MO": lambda x: " / ".join(sorted(set(x))),
+            "MO Alarm": lambda x: " / ".join(sorted(set(x))),
  
             # ✅ Include all computed columns
             "Alarm/No Alarm": lambda x: " / ".join(sorted(set(x))),
             "Noc Remark": lambda x: " / ".join(sorted(set(filter(None, x)))),
             "SA/NSA": lambda x: " / ".join(sorted(set(filter(None, x)))),
             "Alarm Bucket": lambda x: " / ".join(sorted(set(filter(None, x)))),
-            "Responsibility": lambda x: " / ".join(sorted(set(filter(None, x))))
+            "Responsibility": lambda x: " / ".join(sorted(set(filter(None, x)))),
+            "Alarm Status": lambda x: " / ".join(sorted(set(filter(None, x))))
         }).reset_index()
  
         df_alarms = agg_alarms
@@ -1237,14 +1509,14 @@ def upload_4g_log_file(request):
             "IP", "Site ID", "Node ID", "Date & Time", "Severity",
             "Specific Problem", "MO",
             "Alarm/No Alarm", "Noc Remark", "SA/NSA",
-            "Alarm Bucket", "Responsibility"
+            "Alarm Bucket", "Responsibility","Alarm Status"
         ])
 
 
     if site_down:
         site_down_df = pd.DataFrame(site_down).drop_duplicates()
     else:
-        site_down_df = pd.DataFrame(columns=["IP Address", "Status"])
+        site_down_df = pd.DataFrame(columns=["Site ID","Mplane IP","Remark", "Status"])
    
 
     circles = sorted(set(
@@ -1259,16 +1531,24 @@ def upload_4g_log_file(request):
     elif len(circles) > 1:
         circle_name = "".join(circles)
     else:
-        circle_name = circles[0]    
+        circle_name = circles[0] 
+
+    df_alarms["MO Alarm"] = df_alarms["MO Alarm"].apply(lambda val: " / ".join([
+        re.sub(r"^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s+[A-Za-z]\s+", "", i.strip())
+        for i in val.split(" / ")
+    ]))
+    
+    df_alarms.drop(columns=["MO"], inplace=True)
+    
     output_filename = f"4G_Alarm_Logs_{circle}.xlsx"
     output_path = os.path.join(circle_based_output_path, output_filename)
     ##################################
     # with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
     with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
         df_4g.to_excel(writer, index=False, sheet_name="4G Cells")
-        df_alarms.to_excel(writer, index=False, sheet_name="Alarms")
-        site_down_df.to_excel(writer, sheet_name="Site Down", index=False)
-        format_excel_sheet(writer, 'Alarms', df_alarms ,)
+        df_alarms.to_excel(writer, index=False, sheet_name="4G Alarms")
+        site_down_df.to_excel(writer, sheet_name="4G Site Down", index=False)
+        format_excel_sheet(writer, '4G Alarms', df_alarms ,)
  
     # After saving Excel:
     relative_path = os.path.relpath(output_path, MEDIA_ROOT)
@@ -1330,3 +1610,8 @@ def upload_4g_log_file(request):
         "download_link": download_link,
         "status": True
     }, status=200)
+
+
+
+
+
