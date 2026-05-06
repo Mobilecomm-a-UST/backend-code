@@ -101,6 +101,7 @@ urlpatterns = [
     path('nokia/',include("Noika_Slicing.urls")),
     path("noika2G/",include("noika2G_tool.urls")),
     path("payload_traffic/",include("payload_traffic_tool.urls")),
+    path("performance_idploy/",include("performance_idploy.urls")),
 
 ]
 
