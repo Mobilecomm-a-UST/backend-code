@@ -62,7 +62,7 @@ class AlokTrackerModel(models.Model):
     # mw_issue_start_date = models.DateField(null=True, blank=True)
     # mw_issue_close_date = models.DateField(null=True, blank=True)
 
-    detailed_remarks = models.CharField(max_length=100, null=True, blank=True)
+    detailed_remarks = models.TextField( null=True, blank=True)
     # manual_history = models.CharField(max_length=100, null=True, blank=True)
 
     # issue = models.CharField(max_length=100, null=True, blank=True)
