@@ -1,82 +1,3 @@
-#from django.shortcuts import render
-#import os
-#from project_pat.settings import MEDIA_ROOT, MEDIA_URL
-#from rest_framework.decorators import api_view
-#from rest_framework.response import Response
-#from rest_framework import status
-#import pandas as pd
-#from openpyxl.utils import get_column_letter
-#from datetime import datetime
-#from project_pat.settings import MEDIA_ROOT, MEDIA_URL
-
-
-r"""# Create your views here.
-main_folder=os.path.join(MEDIA_ROOT, "performance_idploy")
-output_path = os.path.join(main_folder, "input_file")
-os.makedirs(output_path, exist_ok=True)
-
-@api_view(['POST'])
-def upload_ideploy_dump(request):
-    idploy_data_path = os.path.join(main_folder, "input_file")
-    os.makedirs(output_path, exist_ok=True)
-    files = request.FILES.getlist('file')
-    if not files:
-        return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    for f in files:
-        file_path = os.path.join(idploy_data_path, f.name)
-        with open(file_path, 'wb+') as destination:
-            for chunk in f.chunks():
-                destination.write(chunk)
-
-#logic to read file---  
-        
-        df = pd.read_csv(file_path, low_memory=False)
-        df.columns = df.columns.str.strip()
-
-        required = ["Circle","On Air Date","Performance AT Offered Date"]
-        missing = [c for c in required if c not in df.columns]
-        if missing:
-            return Response({'status': False, 'message': f'Missing columns: {missing}'},
-        status=status.HTTP_400_BAD_REQUEST)
-
-        df["On Air Date"] = pd.to_datetime(df["On Air Date"], dayfirst=True, errors="coerce")
-        df = df.dropna(subset=["On Air Date"])
-
-@api_view('GET')
-def get_cycle_month(date):
-
-#   Custom cycle:
-#   26 Dec 2025 → 25 Jan 2026 = Dec 2025
-    
-    if date.day >= 26:
-        return date.strftime("%b%Y")
-    else:
-        prev_month = date.replace(day=1) - pd.Timedelta(days=1)
-        return prev_month.strftime("%b%Y")
-    
-def categorise_date(diff):
-    if diff >= 12:
-        return  ">=12 days"
-    elif 13 <= diff <= 21:
-        return "32-12"
-    
-    
-    
-    
-
-    return Response({
-        'status': True,
-        'message': 'Files processed successfully'
-    })
-        
-"""
-
-
-
-
-
-
 import os
 import pandas as pd
 from datetime import date
@@ -90,7 +11,7 @@ from django.http import FileResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from project_pat.settings import MEDIA_ROOT, MEDIA_URL
+from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 from django.shortcuts import render
 
 # ─────────────────────────────────────────────
@@ -206,44 +127,108 @@ def _validate_file(filepath):
     return df, None
 
 
-@api_view(['POST'])
+@api_view(['POST', 'GET', 'DELETE'])
 def upload_file(request):
-    """
-    POST /idploy/upload/
-    multipart/form-data, key = 'file'
-    Accepts .xlsx, .xls, .csv
-    Replaces any previously uploaded file.
-    """
-    files = request.FILES.getlist('file')
-    if not files:
-        return Response(
-            {'error': "No file uploaded. Send multipart/form-data with key 'file'."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    try:
+        os.makedirs(input_path, exist_ok=True)
+        os.makedirs(output_path, exist_ok=True)
 
-    uploaded = files[0]
-    ext      = os.path.splitext(uploaded.name)[1].lower()
-    if ext not in ('.xlsx', '.xls', '.csv'):
-        return Response(
-            {'error': f"Unsupported type '{ext}'. Use .xlsx, .xls, or .csv."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        if request.method == 'POST':
+            files = request.FILES.getlist('file')
+            if not files:
+                return Response(
+                    {'error': 'No files uploaded'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-    _clear_old_files()
+            uploaded = files[0]
+            ext      = os.path.splitext(uploaded.name)[1].lower()
+            if ext not in ('.xlsx', '.xls', '.csv'):
+                return Response(
+                    {'error': f"Unsupported type '{ext}'. Use .xlsx, .xls, or .csv."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-    save_path = _save_uploaded_file(uploaded)
-    df, error = _validate_file(save_path)
+            _clear_old_files()
 
-    if error:
-        os.remove(save_path)
-        return Response({'error': error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            save_path = _save_uploaded_file(uploaded)
+            df, error = _validate_file(save_path)
 
-    return Response({
-        'message':   'File uploaded successfully.',
-        'filename':  uploaded.name,
-        'rows_read': len(df),
-        'next_step': 'GET /idploy/months/ to see available date ranges',
-    }, status=status.HTTP_200_OK)
+            if error:
+                os.remove(save_path)
+                return Response({'error': error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+            return Response({
+                'status':    True,
+                'message':   'File saved successfully',
+                'filename':  uploaded.name,
+                'rows_read': len(df),
+            }, status=status.HTTP_200_OK)
+
+
+        elif request.method == 'GET':
+            # check input file
+            input_file_info = None
+            if os.path.exists(input_path):
+                input_files = os.listdir(input_path)
+                if input_files:
+                    input_file_info = {
+                        'filename': input_files[0],
+                        'status':   'ready',
+                    }
+
+            # check output files
+            output_files = []
+
+            offered_file = os.path.join(output_path, "output_Offered Vs OA TAT.xlsx")
+            status_file  = os.path.join(output_path, "output_Performance vs OA TAT.xlsx")
+
+            if os.path.exists(offered_file):
+                output_files.append({
+                    'report_type':  'offered',
+                    'filename':     'output_Offered Vs OA TAT.xlsx',
+                    'download_url': request.build_absolute_uri(
+                        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/output_Offered Vs OA TAT.xlsx"
+                    ),
+                })
+
+            if os.path.exists(status_file):
+                output_files.append({
+                    'report_type':  'status',
+                    'filename':     'output_Performance vs OA TAT.xlsx',
+                    'download_url': request.build_absolute_uri(
+                        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/output_Performance vs OA TAT.xlsx"
+                    ),
+                })
+
+            return Response({
+                'status':       True,
+                'message':      'Files found' if input_file_info else 'No files found',
+                'input_file':   input_file_info,
+                'output_files': output_files,
+            }, status=status.HTTP_200_OK)
+
+
+        elif request.method == 'DELETE':
+            if not os.path.exists(input_path) and not os.path.exists(output_path):
+                return Response(
+                    {'error': 'Folder does not exist'},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            deleted_files = _delete_all_files()
+
+            return Response({
+                'status':        True,
+                'message':       'Files deleted successfully',
+                'deleted_files': deleted_files,
+            }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
 
 
 # ─────────────────────────────────────────────
@@ -447,6 +432,10 @@ def _process_data(df, month_label, layer_case, date_col='Performance AT Offered 
         pending = int((df_pending['Circle'] == circle).sum())
         total   = sum(row.values()) + pending
 
+        pct_lt12  = round(
+            row['<=12days'] / total * 100, 1
+        ) if total > 0 else 0.0
+
         pct_lt21  = round(
             (row['<=12days'] + row['13-21days']) / total * 100, 1
         ) if total > 0 else 0.0
@@ -459,6 +448,7 @@ def _process_data(df, month_label, layer_case, date_col='Performance AT Offered 
             **row,
             'Pending':  pending,
             'Total':    total,
+            '%<12':     pct_lt12,
             '%<21':     pct_lt21,
             '%<22-30':  pct_22_30,
         }
@@ -467,6 +457,10 @@ def _process_data(df, month_label, layer_case, date_col='Performance AT Offered 
             grand[cat] += row[cat]
         grand_pending += pending
         grand_total   += total
+
+    grand_pct_lt12  = round(
+        grand['<=12days'] / grand_total * 100, 1
+    ) if grand_total > 0 else 0.0
 
     grand_pct_lt21  = round(
         (grand['<=12days'] + grand['13-21days']) / grand_total * 100, 1
@@ -485,6 +479,7 @@ def _process_data(df, month_label, layer_case, date_col='Performance AT Offered 
             **grand,
             'Pending':  grand_pending,
             'Total':    grand_total,
+            '%<12':     grand_pct_lt12,
             '%<21':     grand_pct_lt21,
             '%<22-30':  grand_pct_22_30,
         },
@@ -496,7 +491,7 @@ def _write_sheet(ws, result, thin):
     Write data into a single worksheet.
     Called once per layer case — 4G, 5G, 4G+5G.
     """
-    ALL_COLS = CATEGORIES + ['Pending', 'Total', '%<21', '%<22-30']
+    ALL_COLS = CATEGORIES + ['Pending', 'Total','%<12', '%<21', '%<22-30']
 
     def _hdr_cell(cell, value, bg=HEADER_BG, fg=HEADER_FG):
         cell.value     = value
@@ -514,7 +509,7 @@ def _write_sheet(ws, result, thin):
             cell.fill = PatternFill('solid', start_color=bg)
 
     # Row 1 — month label spanning all columns A to I
-    ws.merge_cells('A1:I1')
+    ws.merge_cells('A1:J1')
     _hdr_cell(ws['A1'], result['month'])
 
     # Row 2 — column headers
@@ -542,7 +537,7 @@ def _write_sheet(ws, result, thin):
     _data_cell(ws.cell(row=row, column=1), 'Grand Total', bold=True, bg=TOTAL_BG)
     for col_idx, col_name in enumerate(ALL_COLS, start=2):
         val = grand.get(col_name)
-        if col_name not in ('%<21', '%<22-30', 'Total') and val == 0:
+        if col_name not in ('%<12','%<21', '%<22-30', 'Total') and val == 0:
             val = None
         _data_cell(ws.cell(row=row, column=col_idx), val, bold=True, bg=TOTAL_BG)
 
@@ -555,8 +550,9 @@ def _write_sheet(ws, result, thin):
         'E': 10,   # >30days
         'F': 10,   # Pending
         'G': 8,    # Total
-        'H': 8,    # %<21
-        'I': 10,   # %<22-30
+        'H': 8,    # %<12 
+        'I': 8,    # %<21
+        'J': 10,   # %<22-30
     }
     for col_letter, width in col_widths.items():
         ws.column_dimensions[col_letter].width = width
@@ -728,7 +724,6 @@ def generate_performance(request):
         },
         'download_url': download_url,
     }, status=status.HTTP_200_OK)
-
 
 # ─────────────────────────────────────────────
 # API 4 — CLEANUP
