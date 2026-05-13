@@ -2831,57 +2831,96 @@ gs-
 
 #######################MME############################################
 
-crn ENodeBFunction=1,TermPointToMme=MME_NEW1
-additionalCnRef
-administrativeState 1
-dcnType 0
-domainName
-ipAddress1 10.61.126.218
-ipAddress2 10.61.126.219
-ipv6Address1 ::
-ipv6Address2 ::
-mmeSupportLegacyLte true
-mmeSupportNbIoT false
-end
+                                                                                                                                                                                 
+gs+                                                                                                                                                                               
+                                                                                                                                                                                  
+crn ENodeBFunction=1,TermPointToMme=MME_NEW1                                                                                                                                      
+additionalCnRef                                                                                                                                                                   
+administrativeState 1                                                                                                                                                             
+dcnType 0                                                                                                                                                                         
+domainName                                                                                                                                                                        
+ipAddress1 10.61.126.218                                                                                                                                                          
+ipAddress2 10.61.126.219                                                                                                                                                          
+ipv6Address1 ::                                                                                                                                                                   
+ipv6Address2 ::                                                                                                                                                                   
+mmeSupportLegacyLte true                                                                                                                                                          
+mmeSupportNbIoT false                                                                                                                                                             
+                                                                                                                                                             
+end                                                                                                                                                                               
+                                                                                                                                                                                  
+crn ENodeBFunction=1,TermPointToMme=MME_JRT                                                                                                                                       
+additionalCnRef                                                                                                                                                                   
+administrativeState 1                                                                                                                                                             
+dcnType 0                                                                                                                                                                         
+domainName                                                                                                                                                                        
+ipAddress1 10.50.47.171                                                                                                                                                           
+ipAddress2 10.50.47.172                                                                                                                                                           
+ipv6Address1 ::                                                                                                                                                                   
+ipv6Address2 ::                                                                                                                                                                   
+mmeSupportLegacyLte true                                                                                                                                                          
+mmeSupportNbIoT false                                                                                                                                                             
+                                                                                                                                                             
+end                                                                                                                                                                               
+                                                                                                                                                                                  
+crn ENodeBFunction=1,TermPointToMme=MME_2                                                                                                                                      
+additionalCnRef                                                                                                                                                                   
+administrativeState 1                                                                                                                                                             
+dcnType 0                                                                                                                                                                         
+domainName                                                                                                                                                                        
+ipAddress1 10.50.46.171                                                                                                                                                           
+ipAddress2 10.50.46.172                                                                                                                                                           
+ipv6Address1 ::                                                                                                                                                                   
+ipv6Address2 ::                                                                                                                                                                   
+mmeSupportLegacyLte true                                                                                                                                                          
+mmeSupportNbIoT false                                                                                                                                                             
+                                                                                                                                                             
+end                                                                                                                                                                               
+                                                                                                                                                                                  
+crn ENodeBFunction=1,TermPointToMme=AS_MMENEW4                                                                                                                                    
+additionalCnRef                                                                                                                                                                   
+administrativeState 1                                                                                                                                                             
+dcnType 0                                                                                                                                                                         
+domainName                                                                                                                                                                        
+ipAddress1 10.1.169.224                                                                                                                                                           
+ipAddress2 10.1.169.225                                                                                                                                                           
+ipv6Address1 ::                                                                                                                                                                   
+ipv6Address2 ::                                                                                                                                                                   
+mmeSupportLegacyLte true                                                                                                                                                          
+mmeSupportNbIoT false                                                                                                                                                             
+                                                                                                                                                             
+end                                                                                                                                                                               
+                                                                                                                                                                                  
+crn ENodeBFunction=1,TermPointToMme=AS_MME06                                                                                                                                      
+additionalCnRef                                                                                                                                                                   
+administrativeState 1                                                                                                                                                             
+dcnType 0                                                                                                                                                                         
+domainName                                                                                                                                                                        
+ipAddress1 10.103.139.7                                                                                                                                                           
+ipAddress2 10.103.139.9                                                                                                                                                           
+ipv6Address1 ::                                                                                                                                                                   
+ipv6Address2 ::                                                                                                                                                                   
+mmeSupportLegacyLte true                                                                                                                                                          
+mmeSupportNbIoT false                                                                                                                                                             
+                                                                                                                                                             
+end                                                                                                                                                                               
+gs-   
 
-crn ENodeBFunction=1,TermPointToMme=MME_JHRT
-additionalCnRef
-administrativeState 1
-dcnType 0
-domainName
-ipAddress1 10.50.47.171
-ipAddress2 10.50.47.172
-ipv6Address1 ::
-ipv6Address2 ::
-mmeSupportLegacyLte true
-mmeSupportNbIoT false
-end
 
-crn ENodeBFunction=1,TermPointToMme=MME_2
-additionalCnRef
-administrativeState 1
-dcnType 0
-domainName
-ipAddress1 10.50.46.171
-ipAddress2 10.50.46.172
-ipv6Address1 ::
-ipv6Address2 ::
-mmeSupportLegacyLte true
-mmeSupportNbIoT false
-end
-
-crn ENodeBFunction=1,TermPointToMme=AS_MMENEW4
-additionalCnRef
-administrativeState 1
-dcnType 0
-domainName
-ipAddress1 10.1.169.224
-ipAddress2 10.1.169.225
-ipv6Address1 ::
-ipv6Address2 ::
-mmeSupportLegacyLte true
-mmeSupportNbIoT false
-end
+crn ENodeBFunction=1,TermPointToMme=ERIC_AS_MME_5                                                                                                                                      
+additionalCnRef                                                                                                                                                                   
+administrativeState 1                                                                                                                                                             
+dcnType 0                                                                                                                                                                         
+domainName                                                                                                                                                                        
+ipAddress1 10.1.171.81                                                                                                                                                          
+ipAddress2 10.1.171.83                                                                                                                                                           
+ipv6Address1 ::                                                                                                                                                                   
+ipv6Address2 ::                                                                                                                                                                   
+mmeSupportLegacyLte true                                                                                                                                                          
+mmeSupportNbIoT false                                                                                                                                                             
+                                                                                                                                                             
+end                                                                                                                                                                               
+gs-                                                                                                                                                                            
+    
 
 """
 

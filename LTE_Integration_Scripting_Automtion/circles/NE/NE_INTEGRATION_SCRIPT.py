@@ -2058,50 +2058,65 @@ confb-
 gs-
 
 #######################MME############################################
+                                                                                                                                                                             
+gs+
 
-                                                                                                                                                                                 
-gs+                                                                                                                                                                               
-                                                                                                                                                                                  
-crn ENodeBFunction=1,TermPointToMme=ERIC_NE_MME_4                                                                                                                                 
-additionalCnRef                                                                                                                                                                   
-administrativeState 1                                                                                                                                                             
-dcnType 0                                                                                                                                                                         
-domainName                                                                                                                                                                        
-ipAddress1 10.103.39.75                                                                                                                                                           
-ipAddress2 10.103.39.77                                                                                                                                                           
-ipv6Address1 ::                                                                                                                                                                   
-ipv6Address2 ::                                                                                                                                                                   
-mmeSupportLegacyLte true                                                                                                                                                          
-mmeSupportNbIoT false                                                                                                                                                             
-end                                                                                                                                                                               
-                                                                                                                                                                                  
-crn ENodeBFunction=1,TermPointToMme=ERIC_NE_MME_2                                                                                                                                 
-additionalCnRef                                                                                                                                                                   
-administrativeState 1                                                                                                                                                             
-dcnType 0                                                                                                                                                                         
-domainName                                                                                                                                                                        
-ipAddress1 10.1.171.65                                                                                                                                                            
-ipAddress2 10.1.171.66                                                                                                                                                            
-ipv6Address1 ::                                                                                                                                                                   
-ipv6Address2 ::                                                                                                                                                                   
-mmeSupportLegacyLte true                                                                                                                                                          
-mmeSupportNbIoT false                                                                                                                                                             
-end                                                                                                                                                                               
-                                                                                                                                                                                  
-crn ENodeBFunction=1,TermPointToMme=ERIC_NE_MME_1                                                                                                                                 
-additionalCnRef                                                                                                                                                                   
-administrativeState 1                                                                                                                                                             
-dcnType 0                                                                                                                                                                         
-domainName                                                                                                                                                                        
-ipAddress1 10.1.161.125                                                                                                                                                           
-ipAddress2 10.1.161.126                                                                                                                                                           
-ipv6Address1 ::                                                                                                                                                                   
-ipv6Address2 ::                                                                                                                                                                   
-mmeSupportLegacyLte true                                                                                                                                                          
-mmeSupportNbIoT false                                                                                                                                                             
-end                                                                                                                                                                               
-gs-                                                                                                                                                                               
-        
+crn ENodeBFunction=1,TermPointToMme=ERIC_NE_MME_4
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.103.39.75
+ipAddress2 10.103.39.77
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+pwsRestartHandling 1
+end
+
+crn ENodeBFunction=1,TermPointToMme=ERIC_NE_MME_3
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.103.39.115
+ipAddress2 10.103.39.117
+ipv6Address1 2401:4900:50:8::1:361
+ipv6Address2 2401:4900:50:8::1:363
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+pwsRestartHandling 1
+end
+
+crn ENodeBFunction=1,TermPointToMme=ERIC_NE_MME_2
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.1.171.65
+ipAddress2 10.1.171.66
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+pwsRestartHandling 1
+end
+
+crn ENodeBFunction=1,TermPointToMme=ERIC_NE_MME_1
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.1.161.125
+ipAddress2 10.1.161.126
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+pwsRestartHandling 1
+end
+gs-        
 
 """
 
