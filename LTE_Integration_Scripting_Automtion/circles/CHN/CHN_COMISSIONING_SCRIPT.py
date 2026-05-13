@@ -1,4 +1,4 @@
-TN_SITEBASIC_SCRIPT_BBU6630_BBU6631 = """
+CHN_SITEBASIC_SCRIPT_BBU6630_BBU6631 = """
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
     <capability>urn:ietf:params:netconf:base:1.0</capability>
@@ -291,7 +291,7 @@ TN_SITEBASIC_SCRIPT_BBU6630_BBU6631 = """
 ]]>]]>
 """
 
-TN_SITEBASIC_SCRIPT_BBU6651 = """
+CHN_SITEBASIC_SCRIPT_BBU6651 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
@@ -621,7 +621,7 @@ TN_SITEBASIC_SCRIPT_BBU6651 = """
 
 """
 
-TN_SITEEQUIPMENT_SCRIPT = """
+CHN_SITEEQUIPMENT_SCRIPT = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
