@@ -6,6 +6,7 @@ import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 
+
 main_folder=os.path.join(MEDIA_ROOT, "Payload_traffic")
 output_path = os.path.join(main_folder, "Report")
 os.makedirs(output_path, exist_ok=True)
@@ -58,7 +59,7 @@ def calculate_site_traffic(site_id, on_air_date_str):
     cursor.execute(f"""
         SELECT traffic_date, SUM(traffic_value)
         FROM payload_traffic_4g
-        WHERE site_id = ?
+        WHERE site_id = %s
         AND traffic_date IN ({placeholders})
         GROUP BY traffic_date
     """, [site_id] + date_strings)
@@ -67,13 +68,13 @@ def calculate_site_traffic(site_id, on_air_date_str):
     map_4g = {str(row[0]): round(row[1], 6) for row in rows_4g}
 
     # ✅ FIXED TABLE NAME
+    # FIXED — all %s
     cursor.execute(f"""
-        SELECT traffic_date, SUM(traffic_value)
-        FROM payload_traffic_5g
-        WHERE site_id = ?
-        AND traffic_date IN ({placeholders})
-        GROUP BY traffic_date
-    """, [site_id] + date_strings)
+    SELECT traffic_date, SUM(traffic_value)
+    FROM payload_traffic_4g
+    WHERE site_id = %s
+    AND traffic_date IN ({placeholders})
+    GROUP BY traffic_date""", [site_id] + date_strings)
 
     rows_5g = cursor.fetchall()
     map_5g = {str(row[0]): round(row[1], 6) for row in rows_5g}
