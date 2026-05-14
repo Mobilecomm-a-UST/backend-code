@@ -1917,19 +1917,9 @@ end
 
 crn ENodeBFunction=1
 eNodeBPlmnId mcc=404,mnc=16,mncLength=2
-alignTtiBundWUlTrigSinr 1
-dscpLabel 46
 eNBId {eNBId}
-gtpuErrorIndicationDscp 46
-measuringEcgiWithAgActive false
-rrcConnReestActive true
-s1GtpuEchoDscp 46
 sctpRef Transport=1,SctpEndpoint=1
-timeAndPhaseSynchAlignment true
-tRelocOverall 5
-tS1HoCancelTimer 3
 upIpAddressRef Transport=1,Router=LTEUP,InterfaceIPv4={tnPortId}_UP,AddressIPv4={tnPortId}_UP
-x2GtpuEchoDscp 14
 end
 #END ENodeBFunction=1 --------------------
 
@@ -2058,7 +2048,7 @@ confb-
 gs-
 
 #######################MME############################################
-                                                                                                                                                                             
+
 gs+
 
 crn ENodeBFunction=1,TermPointToMme=ERIC_NE_MME_4
@@ -2116,7 +2106,8 @@ mmeSupportLegacyLte true
 mmeSupportNbIoT false
 pwsRestartHandling 1
 end
-gs-        
+gs-                                                                                                                                                                           
+        
 
 """
 
@@ -3810,7 +3801,6 @@ hiPrioDetEnabled false
 interfaceSupervision 0
 intraFreqMCCellProfileRef IntraFreqMC=1,IntraFreqMCCellProfile=Default
 mcfbCellProfileRef Mcfb=1,McfbCellProfile=Default
-mcpcNrdcPSCellEnabled false
 mcpcNrdcPSCellProfileRef
 mcpcPCellEnabled false
 mcpcPCellProfileRef Mcpc=1,McpcPCellProfile=Default
@@ -4003,11 +3993,6 @@ dlScgCritQualThresh
 dlScgLowQualHyst 50
 dlScgLowQualThresh 50
 dlScgNoDataAcsiPeriodicity 300
-ulCgSwitchMode 1
-ulScgCritQualHyst 100
-ulScgCritQualThresh
-ulScgLowQualHyst 60
-ulScgLowQualThresh 170
 userLabel
 end
 
