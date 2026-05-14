@@ -162,9 +162,9 @@ def old_del_trend(request):
         os.makedirs(door_path, exist_ok=True)
 
     for x in kpi:
-        df_raw_kpi_4G[x] = df_raw_kpi_4G[x].replace(
-            to_replace=".*", value=0, regex=True
-        )
+        df_raw_kpi_4G[x] = (
+            df_raw_kpi_4G[x] .astype(str).str.replace(",", "").str.strip().replace({"-": 0, "na": 0, "N/A": 0}))
+        df_raw_kpi_4G[x] = pd.to_numeric(df_raw_kpi_4G[x], errors="coerce").fillna(0)
 
     df_raw_kpi_4G["Short name"].fillna(inplace=True, method="ffill")
     df_raw_kpi_4G.rename(columns={"Unnamed: 1": "date"}, inplace=True)
@@ -232,7 +232,7 @@ def old_del_trend(request):
 
     def perticular_tech(tech, site_list):
 
-        print(type(df_raw_kpi_4G['ENBID'][0]))
+        # print(type(df_raw_kpi_4G['ENBID'][0]))
         print(df_raw_kpi_4G.columns)
         
 
@@ -352,73 +352,73 @@ def old_del_trend(request):
     for kpi_name in kpi:
         if kpi_name == "MV_RRC Setup Success Rate":
             overwrite(pivot_fdd, kpi_name, "N", trend_ws)
-
+ 
         if kpi_name == "ERAB Setup Success Rate [CDBH]":
             overwrite(pivot_fdd, kpi_name, "T", trend_ws)
-
+ 
         if kpi_name == "PS Drop Call Rate % [CBBH]":
             overwrite(pivot_fdd, kpi_name, "Z", trend_ws)
-
+ 
         if kpi_name == "MV_DL User Throughput_Kbps [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AF", trend_ws)
-
+ 
         if kpi_name == "MV_UL User Throughput_Kbps [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AL", trend_ws)
-
+ 
         if kpi_name == "PS handover success rate [LTE Intra System] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AQ", trend_ws)
-
+ 
         if kpi_name == "PS handover success rate [LTE Inter System] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AW", trend_ws)
-
+ 
         if kpi_name == "MV_4G Data Volume_GB":
             overwrite(pivot_fdd, kpi_name, "DW", trend_ws)
-
+ 
         if kpi_name == "MV_CSFB Redirection Success Rate [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BH", trend_ws)
-
+ 
         if kpi_name == "RRC Paging Discard Ratio":
             overwrite(pivot_fdd, kpi_name, "BN", trend_ws)
-
+ 
         if kpi_name == "MV_Average number of used DL PRBs [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BS", trend_ws)
-
+ 
         if kpi_name == "VoLTE Call Setup Success rate [CBBH]":
             overwrite(pivot_fdd, kpi_name, "BX", trend_ws)
-
+ 
         if kpi_name == "VoLTE Drop Call Rate [CBBH]]":
             overwrite(pivot_fdd, kpi_name, "CD", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Packet Loss DL [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CJ", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Packet Loss UL [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CP", trend_ws)
-
+ 
         if kpi_name == "VoLTE Intra HOSR [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CV", trend_ws)
-
+ 
         if kpi_name == "VoLTE InterF HOSR Exec [CBBH]":
             overwrite(pivot_fdd, kpi_name, "DB", trend_ws)
-
+ 
         if kpi_name == "VoLTE SRVCC SR Exec [CBBH]":
             overwrite(pivot_fdd, kpi_name, "DH", trend_ws)
-
+ 
         if kpi_name == "VoLTE Traffic [CDBH]":
             overwrite(pivot_fdd, kpi_name, "DM", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Traffic":
             overwrite(pivot_fdd, kpi_name, "DR", trend_ws)
-
+ 
         if kpi_name == "4G Data Volume [GB] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BC", trend_ws)
-
+ 
         if kpi_name == "UL RSSI [CBBH]":
             overwrite(pivot_fdd, kpi_name, "EB", trend_ws)
-
+ 
         if kpi_name == "MV_E-UTRAN Average CQI [CDBH]":
             overwrite(pivot_fdd, kpi_name, "EG", trend_ws)
-
+ 
     # for tdd
     pivot_fdd = perticular_tech(["_T1_", "_T2_"], site_list)[1]
     PsOs_blnk_temp = os.path.join(
@@ -431,229 +431,229 @@ def old_del_trend(request):
     for kpi_name in kpi:
         if kpi_name == "MV_RRC Setup Success Rate":
             overwrite(pivot_fdd, kpi_name, "N", trend_ws)
-
+ 
         if kpi_name == "ERAB Setup Success Rate [CDBH]":
             overwrite(pivot_fdd, kpi_name, "T", trend_ws)
-
+ 
         if kpi_name == "PS Drop Call Rate % [CBBH]":
             overwrite(pivot_fdd, kpi_name, "Z", trend_ws)
-
+ 
         if kpi_name == "MV_DL User Throughput_Kbps [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AF", trend_ws)
-
+ 
         if kpi_name == "MV_UL User Throughput_Kbps [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AL", trend_ws)
-
+ 
         if kpi_name == "PS handover success rate [LTE Intra System] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AQ", trend_ws)
-
+ 
         if kpi_name == "PS handover success rate [LTE Inter System] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AW", trend_ws)
-
+ 
         if kpi_name == "MV_4G Data Volume_GB":
             overwrite(pivot_fdd, kpi_name, "DW", trend_ws)
-
+ 
         if kpi_name == "MV_CSFB Redirection Success Rate [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BH", trend_ws)
-
+ 
         if kpi_name == "RRC Paging Discard Ratio":
             overwrite(pivot_fdd, kpi_name, "BN", trend_ws)
-
+ 
         if kpi_name == "MV_Average number of used DL PRBs [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BS", trend_ws)
-
+ 
         if kpi_name == "VoLTE Call Setup Success rate [CBBH]":
             overwrite(pivot_fdd, kpi_name, "BX", trend_ws)
-
+ 
         if kpi_name == "VoLTE Drop Call Rate [CBBH]]":
             overwrite(pivot_fdd, kpi_name, "CD", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Packet Loss DL [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CJ", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Packet Loss UL [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CP", trend_ws)
-
+ 
         if kpi_name == "VoLTE Intra HOSR [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CV", trend_ws)
-
+ 
         if kpi_name == "VoLTE InterF HOSR Exec [CBBH]":
             overwrite(pivot_fdd, kpi_name, "DB", trend_ws)
-
+ 
         if kpi_name == "VoLTE SRVCC SR Exec [CBBH]":
             overwrite(pivot_fdd, kpi_name, "DH", trend_ws)
-
+ 
         if kpi_name == "VoLTE Traffic [CDBH]":
             overwrite(pivot_fdd, kpi_name, "DM", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Traffic":
-            overwrite(pivot_fdd, kpi_name, "DR", trend_ws)
-
+            overwrite(pivot_fdd, kpi_name, "DR", trend_ws) 
+ 
         if kpi_name == "4G Data Volume [GB] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BC", trend_ws)
-
+ 
         if kpi_name == "UL RSSI [CBBH]":
             overwrite(pivot_fdd, kpi_name, "EB", trend_ws)
-
+ 
         if kpi_name == "MV_E-UTRAN Average CQI [CDBH]":
             overwrite(pivot_fdd, kpi_name, "EG", trend_ws)
-
+ 
     pivot_fdd = perticular_tech(["_F8_"], site_list)[1]
     PsOs_blnk_temp = os.path.join(
         door_path, "template", "DEL KPIs Submission_L900.xlsx"
     )
     path_of_blnk_temp = PsOs_blnk_temp
     trend_wb_L900 = load_workbook(path_of_blnk_temp)
-
+ 
     trend_ws = trend_wb_L900["KPI"]
     for kpi_name in kpi:
         if kpi_name == "MV_RRC Setup Success Rate":
             overwrite(pivot_fdd, kpi_name, "N", trend_ws)
-
+ 
         if kpi_name == "ERAB Setup Success Rate [CDBH]":
             overwrite(pivot_fdd, kpi_name, "T", trend_ws)
-
+ 
         if kpi_name == "PS Drop Call Rate % [CBBH]":
             overwrite(pivot_fdd, kpi_name, "Z", trend_ws)
-
+ 
         if kpi_name == "MV_DL User Throughput_Kbps [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AF", trend_ws)
-
+ 
         if kpi_name == "MV_UL User Throughput_Kbps [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AL", trend_ws)
-
+ 
         if kpi_name == "PS handover success rate [LTE Intra System] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AQ", trend_ws)
-
+ 
         if kpi_name == "PS handover success rate [LTE Inter System] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AW", trend_ws)
-
+ 
         if kpi_name == "MV_4G Data Volume_GB":
             overwrite(pivot_fdd, kpi_name, "DW", trend_ws)
-
+ 
         if kpi_name == "MV_CSFB Redirection Success Rate [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BH", trend_ws)
-
+ 
         if kpi_name == "RRC Paging Discard Ratio":
             overwrite(pivot_fdd, kpi_name, "BN", trend_ws)
-
+ 
         if kpi_name == "MV_Average number of used DL PRBs [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BS", trend_ws)
-
+ 
         if kpi_name == "VoLTE Call Setup Success rate [CBBH]":
             overwrite(pivot_fdd, kpi_name, "BX", trend_ws)
-
+ 
         if kpi_name == "VoLTE Drop Call Rate [CBBH]]":
             overwrite(pivot_fdd, kpi_name, "CD", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Packet Loss DL [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CJ", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Packet Loss UL [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CP", trend_ws)
-
+ 
         if kpi_name == "VoLTE Intra HOSR [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CV", trend_ws)
-
+ 
         if kpi_name == "VoLTE InterF HOSR Exec [CBBH]":
             overwrite(pivot_fdd, kpi_name, "DB", trend_ws)
-
+ 
         if kpi_name == "VoLTE SRVCC SR Exec [CBBH]":
             overwrite(pivot_fdd, kpi_name, "DH", trend_ws)
-
+ 
         if kpi_name == "VoLTE Traffic [CDBH]":
             overwrite(pivot_fdd, kpi_name, "DM", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Traffic":
             overwrite(pivot_fdd, kpi_name, "DR", trend_ws)
-
+ 
         if kpi_name == "4G Data Volume [GB] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BC", trend_ws)
-
+ 
         if kpi_name == "UL RSSI [CBBH]":
             overwrite(pivot_fdd, kpi_name, "EB", trend_ws)
-
+ 
         if kpi_name == "MV_E-UTRAN Average CQI [CDBH]":
             overwrite(pivot_fdd, kpi_name, "EG", trend_ws)
-
+ 
     pivot_fdd = perticular_tech(["_F1_"], site_list)[1]
     PsOs_blnk_temp = os.path.join(
         door_path, "template", "DEL KPIs Submission_L2100.xlsx"
     )
     path_of_blnk_temp = PsOs_blnk_temp
     trend_wb_L2100 = load_workbook(path_of_blnk_temp)
-
+ 
     trend_ws = trend_wb_L2100["KPI"]
     for kpi_name in kpi:
         if kpi_name == "MV_RRC Setup Success Rate":
             overwrite(pivot_fdd, kpi_name, "N", trend_ws)
-
+ 
         if kpi_name == "ERAB Setup Success Rate [CDBH]":
             overwrite(pivot_fdd, kpi_name, "T", trend_ws)
-
+ 
         if kpi_name == "PS Drop Call Rate % [CBBH]":
             overwrite(pivot_fdd, kpi_name, "Z", trend_ws)
-
+ 
         if kpi_name == "MV_DL User Throughput_Kbps [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AF", trend_ws)
-
+ 
         if kpi_name == "MV_UL User Throughput_Kbps [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AL", trend_ws)
-
+ 
         if kpi_name == "PS handover success rate [LTE Intra System] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AQ", trend_ws)
-
+ 
         if kpi_name == "PS handover success rate [LTE Inter System] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "AW", trend_ws)
-
+ 
         if kpi_name == "MV_4G Data Volume_GB":
             overwrite(pivot_fdd, kpi_name, "DW", trend_ws)
-
+ 
         if kpi_name == "MV_CSFB Redirection Success Rate [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BH", trend_ws)
-
+ 
         if kpi_name == "RRC Paging Discard Ratio":
             overwrite(pivot_fdd, kpi_name, "BN", trend_ws)
-
+ 
         if kpi_name == "MV_Average number of used DL PRBs [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BS", trend_ws)
-
+ 
         if kpi_name == "VoLTE Call Setup Success rate [CBBH]":
             overwrite(pivot_fdd, kpi_name, "BX", trend_ws)
-
+ 
         if kpi_name == "VoLTE Drop Call Rate [CBBH]]":
             overwrite(pivot_fdd, kpi_name, "CD", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Packet Loss DL [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CJ", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Packet Loss UL [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CP", trend_ws)
-
+ 
         if kpi_name == "VoLTE Intra HOSR [CBBH]":
             overwrite(pivot_fdd, kpi_name, "CV", trend_ws)
-
+ 
         if kpi_name == "VoLTE InterF HOSR Exec [CBBH]":
             overwrite(pivot_fdd, kpi_name, "DB", trend_ws)
-
+ 
         if kpi_name == "VoLTE SRVCC SR Exec [CBBH]":
             overwrite(pivot_fdd, kpi_name, "DH", trend_ws)
-
+ 
         if kpi_name == "VoLTE Traffic [CDBH]":
             overwrite(pivot_fdd, kpi_name, "DM", trend_ws)
-
+ 
         if kpi_name == "MV_VoLTE Traffic":
             overwrite(pivot_fdd, kpi_name, "DR", trend_ws)
-
+ 
         if kpi_name == "4G Data Volume [GB] [CDBH]":
             overwrite(pivot_fdd, kpi_name, "BC", trend_ws)
-
+ 
         if kpi_name == "UL RSSI [CBBH]":
             overwrite(pivot_fdd, kpi_name, "EB", trend_ws)
-
+ 
         if kpi_name == "MV_E-UTRAN Average CQI [CDBH]":
             overwrite(pivot_fdd, kpi_name, "EG", trend_ws)
-
+ 
     save_wb_L2100 = os.path.join(MEDIA_ROOT,"trends","del","output","toBeZipped","out_DEL KPIs Submission_L2100.xlsx")
 
 
@@ -704,7 +704,7 @@ def old_del_trend(request):
     if not os.path.exists(door_path1):
         os.makedirs(door_path1, exist_ok=True)
 
-    df_raw_kpi_2G["Short name"] = df_raw_kpi_2G["Short name"].fillna(method=("ffill"))
+    df_raw_kpi_2G["Short name"] = df_raw_kpi_2G["Short name"].ffill()
     df_raw_kpi_2G.columns.values[1] = "DATE"
     a = []
     for cell in df_raw_kpi_2G["Short name"]:
@@ -864,42 +864,56 @@ def old_del_trend(request):
     )
     wb.save(save_outputs)
 
+
+
     def get_all_file_paths(directory):
         file_paths = []
 
         for root, directories, files in os.walk(directory):
             for filename in files:
+                # toBeZipped.rar ko skip karo
+                if filename == "toBeZipped.rar":
+                    continue
+
                 filepath = os.path.join(root, filename)
                 file_paths.append(filepath)
 
         return file_paths
 
-    def main1():
-        directory = os.path.join(MEDIA_ROOT, "trends", "del", "output", "toBeZipped")
-        file_paths = get_all_file_paths(directory)
 
-        with ZipFile(
-            os.path.join(
-                MEDIA_ROOT, "trends", "del", "output", "output", "del_output.zip"
-            ),
-            "w",
-        ) as zip:
+    def main1():
+        source_dir = os.path.join(
+            MEDIA_ROOT, "trends", "del", "output", "toBeZipped"
+        )
+
+        zip_path = os.path.join(
+            MEDIA_ROOT, "trends", "del", "output", "output", "del_output.zip"
+        )
+
+        file_paths = get_all_file_paths(source_dir)
+
+        with ZipFile(zip_path, "w") as zipf:
             for file in file_paths:
-                zip.write(file)
+                filename = os.path.basename(file)   # sirf file ka naam
+                zipf.write(file, arcname=filename)  # koi folder nahi
+
 
     main1()
 
     download_path = os.path.join(
-        MEDIA_URL, "trends", "del", "output", "output", "del_output.zip"
+        MEDIA_URL,
+        "trends",
+        "del",
+        "output",
+        "output",
+        "del_output.zip",
     )
-    
-    print("The END--------------------------------------------------------------")
-    return Response(
-        {
-            "status": True,
-            "message": "successfully",
-            "missing_sites_4g": message_4G,
-            "missing_sites_2g": message_2G,
-            "Download_url": download_path,
-        }
-    )
+    print("END Of DEL-Trend Process-----")
+    return Response({
+        "status": True,
+        "message": "successfully",
+        "missing_sites_4g": message_4G,
+        "missing_sites_2g": message_2G,
+        "Download_url": download_path,
+    })
+   
