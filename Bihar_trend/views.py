@@ -1196,29 +1196,22 @@ def old_bih_trend_degrow(request):
 #Bihar Degrow new-----------------------
 @api_view(["POST"])
 def Bihar_degrow(request):
-    pre_file= request.FILES.get("pre_file")
+    pre_file = request.FILES.get("pre_file")
     if not pre_file:
         return Response({"message": "pre file not uploaded"}, status=HTTP_400_BAD_REQUEST)
-    post_file=request.FILES.get("post_file")
+
+    post_file = request.FILES.get("post_file")
     if not post_file:
         return Response({"message": "post file not uploaded"}, status=HTTP_400_BAD_REQUEST)
-    
-    site_list=request.FILES.get("site_list")
-    if not site_list:
-        return Response({"message": "sitelist not uploaded"}, status=HTTP_400_BAD_REQUEST)
-    
 
     base_media_url = os.path.join(MEDIA_ROOT, "Bihar_Degrow")
     output_path = os.path.join(base_media_url, "Final_Output")
     input_folder = os.path.join(base_media_url, "Process_output")
 
-
     os.makedirs(input_folder, exist_ok=True)
     os.makedirs(output_path, exist_ok=True)
-  
-    
 
-#__________________________
+    # ================= PRE FILE =================
     if pre_file.name.lower().endswith(".csv"):
         df_pre = pd.read_csv(pre_file)
     else:
@@ -1226,147 +1219,240 @@ def Bihar_degrow(request):
 
     df_pre.columns = df_pre.columns.str.strip()
 
-    
-
-
-    if post_file.name.lower().endswith(".csv"):
-        df_post= pd.read_csv(post_file)
-    else:
-        df_post= pd.read_excel(post_file)
-    df_post.columns = df_post.columns.str.strip()    
-
-
-    site_df = pd.read_excel(site_list)
-    site_df.columns = site_df.columns.str.strip()
-   
-  #processs for pre file---------  
-    df_pre['Short name']=df_pre['Short name'].ffill()
+    df_pre['Short name'] = df_pre['Short name'].ffill()
     df_pre.rename(columns={"Unnamed: 1": "Date"}, inplace=True)
-    df_pre['Date'] = pd.to_datetime(df_pre['Date'])
+
+    df_pre['Date'] = pd.to_datetime(df_pre['Date'], errors='coerce')
     df_pre = df_pre[df_pre['Date'].notna()]
     df_pre = df_pre.sort_values(["Short name", "Date"])
     df_pre = df_pre.groupby("Short name").tail(5)
-    # df_pre.to_excel("date5_pre.xlsx")
 
-    df_pre["DL User Throughput_Kbps [CDBH]"]=(df_pre["DL User Throughput_Kbps [CDBH]"]/1024)
-    df_pre.rename(columns={"DL User Throughput_Kbps [CDBH]":"DL User Throughput_Mbps [CDBH]"},inplace=True)
+    df_pre["DL User Throughput_Kbps [CDBH]"] = (
+        df_pre["DL User Throughput_Kbps [CDBH]"] / 1024
+    )
+    df_pre.rename(
+        columns={
+            "DL User Throughput_Kbps [CDBH]":
+            "DL User Throughput_Mbps [CDBH]"
+        },
+        inplace=True
+    )
+
     for col in df_pre.columns:
         if df_pre[col].dtype in ['object', 'string']:
             df_pre[col] = df_pre[col].fillna("")
         else:
-            df_pre[col] = df_pre[col].fillna(0)  
+            df_pre[col] = df_pre[col].fillna(0)
 
-  
-    df_pre['band2']=[ band.split('_')[2] if '_' in band else band for band in df_pre['Short name']]
-    df_pre['SITE_ID']=[site.split('_')[-2][:-1] if '_' in site else site for site in df_pre['Short name']]
-    df_pre['CELL_ID']=[site.split('_')[-2] if '_' in str(site) else str(site) for site in df_pre['Short name']]
-    df_pre['band2']=df_pre['band2'].replace(['F1','F3','F8'],['L2100','L1800','L900'])
+    df_pre['band2'] = [
+        band.split('_')[2] if '_' in str(band) else str(band)
+        for band in df_pre['Short name']
+    ]
+
+    df_pre['SITE_ID'] = [
+        site.split('_')[-2][:-1] if '_' in str(site) else str(site)
+        for site in df_pre['Short name']
+    ]
+
+    df_pre['CELL_ID'] = [
+        site.split('_')[-2] if '_' in str(site) else str(site)
+        for site in df_pre['Short name']
+    ]
+
+    df_pre['band2'] = df_pre['band2'].replace(
+        ['F1', 'F3', 'F8'],
+        ['L2100', 'L1800', 'L900']
+    )
 
     df_pre['tech'] = df_pre['band2'].astype(str).str.upper().apply(
-    lambda x: 'TDDC2' if 'T1' in x else ('TDDC1' if 'T2' in x else x)
-)
-    df_pre=df_pre.drop('band2',axis=1)
-# pre filter with site id---- and make pivot
-    filter_pre = df_pre[df_pre["SITE_ID"].isin(site_df["Site_ID"])]
-    # print(filter_pre)
-    pivot_pre=filter_pre.pivot_table(index="Date",columns=['Short name','tech','SITE_ID','CELL_ID','4G_ECGI'],aggfunc={'MV_4G Data Volume_GB':'sum',"VoLTE Traffic_24Hrs":'sum','DL User Throughput_Mbps [CDBH]':'mean',
-                                                                                'RRC Setup Success Rate [CDBH]':'mean','VoLTE DCR [CBBH]':'mean','ERAB Setup Success Rate [CDBH]':'mean',
-                                                                            'DL PRB Utilization [CDBH]':'mean','UL User Throughput_Kbps [CUBH]':'mean'})
-    pivot_pre=pivot_pre.T
-    rounded_df_pre=pivot_pre.round(2)
-    pre_file_name = "pre_pivoted.xlsx"
-    pre_file_path = os.path.join(input_folder,pre_file_name)
-    rounded_df_pre.to_excel(pre_file_path)
- 
+        lambda x: 'TDDC2' if 'T1' in x else (
+            'TDDC1' if 'T2' in x else x
+        )
+    )
 
- #process for post data----------
-    df_post['Short name']=df_post['Short name'].ffill()
+    df_pre.drop('band2', axis=1, inplace=True)
+
+    pivot_pre = df_pre.pivot_table(
+        index="Date",
+        columns=['Short name', 'tech', 'SITE_ID', 'CELL_ID', '4G_ECGI'],
+        aggfunc={
+            'MV_4G Data Volume_GB': 'sum',
+            'VoLTE Traffic_24Hrs': 'sum',
+            'DL User Throughput_Mbps [CDBH]': 'mean',
+            'RRC Setup Success Rate [CDBH]': 'mean',
+            'VoLTE DCR [CBBH]': 'mean',
+            'ERAB Setup Success Rate [CDBH]': 'mean',
+            'DL PRB Utilization [CDBH]': 'mean',
+            'UL User Throughput_Kbps [CUBH]': 'mean'
+        }
+    )
+
+    pivot_pre = pivot_pre.T
+    rounded_df_pre = pivot_pre.round(2)
+
+    pre_file_path = os.path.join(input_folder, "pre_pivoted.xlsx")
+    rounded_df_pre.to_excel(pre_file_path)
+
+    # ================= POST FILE =================
+    if post_file.name.lower().endswith(".csv"):
+        df_post = pd.read_csv(post_file)
+    else:
+        df_post = pd.read_excel(post_file)
+
+    df_post.columns = df_post.columns.str.strip()
+
+    df_post['Short name'] = df_post['Short name'].ffill()
     df_post.rename(columns={"Unnamed: 1": "Date"}, inplace=True)
-    df_post['Date'] = pd.to_datetime(df_post['Date'])
+
+    df_post['Date'] = pd.to_datetime(df_post['Date'], errors='coerce')
     df_post = df_post[df_post['Date'].notna()]
     df_post = df_post.sort_values(["Short name", "Date"])
     df_post = df_post.groupby("Short name").tail(5)
 
-    df_post["DL User Throughput_Kbps [CDBH]"]=(df_post["DL User Throughput_Kbps [CDBH]"]/1024)
-    df_post.rename(columns={"DL User Throughput_Kbps [CDBH]":"DL User Throughput_Mbps [CDBH]"},inplace=True)
+    df_post["DL User Throughput_Kbps [CDBH]"] = (
+        df_post["DL User Throughput_Kbps [CDBH]"] / 1024
+    )
+    df_post.rename(
+        columns={
+            "DL User Throughput_Kbps [CDBH]":
+            "DL User Throughput_Mbps [CDBH]"
+        },
+        inplace=True
+    )
+
     for col in df_post.columns:
-     if df_post[col].dtype in ['object', 'string']:
-        df_post[col] = df_post[col].fillna("")
-     else:
-        df_post[col] = df_post[col].fillna(0) 
+        if df_post[col].dtype in ['object', 'string']:
+            df_post[col] = df_post[col].fillna("")
+        else:
+            df_post[col] = df_post[col].fillna(0)
 
-    df_post['band2']=[band.split('_')[2] if '_' in str(band) else str(band) for band in df_post['Short name']]
-    df_post['SITE_ID']=[site.split('_')[-2][:-1] if '_' in str(site) else str(site)[:-1] for site in df_post['Short name']]
-    df_post['band2']=df_post['band2'].replace(['F1','F3','F8'],['L2100','L1800','L900'])
-    df_post['CELL_ID']=[site.split('_')[-2] if '_' in str(site) else str(site) for site in df_post['Short name']]
+    df_post['band2'] = [
+        band.split('_')[2] if '_' in str(band) else str(band)
+        for band in df_post['Short name']
+    ]
+
+    df_post['SITE_ID'] = [
+        site.split('_')[-2][:-1] if '_' in str(site) else str(site)
+        for site in df_post['Short name']
+    ]
+
+    df_post['CELL_ID'] = [
+        site.split('_')[-2] if '_' in str(site) else str(site)
+        for site in df_post['Short name']
+    ]
+
+    df_post['band2'] = df_post['band2'].replace(
+        ['F1', 'F3', 'F8'],
+        ['L2100', 'L1800', 'L900']
+    )
+
     df_post['tech'] = df_post['band2'].astype(str).str.upper().apply(
-     lambda x: 'TDDC2' if 'T1' in x else ('TDDC1' if 'T2' in x else x))
-    df_post=df_post.drop('band2',axis=1)
-   
-# pre filter with site id---- and make pivot
-    filter_post =df_post[df_post["SITE_ID"].isin(site_df["Site_ID"])]
-    pivot_post_vol=filter_post.pivot_table(index="Date",columns=['Short name','tech','SITE_ID','CELL_ID','4G_ECGI'],aggfunc={'MV_4G Data Volume_GB':'sum',"VoLTE Traffic_24Hrs":'sum','DL User Throughput_Mbps [CDBH]':'mean',
-                                                                                'RRC Setup Success Rate [CDBH]':'mean','VoLTE DCR [CBBH]':'mean','ERAB Setup Success Rate [CDBH]':'mean',
-                                                                               'DL PRB Utilization [CDBH]':'mean','UL User Throughput_Kbps [CUBH]':'mean'})
-    
-    pivot_post=pivot_post_vol.T
-    rounded_df_post=pivot_post.round(2)
-    post_file_name = "post_pivoted.xlsx"
-    post_file_path = os.path.join(input_folder,post_file_name)
-    rounded_df_post.to_excel(post_file_path)
-    
+        lambda x: 'TDDC2' if 'T1' in x else (
+            'TDDC1' if 'T2' in x else x
+        )
+    )
 
-    #concat to pre-post
-    concat_pre_post = pd.concat([rounded_df_pre, rounded_df_post], axis=1)
+    df_post.drop('band2', axis=1, inplace=True)
+
+    pivot_post = df_post.pivot_table(
+        index="Date",
+        columns=['Short name', 'tech', 'SITE_ID', 'CELL_ID', '4G_ECGI'],
+        aggfunc={
+            'MV_4G Data Volume_GB': 'sum',
+            'VoLTE Traffic_24Hrs': 'sum',
+            'DL User Throughput_Mbps [CDBH]': 'mean',
+            'RRC Setup Success Rate [CDBH]': 'mean',
+            'VoLTE DCR [CBBH]': 'mean',
+            'ERAB Setup Success Rate [CDBH]': 'mean',
+            'DL PRB Utilization [CDBH]': 'mean',
+            'UL User Throughput_Kbps [CUBH]': 'mean'
+        }
+    )
+
+    pivot_post = pivot_post.T
+    rounded_df_post = pivot_post.round(2)
+
+    post_file_path = os.path.join(input_folder, "post_pivoted.xlsx")
+    rounded_df_post.to_excel(post_file_path)
+
+    # ================= CONCAT =================
+    concat_pre_post = pd.concat(
+        [rounded_df_pre, rounded_df_post],
+        axis=1
+    )
+
     concat_pre_post.fillna(0, inplace=True)
 
     pre_cols = concat_pre_post.columns[:5]
     post_cols = concat_pre_post.columns[5:10]
 
-    concat_pre_post["Pre Avg"] = concat_pre_post[pre_cols].mean(axis=1).round(2)
-    concat_pre_post["Post Avg"] = concat_pre_post[post_cols].mean(axis=1).round(2)
+    concat_pre_post["Pre Avg"] = concat_pre_post[
+        pre_cols
+    ].mean(axis=1).round(2)
 
-    concat_pre_post["Delta"] = (concat_pre_post["Post Avg"] - concat_pre_post["Pre Avg"]).round(2)
+    concat_pre_post["Post Avg"] = concat_pre_post[
+        post_cols
+    ].mean(axis=1).round(2)
+
+    concat_pre_post["Delta"] = (
+        concat_pre_post["Post Avg"]
+        - concat_pre_post["Pre Avg"]
+    ).round(2)
 
     concat_pre_post["Change%"] = np.where(
         concat_pre_post["Pre Avg"] == 0,
         0,
-        (concat_pre_post["Delta"] / concat_pre_post["Pre Avg"]).round(2)
+        (
+            concat_pre_post["Delta"]
+            / concat_pre_post["Pre Avg"]
+        ).round(2)
     )
 
-    concat_pre_post.replace([np.inf, -np.inf], 0, inplace=True)
-    concat_pre_post["Change%"].fillna(0, inplace=True)
+    concat_pre_post.replace(
+        [np.inf, -np.inf],
+        0,
+        inplace=True
+    )
+
     concat_pre_post.reset_index(inplace=True)
-    concat_pre_post.rename(columns={
-    'level_0': 'KPI',
-    'Short name': 'Row Labels',
-    'tech': 'Technology'
-    }, inplace=True)
-    concat_pre_post.set_index(['KPI', 'Row Labels'], inplace=True)
-    file_name = "priovt_concate_pre_post.xlsx"
-    file_path = os.path.join(input_folder, file_name)
+
+    concat_pre_post.rename(
+        columns={
+            'level_0': 'KPI',
+            'Short name': 'Row Labels',
+            'tech': 'Technology'
+        },
+        inplace=True
+    )
+
+    concat_pre_post.set_index(
+        ['KPI', 'Row Labels'],
+        inplace=True
+    )
+
+    file_path = os.path.join(
+        input_folder,
+        "priovt_concate_pre_post.xlsx"
+    )
+
     concat_pre_post.to_excel(file_path)
 
+    # ================= FORMAT EXCEL =================
     wb = openpyxl.load_workbook(file_path)
     ws = wb.active
 
-    font = Font(size=9,bold=True)
-    alignment = Alignment(horizontal='center', vertical='center')
+    font = Font(size=9, bold=True)
+    alignment = Alignment(
+        horizontal='center',
+        vertical='center'
+    )
+
     merged_ranges = list(ws.merged_cells.ranges)
 
     for m in merged_ranges:
         ws.unmerge_cells(str(m))
+
     ws.insert_rows(1)
-
-
-    for m in merged_ranges:
-        min_col, min_row, max_col, max_row = m.bounds
-        ws.merge_cells(
-            start_row=min_row + 1,
-            start_column=min_col,
-            end_row=max_row + 1,
-            end_column=max_col
-        )
 
     ws.merge_cells('G1:K1')
     ws['G1'] = "PRE"
@@ -1374,112 +1460,408 @@ def Bihar_degrow(request):
     ws.merge_cells('L1:P1')
     ws['L1'] = "POST"
 
+    pre_fill = PatternFill(
+        start_color="C4BD97",
+        end_color="C4BD97",
+        fill_type="solid"
+    )
 
-    for cell in ['G1', 'L1']:
-        ws[cell].font = Font(bold=True, size=11)
-        ws[cell].alignment = Alignment(horizontal='center', vertical='center')
+    post_fill = PatternFill(
+        start_color="C6E0B4",
+        end_color="C6E0B4",
+        fill_type="solid"
+    )
 
- 
-    pre_fill = PatternFill(start_color="C4BD97", end_color="C4BD97", fill_type="solid")
-    post_fill = PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")
-
-    for col in range(7, 12):   # G-K
+    for col in range(7, 12):
         ws.cell(row=1, column=col).fill = pre_fill
 
-    for col in range(12, 17):  # L-P
+    for col in range(12, 17):
         ws.cell(row=1, column=col).fill = post_fill
-
-
-    header_fill = PatternFill(start_color="FCD5B4", end_color="FCD5B4", fill_type="solid")
-
-    for col in range(1, 7):  # KPI to ECGI
-        cell = ws.cell(row=2, column=col)
-        cell.font = Font(bold=True, size=10)
-        cell.alignment = Alignment(horizontal='center', vertical='center')
-        cell.fill = header_fill
-
-
-    date_fill = PatternFill(start_color="92CDDC", end_color="92CDDC", fill_type="solid")
-
-    for col in range(7, 17):
-        cell = ws.cell(row=2, column=col)
-        cell.font = Font(bold=True, size=10)
-        cell.alignment = Alignment(horizontal='center', vertical='center')
-        cell.fill = date_fill
- 
-
-    back_fill = PatternFill(start_color="FCD5B4", end_color="FCD5B4", fill_type="solid")
-    for col in range(17,21):
-        cell = ws.cell(row=2, column=col)
-        cell.font = Font(bold=True, size=9) 
-        cell.alignment = Alignment(horizontal='center', vertical='center')
-        cell.fill = back_fill    
-
-
 
     for row in ws.iter_rows():
         for cell in row:
             cell.font = font
             cell.alignment = alignment
 
-    thin_border = Border(
-        left=Side(style='thin'),
-        right=Side(style='thin'),
-        top=Side(style='thin'),
-        bottom=Side(style='thin')
+    final_file_path = os.path.join(
+        output_path,
+        "BIH_DEGROW_OUTPUT.xlsx"
     )
 
-    for row in ws.iter_rows():
-        for cell in row:
-            if cell.value is not None:
-                cell.border = thin_border
-
-    for col in ws.columns:
-        max_len = 0
-        col_letter = get_column_letter(cell.column)
-
-        for cell in col:
-            if cell.value:
-                max_len = max(max_len, len(str(cell.value)))
-
-        ws.column_dimensions[col_letter].width = max_len + 2
-
-
-    kpi_col = column_index_from_string("A")
-    merged_ranges = list(ws.merged_cells.ranges)
-
-    for m in merged_ranges:
-        min_col, min_row, max_col, max_row = m.bounds
-        if min_col == kpi_col and max_col == kpi_col:
-            kpi_value = ws.cell(row=min_row, column=min_col).value
-            ws.unmerge_cells(str(m))
-            for row in range(min_row, max_row + 1):
-                cell = ws.cell(row=row, column=kpi_col)
-                cell.value = kpi_value
-                cell.font = Font(bold=True, size=9)
-                cell.alignment = Alignment(horizontal='center', vertical='center')
-
-
-    file_name = "BIH_DEGROW_OUTPUT.xlsx"
-    final_file_path = os.path.join(output_path, file_name)
-
-    # Save workbook
     wb.save(final_file_path)
+
+    download_url = request.build_absolute_uri(
+        os.path.join(
+            MEDIA_URL,
+            "Bihar_Degrow",
+            "Final_Output",
+            "BIH_DEGROW_OUTPUT.xlsx"
+        ).replace("\\", "/")
+    )
+
+    return Response({
+        "status": True,
+        "message": "Files processed successfully",
+        "download_url": download_url
+    }, status=HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# @api_view(["POST"])
+# def Bihar_degrow(request):
+#     pre_file= request.FILES.get("pre_file")
+#     if not pre_file:
+#         return Response({"message": "pre file not uploaded"}, status=HTTP_400_BAD_REQUEST)
+#     post_file=request.FILES.get("post_file")
+#     if not post_file:
+#         return Response({"message": "post file not uploaded"}, status=HTTP_400_BAD_REQUEST)
+    
+#     site_list=request.FILES.get("site_list")
+#     if not site_list:
+#         return Response({"message": "sitelist not uploaded"}, status=HTTP_400_BAD_REQUEST)
+    
+
+#     base_media_url = os.path.join(MEDIA_ROOT, "Bihar_Degrow")
+#     output_path = os.path.join(base_media_url, "Final_Output")
+#     input_folder = os.path.join(base_media_url, "Process_output")
+
+
+#     os.makedirs(input_folder, exist_ok=True)
+#     os.makedirs(output_path, exist_ok=True)
+  
+    
+
+# #__________________________
+#     if pre_file.name.lower().endswith(".csv"):
+#         df_pre = pd.read_csv(pre_file)
+#     else:
+#         df_pre = pd.read_excel(pre_file)
+
+#     df_pre.columns = df_pre.columns.str.strip()
+
+    
+
+
+#     if post_file.name.lower().endswith(".csv"):
+#         df_post= pd.read_csv(post_file)
+#     else:
+#         df_post= pd.read_excel(post_file)
+#     df_post.columns = df_post.columns.str.strip()    
+
+
+#     site_df = pd.read_excel(site_list)
+#     site_df.columns = site_df.columns.str.strip()
+   
+#   #processs for pre file---------  
+#     df_pre['Short name']=df_pre['Short name'].ffill()
+#     df_pre.rename(columns={"Unnamed: 1": "Date"}, inplace=True)
+#     df_pre['Date'] = pd.to_datetime(df_pre['Date'])
+#     df_pre = df_pre[df_pre['Date'].notna()]
+#     df_pre = df_pre.sort_values(["Short name", "Date"])
+#     df_pre = df_pre.groupby("Short name").tail(5)
+#     # df_pre.to_excel("date5_pre.xlsx")
+
+#     df_pre["DL User Throughput_Kbps [CDBH]"]=(df_pre["DL User Throughput_Kbps [CDBH]"]/1024)
+#     df_pre.rename(columns={"DL User Throughput_Kbps [CDBH]":"DL User Throughput_Mbps [CDBH]"},inplace=True)
+#     for col in df_pre.columns:
+#         if df_pre[col].dtype in ['object', 'string']:
+#             df_pre[col] = df_pre[col].fillna("")
+#         else:
+#             df_pre[col] = df_pre[col].fillna(0)  
+
+  
+#     df_pre['band2']=[ band.split('_')[2] if '_' in band else band for band in df_pre['Short name']]
+#     df_pre['SITE_ID']=[site.split('_')[-2][:-1] if '_' in site else site for site in df_pre['Short name']]
+#     df_pre['CELL_ID']=[site.split('_')[-2] if '_' in str(site) else str(site) for site in df_pre['Short name']]
+#     df_pre['band2']=df_pre['band2'].replace(['F1','F3','F8'],['L2100','L1800','L900'])
+
+#     df_pre['tech'] = df_pre['band2'].astype(str).str.upper().apply(
+#     lambda x: 'TDDC2' if 'T1' in x else ('TDDC1' if 'T2' in x else x)
+# )
+#     df_pre=df_pre.drop('band2',axis=1)
+# # pre filter with site id---- and make pivot
+#     filter_pre = df_pre[df_pre["SITE_ID"].isin(site_df["Site_ID"])]
+#     # print(filter_pre)
+#     pivot_pre=filter_pre.pivot_table(index="Date",columns=['Short name','tech','SITE_ID','CELL_ID','4G_ECGI'],aggfunc={'MV_4G Data Volume_GB':'sum',"VoLTE Traffic_24Hrs":'sum','DL User Throughput_Mbps [CDBH]':'mean',
+#                                                                                 'RRC Setup Success Rate [CDBH]':'mean','VoLTE DCR [CBBH]':'mean','ERAB Setup Success Rate [CDBH]':'mean',
+#                                                                             'DL PRB Utilization [CDBH]':'mean','UL User Throughput_Kbps [CUBH]':'mean'})
+#     pivot_pre=pivot_pre.T
+#     rounded_df_pre=pivot_pre.round(2)
+#     pre_file_name = "pre_pivoted.xlsx"
+#     pre_file_path = os.path.join(input_folder,pre_file_name)
+#     rounded_df_pre.to_excel(pre_file_path)
+ 
+
+#  #process for post data----------
+#     df_post['Short name']=df_post['Short name'].ffill()
+#     df_post.rename(columns={"Unnamed: 1": "Date"}, inplace=True)
+#     df_post['Date'] = pd.to_datetime(df_post['Date'])
+#     df_post = df_post[df_post['Date'].notna()]
+#     df_post = df_post.sort_values(["Short name", "Date"])
+#     df_post = df_post.groupby("Short name").tail(5)
+
+#     df_post["DL User Throughput_Kbps [CDBH]"]=(df_post["DL User Throughput_Kbps [CDBH]"]/1024)
+#     df_post.rename(columns={"DL User Throughput_Kbps [CDBH]":"DL User Throughput_Mbps [CDBH]"},inplace=True)
+#     for col in df_post.columns:
+#      if df_post[col].dtype in ['object', 'string']:
+#         df_post[col] = df_post[col].fillna("")
+#      else:
+#         df_post[col] = df_post[col].fillna(0) 
+
+#     df_post['band2']=[band.split('_')[2] if '_' in str(band) else str(band) for band in df_post['Short name']]
+#     df_post['SITE_ID']=[site.split('_')[-2][:-1] if '_' in str(site) else str(site)[:-1] for site in df_post['Short name']]
+#     df_post['band2']=df_post['band2'].replace(['F1','F3','F8'],['L2100','L1800','L900'])
+#     df_post['CELL_ID']=[site.split('_')[-2] if '_' in str(site) else str(site) for site in df_post['Short name']]
+#     df_post['tech'] = df_post['band2'].astype(str).str.upper().apply(
+#      lambda x: 'TDDC2' if 'T1' in x else ('TDDC1' if 'T2' in x else x))
+#     df_post=df_post.drop('band2',axis=1)
+   
+# # pre filter with site id---- and make pivot
+#     filter_post =df_post[df_post["SITE_ID"].isin(site_df["Site_ID"])]
+#     pivot_post_vol=filter_post.pivot_table(index="Date",columns=['Short name','tech','SITE_ID','CELL_ID','4G_ECGI'],aggfunc={'MV_4G Data Volume_GB':'sum',"VoLTE Traffic_24Hrs":'sum','DL User Throughput_Mbps [CDBH]':'mean',
+#                                                                                 'RRC Setup Success Rate [CDBH]':'mean','VoLTE DCR [CBBH]':'mean','ERAB Setup Success Rate [CDBH]':'mean',
+#                                                                                'DL PRB Utilization [CDBH]':'mean','UL User Throughput_Kbps [CUBH]':'mean'})
+    
+#     pivot_post=pivot_post_vol.T
+#     rounded_df_post=pivot_post.round(2)
+#     post_file_name = "post_pivoted.xlsx"
+#     post_file_path = os.path.join(input_folder,post_file_name)
+#     rounded_df_post.to_excel(post_file_path)
+    
+
+#     #concat to pre-post
+#     concat_pre_post = pd.concat([rounded_df_pre, rounded_df_post], axis=1)
+#     concat_pre_post.fillna(0, inplace=True)
+
+#     pre_cols = concat_pre_post.columns[:5]
+#     post_cols = concat_pre_post.columns[5:10]
+
+#     concat_pre_post["Pre Avg"] = concat_pre_post[pre_cols].mean(axis=1).round(2)
+#     concat_pre_post["Post Avg"] = concat_pre_post[post_cols].mean(axis=1).round(2)
+
+#     concat_pre_post["Delta"] = (concat_pre_post["Post Avg"] - concat_pre_post["Pre Avg"]).round(2)
+
+#     concat_pre_post["Change%"] = np.where(
+#         concat_pre_post["Pre Avg"] == 0,
+#         0,
+#         (concat_pre_post["Delta"] / concat_pre_post["Pre Avg"]).round(2)
+#     )
+
+#     concat_pre_post.replace([np.inf, -np.inf], 0, inplace=True)
+#     concat_pre_post["Change%"].fillna(0, inplace=True)
+#     concat_pre_post.reset_index(inplace=True)
+#     concat_pre_post.rename(columns={
+#     'level_0': 'KPI',
+#     'Short name': 'Row Labels',
+#     'tech': 'Technology'
+#     }, inplace=True)
+#     concat_pre_post.set_index(['KPI', 'Row Labels'], inplace=True)
+#     file_name = "priovt_concate_pre_post.xlsx"
+#     file_path = os.path.join(input_folder, file_name)
+#     concat_pre_post.to_excel(file_path)
+
+#     wb = openpyxl.load_workbook(file_path)
+#     ws = wb.active
+
+#     font = Font(size=9,bold=True)
+#     alignment = Alignment(horizontal='center', vertical='center')
+#     merged_ranges = list(ws.merged_cells.ranges)
+
+#     for m in merged_ranges:
+#         ws.unmerge_cells(str(m))
+#     ws.insert_rows(1)
+
+
+#     for m in merged_ranges:
+#         min_col, min_row, max_col, max_row = m.bounds
+#         ws.merge_cells(
+#             start_row=min_row + 1,
+#             start_column=min_col,
+#             end_row=max_row + 1,
+#             end_column=max_col
+#         )
+
+#     ws.merge_cells('G1:K1')
+#     ws['G1'] = "PRE"
+
+#     ws.merge_cells('L1:P1')
+#     ws['L1'] = "POST"
+
+
+#     for cell in ['G1', 'L1']:
+#         ws[cell].font = Font(bold=True, size=11)
+#         ws[cell].alignment = Alignment(horizontal='center', vertical='center')
+
+ 
+#     pre_fill = PatternFill(start_color="C4BD97", end_color="C4BD97", fill_type="solid")
+#     post_fill = PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")
+
+#     for col in range(7, 12):   # G-K
+#         ws.cell(row=1, column=col).fill = pre_fill
+
+#     for col in range(12, 17):  # L-P
+#         ws.cell(row=1, column=col).fill = post_fill
+
+
+#     header_fill = PatternFill(start_color="FCD5B4", end_color="FCD5B4", fill_type="solid")
+
+#     for col in range(1, 7):  # KPI to ECGI
+#         cell = ws.cell(row=2, column=col)
+#         cell.font = Font(bold=True, size=10)
+#         cell.alignment = Alignment(horizontal='center', vertical='center')
+#         cell.fill = header_fill
+
+
+#     date_fill = PatternFill(start_color="92CDDC", end_color="92CDDC", fill_type="solid")
+
+#     for col in range(7, 17):
+#         cell = ws.cell(row=2, column=col)
+#         cell.font = Font(bold=True, size=10)
+#         cell.alignment = Alignment(horizontal='center', vertical='center')
+#         cell.fill = date_fill
+ 
+
+#     back_fill = PatternFill(start_color="FCD5B4", end_color="FCD5B4", fill_type="solid")
+#     for col in range(17,21):
+#         cell = ws.cell(row=2, column=col)
+#         cell.font = Font(bold=True, size=9) 
+#         cell.alignment = Alignment(horizontal='center', vertical='center')
+#         cell.fill = back_fill    
+
+
+
+#     for row in ws.iter_rows():
+#         for cell in row:
+#             cell.font = font
+#             cell.alignment = alignment
+
+#     thin_border = Border(
+#         left=Side(style='thin'),
+#         right=Side(style='thin'),
+#         top=Side(style='thin'),
+#         bottom=Side(style='thin')
+#     )
+
+#     for row in ws.iter_rows():
+#         for cell in row:
+#             if cell.value is not None:
+#                 cell.border = thin_border
+
+#     for col in ws.columns:
+#         max_len = 0
+#         col_letter = get_column_letter(cell.column)
+
+#         for cell in col:
+#             if cell.value:
+#                 max_len = max(max_len, len(str(cell.value)))
+
+#         ws.column_dimensions[col_letter].width = max_len + 2
+
+
+#     kpi_col = column_index_from_string("A")
+#     merged_ranges = list(ws.merged_cells.ranges)
+
+#     for m in merged_ranges:
+#         min_col, min_row, max_col, max_row = m.bounds
+#         if min_col == kpi_col and max_col == kpi_col:
+#             kpi_value = ws.cell(row=min_row, column=min_col).value
+#             ws.unmerge_cells(str(m))
+#             for row in range(min_row, max_row + 1):
+#                 cell = ws.cell(row=row, column=kpi_col)
+#                 cell.value = kpi_value
+#                 cell.font = Font(bold=True, size=9)
+#                 cell.alignment = Alignment(horizontal='center', vertical='center')
+
+
+#     file_name = "BIH_DEGROW_OUTPUT.xlsx"
+#     final_file_path = os.path.join(output_path, file_name)
+
+#     # Save workbook
+#     wb.save(final_file_path)
     
 
   
-    download_url = request.build_absolute_uri(
-    os.path.join(MEDIA_URL, "Bihar_Degrow", "Final_Output", file_name).replace("\\", "/")
-)
+#     download_url = request.build_absolute_uri(
+#     os.path.join(MEDIA_URL, "Bihar_Degrow", "Final_Output", file_name).replace("\\", "/")
+# )
    
 
 
-    print("End of Process---")
-    return Response({
-        "status":True,
-        "message": "Files processed successfully",
-        "download_url":download_url,
-        }, status=HTTP_200_OK)
+#     print("End of Process---")
+#     return Response({
+#         "status":True,
+#         "message": "Files processed successfully",
+#         "download_url":download_url,
+#         }, status=HTTP_200_OK)
 
 
 
