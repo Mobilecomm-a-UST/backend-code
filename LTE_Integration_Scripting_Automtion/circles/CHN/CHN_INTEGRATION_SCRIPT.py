@@ -1,4 +1,4 @@
-TN_s1_FOR_TN_IDL_B_PORT = """ 
+CHN_s1_FOR_TN_IDL_B_PORT = """ 
                                            
                                            
 gs+                                                                                                                                                                               
@@ -306,7 +306,7 @@ gs-
 		 
                                            
 """
-TN_s1_FOR_TN_IDLTN_C_AND_TN_E_PORT = """
+CHN_s1_FOR_TN_IDLTN_C_AND_TN_E_PORT = """
 
 
 
@@ -470,7 +470,7 @@ confb-
 """
 
 
-TN_s1_FOR_TN_C_PORT = """
+CHN_s1_FOR_TN_C_PORT = """
 
 
 
@@ -633,7 +633,7 @@ confb-
 """
 
 
-TN_s3_LTE_GPL_LMS = """
+CHN_s3_LTE_GPL_LMS = """
 
 
 
@@ -3048,9 +3048,7 @@ set Lm=1,FeatureState=CXC4012635 featureState 1
 set NRCellDU=.* rimDetectionEnabled TRUE                                                                                                                                                                               
 set NRCellDU=.* rimPdschSlotBlankMode 1                                                                                                                                                                                
 set NRCellDU=.* rimPdschSlotBlankTimer 1260                                                                                                                                                                            
-                                                                                                                                                                                                                       
-run /home/shared/N_PROJECT/ROTN_Scripts/lat_long.txt                                                                                                                                                                   
-                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                                                                                                                                                                       
                                                                                                                                                                                             
 confbd-   
 
@@ -6728,8 +6726,8 @@ confbd-
 
 """
 
-# --------------------------------------------------- 5G in TN ------------------------------------------------------------------#
-NR_TN_RN_Cell_Def = """ 
+# --------------------------------------------------- 5G in CHN ------------------------------------------------------------------#
+NR_TN_RN_Cell_Def_CHN = """ 
 ## TN STARTED - DscpPcpMap=1/TwampResponder/SctpProfile=1/SctpEndpoint=1/SctpEndpoint=F1/SctpProfile=Node_Internal_F1/SctpEndpoint=NG/SctpEndpoint=X2/CLOCK##
 
 confb+
@@ -6978,7 +6976,7 @@ end
 
 ##############################-----------------------------RN - GNBDUFunction=1 Cell specific Started ------------------###################################
 
-{TN_GNPDUFUNCTION_ELEMENT}
+{CHN_GNPDUFUNCTION_ELEMENT}
 
 ##############################----------------------- RN - GNBDUFunction=1 Cell specific Ended -------------------------###################################
 
@@ -7065,7 +7063,7 @@ end
 
 ##############################--RN - GNBCUCPFunction=1 Cell specific Started-------------------###################################
 
-{TN_GNBCUCPFUNCTION_ELEMENT}
+{CHN_GNBCUCPFUNCTION_ELEMENT}
 
 ##############################RN - GNBCUCPFunction=1 Cell specific ENDED-------------------###################################
 
@@ -7119,7 +7117,7 @@ confb-
 """
 
 
-TN_02_IPV6creationforanchor = """ 
+CHN_02_IPV6creationforanchor = """ 
 #########01_IPV6creationforanchor##########
 
 cvms pre_sctp_ENDC_NR
@@ -7329,7 +7327,7 @@ confb-
 
 """
 
-TN_03_ENDCanchornode_ROTN = """ 
+CHN_03_ENDCanchornode_CHN = """ 
 
 cvms pre_Termpoint_cre22q2
 
@@ -7367,7 +7365,7 @@ deb TermPointToGNB
 """
 
 
-TN_Termpoint_GUtranFreqRelation = """ 
+CHN_Termpoint_GUtranFreqRelation = """ 
 #########01_IPV6creationforanchor##########
 
 
@@ -7414,7 +7412,7 @@ get lgutran res
 
 """
 
-TN_05_5G_LMS_GPL_ROTN = """
+CHN_05_5G_LMS_GPL_CHN = """
 
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ 5G GPL START $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 lt all
@@ -9156,7 +9154,7 @@ Confb-
 ####################################################### --- TN ----- ##########################################################
 
 
-TN_GNBDUFUNCTION_ELEMENT = """ 
+CHN_GNBDUFUNCTION_ELEMENT = """ 
 crn GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId}
 administrativeState 1
 arfcnDL {arfcnDL}
@@ -9244,7 +9242,7 @@ end
 """
 
 
-TN_GNBCUCPFUNCTION_ELEMENT = """ 
+CHN_GNBCUCPFUNCTION_ELEMENT = """ 
 crn GNBCUCPFunction=1,NRCellCU={gUtranCell}
 cellLocalId {cellLocalId}
 qHyst 4

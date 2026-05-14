@@ -1634,7 +1634,6 @@ def add_model(request):
         "already_exists": already_exists
     })
 
-
 @api_view(["GET"])
 def get_model(request):
 

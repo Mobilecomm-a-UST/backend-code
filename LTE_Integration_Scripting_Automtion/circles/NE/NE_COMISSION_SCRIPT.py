@@ -1,4 +1,4 @@
-AS_SiteBasic_ipv6_6631 = """
+NE_SiteBasic_ipv6_6631 = """
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
     <capability>urn:ietf:params:netconf:base:1.0</capability>
@@ -291,7 +291,7 @@ AS_SiteBasic_ipv6_6631 = """
 
 """
 
-AS_SiteBasic_5216_IPV4 = """
+NE_SiteBasic_5216_IPV4 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
@@ -678,7 +678,7 @@ AS_SiteBasic_5216_IPV4 = """
 
 """
 
-AS_SiteBasic_5216_IPV6 = """
+NE_SiteBasic_5216_IPV6 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
@@ -1097,7 +1097,7 @@ AS_SiteBasic_5216_IPV6 = """
 """
 
 
-AS_SiteBasic_ipv6_6651 = """
+NE_SiteBasic_ipv6_6651 = """
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
     <capability>urn:ietf:params:netconf:base:1.0</capability>
@@ -1390,7 +1390,7 @@ AS_SiteBasic_ipv6_6651 = """
 
 """
 
-AS_SiteBasic_ipv6_6630 = """
+NE_SiteBasic_ipv6_6630 = """
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
     <capability>urn:ietf:params:netconf:base:1.0</capability>
@@ -1682,7 +1682,7 @@ AS_SiteBasic_ipv6_6630 = """
 ]]>]]>
 """
 
-AS_SiteBasic_ipv6_6339 = """
+NE_SiteBasic_ipv6_6339 = """
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
     <capability>urn:ietf:params:netconf:base:1.0</capability>
@@ -1976,7 +1976,7 @@ AS_SiteBasic_ipv6_6339 = """
 
 """
 
-AS_SiteBasic_ipv6_6303 = """
+NE_SiteBasic_ipv6_6303 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
@@ -2664,7 +2664,7 @@ AS_SiteBasic_ipv6_6303 = """
 
 """
 
-AS_SiteBasic_ipv4_6651 = """
+NE_SiteBasic_ipv4_6651 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
@@ -3300,7 +3300,7 @@ AS_SiteBasic_ipv4_6651 = """
 
 """
 
-AS_SiteBasic_ipv4_6631 = """
+NE_SiteBasic_ipv4_6631 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
@@ -3936,7 +3936,7 @@ AS_SiteBasic_ipv4_6631 = """
 
 """
 
-AS_SiteBasic_ipv4_6630 = """
+NE_SiteBasic_ipv4_6630 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
@@ -4572,7 +4572,7 @@ AS_SiteBasic_ipv4_6630 = """
 
 """
 
-AS_SiteBasic_ipv4_6353 = """
+NE_SiteBasic_ipv4_6353 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
@@ -5208,7 +5208,7 @@ AS_SiteBasic_ipv4_6353 = """
 
 """
 
-AS_SiteBasic_ipv4_6339 = """
+NE_SiteBasic_ipv4_6339 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
@@ -5844,7 +5844,7 @@ AS_SiteBasic_ipv4_6339 = """
 
 """
 
-AS_SiteBasic_ipv4_6339 = """
+NE_SiteBasic_ipv4_6339 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
@@ -6480,7 +6480,7 @@ AS_SiteBasic_ipv4_6339 = """
 
 """
 
-AS_SiteBasic_ipv4_6303 = """
+NE_SiteBasic_ipv4_6303 = """
 <?xml version="1.0" encoding="UTF-8"?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>

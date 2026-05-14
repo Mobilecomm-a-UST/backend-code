@@ -3463,7 +3463,7 @@ deb Transport=1,Synchronization=1,RadioEquipmentClock=1,NodeGroupSyncMember=1
 
 ldeb RadioEquipmentClockReference=1
 
-set 0 Userlabel {Phy_SiteID_Userlabel} 
+
 
 """
 
@@ -4818,24 +4818,9 @@ fi
 ###################################### GNBCUUPFunction=1 SCRIPT ######################################
 
 crn GNBCUUPFunction=1
-altDepHServAdapUPProfEnabled false
-dataFwdRateTo5Gs 5000
-dataFwdRateToEps 200
-dcDlAggActTime 1
-dcDlAggExpiryTimer 100
-dcDlPdcpInitialMcgRate 20
-dcDlPdcpInitialScgRate 100
-dlPdcpSpsTargetTimeLTE 25
-dlPdcpSpsTargetTimeNR 25
-endcDataUsageReportEnabled true
-endcDlNrRetProhibTimer 400
-endcUlNrRetProhibTimer 1000
-estimatedUeL2Buffer
 gNBId {gNBId}
 gNBIdLength 26
 pLMNIdList mcc=404,mnc=70
-sNSSAIList
-userLabel
 end
 crn GNBCUUPFunction=1,EndpointResource=1
 end
@@ -4881,25 +4866,9 @@ end
 ###################################### GNBDUFunction=1 SCRIPT ######################################
 
 crn GNBDUFunction=1
-altDepHMultCGPeriodEnabled false
-altDepHServAdapUPProfEnabled false
-autoLockDelay 0
-caVlanPortRef
-capacityAllocationPolicy 0
-configuredGrantConfMode 0
-dlBbCapacityTarget
-dynTACConfigEnabled false
-esiSuetEnabled false
 gNBDUId 1
-gNBDUName
 gNBId {gNBId}
 gNBIdLength 26
-mixedSrsModeEnabled false
-multiTddPatternSmEnabled false
-pimCancAutoConfigEnabled false
-pwsEtwsPrimaryInd 8
-servAdapUPProfDepHEnabled true
-userLabel
 end
 
 crn GNBDUFunction=1,EndpointResource=1
@@ -4956,37 +4925,9 @@ end
 ###################################### GNBCUCPFunction=1 SCRIPT ######################################
 
 crn GNBCUCPFunction=1
-advUePosPeriodicityMode 0
-caDepHEnabled true
-cellRelationMOThresh 1500
-dnsLookup5GsTaiPeriodicTimer 0
-dnsLookupOn5GsTai false
-extEnbRemoveTime 1440
-extendedBandN77Supported false
-extendedBandN77TwoSupported false
-gNBCUName
 gNBId {gNBId}
 gNBIdLength 26
-maxCommonProcTime 30
-maxNgRetryTime 30
-nasInactivityTime 5
-networkIdInUeCapEnq false
-ngcDedProcTime 5
-nrNeedForGapsSupported true
 pLMNId mcc=404,mnc=70
-pimAutoDetectionEnabled false
-prefInterGnbHo 0
-ranNodeName
-resourceStatusReportDefault -2
-resourceStatusReportF1Enabled true
-rfspSpidPairList
-ribTmAutoMax 0
-rrcReestSupportType 0
-tDcOverall 7
-tXnDcOverall 5
-tXnDcPrep 5
-userLabel
-xnIpAddrViaNgActive true
 end
 
 crn GNBCUCPFunction=1,EndpointResource=1
@@ -5255,10 +5196,6 @@ dftSOfdmMsg3Enabled false
 dftSOfdmPuschEnabled false
 dl256QamEnabled true
 dlMaxMuMimoLayers 0
-dlStartCrb 0
-endcUlLegSwitchEnabled true
-endcUlNrLowQualThresh -4
-endcUlNrQualHyst 6
 maxUeSpeed 2
 nRPCI {nRPCI}
 nRSectorCarrierRef GNBDUFunction=1,NRSectorCarrier={nRSectorCarrierId}

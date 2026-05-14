@@ -815,6 +815,10 @@ def datewise_integration_data(request):
         "download_data": serializer.data
     }
     return Response(data)
+
+
+
+
 # @api_view(['GET','POST'])
 # def datewise_integration_data(request):
 #     print("User: ", request.user.username)
@@ -1605,8 +1609,6 @@ def monthly_oemwise_integration_data(request):
     return Response(data)
         
 
-
-
 @api_view(['POST'])
 def hyperlink_monthly_oemwise_integration_data(request):
     print("User: ", request.user.username)
@@ -1655,8 +1657,6 @@ def hyperlink_monthly_oemwise_integration_data(request):
      USING ("CIRCLE", "Activity_Name") order by 1,2 $$) as 
 ct(cir text, "5G RELOCATION" INTEGER,"5G RRU SWAP" INTEGER,"5G SECTOR ADDITION" INTEGER,"DE-GROW" INTEGER,"FEMTO" INTEGER,"HT INCREMENT" INTEGER,"IBS" INTEGER,"IDSC" INTEGER,"MACRO" INTEGER, "ODSC" INTEGER,"OPERATIONS" INTEGER,"RECTIFICATION" INTEGER,"OTHERS" INTEGER,"RELOCATION" INTEGER,"RET" INTEGER,"RRU UPGRADE" INTEGER,"TRAFFIC SHIFTING" INTEGER,"ULS_HPSC" INTEGER,"UPGRADE" INTEGER,"5G AIR SWAP" INTEGER,"RRU SWAP" INTEGER)) as m1
 
-        
-        
          """
         cursor.execute(query)
         results = cursor.fetchall()
@@ -1691,7 +1691,6 @@ def hyperlink_hyperlink_monthly_oemwise_integration_data(request):
     activity_name=request.POST.get("Activity_Name")
      # Filter IntegrationData objects based on provided parameters
     objs = IntegrationData.objects.filter(Integration_Date__year=year,Integration_Date__month=month, CIRCLE=circle, Activity_Name=activity_name,OEM=oem)
-    
     # Serialize queryset using serializer
     serializer = IntegrationDataSerializer(objs, many=True)
     

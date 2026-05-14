@@ -206,7 +206,7 @@ def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
     green_fmt = workbook.add_format({"bg_color": "#B4E6BE", "border": 1})
     red_fmt   = workbook.add_format({"bg_color": "#E9AAB1", "border": 1})
     blank_fmt = workbook.add_format({"bg_color": "#FCF259", "font_color": "#222831",
-                                     "align": "center", "valign": "center", "bold": True, "border": 1})
+                                    "align": "center", "valign": "center", "bold": True, "border": 1})
 
     worksheet.set_row(startrow, 23)
 
@@ -236,8 +236,10 @@ def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
                 key_cols = ["Mech. angle", "Min. angle", "Max. angle", "Angle"]
             elif sheet_name == "VSWR":
                 key_cols = ["vswrMajorThreshold", "vswrMinorThreshold"]
-            elif sheet_name == "Nomenclature":
+            elif sheet_name == "Nomenclature 4G":
                 key_cols = ["TAC"]
+            elif sheet_name == "Nomenclature 2G":
+                key_cols = ["LAC"]
 
             if df.columns[col_num] in key_cols and (pd.isna(cell_value) or str(cell_value).strip() == ""):
                 fmt = blank_fmt
@@ -293,7 +295,7 @@ def format_excel_sheet(writer, sheet_name, df, startrow=0, startcol=0):
     # =========================
     # 🔥 TAC LOGIC (Nomenclature)
     # =========================
-    if sheet_name == "Nomenclature" and "TAC" in df.columns and "Site_id" in df.columns:
+    if sheet_name == "Nomenclature 4G" and "TAC" in df.columns and "Site_id" in df.columns:
         tac_col_idx = df.columns.get_loc("TAC")
         for site, group in df.groupby("Site_id"):
             rows = group.index.tolist()
@@ -417,7 +419,8 @@ def api_usage_all(userId, api, site_id):
     today = timezone.now().date()
 
     print("USER:", userId)
-    print("SITE:", site_id)
+    # print("SITE:", site_id)
+    print("Successfully Data received for API usage tracking........")   # 🔥 DEBUG
 
     qs = UserCounter.objects.filter(
         user_name=userId,
@@ -459,7 +462,7 @@ def user_count(request):
     else:
         data = request.data
 
-    print("REQUEST DATA:", data)   # 🔥 DEBUG
+    print("REQUEST DATA:", data)
 
     user = data.get('user')
     api_name = data.get('api')
@@ -627,9 +630,10 @@ def upload_and_compare_xml_files(request):
     all_alarms = []
     summary_rows = []
     ipmtu_rows = []
-    nomenclature = []
+    nomenclature_4G = []
     ret_counter = []
     VSWR = []
+    nomenclature_2G = []
 
 
     # ------------------------
@@ -683,7 +687,7 @@ def upload_and_compare_xml_files(request):
         mo_elements = root.findall('.//ns:managedObject', ns) if ns else root.findall('.//managedObject')
 
         mrbts_site_map = get_mrbts_site_map(root, ns)
-        print("MRBTS → SITE MAP:", mrbts_site_map)
+        # print("MRBTS → SITE MAP:", mrbts_site_map)
 
     #--------------------------------------------------------------------------------------
         # 1. IPMTU VALIDATION
@@ -747,87 +751,6 @@ def upload_and_compare_xml_files(request):
                 "ipMtu": ipmtu_val,
                 "status": status_ip
             })
-
-        # # 2. FIXED PARAMETERS SECTION
-        
-
-        # # First, get all unique site IDs from your XML
-        # site_ids = set()
-        # for mo in mo_elements:
-        #     dist_name = mo.attrib.get("distName", "")
-        #     site_id = extract_site_id(dist_name)
-        #     site = mrbts_site_map.get(site_id, "")
-        #     print("SIte_id of FIxed parameters",site)
-
-        # # Now, for each site, iterate over each parameter rule
-        # for site_id in site_ids:
-        #     for rule in FIXED_PARAMETERS:
-        #         param = rule["parameter"].lower().strip()
-        #         mo_class = rule["mo_class"]
-
-        #         # Find the MO that matches both site_id and mo_class
-        #         value_found = "Missing"
-        #         for mo in mo_elements:
-        #             dist_name = mo.attrib.get("distName", "")
-        #             if extract_site_id(dist_name) == site_id and matches_path(mo_class, dist_name):
-        #                 value_found = get_param_value(mo, param, ns_uri)
-        #                 break  # Take first match
-
-        #         summary_rows.append({
-        #             "file": xml_file.name,
-        #             "site_id": site,
-        #             "MRBTS": site_id,
-        #             "mo_class": mo_class,
-        #             "parameter": param,
-        #             "value": value_found
-        #         })
-
-# ALARM SHEET DATA
-# -------- Fixed Alarm Definitions --------
-
-        # LIST_1 = {
-        #     "MAINS FAIL": "Normally_open",
-        #     "RECTIFIER FAIL": "Normally_open",
-        #     "SITE ON BATTERY": "Normally_open",
-        #     "AC FAIL or CANOPY FAN FAIL": "Normally_open",
-        #     "FIRE AND SMOKE": "Normally_open",
-        #     "DG ON LOAD": "Normally_open",
-        #     "DG FAILED TO START": "Normally_open",
-        #     "DG FAILED TO STOP": "Normally_open",
-        #     "HIGH TEMPERATURE": "Normally_open",
-        #     "DOOR OPEN": "Normally_open",
-        #     "LOW BATTERY VOLTAGE": "Normally_open",
-        #     "DG FUEL LEVEL LOW": "Normally_open",
-        # }
-
-        # LIST_2 = {
-        #     "ACOC DOOR OPEN": "Normally_closed",
-        #     "ACOC EXT FAN FAIL": "Normally_closed",
-        #     "ACOC INT FAN FAIL": "Normally_closed",
-        #     "ACOC OVER TEMPERATURE": "Normally_open",
-        #     "MAINS FAIL": "Normally_open",
-        #     "SITE ON BATTERY": "Normally_open",
-        #     "LOW BATTERY VOLTAGE": "Normally_open",
-        #     "DG ON LOAD": "Normally_open",
-        #     "DG FUEL LEVEL LOW": "Normally_open",
-        #     "DG FAILED TO START": "Normally_open",
-        #     "HIGH TEMPERATURE": "Normally_open",
-        #     "FIRE AND SMOKE": "Normally_open",
-        # }
-
-
-        # LIST_1_ORDER = {name: idx for idx, name in enumerate(LIST_1.keys())}
-        # LIST_2_ORDER = {name: idx for idx, name in enumerate(LIST_2.keys())}
-
-
-
-        # def valid_alarm_pair(descr, polarity):
-        #     if descr in LIST_1 and LIST_1[descr] == polarity:
-        #         return True
-        #     if descr in LIST_2 and LIST_2[descr] == polarity:
-        #         return True
-        #     return False
-
 
 
         alarms = []
@@ -920,17 +843,7 @@ def upload_and_compare_xml_files(request):
                             "expected_value": expected_value,
                             "status": "OK"
                         })
-                    # else:
-                    #     # If none match DB, still log first actual value as NOT OK
-                    #     results.append({
-                    #         "file": xml_file.name,
-                    #         "site_id": site_id,
-                    #         "mo_path": path,
-                    #         "parameter": param_name,
-                    #         "actual_value": actual_values[0],
-                    #         "expected_value": expected_value,
-                    #         "status": "NOT OK"
-                    #     })
+
 
         # ---------------------------------------
         # 5. Nomenclature Validation (FIXED)
@@ -969,14 +882,24 @@ def upload_and_compare_xml_files(request):
                         tac = (p.text or "").strip()
 
             # 👉 LNBTS → siteTemplateName
+            # elif mo_class == "LNBTS":
+            #     for p in mo.findall(p_tag):
+            #         if p.attrib.get("name", "").lower() == "sitetemplatename":
+            #             itemname = (p.text or "").strip()
+            #             break
+            
             elif mo_class == "LNBTS":
                 for p in mo.findall(p_tag):
                     if p.attrib.get("name", "").lower() == "sitetemplatename":
                         itemname = (p.text or "").strip()
+
+                        if len(itemname) != 15:
+                            itemname = f"{itemname[:15]} (Invalid Length)"
+
                         break
 
             if bts_name or cell_name or itemname or tac:
-                nomenclature.append({
+                nomenclature_4G.append({
                     "Site_id": site,
                     "MRBTS": site_id,
                     "BTS_NAME": bts_name,
@@ -984,6 +907,90 @@ def upload_and_compare_xml_files(request):
                     "SiteTemplateName": itemname,
                     "TAC": tac,
                 })
+        # ---------------------------------------
+        # 2G Nomenclature
+        # ---------------------------------------
+        for mo in mo_elements:
+
+            mo_class = mo.attrib.get("class")
+
+            dist_name = mo.attrib.get("distName", "")
+            site_id = extract_site_id(dist_name)
+            site = mrbts_site_map.get(site_id, "")
+
+            sector_name = ""
+            bcf_name = ""
+            mrbts_name = ""
+            site_name = ""
+            itemname = ""
+            lac = ""
+
+            p_tag = f"{{{ns_uri}}}p" if ns_uri else "p"
+
+            # print("\n🔹 Processing:", mo_class, "| Site:", site_id, site)
+
+            # 👉 BCF → BCF NAME
+            # if mo_class == "BTS":
+            #     for p in mo.findall(p_tag):
+            #         if p.attrib.get("name", "").lower() == "name":
+            #             bcf_name = (p.text or "").strip()
+            #             print("Sector name:", sector_name)
+            #             break
+
+            # 👉 BTS → CELL NAME + TEMPLATE
+            if mo_class == "BTS":
+                for p in mo.findall(p_tag):
+                    pname = p.attrib.get("name", "").lower()
+
+                    if pname == "name":
+                        sector_name = (p.text or "").strip()
+                        print("SECTOR_NAME:", sector_name)
+
+                    # elif pname == "sitetemplatename":
+                    #     itemname = (p.text or "").strip()
+                    #     print("TEMPLATE:", itemname)
+                    
+                    elif pname == "sitetemplatename":
+                        itemname = (p.text or "").strip()
+
+                        # check length BEFORE trimming
+                        is_invalid = len(itemname) > 15
+
+                        # trim for display only
+                        itemname = itemname[:15]
+
+                        # store only value (no flag)
+                        break
+                    
+                    elif pname == "locationareaidlac":
+                        lac = (p.text or "").strip()
+                        print("LAC:", lac)
+
+            elif mo_class == "BCF":
+                bcf_name = dist_name.split("BCF-")[-1]
+                for p in mo.findall(p_tag):
+                    pname = p.attrib.get("name", "").lower()
+                    if pname == "sbtsid":
+                        mrbts_name = (p.text or "").strip()
+                        print("MRBTS_NAME:", mrbts_name)
+
+                    elif pname == "name":
+                        site_name = (p.text or "").strip()
+                        print("SITE_NAME:", site_name)
+
+            if bcf_name or sector_name or itemname or lac or mrbts_name or site_name:
+
+                print("   ✅ Appending Row")
+
+                nomenclature_2G.append({
+                    "SITE_NAME": site_name,
+                    "MRBTS_NAME": mrbts_name,
+                    "BCF_NAME": bcf_name,
+                    "SECTOR_NAME": sector_name,
+                    "SiteTemplateName": itemname,
+                    "LAC": lac,
+                })
+
 
 
         for mo in mo_elements:
@@ -1042,6 +1049,16 @@ def upload_and_compare_xml_files(request):
             site_id = extract_site_id(dist_name)
             site = mrbts_site_map.get(site_id, "")
 
+            # -------- Extract ANT and RMOD --------
+            rmod = re.search(r"RMOD-\d+", dist_name)
+            antl = re.search(r"ANTL-\d+", dist_name)
+
+            RMOD = rmod.group(0) if rmod else ""
+            ANT = antl.group(0) if antl else ""
+
+            # print("Processing:", ANT, RMOD, "Site:", site)
+
+
             vswrMajor = ""
             vswrMinor = ""
 
@@ -1058,231 +1075,281 @@ def upload_and_compare_xml_files(request):
                 VSWR.append({
                     "Site_id": site,
                     "MRBTS": site_id,
+                    "RMOD": RMOD,
+                    "ANT": ANT,
                     "vswrMajorThreshold": vswrMajor,
                     "vswrMinorThreshold": vswrMinor,
                 })
-        # ---------------------------------------
-        # Deduplicate final outputs
-        # ---------------------------------------
-        all_alarms = deduplicate_alarms(all_alarms)
+    # ---------------------------------------
+    # Deduplicate final outputs
+    # ---------------------------------------
+    all_alarms = deduplicate_alarms(all_alarms)
 
-        df_results = pd.DataFrame(results).drop_duplicates(
-            subset=["file","MRBTS", "mo_path", "parameter", "actual_value", "expected_value"],
-            keep="first"
-        )
+    df_results = pd.DataFrame(results).drop_duplicates(
+        subset=["file","MRBTS", "mo_path", "parameter", "actual_value", "expected_value"],
+        keep="first"
+    )
 
-        df_alarms = pd.DataFrame(all_alarms).drop_duplicates(
-            subset=["file", "MRBTS", "mo_path", "parameter", "Status"],
-            keep="first"
-        )
+    df_alarms = pd.DataFrame(all_alarms).drop_duplicates(
+        subset=["file", "MRBTS", "mo_path", "parameter", "Status"],
+        keep="first"
+    )
 
-        df_summary = pd.DataFrame(summary_rows).drop_duplicates()
+    df_summary = pd.DataFrame(summary_rows).drop_duplicates()
 
-        df_ipmtu = pd.DataFrame(ipmtu_rows).drop_duplicates(
-            subset=["file", "MRBTS","dist_name", "ipMtu", "status"],
-            keep="first"
-        )
-        df_nomenclature = pd.DataFrame(nomenclature).drop_duplicates()
+    df_ipmtu = pd.DataFrame(ipmtu_rows).drop_duplicates(
+        subset=["file", "MRBTS","dist_name", "ipMtu", "status"],
+        keep="first"
+    )
+    df_nomenclature_4G = pd.DataFrame(nomenclature_4G).drop_duplicates()
 
-        df_vswr = pd.DataFrame(VSWR)
+    df_nomenclature_2G = pd.DataFrame(nomenclature_2G).drop_duplicates()
+    print("df_nomenclature_2G", df_nomenclature_2G  )
 
-        df_ret = pd.DataFrame(ret_counter).drop_duplicates()
+    df_vswr = pd.DataFrame(VSWR)
 
-        # ---------------------------------------
-        # SAVE EXCEL REPORT
-        # ---------------------------------------
-        report_folder = os.path.join(settings.MEDIA_ROOT, "reports")
-        os.makedirs(report_folder, exist_ok=True)
+    df_ret = pd.DataFrame(ret_counter).drop_duplicates()
 
-        filename = f"report_{circle_name}.xlsx"
-        filepath = os.path.join(report_folder, filename)
+    # ---------------------------------------
+    # SAVE EXCEL REPORT
+    # ---------------------------------------
+    report_folder = os.path.join(settings.MEDIA_ROOT, "reports")
+    os.makedirs(report_folder, exist_ok=True)
 
-        with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
-            df_results.to_excel(writer, index=False, sheet_name="Comparison")
-            format_excel_sheet(writer, "Comparison", df_results)
+    filename = f"report_{circle_name}.xlsx"
+    filepath = os.path.join(report_folder, filename)
 
-            if not df_alarms.empty:
-                df_alarms["sort_key"] = df_alarms["mo_path"].str.extract(r"EAC_IN-(\d+)$").astype(int)
-                df_alarms["param_order"] = df_alarms["parameter"].map({"descr": 1, "polarity": 2})
+    with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
+        df_results.to_excel(writer, index=False, sheet_name="Comparison")
+        format_excel_sheet(writer, "Comparison", df_results)
 
-                df_alarms = df_alarms.sort_values(
-                    by=["MRBTS", "sort_key", "param_order"],
-                    ascending=[True, True, True]
-                ).drop(columns=["sort_key", "param_order"])
+        if not df_alarms.empty:
+            df_alarms["sort_key"] = df_alarms["mo_path"].str.extract(r"EAC_IN-(\d+)$").astype(int)
+            df_alarms["param_order"] = df_alarms["parameter"].map({"descr": 1, "polarity": 2})
 
-
-                # ---- Flattened Lists ----
-                list1 = [
-                    'MAINS FAIL', 'Normally_open',
-                    'RECTIFIER FAIL', 'Normally_open',
-                    'SITE ON BATTERY', 'Normally_open',
-                    'AC FAIL or CANOPY FAN FAIL', 'Normally_open',
-                    'FIRE AND SMOKE', 'Normally_open',
-                    'DG ON LOAD', 'Normally_open',
-                    'DG FAILED TO START', 'Normally_open',
-                    'DG FAILED TO STOP', 'Normally_open',
-                    'HIGH TEMPERATURE', 'Normally_open',
-                    'DOOR OPEN', 'Normally_open',
-                    'LOW BATTERY VOLTAGE', 'Normally_open',
-                    'DG FUEL LEVEL LOW', 'Normally_open'
-                ]
-
-                list2 = [
-                    'ACOC DOOR OPEN', 'Normally_closed',
-                    'ACOC EXT FAN FAIL', 'Normally_closed',
-                    'ACOC INT FAN FAIL', 'Normally_closed',
-                    'ACOC OVER TEMPERATURE', 'Normally_open',
-                    'MAINS FAIL', 'Normally_open',
-                    'SITE ON BATTERY', 'Normally_open',
-                    'LOW BATTERY VOLTAGE', 'Normally_open',
-                    'DG ON LOAD', 'Normally_open',
-                    'DG FUEL LEVEL LOW', 'Normally_open',
-                    'DG FAILED TO START', 'Normally_open',
-                    'HIGH TEMPERATURE', 'Normally_open',
-                    'FIRE AND SMOKE', 'Normally_open'
-                ]
-
-                valid_orders = {
-                    "list1": list1,
-                    "list2": list2,
-                    "list1_list2": list1 + list2,
-                    "list2_list1": list2 + list1,
-                }
-
-                # ---- Detect order ----
-                def detect_order(status_values, valid_orders):
-                    scores = {}
-                    for name, order in valid_orders.items():
-                        score = 0
-                        for s, o in zip(status_values, order):
-                            if s == o:
-                                score += 1
-                            else:
-                                break
-                        scores[name] = score
-                    return max(scores, key=scores.get)
-
-                status_list = df_alarms["Status"].astype(str).tolist()
-                detected_order = detect_order(status_list, valid_orders)
-                expected_sequence = valid_orders[detected_order]
-
-                status_ok = []
-                seq_len = len(expected_sequence)
-
-                for idx, actual in enumerate(status_list):
-
-                    # 🔹 normal range → PURANA behaviour
-                    if idx < seq_len:
-                        status_ok.append(actual == expected_sequence[idx])
-
-                    # 🔁 repeat start → cyclic allow
-                    else:
-                        expected = expected_sequence[idx % seq_len]
-                        status_ok.append(actual == expected)
+            df_alarms = df_alarms.sort_values(
+                by=["MRBTS", "sort_key", "param_order"],
+                ascending=[True, True, True]
+            ).drop(columns=["sort_key", "param_order"])
 
 
-                df_alarms["Status_OK"] = status_ok
+            # ---- Flattened Lists ----
+            list1 = [
+                'MAINS FAIL', 'Normally_open',
+                'RECTIFIER FAIL', 'Normally_open',
+                'SITE ON BATTERY', 'Normally_open',
+                'AC FAIL or CANOPY FAN FAIL', 'Normally_open',
+                'FIRE AND SMOKE', 'Normally_open',
+                'DG ON LOAD', 'Normally_open',
+                'DG FAILED TO START', 'Normally_open',
+                'DG FAILED TO STOP', 'Normally_open',
+                'HIGH TEMPERATURE', 'Normally_open',
+                'DOOR OPEN', 'Normally_open',
+                'LOW BATTERY VOLTAGE', 'Normally_open',
+                'DG FUEL LEVEL LOW', 'Normally_open'
+            ]
 
-                # ---- Write alarms sheet ----
-                sheet_name = "Alarms"
-                df_alarms.to_excel(writer, index=False, sheet_name=sheet_name)
-                format_excel_sheet(writer, sheet_name, df_alarms)
+            list2 = [
+                'ACOC DOOR OPEN', 'Normally_closed',
+                'ACOC EXT FAN FAIL', 'Normally_closed',
+                'ACOC INT FAN FAIL', 'Normally_closed',
+                'ACOC OVER TEMPERATURE', 'Normally_open',
+                'MAINS FAIL', 'Normally_open',
+                'SITE ON BATTERY', 'Normally_open',
+                'LOW BATTERY VOLTAGE', 'Normally_open',
+                'DG ON LOAD', 'Normally_open',
+                'DG FUEL LEVEL LOW', 'Normally_open',
+                'DG FAILED TO START', 'Normally_open',
+                'HIGH TEMPERATURE', 'Normally_open',
+                'FIRE AND SMOKE', 'Normally_open'
+            ]
 
-                workbook = writer.book
-                worksheet = writer.sheets[sheet_name]
+            valid_orders = {
+                "list1": list1,
+                "list2": list2,
+                "list1_list2": list1 + list2,
+                "list2_list1": list2 + list1,
+            }
 
-                green_fmt = workbook.add_format({
-                    "bg_color": "#4DC765",
-                    "border": 1
-                })
-                red_fmt = workbook.add_format({
-                    "bg_color": "#DB6976",
-                    "border": 1
-                })
+            # ---- Detect order ----
+            def detect_order(status_values, valid_orders):
+                scores = {}
+                for name, order in valid_orders.items():
+                    score = 0
+                    for s, o in zip(status_values, order):
+                        if s == o:
+                            score += 1
+                        else:
+                            break
+                    scores[name] = score
+                return max(scores, key=scores.get)
 
-                status_col_idx = df_alarms.columns.get_loc("Status")
-                ok_col_idx = df_alarms.columns.get_loc("Status_OK")
+            status_list = df_alarms["Status"].astype(str).tolist()
+            detected_order = detect_order(status_list, valid_orders)
+            expected_sequence = valid_orders[detected_order]
 
-                # ---- Apply coloring ----
-                for row_idx in range(len(df_alarms)):
-                    fmt = green_fmt if df_alarms.iloc[row_idx, ok_col_idx] else red_fmt
-                    worksheet.write(
-                        row_idx + 1,
-                        status_col_idx,
-                        df_alarms.iloc[row_idx, status_col_idx],
-                        fmt
-                    )
+            status_ok = []
+            seq_len = len(expected_sequence)
 
-                # ---- Hide helper column ----
-                worksheet.set_column(ok_col_idx, ok_col_idx, None, None, {"hidden": True})
+            for idx, actual in enumerate(status_list):
+
+                # 🔹 normal range → PURANA behaviour
+                if idx < seq_len:
+                    status_ok.append(actual == expected_sequence[idx])
+
+                # 🔁 repeat start → cyclic allow
+                else:
+                    expected = expected_sequence[idx % seq_len]
+                    status_ok.append(actual == expected)
 
 
-            if not df_summary.empty:
-                df_summary.to_excel(writer, index=False, sheet_name="FixedParameters")
-                format_excel_sheet(writer, "FixedParameters", df_summary)
+            df_alarms["Status_OK"] = status_ok
 
-            if not df_ipmtu.empty:
-                df_ipmtu.to_excel(writer, index=False, sheet_name="ipMtu Status")
-                format_excel_sheet(writer, "ipMtu Status", df_ipmtu)
+            # ---- Write alarms sheet ----
+            sheet_name = "Alarms"
+            df_alarms.to_excel(writer, index=False, sheet_name=sheet_name)
+            format_excel_sheet(writer, sheet_name, df_alarms)
+
+            workbook = writer.book
+            worksheet = writer.sheets[sheet_name]
+
+            green_fmt = workbook.add_format({
+                "bg_color": "#4DC765",
+                "border": 1
+            })
+            red_fmt = workbook.add_format({
+                "bg_color": "#DB6976",
+                "border": 1
+            })
+
+            status_col_idx = df_alarms.columns.get_loc("Status")
+            ok_col_idx = df_alarms.columns.get_loc("Status_OK")
+
+            # ---- Apply coloring ----
+            for row_idx in range(len(df_alarms)):
+                fmt = green_fmt if df_alarms.iloc[row_idx, ok_col_idx] else red_fmt
+                worksheet.write(
+                    row_idx + 1,
+                    status_col_idx,
+                    df_alarms.iloc[row_idx, status_col_idx],
+                    fmt
+                )
+
+            # ---- Hide helper column ----
+            worksheet.set_column(ok_col_idx, ok_col_idx, None, None, {"hidden": True})
+
+
+        if not df_summary.empty:
+            df_summary.to_excel(writer, index=False, sheet_name="FixedParameters")
+            format_excel_sheet(writer, "FixedParameters", df_summary)
+
+        if not df_ipmtu.empty:
+            df_ipmtu.to_excel(writer, index=False, sheet_name="ipMtu Status")
+            format_excel_sheet(writer, "ipMtu Status", df_ipmtu)
+        
+        if not df_nomenclature_4G.empty:
+            df_nomenclature_4G.to_excel(writer, index=False, sheet_name="Nomenclature 4G")
+            format_excel_sheet(writer, "Nomenclature 4G", df_nomenclature_4G)
+            workbook = writer.book
+            worksheet = writer.sheets["Nomenclature 4G"]
+
+            red_fmt = workbook.add_format({
+                "bg_color": "#DB6976",
+                "border": 1
+            })
+
+            template_col = df_nomenclature_4G.columns.get_loc("SiteTemplateName")
+
+            for row_idx in range(len(df_nomenclature_4G)):
+                value = str(df_nomenclature_4G.iloc[row_idx, template_col])
+
+                # highlight invalid length
+                if len(value) != 15:
+                    worksheet.write(row_idx + 1, template_col, value, red_fmt)
+                    
+                    
+        if not df_nomenclature_2G.empty:
+            df_nomenclature_2G.to_excel(writer, index=False, sheet_name="Nomenclature 2G")
+            format_excel_sheet(writer, "Nomenclature 2G", df_nomenclature_2G)
+
+            workbook = writer.book
+            worksheet = writer.sheets["Nomenclature 2G"]
+
+            red_fmt = workbook.add_format({
+                "bg_color": "#DB6976",
+                "border": 1
+            })
+
+            template_col = df_nomenclature_2G.columns.get_loc("SiteTemplateName")
+
+            for row_idx in range(len(df_nomenclature_2G)):
+                value = str(df_nomenclature_2G.iloc[row_idx, template_col])
+
+                # highlight invalid length
+                if len(value) != 15:
+                    worksheet.write(row_idx + 1, template_col, value, red_fmt)
+                    
+        
             
-            if not df_nomenclature.empty:
-                df_nomenclature.to_excel(writer, index=False, sheet_name="Nomenclature")
-                format_excel_sheet(writer, "Nomenclature", df_nomenclature)
             
-            if not df_ret.empty:
-                df_ret = df_ret[
-                    [
-                        "Site_id",
-                        "MRBTS",
-                        "ALD",
-                        "RET Unit ID",
-                        "Mech. angle",
-                        "Min. angle",
-                        "Max. angle",
-                        "Angle"
-                    ]
+        if not df_ret.empty:
+            df_ret = df_ret[
+                [
+                    "Site_id",
+                    "MRBTS",
+                    "ALD",
+                    "RET Unit ID",
+                    "Mech. angle",
+                    "Min. angle",
+                    "Max. angle",
+                    "Angle"
                 ]
-                df_ret.to_excel(writer, index=False, sheet_name="RET Counter")
-                format_excel_sheet(writer, "RET Counter", df_ret)
-            
-            if not df_vswr.empty:
-                df_vswr.to_excel(writer, index=False, sheet_name="VSWR")
-                format_excel_sheet(writer, "VSWR", df_vswr)
-            # print("==========ret=======",df_ret)
+            ]
+            df_ret.to_excel(writer, index=False, sheet_name="RET Counter")
+            format_excel_sheet(writer, "RET Counter", df_ret)
+        
+        if not df_vswr.empty:
+            df_vswr.to_excel(writer, index=False, sheet_name="VSWR")
+            format_excel_sheet(writer, "VSWR", df_vswr)
+        # print("==========ret=======",df_ret)
 
 
-        all_sites = []
-        # from ipmtu
-        for row in ipmtu_rows:
-            if row.get("Site_id"):
-                all_sites.append(row["Site_id"])
+    all_sites = []
+    # from ipmtu
+    for row in ipmtu_rows:
+        if row.get("Site_id"):
+            all_sites.append(row["Site_id"])
 
-        # from summary
-        for row in summary_rows:
-            if row.get("site_id"):
-                all_sites.append(row["site_id"])
+    # from summary
+    for row in summary_rows:
+        if row.get("site_id"):
+            all_sites.append(row["site_id"])
 
-        # from nomenclature
-        for row in nomenclature:
-            if row.get("Site_id"):
-                all_sites.append(row["Site_id"])
+    # from nomenclature_4G
+    for row in nomenclature_4G:
+        if row.get("Site_id"):
+            all_sites.append(row["Site_id"])
+        
+    for row in nomenclature_2G:
+        if row.get("Site_id"):
+            all_sites.append(row["Site_id"])
 
-        # from alarms
-        for row in all_alarms:
-            if row.get("Site_id"):
-                all_sites.append(row["Site_id"])
+    # from alarms
+    for row in all_alarms:
+        if row.get("Site_id"):
+            all_sites.append(row["Site_id"])
 
-        unique_sites = list(set(all_sites))
-        site_id_str = ",".join(unique_sites)
-        print("FINAL SITE LIST:", site_id_str)
+    unique_sites = list(set(all_sites))
+    site_id_str = ",".join(unique_sites)
+    # print("FINAL SITE LIST:", site_id_str)
 
-        api_usage_all(userId, api, site_id_str)
+    api_usage_all(userId, api, site_id_str)
 
-        return Response({
-            "message": f"Report generated successfully for circle: {circle_name}",
-            "download_link": request.build_absolute_uri(settings.MEDIA_URL + 'reports/' + filename),
-            "status": True
-        })
+    return Response({
+        "message": f"Report generated successfully for circle: {circle_name}",
+        "download_link": request.build_absolute_uri(settings.MEDIA_URL + 'reports/' + filename),
+        "status": True
+    })
 
 
 ##################################################### summary ##############################
@@ -2135,24 +2202,16 @@ def upload_checklist_xml_files_5G(request):
     # Save Excel report
     report_folder = os.path.join(settings.MEDIA_ROOT, "reports")
     os.makedirs(report_folder, exist_ok=True)
- 
-    file_name = "5G-AT_Checklist.xlsx"
-    file_path = os.path.join(report_folder, file_name)
- 
- 
-    file_url = request.build_absolute_uri(
-        os.path.join(settings.MEDIA_URL, "reports", file_name).replace('\\', '/')
-    )
- 
-    # Write Excel
-    with pd.ExcelWriter(file_path, engine="xlsxwriter") as writer:
+
+    filepath = os.path.join(report_folder, "5G-AT_Checklist.xlsx")
+
+    with pd.ExcelWriter(filepath, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name="Comparison")
         format_excel_sheet(writer, "Comparison", df)
- 
+
     return Response({
         "status": True,
         "message": "XML parsed successfully",
         "rows_generated": len(df),
-        "file_path": file_url
+        "file_path": filepath
     })
- 
