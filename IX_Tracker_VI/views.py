@@ -381,7 +381,7 @@ def datewise_integration_data(request):
         '5G SECTOR ADDITION','5G RELOCATION','HT INCREMENT','FEMTO','DE-GROW',
         'IBS','IDSC','MACRO','ODSC','5G BW UPGRADE','RRU UPGRADE','OPERATIONS',
         'OTHERS','RECTIFICATION','RELOCATION','5G RRU SWAP','RET',
-        'TRAFFIC SHIFTING','ULS_HPSC','UPGRADE','RRU SWAP'
+        'TRAFFIC SHIFTING','ULS_HPSC','UPGRADE','RRU SWAP',
     ]
 
     activity_columns = [a.replace(' ', '_').replace('-', '_') for a in activity_type]

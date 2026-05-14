@@ -69,6 +69,9 @@ class IntegrationData(models.Model):
     Customer_Approval = models.CharField(max_length=500, blank =True, null = True)
 
     Old_Site_ID = models.CharField(max_length=500, blank=True)
+    Old_Site_LNBTS = models.CharField(max_length=500, blank=True)
+    Old_Site_OSS = models.CharField(max_length=500, blank=True)
+    Old_Site_MPlane_IP = models.CharField(max_length=500, blank=True)
     Old_Site_Tech= models.CharField(max_length=500, blank=True)
     Allocated_Tech= models.CharField(max_length=500, blank=True)
     Deployed_Tech= models.CharField(max_length=500, blank=True)

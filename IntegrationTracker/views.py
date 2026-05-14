@@ -86,13 +86,13 @@ def generate_date_list(start_date):
 def get_excel_temp_link(request):
     #mcom123 temp id.
     # Path to the Excel file
-    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.8.3.xlsm')
+    file_path = os.path.join(settings.MEDIA_ROOT, 'IntegrationTracker', 'Integration_Tracker_Template_V1.8.4.xlsm')
 
     # Check if the file exists
     if os.path.exists(file_path):
         # Construct the URL to access the file
-        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.8.3.xlsm')              
-        return Response({'file_url': file_url,'template_version':'v1.8.3'}, status=status.HTTP_200_OK)
+        file_url = os.path.join(settings.MEDIA_URL ,'IntegrationTracker' , 'Integration_Tracker_Template_V1.8.4.xlsm')              
+        return Response({'file_url': file_url,'template_version':'v1.8.4'}, status=status.HTTP_200_OK)
     else:
         # Return a 404 response if the file does not exist
         return Response({'error': 'Excel file not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -179,7 +179,7 @@ def upload_excel(request):
 
             for index, row in df.iterrows():
                 if row['Activity Name'].upper() == 'RELOCATION':
-                    empty_check_columns = ['Integration Date','Site ID','Technology (SIWA)','Old Site ID','Old Site Tech','Allocated Tech','Deployed Tech','NO OF BBU']
+                    empty_check_columns = ['Integration Date','Site ID','Technology (SIWA)','Old Site ID','Old Site Tech','Allocated Tech','Deployed Tech','NO OF BBU','Old Site LNBTS','Old Site OSS','Old Site MPlane IP']
                    
                 else:
                     empty_check_columns =  ['Integration Date','Site ID','Technology (SIWA)']
@@ -299,6 +299,9 @@ def upload_excel(request):
                         'Customer_Approval':row['Customer Approval'],
 
                         'Old_Site_ID':row['Old Site ID'],
+                        'Old_Site_LNBTS':row['Old Site LNBTS'],
+                        'Old_Site_OSS':row['Old Site OSS'],
+                        'Old_Site_MPlane_IP':row['Old Site MPlane IP'],
                         'Old_Site_Tech':row['Old Site Tech'],
                         'Allocated_Tech':row['Allocated Tech'],
                         'Deployed_Tech':row['Deployed Tech'],
