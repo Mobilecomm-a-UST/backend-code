@@ -522,31 +522,10 @@ def generate_integration_script(request):
         # -----------------------------------------------------------------------------------------------------------------------------------------------------------
         # -        -                    -          - ----------------------- defining the output path -------------------- -           -                 -
         base_path_url = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
-        # ------- old code -------- // permision error
-        # if os.path.exists(base_path_url):
-        #     os.chmod(base_path_url, stat.S_IWRITE)
-        #     shutil.rmtree(base_path_url)
-        # os.makedirs(base_path_url, exist_ok=True)
-        
-        # ------- new code -------- // to avoid permission error while deleting the old folder and creating new one with full permission
         if os.path.exists(base_path_url):
-            # Full permission before delete
-            os.chmod(base_path_url, 0o2777)
-
-            # Also change inner files/folders permission
-            for root, dirs, files in os.walk(base_path_url):
-                for d in dirs:
-                    os.chmod(os.path.join(root, d), 0o2777)
-
-                for f in files:
-                    os.chmod(os.path.join(root, f), 0o0666)
-
+            os.chmod(base_path_url, stat.S_IWRITE)
             shutil.rmtree(base_path_url)
-
-        os.makedirs(base_path_url, mode=0o2777, exist_ok=True)
-
-        # Ensure permission after create
-        os.chmod(base_path_url, 0o2777)
+        os.makedirs(base_path_url, exist_ok=True)
         # ___________________________________________________________________________________________________________________________________________________________
 
         siteBasicFilePath = ""
@@ -934,10 +913,6 @@ def generate_integration_script(request):
                 with open(TN_05_5G_LMS_GPL_ROTN_path, "a", encoding="utf-8") as file:
                     file.write(TN_05_5G_LMS_GPL_ROTN + "\n")
                 
-                SA_RIM_ACTIVATION_script_path = os.path.join(node_dir_5g, f"04_{node}_SA_CONFIGURATION_RIM_ACTIVATION_{current_time}.txt")
-
-                with open(SA_RIM_ACTIVATION_script_path, "a", encoding="utf-8") as file:
-                    file.write("")
 
             # -------------------------------------------------------------------------------------------- TN Commissioning Scripts Generation Logic ------------------------------------------------------------------#
             for node in site_basic_df["eNodeBName"].unique():
