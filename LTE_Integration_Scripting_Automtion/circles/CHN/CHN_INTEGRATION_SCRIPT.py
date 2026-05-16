@@ -183,23 +183,15 @@ crn ENodeBFunction=1
 eNodeBPlmnId mcc=404,mnc=40,mncLength=2
 dscpLabel 46
 eNBId {eNBId}
-gtpuErrorIndicationDscp 46
-measuringEcgiWithAgActive false
-rrcConnReestActive true
-s1GtpuEchoDscp 46
 sctpRef Transport=1,SctpEndpoint=1
-timeAndPhaseSynchAlignment true
-tRelocOverall 5
-tS1HoCancelTimer 3
 upIpAddressRef Router=LTE_NR,InterfaceIPv4=LTE_UP,AddressIPv4=LTE_UP
-x2GtpuEchoDscp 14
 end
 #END ENodeBFunction=1 --------------------
 
 gs-
 confb-
 
-#START ENodeBFunction=1,TermPointToMme --------------------
+#########################################TermPointToMme##################################
 
 gs+
 
@@ -256,6 +248,7 @@ mmeSupportNbIoT false
 end
 cvms post_chn_mme
 gs-
+
 
 
 
@@ -401,24 +394,74 @@ gs+
 
 crn ENodeBFunction=1
 eNodeBPlmnId mcc=404,mnc=40,mncLength=2
-
 dscpLabel 46
 eNBId {eNBId}
-gtpuErrorIndicationDscp 46
-measuringEcgiWithAgActive false
-rrcConnReestActive true
-s1GtpuEchoDscp 46
 sctpRef Transport=1,SctpEndpoint=1
-timeAndPhaseSynchAlignment true
-tRelocOverall 5
-tS1HoCancelTimer 3
 upIpAddressRef Transport=1,Router=LTEUP,InterfaceIPv4=TN_E_UP,AddressIPv4=TN_E_UP
-x2GtpuEchoDscp 14
 end
 #END ENodeBFunction=1 --------------------
 
 gs-
 confb-
+
+#########################################TermPointToMme##################################
+
+gs+
+
+crn ENodeBFunction=1,TermPointToMme=CHSERRHCK01ERPCCMM03
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.103.139.135
+ipAddress2 10.103.139.137
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+
+crn ENodeBFunction=1,TermPointToMme=CHNSIRRHCK02ERPCCMM04
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.103.39.65
+ipAddress2 10.103.39.67
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+
+crn ENodeBFunction=1,TermPointToMme=CHNSIREMME02
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.1.169.235
+ipAddress2 10.1.169.236
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+
+crn ENodeBFunction=1,TermPointToMme=CHNSIREMME01
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.1.163.121
+ipAddress2 10.1.163.122
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+cvms post_chn_mme
+gs-
+
 
 
 """
@@ -566,22 +609,71 @@ gs+
 crn ENodeBFunction=1
 eNodeBPlmnId mcc=404,mnc=40,mncLength=2
 eNBId {eNBId}
-gtpuErrorIndicationDscp 46
-measuringEcgiWithAgActive false
-rrcConnReestActive true
-s1GtpuEchoDscp 46
 sctpRef Transport=1,SctpEndpoint=1
-timeAndPhaseSynchAlignment true
-tRelocOverall 5
-tS1HoCancelTimer 3
-upIpAddressRef Transport=1,Router=LTEUP,InterfaceIPv4=TN_C_UP,AddressIPv4=TN_C_UP
-x2GtpuEchoDscp 14
+upIpAddressRef Transport=1,Router=LTEUP,InterfaceIPv4=TN_C_UP,AddressIPv4=TN_C_UP\
 end
 #END ENodeBFunction=1 --------------------
 
 gs-
 confb-
 
+#########################################TermPointToMme##################################
+
+gs+
+
+crn ENodeBFunction=1,TermPointToMme=CHSERRHCK01ERPCCMM03
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.103.139.135
+ipAddress2 10.103.139.137
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+
+crn ENodeBFunction=1,TermPointToMme=CHNSIRRHCK02ERPCCMM04
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.103.39.65
+ipAddress2 10.103.39.67
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+
+crn ENodeBFunction=1,TermPointToMme=CHNSIREMME02
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.1.169.235
+ipAddress2 10.1.169.236
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+
+crn ENodeBFunction=1,TermPointToMme=CHNSIREMME01
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.1.163.121
+ipAddress2 10.1.163.122
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+cvms post_chn_mme
+gs-
 
 
 """
@@ -7320,48 +7412,246 @@ deb TermPointToGNB
 
 
 CHN_Termpoint_GUtranFreqRelation = """ 
-#########01_IPV6creationforanchor##########
 
 
-##################################GutranFreqRelation Creation#########################################
+###########################Termpoint & FreqRelation################################
 
 
 
-ma L21_12_21 ^EUtranCell.DD
-for $mo in L21_12_21
-$mordn = rdn($mo)
-pr ENodeBFunction=1,$mordn,GUtranFreqRelation=629952
-if $nr_of_mos = 0
-cr ENodeBFunction=1,$mordn,GUtranFreqRelation=629952
-GUtraNetwork=1,GUtranSyncSignalFrequency=629952-30
-fi
-done
-func Relation_121L21
-for $j = 1 to 5
-pr GUtraNetwork=1,ExternalGNodeBFunction=40440-$gnbid,ExternalGUtranCell=40440-000000$gnbid-31$j
-if $nr_of_mos = 1
-crn ENodeBFunction=1,$mordn,GUtranFreqRelation=629952,GUtranCellRelation=40440-000000$gnbid-31$j
-essEnabled false
-isRemoveAllowed false
-neighborCellRef GUtraNetwork=1,ExternalGNodeBFunction=40440-$gnbid,ExternalGUtranCell=40440-000000$gnbid-31$j
+cvms bfranchor
+
+#####1. Transport=1,Router=LTEUP,InterfaceIPv6=NR--Change TN Port as per configured in BBU
+
+get Router=LTEUP,InterfaceIPv4=TN_._UP                      encapsulation  > $encapsulation
+
+$reqipX2 = readinput( ipv6 IP for X2 ENDC )
+$reqhopadd = readinput( ipv6 nexthop )
+
+get Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR usedAddress > $reqipNR                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+get GNBDUFunction=1 gNBId$ > $gnbid
+
+
+gs+
+
+crn Transport=1,Router=LTEUP,InterfaceIPv6=NR
+aclEgress
+aclIngress
+bfdProfile
+bfdStaticRoutes 0
+dscpNdp 48
+egressQosMarking
+encapsulation $encapsulation
+ingressQosMarking
+loopback false
+mtu 1500
+neighborDiscoveryTimeout 30000
+neighborSolicitationInterval 1000
+routesHoldDownTimer
+trackedInterface
 userLabel
 end
-fi
-done
-endfunc
 
-func Relation_121L2_18L
-for $mo in L21_12_21
-$mordn = rdn($mo)
-Relation_121L21
-done
-endfunc
 
-Relation_121L2_18L
+#####2. Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2/NR ---- Change IP address as per planning
+
+
+crn Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2
+address $reqipX2 ###need to change ENDC IP according to plan in AD column###
+configurationMode 0
+duidType 0
+primaryAddress true
+userLabel
+end	
+gs-
+
+#######3. Transport=1,Router=LTEUP,RouteTableIPv6Static=1,Dst=default,NextHop=1/NR--Change Nexthop address as per planning
+
+gs+
+
+crn Transport=1,Router=LTEUP,RouteTableIPv6Static=1                                                                                                               
+end
+
+crn Transport=1,Router=LTEUP,RouteTableIPv6Static=1,Dst=default                                                                                                   
+dst ::/0                                                                                                                                                          
+end
+
+
+crn Transport=1,Router=LTEUP,RouteTableIPv6Static=1,Dst=default,NextHop=1
+address $reqhopadd ###need to change ENDC gateway according to plan in AA column###
+adminDistance 1
+bfdMonitoring true
+discard false
+reference
+end
+gs-
+
+#########4. Transport=1,SctpEndpoint=X2_ENDC/NR 
+
+
+gs+
+
+crn Transport=1,SctpEndpoint=X2_ENDC
+dtls
+dtlsNodeCredential
+dtlsSctpSecurityMode 0
+dtlsTrustCategory
+localIpAddress Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2
+portNumber 36422
+sctpProfile SctpProfile=1
+userLabel
+end
+
+set ENodeBFunction=1$  endcAllowed  true                                                                                                                 
+set ENodeBFunction=1$  sctpEndcX2Ref Transport=1,SctpEndpoint=X2_ENDC                                                                                        
+set ENodeBFunction=1$  upEndcX2IpAddressRef Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2                                                                     
+set ENodeBFunction=1$  intraRanIpAddressRef Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2                                                                  
+set ^EUtranCell.DD= endcAllowedPlmnList mcc=404,mnc=40,mnclength=2                                                                                                
+
+crn ENodeBFunction=1,EndcProfile=1                                                                                                                                
+end
+
+set ENodeBFunction=1,EndcProfile=1 meNbS1TermReqArpLev 0                                                                                                          
+set ENodeBFunction=1,EndcProfile=1 splitNotAllowedUeArpLev 0 
+lset ENodeBFunction=1,QciTable=default,QciProfilePredefined=qci[6789]$ endcProfileRef ENodeBFunction=1,EndcProfile=1
+
+cr ENodeBFunction=1,UePolicyOptimization=1                                                                                                                        
+set ENodeBFunction=1,UePolicyOptimization=1 ueCapPrioList 0                                                                                                       
+set ENodeBFunction=1,UePolicyOptimization=1 coverageAwareImc true                                                                                                 
+set ENodeBFunction=1  endcX2IpAddrViaS1Active  true
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR= gNodebIdLength 26                                                                                               
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1 anrStateNR 1 
+
+
+
+################*Parameter Setting Required:
+
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1  anrStateNR        1
+set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1  anrFunctionNRId   1
+set ENodeBFunction=1$   endcAllowed       true
+set ENodeBFunction=1$  intraRanIpAddressRef Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2
+set ENodeBFunction=1$  upEndcX2IpAddressRef Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2
+
+set  CXC4012095   featureState 1
+set  CXC4012504   featurestate 1
+set  CXC4012381   featurestate 1
+set  CXC4012385   featurestate 1 
+set  CXC4040006   featurestate 1                                                                                                                                   
+
+set EUtranCellFDD=DL_.*,EUtranFreqRelation=240 endcHoFreqPriority 6
+set EUtranCellFDD=DL_.*,EUtranFreqRelation=1511 endcHoFreqPriority 7
+set EUtranCellFDD=DL_.*,EUtranFreqRelation=3663 endcAwareIdleModePriority 3
+set EUtranCellTDD=DL_.*,EUtranFreqRelation=39150 endcAwareIdleModePriority 5
+set EUtranCellTDD=DL_.*,EUtranFreqRelation=39151 endcAwareIdleModePriority 7
+set EUtranCellTDD=DL_.*,EUtranFreqRelation=39348 endcAwareIdleModePriority 5
+set EUtranCellTDD=DL_.*,EUtranFreqRelation=39349 endcAwareIdleModePriority 7             
+
+get Router=*.*,RouteTableIPv6Static=.*,Dst=default,NextHop= address > $gwip                                                                                          
+mcc Router=*.*,InterfaceIPv6=NR,AddressIPv6=X2 ping6 $gwip -c 4
+
+
+
+#############################################5. ENodeBFunction=1,GUtraNetwork=1###########################################
+
+gs+
+
+cr ENodeBFunction=1,GUtraNetwork=1
+
+
+#############################################6. ENodeBFunction=1,GUtraNetwork=1###########################################
+
+gs+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+crn ENodeBFunction=1,GUtraNetwork=1,ExternalGNodeBFunction=40440-$gnbid                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+dirDataPathAvail true                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+eNBVlanPortRef                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+gNodeBId $gnbid                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+gNodeBIdLength 26                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+gNodeBPlmnId mcc=404,mnc=40,mncLength=2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+userLabel                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+end   
+
+crn ENodeBFunction=1,GUtraNetwork=1,ExternalGNodeBFunction=40440-$gnbid,TermPointToGNB=40440-$gnbid                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+additionalCnRef                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+administrativeState 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+domainName                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+ipAddress 0.0.0.0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+ipAddress2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+ipsecEpAddress ::                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+ipv6Address $reqipNR                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+ipv6Address2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+upIpAddress ::                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+end    
+
+########################7. ENodeBFunction=1,GUtraNetwork=1,GUtranSyncSignalFrequency=######################################
+
+crn ENodeBFunction=1,GUtraNetwork=1,GUtranSyncSignalFrequency=629952-30
+arfcn 629952
+smtcScs 30
+userLabel
+end
+gs-
+
 
 
 lt all
-get lgutran res
+
+
+get GNBDUFunction=1,NRCellDU= celllocalid > $CLID
+
+mr CWA_CRP_2
+ma CWA_CRP_2 EUtranCell.DD=.*,EUtranFreqRelation= cellReselectionPriority 2
+lpr CWA_CRP_2
+
+set CWA_CRP_2 cellReselectionPriority 4
+
+
+ma L21_12_21 ^EUtranCell.DD                                                                                                                                       
+
+for $mo in L21_12_21                                                                                                                                              
+$mordn = rdn($mo)                                                                                                                                                 
+pr ENodeBFunction=1,$mordn,GUtranFreqRelation=629952                                                                                                              
+if $nr_of_mos = 0                                                                                                                                                 
+cr ENodeBFunction=1,$mordn,GUtranFreqRelation=629952                                                                                                              
+GUtraNetwork=1,GUtranSyncSignalFrequency=629952-30                                                                                                       
+fi                                                                                                                                                                
+done                                                                                                                                                              
+
+
+func Relation_121L21                                                                                                                                              
+for $j = 1 to 5                                                                                                                                                   
+pr GUtraNetwork=1,ExternalGNodeBFunction=40440-$gnbid,ExternalGUtranCell=40440-000000$gnbid-31$j                                                                  
+if $nr_of_mos = 1                                                                                                                                                 
+crn ENodeBFunction=1,$mordn,GUtranFreqRelation=629952,GUtranCellRelation=40440-000000$gnbid-31$j                                                                  
+essEnabled false                                                                                                                                                  
+isRemoveAllowed false                                                                                                                                             
+neighborCellRef GUtraNetwork=1,ExternalGNodeBFunction=40440-$gnbid,ExternalGUtranCell=40440-000000$gnbid-31$j                                                     
+userLabel                                                                                                                                                         
+end                                                                                                                                                               
+fi                                                                                                                                                                
+done                                                                                                                                                              
+endfunc                                                                                                                                                           
+
+
+
+func Relation_121L2_18L                                                                                                                                           
+for $mo in L21_12_21                                                                                                                                              
+$mordn = rdn($mo)                                                                                                                                                 
+Relation_121L21                                                                                                                                                   
+done                                                                                                                                                              
+endfunc                                                                                                                                                           
+
+Relation_121L2_18L        
+
+
+set EUtranCell.DD=.*,GUtranFreqRelation=629952 cellReselectionPriority 5
+set CWA_CRP_2 cellReselectionPriority 2
+
+set ENodeBFunction=1$  endcAllowed  true                                                                                                                 
+set ENodeBFunction=1$  sctpEndcX2Ref Transport=1,SctpEndpoint=X2_ENDC                                                                                        
+set ENodeBFunction=1$  upEndcX2IpAddressRef Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2                                                                     
+set ENodeBFunction=1$  intraRanIpAddressRef Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=X2                                                                  
+set ^EUtranCell.DD= endcAllowedPlmnList mcc=404,mnc=40,mnclength=2                                                                                                
+
 
 
 """
