@@ -521,11 +521,22 @@ def generate_integration_script(request):
 
         # -----------------------------------------------------------------------------------------------------------------------------------------------------------
         # -        -                    -          - ----------------------- defining the output path -------------------- -           -                 -
+        # base_path_url = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
+        # if os.path.exists(base_path_url):
+        #     os.chmod(base_path_url, stat.S_IWRITE)
+        #     shutil.rmtree(base_path_url)
+        # os.makedirs(base_path_url, exist_ok=True)
         base_path_url = os.path.join(MEDIA_ROOT, "LTE_INTEGRATION_CONFIG_FILES")
+
         if os.path.exists(base_path_url):
-            os.chmod(base_path_url, stat.S_IWRITE)
-            shutil.rmtree(base_path_url)
+            try:
+                os.chmod(base_path_url, 0o777)
+                shutil.rmtree(base_path_url)
+            except PermissionError:
+                pass
+ 
         os.makedirs(base_path_url, exist_ok=True)
+        os.chmod(base_path_url, 0o755)
         # ___________________________________________________________________________________________________________________________________________________________
 
         siteBasicFilePath = ""
