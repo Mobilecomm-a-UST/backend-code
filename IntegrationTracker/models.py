@@ -15,6 +15,7 @@ class IntegrationData(models.Model):
     MO_NAME = models.CharField(max_length=500, blank=True)  # Allow no value
     NO_OF_BBU = models.CharField(max_length=500, blank=True)  # Allow no value
     LNBTS_ID = models.CharField(max_length=500, blank=True)  # Allow no value
+    New_NRBTS_ID = models.CharField(max_length=500, blank=True)  # Allow no value
     Technology_SIWA = models.CharField(max_length=500, blank=True) 
     Configuration_5G= models.CharField(max_length=500, blank=True,default="N/A")   # Allow no value
     OSS_Details = models.CharField(max_length=500, blank=True)  # Allow no value
@@ -70,6 +71,7 @@ class IntegrationData(models.Model):
 
     Old_Site_ID = models.CharField(max_length=500, blank=True)
     Old_Site_LNBTS = models.CharField(max_length=500, blank=True)
+    Old_NRBTS_ID = models.CharField(max_length=500, blank=True)
     Old_Site_OSS = models.CharField(max_length=500, blank=True)
     Old_Site_MPlane_IP = models.CharField(max_length=500, blank=True)
     Old_Site_Tech= models.CharField(max_length=500, blank=True)

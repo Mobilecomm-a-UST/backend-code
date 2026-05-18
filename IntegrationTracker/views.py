@@ -138,7 +138,7 @@ def upload_excel(request):
     file = request.data['file']
     value_in_cell = read_excel_cell(file.read(), sheet_name='Sheet2', cell='BE37')
     print("cell_value:",value_in_cell)
-    if value_in_cell == "mcom_v1.8.3":
+    if value_in_cell == "mcom_v1.8.4":
             try:
                 df = pd.read_excel(file,sheet_name="Tracker",keep_default_na=False,skiprows=1)
             except Exception as e:
@@ -250,6 +250,7 @@ def upload_excel(request):
                         'unique_key': unique_key,                   
                         'MO_NAME': str(row['MO NAME']).upper(),                           
                         'OSS_Details': row['OSS Details'],
+                        'New_NRBTS_ID': row['New NRBTS ID'],
                         'CELL_COUNT': row['CELL COUNT'],
                         'TRX_Count': row['TRX Count'],
                         'PRE_ALARM': row['PRE-ALARM'],
@@ -300,6 +301,7 @@ def upload_excel(request):
 
                         'Old_Site_ID':row['Old Site ID'],
                         'Old_Site_LNBTS':row['Old Site LNBTS'],
+                        'Old_NRBTS_ID':row['Old NRBTS ID'],
                         'Old_Site_OSS':row['Old Site OSS'],
                         'Old_Site_MPlane_IP':row['Old Site MPlane IP'],
                         'Old_Site_Tech':row['Old Site Tech'],
