@@ -17,7 +17,7 @@ from django.db.models import Q
 from django.forms.models import model_to_dict
 import numpy as np
 from rest_framework import status
-
+from openpyxl.styles import Font, PatternFill, Alignment
 
 CENTRAL_COLUMNS = [
     'Integration Date',    
@@ -1274,6 +1274,297 @@ def issue_summary(request):
 
 ############################################################ DOWNLOAD DATA ###################################################################
 
+# @api_view(['POST'])
+# def download_tracker_data_view(request):
+#     userId = request.data.get('userId')
+#     year = request.data.get('year')
+    
+#     try:
+#         user = RelocationUser.objects.filter(email=userId.lower()).first()
+#     except RelocationUser.DoesNotExist:
+#         return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    
+#     circles = user.circles
+
+#     # if not userId or not circle:
+#     #     return Response({'error': 'userId and circle are required.'}, status=400)
+
+#     try:
+#         if year:
+#             year = int(year)
+        
+#             fy_start = pd.Timestamp(year=year, month=3, day=26).date()
+#             fy_end   = pd.Timestamp(year=year + 1, month=3, day=25).date()
+        
+        
+#             today = dtime.today().date()
+
+#             # condition for FY range
+#             fy_filter = Q(site_onair_date__range=(fy_start, fy_end))
+#             null_filter = Q(site_onair_date__isnull=True)
+
+#             if fy_start <= today <= fy_end:
+#                 final_filter = fy_filter | null_filter
+#             else:
+#                 final_filter = fy_filter
+        
+#         if 'CENTRAL' in circles:
+#             if year:
+#                 obj = AlokTrackerModel.objects.filter(final_filter)
+#             else:
+#                 obj = AlokTrackerModel.objects.all()
+#             issue_obj = RelocationIssue.objects.all()
+#         else:
+#             if year:
+#                 obj = AlokTrackerModel.objects.filter(
+#                     final_filter,
+#                     circle__in=circles
+#                 )
+#             else:
+#                 obj = AlokTrackerModel.objects.filter(
+#                     circle__in=circles
+#                 )
+#             issue_obj = RelocationIssue.objects.filter(circle__in=circles)
+
+#         df = pd.DataFrame(obj.values())
+        
+#         if df.empty:
+#             return Response({"message": "No Data Found"}, status=404)
+        
+#         issue_df = pd.DataFrame(issue_obj.values())
+        
+#         rename_map = {
+#             "circle": "Circle",
+#             "site_id": "Site ID",
+#             "issue_owner": "Issue Owner",
+#             "milestone": "Milestone",
+#             "issue_name": "Issue Name",
+#             "start_date": "Start Date",
+#             "close_date": "Close Date",
+#             "status": "Status",
+#             "duration": "Duration",
+#             "remarks": "Remarks",
+#             "updated_by": "Updated_by",
+#             "updated_at": "Updated_at",
+#             "created_by": "Created_by",
+#             "created_at": "Created_at"
+#         }
+        
+#         issue_df = issue_df.rename(columns=rename_map)
+
+#         print("1")
+        
+#         required_cols = ["Circle", "Site ID", "Issue Owner", "Milestone", "Issue Name", "Start Date", "Close Date", "Status", "Duration", "Remarks", "Updated_by", "Updated_at", "Created_by", "Created_at"]
+#         for col in required_cols:
+#             if col not in issue_df.columns:
+#                 issue_df[col] = None
+
+#         # Convert date columns safely
+#         for col in ["Start Date", "Close Date"]:
+#             if col in issue_df.columns:
+#                 issue_df[col] = pd.to_datetime(issue_df[col], errors='coerce')
+        
+#         print("1.1")
+#         df = update_ageing(df, issue_df)
+
+#         print("2")
+
+#         for col in df.columns:
+#             if 'date' in col:
+#                 if col != 'last_updated_date':
+#                     converted = pd.to_datetime(df[col], errors='coerce')
+#                     if converted.notna().sum() > 0:
+#                         df[col] = converted.dt.strftime('%d-%b-%y')
+#                 else:
+#                     converted = pd.to_datetime(df[col], errors='coerce')
+#                     if converted.notna().sum() > 0:
+#                         df[col] = converted.dt.strftime('%d-%b-%y %H:%M:%S')
+
+#         print("3")
+        
+#         qs = SiteStatus.objects.all().values(
+#             "site_id", "date", "status"
+#         )
+
+#         # Create DataFrame
+#         status_df = pd.DataFrame(qs)
+        
+#         print(status_df)
+        
+#         required_cols = ["site_id", "date", "status"]
+#         for col in required_cols:
+#             if col not in status_df.columns:
+#                 status_df[col] = None
+        
+#         print(status_df['date'].dropna().unique().tolist())
+        
+
+        
+
+#         print("4")
+#         # Ensure datetime
+#         status_df["date"] = pd.to_datetime(status_df["date"])
+        
+#         print("5")
+
+#         # Pivot to required structure
+#         status_df = status_df.pivot_table(
+#             index="site_id",
+#             columns="date",
+#             values="status",
+#             aggfunc="last"
+#         )
+
+#         # Sort columns chronologically
+#         status_df = status_df.sort_index(axis=1)
+
+#         # Format date headers
+#         status_df.columns = status_df.columns.strftime("%d-%b-%y")
+
+#         # Rename index for display
+#         status_df.index.name = "Site ID"
+
+#         # 🔥 REMOVE JUNK ROW
+#         status_df = status_df[status_df.index != "Site ID"]
+        
+#         print("Index values:", list(status_df.index))
+
+        
+#         print(status_df)
+
+
+#         current_date = dtime.now().strftime("%Y-%m-%d")
+#         current_time = dtime.now().strftime("%H-%M-%S")
+
+#         BASE_URL = os.path.join(settings.MEDIA_ROOT, "alok_sir_tracking")
+#         os.makedirs(BASE_URL, exist_ok=True)
+
+#         output_folder = os.path.join(BASE_URL, f"generated_files_{current_date}")
+#         shutil.rmtree(output_folder, ignore_errors=True)
+#         os.makedirs(output_folder, exist_ok=True)
+
+#         tracker_file_path = os.path.join(output_folder, f"TRACKER_FILE_{current_date}_{current_time}.xlsx")
+#         df.insert(0, "Unique ID", range(1, len(df) + 1))
+
+#         df.drop(columns=['id'], inplace=True)
+
+#         df = df[['Unique ID', 'circle', 'site_tagging', 'old_toco_name', 'old_site_id', 'new_site_id', 'new_toco_name',
+#                  'sr_number', 'ran_oem', 'media_type', 'mw_oem', 'relocation_method', 'relocation_type', 'old_site_band',
+#                  'new_site_band', 'rfai_date', 'allocation_date', 'rfai_survey_date', 'mo_punch_date',
+#                  'material_dispatch_date', 'material_delivered_date', 'installation_start_date', 'installation_end_date',
+#                  'integration_date', 'emf_submission_date', 'ran_lkf_status', 'alarm_status', 'alarm_rectification_done_date',
+#                  'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
+#                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
+#                  'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
+#                  'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
+#                  'clear_rfai_to_ms1_ageing', 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
+#                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
+#                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
+#                  "dismantle_date", "material_pickup_date", "material_submission_date", "oci_done_date", "sign_off_date", "dismantling_status", 
+#                  'last_updated_date', 'last_updated_by']]
+
+#         template_path = os.path.join(BASE_URL, "template", "templateAlok_v.1.xlsx")
+#         wb = load_workbook(template_path)
+#         ws = wb["Sheet1"]   # or wb.create_sheet("Tracker")
+#         ws.title = "Main Tracker"
+
+#         date_columns = [col for col in df.columns if col.endswith("_date") and col != 'last_updated_date']
+
+#         for col in date_columns:
+#             df[col] = pd.to_datetime(df[col], errors="coerce")
+
+#         start_row = 3
+#         for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=False), start=start_row):
+#             for c_idx, value in enumerate(row, start=1):
+#                 cell = ws.cell(row=r_idx, column=c_idx)
+#                 cell.value = value
+
+#                 # apply formatting for date columns
+#                 if df.columns[c_idx - 1].endswith("_date") and hasattr(value, "strftime") and df.columns[c_idx - 1] != 'last_updated_date':
+#                     cell.number_format = "dd-mmm-yy"
+
+
+
+#         print("6")
+        
+#         ws2 = wb.create_sheet(title="Issues Tracker")
+
+#         # Clean issue_df (remove id if present)
+#         if "id" in issue_df.columns:
+#             issue_df = issue_df.drop(columns=["id"])
+            
+#         # print(issue_df['updated_by'])
+
+#         def remove_tz_safe(x):
+#             if isinstance(x, datetime) and x.tzinfo is not None:
+#                 return x.replace(tzinfo=None)
+#             return x
+
+#         # apply to every cell in issue_df
+#         issue_df = issue_df.applymap(remove_tz_safe)
+        
+#         # print(issue_df['updated_by'])
+
+
+#         # Convert date columns
+#         issue_date_columns = [col for col in issue_df.columns if "Date" in col]
+#         for col in issue_date_columns:
+#             issue_df[col] = pd.to_datetime(issue_df[col], errors='coerce')
+            
+#         # print(issue_df['updated_by'])
+
+#         # ---- Write header ----
+#         for col_idx, column_name in enumerate(issue_df.columns, start=1):
+#             ws2.cell(row=1, column=col_idx, value=column_name)
+            
+#         # print(issue_df['updated_by'])
+
+#         # ---- Write data ----
+#         for r_idx, row in enumerate(dataframe_to_rows(issue_df, index=False, header=False), start=2):
+#             for c_idx, value in enumerate(row, start=1):
+#                 cell = ws2.cell(row=r_idx, column=c_idx)
+#                 cell.value = value
+
+#                 # Apply date formatting
+#                 if issue_df.columns[c_idx - 1] in issue_date_columns and hasattr(value, "strftime"):
+#                     cell.number_format = "dd-mmm-yy"
+                    
+#         # print(issue_df['updated_by'])
+
+#         ws3 = wb.create_sheet(title="Site Status Tracker")
+
+#         # Remove index name to avoid Excel phantom row
+#         status_df.index.name = None
+
+#         # Write header
+#         headers = ["Site ID"] + list(status_df.columns)
+#         for col_idx, header in enumerate(headers, start=1):
+#             ws3.cell(row=1, column=col_idx, value=header)
+
+#         # Write data
+#         for r_idx, row in enumerate(
+#             dataframe_to_rows(status_df, index=True, header=False),
+#             start=2
+#         ):
+#             for c_idx, value in enumerate(row, start=1):
+#                 if value=='' and c_idx==0:
+#                     print("----------------------------------------------------------------------------------")
+#                 ws3.cell(row=r_idx, column=c_idx, value=value)
+
+#         wb.save(tracker_file_path)
+
+#         relative_path = tracker_file_path.replace(settings.MEDIA_ROOT, '').lstrip(os.sep)
+#         download_url = request.build_absolute_uri(
+#             os.path.join(settings.MEDIA_URL, relative_path).replace('\\', '/')
+#         )
+
+#         return Response({'message': f'Welcome {userId}! Credentials verified.', "download_link": download_url}, status=200)
+
+#     except Exception as e:
+#         return Response({"error": f"{str(e)}"}, status=500)
+
+
 @api_view(['POST'])
 def download_tracker_data_view(request):
     userId = request.data.get('userId')
@@ -1384,7 +1675,7 @@ def download_tracker_data_view(request):
         print("3")
         
         qs = SiteStatus.objects.all().values(
-            "site_id", "date", "status"
+            "site_id","circle", "date", "status"
         )
 
         # Create DataFrame
@@ -1392,7 +1683,7 @@ def download_tracker_data_view(request):
         
         print(status_df)
         
-        required_cols = ["site_id", "date", "status"]
+        required_cols = ["site_id","circle", "date", "status"]
         for col in required_cols:
             if col not in status_df.columns:
                 status_df[col] = None
@@ -1410,7 +1701,7 @@ def download_tracker_data_view(request):
 
         # Pivot to required structure
         status_df = status_df.pivot_table(
-            index="site_id",
+            index=["circle", "site_id"],
             columns="date",
             values="status",
             aggfunc="last"
@@ -1450,19 +1741,19 @@ def download_tracker_data_view(request):
         df.drop(columns=['id'], inplace=True)
 
         df = df[['Unique ID', 'circle', 'site_tagging', 'old_toco_name', 'old_site_id', 'new_site_id', 'new_toco_name',
-                 'sr_number', 'ran_oem', 'media_type', 'mw_oem', 'relocation_method', 'relocation_type', 'old_site_band',
-                 'new_site_band', 'rfai_date', 'allocation_date', 'rfai_survey_date', 'mo_punch_date',
-                 'material_dispatch_date', 'material_delivered_date', 'installation_start_date', 'installation_end_date',
-                 'integration_date', 'emf_submission_date', 'ran_lkf_status', 'alarm_status', 'alarm_rectification_done_date',
-                 'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
-                 'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
-                 'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
-                 'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
-                 'clear_rfai_to_ms1_ageing', 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
-                 'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
-                 'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
-                 "dismantle_date", "material_pickup_date", "material_submission_date", "oci_done_date", "sign_off_date", "dismantling_status", 
-                 'last_updated_date', 'last_updated_by']]
+                'sr_number', 'ran_oem', 'media_type', 'mw_oem', 'relocation_method', 'relocation_type', 'old_site_band',
+                'new_site_band', 'rfai_date', 'allocation_date', 'rfai_survey_date', 'mo_punch_date',
+                'material_dispatch_date', 'material_delivered_date', 'installation_start_date', 'installation_end_date',
+                'integration_date', 'emf_submission_date', 'ran_lkf_status', 'alarm_status', 'alarm_rectification_done_date',
+                'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
+                'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
+                'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
+                'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
+                'clear_rfai_to_ms1_ageing', 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
+                'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
+                'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
+                "dismantle_date", "material_pickup_date", "material_submission_date", "oci_done_date", "sign_off_date", "dismantling_status", 
+                'last_updated_date', 'last_updated_by']]
 
         template_path = os.path.join(BASE_URL, "template", "templateAlok_v.1.xlsx")
         wb = load_workbook(template_path)
@@ -1488,13 +1779,77 @@ def download_tracker_data_view(request):
 
         print("6")
         
+        # Styles
+        # header_fill = PatternFill(start_color="4FC5C7", end_color="4FC5C7", fill_type="solid")
+        # header_font = Font(color="000000", bold=True, size=10)
+
+        # # Data font
+        # data_font = Font(size=10)
+
+        # # Alignment
+        # alignment = Alignment(
+        #     horizontal="center",
+        #     vertical="center",
+        #     wrap_text=True
+        # )
+        
+        # ws2 = wb.create_sheet(title="Issues Tracker")
+
+        # # Clean issue_df (remove id if present)
+        # if "id" in issue_df.columns:
+        #     issue_df = issue_df.drop(columns=["id"])
+            
+        # # print(issue_df['updated_by'])
+
+        # def remove_tz_safe(x):
+        #     if isinstance(x, datetime) and x.tzinfo is not None:
+        #         return x.replace(tzinfo=None)
+        #     return x
+
+        # # apply to every cell in issue_df
+        # issue_df = issue_df.applymap(remove_tz_safe)
+        
+        # # print(issue_df['updated_by'])
+
+
+        # # Convert date columns
+        # issue_date_columns = [col for col in issue_df.columns if "Date" in col]
+        # for col in issue_date_columns:
+        #     issue_df[col] = pd.to_datetime(issue_df[col], errors='coerce')
+            
+        # # print(issue_df['updated_by'])
+
+        # # ---- Write header ----
+        # for col_idx, column_name in enumerate(issue_df.columns, start=1):
+        #     # ws2.cell(row=1, column=col_idx, value=column_name)
+        #     cell = ws2.cell(row=1, column=col_idx, value=column_name)
+
+        #     cell.fill = header_fill
+        #     cell.font = header_font
+        #     cell.alignment = alignment
+            
+        # # print(issue_df['updated_by'])
+
+        # # ---- Write data ----
+        # for r_idx, row in enumerate(dataframe_to_rows(issue_df, index=False, header=False), start=2):
+        #     for c_idx, value in enumerate(row, start=1):
+        #         cell = ws2.cell(row=r_idx, column=c_idx)
+        #         cell.value = value
+        #         cell.font = data_font
+        #         cell.alignment = alignment
+
+
+        #         # Apply date formatting
+        #         if issue_df.columns[c_idx - 1] in issue_date_columns and hasattr(value, "strftime"):
+        #             cell.number_format = "dd-mmm-yy"
+                    
+        # ===================== ISSUES TRACKER =====================
+
         ws2 = wb.create_sheet(title="Issues Tracker")
 
         # Clean issue_df (remove id if present)
         if "id" in issue_df.columns:
             issue_df = issue_df.drop(columns=["id"])
-            
-        # print(issue_df['updated_by'])
 
         def remove_tz_safe(x):
             if isinstance(x, datetime) and x.tzinfo is not None:
@@ -1503,55 +1858,178 @@ def download_tracker_data_view(request):
 
         # apply to every cell in issue_df
         issue_df = issue_df.applymap(remove_tz_safe)
-        
-        # print(issue_df['updated_by'])
-
 
         # Convert date columns
         issue_date_columns = [col for col in issue_df.columns if "Date" in col]
+
         for col in issue_date_columns:
             issue_df[col] = pd.to_datetime(issue_df[col], errors='coerce')
-            
-        # print(issue_df['updated_by'])
 
-        # ---- Write header ----
+        # ---------------- STYLES ----------------
+        header_fill = PatternFill(
+            start_color="31869B",
+            end_color="31869B",
+            fill_type="solid"
+        )
+
+        header_font = Font(
+            color="000000",
+            bold=True,
+            size=10
+        )
+
+        data_font = Font(size=10)
+
+        # IMPORTANT FIX
+        alignment = Alignment(
+            horizontal="center",
+            vertical="center",
+            wrap_text=False
+        )
+
+        # ---------------- HEADER ----------------
         for col_idx, column_name in enumerate(issue_df.columns, start=1):
-            ws2.cell(row=1, column=col_idx, value=column_name)
-            
-        # print(issue_df['updated_by'])
 
-        # ---- Write data ----
-        for r_idx, row in enumerate(dataframe_to_rows(issue_df, index=False, header=False), start=2):
-            for c_idx, value in enumerate(row, start=1):
-                cell = ws2.cell(row=r_idx, column=c_idx)
-                cell.value = value
+            cell = ws2.cell(row=1, column=col_idx, value=column_name)
 
-                # Apply date formatting
-                if issue_df.columns[c_idx - 1] in issue_date_columns and hasattr(value, "strftime"):
-                    cell.number_format = "dd-mmm-yy"
-                    
-        # print(issue_df['updated_by'])
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = alignment
 
-        ws3 = wb.create_sheet(title="Site Status Tracker")
-
-        # Remove index name to avoid Excel phantom row
-        status_df.index.name = None
-
-        # Write header
-        headers = ["Site ID"] + list(status_df.columns)
-        for col_idx, header in enumerate(headers, start=1):
-            ws3.cell(row=1, column=col_idx, value=header)
-
-        # Write data
+        # ---------------- DATA ----------------
         for r_idx, row in enumerate(
-            dataframe_to_rows(status_df, index=True, header=False),
+            dataframe_to_rows(issue_df, index=False, header=False),
             start=2
         ):
             for c_idx, value in enumerate(row, start=1):
-                if value=='' and c_idx==0:
-                    print("----------------------------------------------------------------------------------")
-                ws3.cell(row=r_idx, column=c_idx, value=value)
 
+                cell = ws2.cell(row=r_idx, column=c_idx, value=value)
+
+                cell.font = data_font
+                cell.alignment = alignment
+
+                # Apply date formatting
+                if (
+                    issue_df.columns[c_idx - 1] in issue_date_columns
+                    and hasattr(value, "strftime")
+                ):
+                    cell.number_format = "dd-mmm-yy"
+
+        # ---------------- AUTO COLUMN WIDTH ----------------
+        for col in ws2.columns:
+            max_length = 0
+            col_letter = col[0].column_letter
+
+            for cell in col:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+
+            ws2.column_dimensions[col_letter].width = max_length + 5
+        # print(issue_df['updated_by'])
+
+        # ws3 = wb.create_sheet(title="Site Status Tracker")
+
+        # # Remove index name to avoid Excel phantom row
+        # status_df.index.name = None
+
+        # # Header style
+        # header_fill = PatternFill(start_color="4FC5C7", end_color="4FC5C7", fill_type="solid")
+        # header_font = Font(color="000000", bold=True, size=10)
+
+        # # Data font
+        # data_font = Font(size=10)
+
+        # # Alignment
+        # alignment = Alignment(
+        #     horizontal="center",
+        #     vertical="center",
+        #     wrap_text=True
+        # )
+                
+        # # Write header
+        # # headers = ["Site ID"] + list(status_df.columns)
+        # headers = list(status_df.reset_index().columns)
+        # for col_idx, header in enumerate(headers, start=1):
+        #     # ws3.cell(row=1, column=col_idx, value=header)
+        #     cell = ws3.cell(row=1, column=col_idx, value=header)
+
+        #     cell.fill = header_fill
+        #     cell.font = header_font
+        #     cell.alignment = alignment
+
+        # # Write data
+        # # for r_idx, row in enumerate(
+        # #     dataframe_to_rows(status_df, index=True, header=False),
+        # #     start=2
+        # # ):
+        # for r_idx, row in enumerate(
+        #     dataframe_to_rows(status_df.reset_index(), index=False, header=False),
+        #     start=2
+        # ):
+        #     for c_idx, value in enumerate(row, start=1):
+        #         if value=='' and c_idx==0:
+        #             print("----------------------------------------------------------------------------------")
+        #         # ws3.cell(row=r_idx, column=c_idx, value=value)
+        #         cell = ws3.cell(row=r_idx, column=c_idx, value=value)
+
+        #         cell.font = data_font
+        #         cell.alignment = alignment
+
+        
+        ws3 = wb.create_sheet(title="Site Status Tracker")
+
+        # Remove index name
+        status_df.index.name = None
+
+        # RESET INDEX ONLY ONCE
+        status_df = status_df.reset_index()
+
+        # Header style
+        header_fill = PatternFill(start_color="31869B", end_color="31869B", fill_type="solid")
+        header_font = Font(color="000000", bold=True, size=10)
+
+        # Data font
+        data_font = Font(size=10)
+
+        # IMPORTANT FIX: NO WRAP TEXT
+        alignment = Alignment(
+            horizontal="center",
+            vertical="center",
+            wrap_text=False
+        )
+
+        # ---------------- HEADER ----------------
+        headers = list(status_df.columns)
+
+        for col_idx, header in enumerate(headers, start=1):
+            cell = ws3.cell(row=1, column=col_idx, value=header)
+
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = alignment
+
+        # ---------------- DATA ----------------
+        for r_idx, row in enumerate(
+            dataframe_to_rows(status_df, index=False, header=False),
+            start=2
+        ):
+            for c_idx, value in enumerate(row, start=1):
+
+                cell = ws3.cell(row=r_idx, column=c_idx, value=value)
+
+                cell.font = data_font
+                cell.alignment = alignment
+
+        # ---------------- AUTO COLUMN WIDTH FIX ----------------
+        for col in ws3.columns:
+            max_length = 0
+            col_letter = col[0].column_letter
+
+            for cell in col:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+
+            ws3.column_dimensions[col_letter].width = max_length + 5
         wb.save(tracker_file_path)
 
         relative_path = tracker_file_path.replace(settings.MEDIA_ROOT, '').lstrip(os.sep)
@@ -1563,6 +2041,7 @@ def download_tracker_data_view(request):
 
     except Exception as e:
         return Response({"error": f"{str(e)}"}, status=500)
+
 
 
 @api_view(["POST"])
@@ -1684,7 +2163,9 @@ def sync_alok_tracker_to_site_status(request):
 
     qs = AlokTrackerModel.objects.values(
         "new_site_id",
+        "circle",
         "current_status"
+        
     )
 
     if not qs.exists():
@@ -1698,12 +2179,14 @@ def sync_alok_tracker_to_site_status(request):
 
     for row in qs:
         site_id = row["new_site_id"]
+        circle = row["circle"]
         status = row["current_status"]
 
         if not site_id or not status:
             continue
 
         site_id = str(site_id).strip()
+        circle = str(circle).strip()
         status = str(status).strip()
 
         key = (site_id, today)
@@ -1715,6 +2198,7 @@ def sync_alok_tracker_to_site_status(request):
         records.append(
             SiteStatus(
                 site_id=site_id,
+                circle=circle,
                 status=status,
                 date=today
             )
@@ -1736,7 +2220,6 @@ def sync_alok_tracker_to_site_status(request):
         "records_created": len(records),
         "date": today
     })
-
 
 ############################################################# DASHBOARD ##########################################################################
 
