@@ -5,7 +5,10 @@ from .views import *
 urlpatterns = [
     path('upload/',   upload_file),
     path('months/',   get_months),
+    path('date-range-selection/', date_range_selection),
     path('generate-offered/', generate_offered),
     path('generate-performance/', generate_performance),
+    path('generate-ftr/', generate_ftr),
+    path('generate-scft/', generate_scft),
     path('cleanup/',  cleanup),
 ]
