@@ -926,18 +926,6 @@ def upload_and_compare_xml_files(request):
             lac = ""
 
             p_tag = f"{{{ns_uri}}}p" if ns_uri else "p"
-
-            # print("\n🔹 Processing:", mo_class, "| Site:", site_id, site)
-
-            # 👉 BCF → BCF NAME
-            # if mo_class == "BTS":
-            #     for p in mo.findall(p_tag):
-            #         if p.attrib.get("name", "").lower() == "name":
-            #             bcf_name = (p.text or "").strip()
-            #             print("Sector name:", sector_name)
-            #             break
-
-            # 👉 BTS → CELL NAME + TEMPLATE
             if mo_class == "BTS":
                 for p in mo.findall(p_tag):
                     pname = p.attrib.get("name", "").lower()
@@ -955,12 +943,9 @@ def upload_and_compare_xml_files(request):
 
                         # check length BEFORE trimming
                         is_invalid = len(itemname) > 15
-
                         # trim for display only
                         itemname = itemname[:15]
-
                         # store only value (no flag)
-                        break
                     
                     elif pname == "locationareaidlac":
                         lac = (p.text or "").strip()
@@ -979,13 +964,10 @@ def upload_and_compare_xml_files(request):
                         print("SITE_NAME:", site_name)
 
             if bcf_name or sector_name or itemname or lac or mrbts_name or site_name:
-
-                print("   ✅ Appending Row")
-
                 nomenclature_2G.append({
                     "SITE_NAME": site_name,
                     "MRBTS_NAME": mrbts_name,
-                    "BCF_NAME": bcf_name,
+                    "BCF": bcf_name,
                     "SECTOR_NAME": sector_name,
                     "SiteTemplateName": itemname,
                     "LAC": lac,
@@ -1102,9 +1084,57 @@ def upload_and_compare_xml_files(request):
         keep="first"
     )
     df_nomenclature_4G = pd.DataFrame(nomenclature_4G).drop_duplicates()
+    # ---------------- Fix Nomenclature 4G format ----------------
+    if not df_nomenclature_4G.empty:
+
+        fill_columns = [
+            "Site_id",
+            "MRBTS",
+            "BTS_NAME",
+            "SiteTemplateName"
+        ]
+
+        # upar wali values neeche fill karo
+        df_nomenclature_4G[fill_columns] = (
+            df_nomenclature_4G[fill_columns].replace("", pd.NA).ffill()
+        )
+
+        # sirf CELL_NAME wali rows rakho
+        df_nomenclature_4G = df_nomenclature_4G[
+            df_nomenclature_4G["CELL_NAME"].notna()
+            & (df_nomenclature_4G["CELL_NAME"] != "")
+        ]
+
+        df_nomenclature_4G.reset_index(drop=True, inplace=True)
 
     df_nomenclature_2G = pd.DataFrame(nomenclature_2G).drop_duplicates()
     print("df_nomenclature_2G", df_nomenclature_2G  )
+    
+    # ---------------- Fix Nomenclature 2G format ----------------
+    if not df_nomenclature_2G.empty:
+
+        fill_columns = [
+            "SITE_NAME",
+            "MRBTS_NAME",
+            "BCF",
+            "SiteTemplateName",
+            "LAC"
+        ]
+
+        # blank values ko NA bana ke forward fill
+        df_nomenclature_2G[fill_columns] = (
+            df_nomenclature_2G[fill_columns]
+            .replace("", pd.NA)
+            .ffill()
+        )
+
+        # sirf sector rows rakho
+        df_nomenclature_2G = df_nomenclature_2G[
+            df_nomenclature_2G["SECTOR_NAME"].notna()
+            & (df_nomenclature_2G["SECTOR_NAME"] != "")
+        ]
+
+        df_nomenclature_2G.reset_index(drop=True, inplace=True)
 
     df_vswr = pd.DataFrame(VSWR)
 
