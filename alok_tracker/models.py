@@ -259,6 +259,7 @@ class ATDumpData(models.Model):
     
 
 class SiteStatus(models.Model):
+    circle = models.CharField(max_length=10,blank=True, null=True)
     site_id = models.CharField(max_length=100)
     date = models.DateField()
     status = models.CharField(max_length=50)

@@ -1,3 +1,5 @@
+
+
 import os
 import pandas as pd
 from datetime import date
@@ -11,6 +13,7 @@ from django.http import FileResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+#from project_pat.settings import MEDIA_ROOT, MEDIA_URL
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 from django.shortcuts import render
 
@@ -113,11 +116,7 @@ def _validate_file(filepath):
 
     df.rename(columns=rename, inplace=True)
 
-    # parse date columns — only On Air Date is mandatory
-    df['On Air Date'] = pd.to_datetime(df['On Air Date'], errors='coerce').dt.date
-    df['Performance AT Offered Date'] = pd.to_datetime(
-        df['Performance AT Offered Date'], errors='coerce'
-    ).dt.date
+   
     for col in ('On Air Date', 'Performance AT Offered Date', 'Performance AT Status Date'):
         df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
 
@@ -179,27 +178,27 @@ def upload_file(request):
 
             # check output files
             output_files = []
+            file_map = [
+                ("output_Offered Vs OA TAT.xlsx",              'offered'),
+                ("output_Performance vs OA TAT.xlsx",          'performance'),
+                ("output_Offered Vs OA TAT_DateRange.xlsx",    'offered_range'),
+                ("output_Performance vs OA TAT_DateRange.xlsx", 'perf_range'),
+                ("output_performance_FTR.xlsx",                'ftr'),
+                ("output_performance_SCFT FTR.xlsx",           'scft'),
+            ]
 
-            offered_file = os.path.join(output_path, "output_Offered Vs OA TAT.xlsx")
-            status_file  = os.path.join(output_path, "output_Performance vs OA TAT.xlsx")
 
-            if os.path.exists(offered_file):
-                output_files.append({
-                    'report_type':  'offered',
-                    'filename':     'output_Offered Vs OA TAT.xlsx',
-                    'download_url': request.build_absolute_uri(
-                        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/output_Offered Vs OA TAT.xlsx"
-                    ),
-                })
-
-            if os.path.exists(status_file):
-                output_files.append({
-                    'report_type':  'status',
-                    'filename':     'output_Performance vs OA TAT.xlsx',
-                    'download_url': request.build_absolute_uri(
-                        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/output_Performance vs OA TAT.xlsx"
-                    ),
-                })
+         
+            for filename, report_type in file_map:
+                filepath = os.path.join(output_path, filename)
+                if os.path.exists(filepath):
+                    output_files.append({
+                        'report_type':  report_type,
+                        'filename':     filename,
+                        'download_url': request.build_absolute_uri(
+                            f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{filename}"
+                        ),
+                    })
 
             return Response({
                 'status':       True,
@@ -255,13 +254,7 @@ def _get_input_df():
         else:
             continue
 
-        # parse date columns back to date objects
-        df['On Air Date'] = pd.to_datetime(
-            df['On Air Date'], errors='coerce'
-        ).dt.date
-        df['Performance AT Offered Date'] = pd.to_datetime(
-            df['Performance AT Offered Date'], errors='coerce'
-        ).dt.date
+        
 
         for col in ('On Air Date', 'Performance AT Offered Date', 'Performance AT Status Date'):
             df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
@@ -269,7 +262,35 @@ def _get_input_df():
         return df, None
 
     return None, "No input file found. Upload first via POST /idploy/upload/"
+# Added  start and end date validation here
 
+def _validate_date_range(start_str, end_str):
+    """
+    Validate start_date and end_date strings.
+    Returns (start_dt, end_dt, error_response) where error_response
+    is None if valid, or a Response object if invalid.
+    """
+    if not start_str or not end_str:
+        return None, None, Response(
+            {'error': 'Provide both start_date and end_date. Format: YYYY-MM-DD'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    try:
+        start_dt = date.fromisoformat(start_str)
+        end_dt   = date.fromisoformat(end_str)
+    except ValueError:
+        return None, None, Response(
+            {'error': f"Invalid date format. Use YYYY-MM-DD. Got: start='{start_str}' end='{end_str}'"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if start_dt > end_dt:
+        return None, None, Response(
+            {'error': f"start_date ({start_str}) must not be after end_date ({end_str})."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    return start_dt, end_dt, None
+
+# get month
 
 def _bucket_start(month_label):
     """'Dec 2025' -> date(2025, 11, 26) — 26th of previous month."""
@@ -326,8 +347,59 @@ def get_months(request):
 
     return Response({
         'months':    result,
-        'next_step': 'POST /idploy/generate-offered/ with body {"month": "<label>"}',
+        #'next_step': 'POST /idploy/generate-offered/ with body {"month": "<label>"}',
     }, status=status.HTTP_200_OK)
+
+# Date range selection API
+
+@api_view(['POST'])
+def date_range_selection(request):
+    """
+    POST /idploy/date-range-selection/
+
+    Validates and confirms a custom start/end date range.
+    Use this to pick dates before calling generate-offered,
+    generate-performance, generate-ftr, or generate-scft.
+
+    Body:
+    {
+        "start_date": "2025-12-26",
+        "end_date":   "2026-01-25"
+    }
+
+    Returns the confirmed date range + count of rows that fall
+    within that range, so the frontend can show a preview
+    before the user triggers report generation.
+    """
+    start_str = request.data.get('start_date', '').strip()
+    end_str   = request.data.get('end_date',   '').strip()
+
+    start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+    if err:
+        return err
+
+    df, error = _get_input_df()
+    if error:
+        return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
+
+    # preview: count rows whose On Air Date falls in range
+    mask        = (df['On Air Date'] >= start_dt) & (df['On Air Date'] <= end_dt)
+    rows_in_range = int(mask.sum())
+
+    return Response({
+        'status':        True,
+        'message':       'Date range confirmed. Use these dates in your report generation call.',
+        'start_date':    start_dt.strftime('%d-%b-%Y'),
+        'end_date':      end_dt.strftime('%d-%b-%Y'),
+        'rows_in_range': rows_in_range,
+        'next_steps': {
+            'offered':     'POST /idploy/generate-offered/     with {"start_date": "...", "end_date": "..."}',
+            'performance': 'POST /idploy/generate-performance/ with {"start_date": "...", "end_date": "..."}',
+            'ftr':         'POST /idploy/generate-ftr/         with {"start_date": "...", "end_date": "..."}',
+            'scft':        'POST /idploy/generate-scft/        with {"start_date": "...", "end_date": "..."}',
+        },
+    }, status=status.HTTP_200_OK)
+
 
 
 # ─────────────────────────────────────────────
@@ -386,18 +458,20 @@ def _process_data(df, month_label, layer_case, date_col='Performance AT Offered 
     """
     start = _bucket_start(month_label)
     end   = _bucket_end(month_label)
+    return _process_data_by_date_range(df, start, end, layer_case, date_col, label=month_label)
 
+def _process_data_by_date_range(df, start_dt, end_dt, layer_case, date_col='Performance AT Offered Date', label=None):
     # Step 1 — layer filter first
     df_layer = _apply_layer_filter(df, layer_case)
 
     # Step 2 — filter On Air Date within bucket
-    mask_oa = (df_layer['On Air Date'] >= start) & (df_layer['On Air Date'] <= end)
+    mask_oa = (df_layer['On Air Date'] >= start_dt) & (df_layer['On Air Date'] <= end_dt)
     df_oa   = df_layer[mask_oa].copy()
 
     if df_oa.empty:
         available = _get_available_months(df)
         raise ValueError(
-            f"No data found for '{month_label}' with layer '{layer_case}'. "
+            f"No data found for '{label or f'{start_dt} to {end_dt}'}' with layer '{layer_case}'. "
             f"Available months: {available}"
         )
 
@@ -441,7 +515,7 @@ def _process_data(df, month_label, layer_case, date_col='Performance AT Offered 
         ) if total > 0 else 0.0
 
         pct_22_30 = round(
-            row['22-30days'] / total * 100, 1
+            (row['22-30days'] + row['<=12days'] + row['13-21days'])/ total * 100, 1
         ) if total > 0 else 0.0
 
         result_circles[circle] = {
@@ -467,13 +541,15 @@ def _process_data(df, month_label, layer_case, date_col='Performance AT Offered 
     ) if grand_total > 0 else 0.0
 
     grand_pct_22_30 = round(
-        grand['22-30days'] / grand_total * 100, 1
+        (grand['<=12days'] + grand['13-21days']+grand['22-30days']) / grand_total * 100, 1
     ) if grand_total > 0 else 0.0
 
+    period = label if label else f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+
     return {
-        'month':       month_label,
-        'start':       start.strftime('%d-%b-%Y'),
-        'end':         end.strftime('%d-%b-%Y'),
+        'month':       period,
+        'start':       start_dt.strftime('%d-%b-%Y'),
+        'end':         end_dt.strftime('%d-%b-%Y'),
         'circles':     result_circles,
         'grand_total': {
             **grand,
@@ -596,14 +672,22 @@ def _delete_all_files():
 def generate_offered(request):
     """
     POST /idploy/generate-offered/
-    Body (JSON): { "month": "Dec 2025" }
+
+    Option A — by month bucket:
+    { "month": "Dec 2025" }
+
+    Option B — by custom date range:
+    { "start_date": "2025-12-26", "end_date": "2026-01-25" }
+
     Processes data for all 3 layer cases (4G, 5G, 4G+5G),
     writes one Excel with 3 sheets, returns JSON + download URL.
     """
+    start_str   = request.data.get('start_date', '').strip()
+    end_str     = request.data.get('end_date',   '').strip()
     month_label = request.data.get('month', '').strip()
-    if not month_label:
+    if not month_label and not (start_str or end_str):
         return Response(
-            {'error': 'Provide month in body. Example: {"month": "Dec 2025"}'},
+            {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -611,70 +695,79 @@ def generate_offered(request):
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
 
-    out_file = os.path.join(output_path, OUTPUT_FILENAME)
+   
 
-    try:
-        results = {
-            '4G':    _process_data(df, month_label, '4G'),
-            '5G':    _process_data(df, month_label, '5G'),
-            '4G+5G': _process_data(df, month_label, '4G+5G'),
-        }
-        _write_output_excel(results, out_file)
+    # ── resolve date range ───────────────────────────────────────
+    if month_label:
+        try:
+            out_filename = OUTPUT_FILENAME
+            results = {
+                '4G':    _process_data(df, month_label, '4G'),
+                '5G':    _process_data(df, month_label, '5G'),
+                '4G+5G': _process_data(df, month_label, '4G+5G'),
+            }
+        except ValueError as ve:
+            return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    else:
+        start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+        if err:
+            return err
+        try:
+            out_filename = "output_Offered Vs OA TAT_DateRange.xlsx"
+            results = {
+                case: _process_data_by_date_range(df, start_dt, end_dt, case, 'Performance AT Offered Date')
+                for case in ['4G', '5G', '4G+5G']
+            }
+        except ValueError as ve:
+            return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    except ValueError as ve:
-        return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as exc:
-        return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    out_file = os.path.join(output_path, out_filename)
+    _write_output_excel(results, out_file)
 
-    file_relative_path = f"performance_idploy/output/{OUTPUT_FILENAME}"
     download_url = request.build_absolute_uri(
-        f"{settings.MEDIA_URL.rstrip('/')}/{file_relative_path}"
+        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
     )
 
     return Response({
-        'status':     True,
-        'message':    'Report generated successfully.',
-        'month':      month_label,
-        'date_range': f"{results['4G']['start']} to {results['4G']['end']}",
+        'status':       True,
+        'message':      'Offered report generated successfully.',
+        'date_range':   f"{results['4G']['start']} to {results['4G']['end']}",
         'data': {
-            '4G': {
-                'circles':     results['4G']['circles'],
-                'grand_total': results['4G']['grand_total'],
-            },
-            '5G': {
-                'circles':     results['5G']['circles'],
-                'grand_total': results['5G']['grand_total'],
-            },
-            '4G+5G': {
-                'circles':     results['4G+5G']['circles'],
-                'grand_total': results['4G+5G']['grand_total'],
-            },
+            '4G':    {'circles': results['4G']['circles'],    'grand_total': results['4G']['grand_total']},
+            '5G':    {'circles': results['5G']['circles'],    'grand_total': results['5G']['grand_total']},
+            '4G+5G': {'circles': results['4G+5G']['circles'], 'grand_total': results['4G+5G']['grand_total']},
         },
         'download_url': download_url,
     }, status=status.HTTP_200_OK)
 
 
 # ─────────────────────────────────────────────
-# API 5 — GENERATE STATUS DATE REPORT
+# API 5 — GENERATE PERFORMANCE
+# Supports both month label and start/end date range
 # ─────────────────────────────────────────────
 
 @api_view(['POST'])
 def generate_performance(request):
     """
     POST /idploy/generate-performance/
-    Body (JSON): { "month": "Dec 2025" }
 
-    Same logic as generate_offered but uses
-    'Performance AT Status Date' column instead of
-    'Performance AT Offered Date' for diff calculation.
+    Option A — by month bucket:
+    { "month": "Dec 2025" }
 
-    Reuses all existing helpers — _get_input_df, _apply_layer_filter,
-    _process_data, _write_output_excel — no duplication.
+    Option B — by custom date range:
+    { "start_date": "2025-12-26", "end_date": "2026-01-25" }
     """
     month_label = request.data.get('month', '').strip()
-    if not month_label:
+    start_str   = request.data.get('start_date', '').strip()
+    end_str     = request.data.get('end_date',   '').strip()
+
+    if not month_label and not (start_str or end_str):
         return Response(
-            {'error': 'Provide month in body. Example: {"month": "Dec 2025"}'},
+            {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -682,53 +775,529 @@ def generate_performance(request):
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
 
-    out_file = os.path.join(output_path, "output_Performance vs OA TAT.xlsx")
+    # ── resolve date range ───────────────────────────────────────
+    if month_label:
+        try:
+            out_filename = "output_Performance vs OA TAT.xlsx"
+            results = {
+                '4G':    _process_data(df, month_label, '4G',    'Performance AT Status Date'),
+                '5G':    _process_data(df, month_label, '5G',    'Performance AT Status Date'),
+                '4G+5G': _process_data(df, month_label, '4G+5G', 'Performance AT Status Date'),
+            }
+        except ValueError as ve:
+            return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    else:
+        start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+        if err:
+            return err
+        try:
+            out_filename = "output_Performance vs OA TAT_DateRange.xlsx"
+            results = {
+                case: _process_data_by_date_range(df, start_dt, end_dt, case, 'Performance AT Status Date')
+                for case in ['4G', '5G', '4G+5G']
+            }
+        except ValueError as ve:
+            return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    try:
-        # same _process_data — just passing different date_col
-        results = {
-            '4G':    _process_data(df, month_label, '4G',    'Performance AT Status Date'),
-            '5G':    _process_data(df, month_label, '5G',    'Performance AT Status Date'),
-            '4G+5G': _process_data(df, month_label, '4G+5G', 'Performance AT Status Date'),
-        }
-        _write_output_excel(results, out_file)
-
-    except ValueError as ve:
-        return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as exc:
-        return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    file_relative_path = "performance_idploy/output/output_Performance vs OA TAT.xlsx"
+    out_file = os.path.join(output_path, out_filename)
+    _write_output_excel(results, out_file)
     download_url = request.build_absolute_uri(
-        f"{settings.MEDIA_URL.rstrip('/')}/{file_relative_path}"
+        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
     )
 
+   
     return Response({
-        'status':     True,
-        'message':    'Status date report generated successfully.',
-        'month':      month_label,
-        'date_range': f"{results['4G']['start']} to {results['4G']['end']}",
+        'status':       True,
+        'message':      'Performance report generated successfully.',
+        'date_range':   f"{results['4G']['start']} to {results['4G']['end']}",
         'data': {
-            '4G': {
-                'circles':     results['4G']['circles'],
-                'grand_total': results['4G']['grand_total'],
-            },
-            '5G': {
-                'circles':     results['5G']['circles'],
-                'grand_total': results['5G']['grand_total'],
-            },
-            '4G+5G': {
-                'circles':     results['4G+5G']['circles'],
-                'grand_total': results['4G+5G']['grand_total'],
-            },
+            '4G':    {'circles': results['4G']['circles'],    'grand_total': results['4G']['grand_total']},
+            '5G':    {'circles': results['5G']['circles'],    'grand_total': results['5G']['grand_total']},
+            '4G+5G': {'circles': results['4G+5G']['circles'], 'grand_total': results['4G+5G']['grand_total']},
         },
         'download_url': download_url,
     }, status=status.HTTP_200_OK)
 
+
+# # ─────────────────────────────────────────────
+# # API 5 — GENERATE STATUS DATE REPORT
+# # ─────────────────────────────────────────────
+
+
+#added code new performance ftr
+# ─────────────────────────────────────────────
+# FTR CONSTANTS
+# ─────────────────────────────────────────────
+
+FTR_HEADER_FILL = PatternFill("solid", start_color="C55A11")
+FTR_HEADER_FONT = Font(name="Arial", bold=True, color="FFFFFF", size=10)
+FTR_DATA_FONT   = Font(name="Arial", size=10)
+FTR_TOTAL_FONT  = Font(name="Arial", bold=True, size=10)
+FTR_TOTAL_FILL  = PatternFill("solid", start_color="F2F2F2")
+FTR_BORDER_SIDE = Side(style="thin", color="BFBFBF")
+FTR_BORDER      = Border(
+    left=FTR_BORDER_SIDE, right=FTR_BORDER_SIDE,
+    top=FTR_BORDER_SIDE,  bottom=FTR_BORDER_SIDE
+)
+FTR_CENTER      = Alignment(horizontal="center", vertical="center", wrap_text=True)
+FTR_LEFT        = Alignment(horizontal="left",   vertical="center")
+
+OUTPUT_FTR_MONTH = "output_performance_FTR_Month.xlsx"
+OUTPUT_FTR_WEEK  = "output_performance_FTR_Week.xlsx"
+
+
+# ─────────────────────────────────────────────
+# FTR HELPERS
+# ─────────────────────────────────────────────
+
+def _ftr_fill(ftr_value):
+    """6-band FTR colour coding."""
+    if ftr_value >= 95:
+        return PatternFill("solid", start_color="375623")   # dark green
+    elif ftr_value >= 85:
+        return PatternFill("solid", start_color="70AD47")   # light green
+    elif ftr_value >= 75:
+        return PatternFill("solid", start_color="FFFF00")   # yellow
+    elif ftr_value >= 65:
+        return PatternFill("solid", start_color="FFC000")   # light orange
+    elif ftr_value >= 35:
+        return PatternFill("solid", start_color="F98D8D")   # light red
+    else:
+        return PatternFill("solid", start_color="C00000")   # dark red
+
+
+def _ftr_font(ftr_value):
+    """White bold for dark backgrounds, black for light backgrounds."""
+    if ftr_value >= 95 or ftr_value < 35:
+        return Font(name="Arial", size=10, color="FFFFFF", bold=True)
+    return Font(name="Arial", size=10, color="000000")
+
+
+def _calc_metrics(group):
+    """
+    Calculate FTR metrics for a group of rows.
+    Total Site     = total rows in group
+    Pending        = rows where Performance AT Status == 'Pending'
+    Accepted 0     = Accepted + Rejection Counter == 0
+    Acc Pending 0  = Acceptance Pending + Rejection Counter == 0
+    FTR            = Accepted 0 / (Total - Pending - Acc Pending 0) * 100
+    """
+    total   = len(group)
+    pending = (group["Performance AT Status"] == "Pending").sum()
+
+    acc_zero = (
+        (group["Performance AT Status"] == "Accepted") &
+        (group["Performance AT Rejection Counter"] == 0)
+    ).sum()
+
+    acc_pend_zero = (
+        (group["Performance AT Status"] == "Acceptance Pending") &
+        (group["Performance AT Rejection Counter"] == 0)
+    ).sum()
+
+    denominator = total - pending - acc_pend_zero
+    ftr = round((acc_zero / denominator) * 100, 2) if denominator > 0 else 0.0
+
+    return pd.Series({
+        "Total Site":                           total,
+        "Pending":                              int(pending),
+        "Accepted with 0 counter":              int(acc_zero),
+        "Acceptance pending with 0 Counter":    int(acc_pend_zero),
+        "FTR":                                  ftr,
+    })
+
+
+def _build_ftr_summary(df):
+    """
+    Circle-wise FTR summary sorted alphabetically.
+    Grand Total row pinned at bottom.
+    """
+    if df.empty:
+        return pd.DataFrame(columns=[
+            "Circle", "Total Site", "Pending",
+            "Accepted with 0 counter",
+            "Acceptance pending with 0 Counter", "FTR"
+        ])
+
+    if "Circle" not in df.columns:
+        metrics = _calc_metrics(df)
+        summary = pd.DataFrame([metrics])
+        summary.insert(0, "Circle", "ALL")
+        return summary
+
+    summary     = df.groupby("Circle", sort=True).apply(_calc_metrics).reset_index()
+    summary     = summary.sort_values("Circle", ascending=True).reset_index(drop=True)
+    total_row   = pd.DataFrame([_calc_metrics(df)])
+    total_row.insert(0, "Circle", "Grand Total")
+    return pd.concat([summary, total_row], ignore_index=True)
+
+
+def _validate_ftr_columns(df):
+    """
+    Check that FTR-specific columns exist in the DataFrame.
+    Returns (df, error_message).
+    """
+    required = [
+        "Performance AT Status",
+        "Performance AT Rejection Counter",
+    ]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        return None, f"Missing columns for FTR report: {missing}"
+
+    # parse numeric
+    df["Performance AT Rejection Counter"] = pd.to_numeric(
+        df["Performance AT Rejection Counter"], errors="coerce"
+    ).fillna(0)
+    df["Performance AT Status"] = df["Performance AT Status"].astype(str).str.strip()
+
+    return df, None
+
+def _process_ftr(df, start_dt, end_dt):
+    start = pd.Timestamp(start_dt)
+    end   = pd.Timestamp(end_dt)
+
+    results = {}
+    for case in ['4G', '5G', '4G+5G']:
+        df_layer = _apply_layer_filter(df, case)
+        df_layer['On Air Date'] = pd.to_datetime(df_layer['On Air Date'], errors='coerce')
+        mask     = (df_layer['On Air Date'] >= start) & (df_layer['On Air Date'] <= end)
+        df_range = df_layer[mask].copy()
+        results[case] = _build_ftr_summary(df_range)
+
+    return results
+
+
+def _write_ftr_sheet(ws, summary, period_label, sheet_title, metric_col = "FTR", report_title = "Performance_FTR"):
+    """
+    metric_col: column name to apply colour coding on.
+                'FTR' for performance report, 'SCFT' for SCFT report.
+    """
+    if summary.empty:
+        ws.cell(row=1, column=1, value="No data available for this filter.")
+        return
+
+    columns = list(summary.columns)
+
+    col_widths = {
+        "Circle":                               14,
+        "Total Site":                           12,
+        "Pending":                              10,
+        "Accepted with 0 counter":              22,
+        "Acceptance pending with 0 Counter":    30,
+        "FTR":                                  8,
+        "SCFT FTR":                             8,
+    }
+
+    # Row 1 — title bar
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(columns))
+    title_cell              = ws.cell(row=1, column=1,
+                                      value=f"{report_title} |  {period_label}  |  {sheet_title}")
+    title_cell.font         = Font(name="Arial", bold=True, size=11, color="FFFFFF")
+    title_cell.fill         = PatternFill("solid", start_color="1F4E79")
+    title_cell.alignment    = FTR_CENTER
+
+    # Row 2 — column headers
+    for col_idx, col_name in enumerate(columns, start=1):
+        cell            = ws.cell(row=2, column=col_idx, value=col_name)
+        cell.font       = FTR_HEADER_FONT
+        cell.fill       = FTR_HEADER_FILL
+        cell.alignment  = FTR_CENTER
+        cell.border     = FTR_BORDER
+
+    # Data rows
+    for row_idx, row in summary.iterrows():
+        excel_row = row_idx + 3
+        is_total  = row["Circle"] == "Grand Total"
+        alt_fill  = PatternFill("solid", start_color="FFFFFF") if row_idx % 2 == 0 else None
+
+        for col_idx, col_name in enumerate(columns, start=1):
+            value       = row[col_name]
+            cell        = ws.cell(row=excel_row, column=col_idx, value=value)
+            cell.border = FTR_BORDER
+
+            if is_total:
+                cell.font = FTR_TOTAL_FONT
+                cell.fill = FTR_TOTAL_FILL
+                cell.alignment = FTR_LEFT if col_idx == 1 else FTR_CENTER
+                if col_name == metric_col:
+                    cell.number_format = "0.0"
+            else:
+                if col_name == metric_col:
+                    cell.fill = _ftr_fill(value)
+                    cell.font = _ftr_font(value)
+                    cell.number_format = "0.0"
+                else:
+                    cell.font = FTR_DATA_FONT
+                    if alt_fill:
+                        cell.fill = alt_fill
+
+            cell.alignment = FTR_LEFT if col_idx == 1 else FTR_CENTER
+            
+
+    # column widths + row heights
+    for col_idx, col_name in enumerate(columns, start=1):
+        ws.column_dimensions[get_column_letter(col_idx)].width = col_widths.get(col_name, 16)
+
+    ws.row_dimensions[1].height = 22
+    ws.row_dimensions[2].height = 30
+    ws.freeze_panes             = "A3"
+
+
+def _write_ftr_excel(summaries, period_label, out_filepath, metric_col = "FTR", report_title = "Performance_FTR"):
+    """
+    Write one Excel file with 3 sheets — 4G, 5G, 4G+5G.
+    summaries = {'4G': df, '5G': df, '4G+5G': df}
+    """
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    side = Side(style= "thin", color = "BFBFBF")
+    thin = Border(left = side, right = side, top = side, bottom = side)
+
+    for sheet_name in ['4G', '5G', '4G+5G']:
+        ws = wb.create_sheet(title=sheet_name)
+        _write_ftr_sheet(ws, summaries[sheet_name], period_label, sheet_name, metric_col= metric_col,
+                         report_title = report_title)
+
+    wb.save(out_filepath)
+
+
+
+
+# ─────────────────────────────────────────────
+# API — GENERATE FTR REPORT (date range only)
+# ─────────────────────────────────────────────
+
+@api_view(['POST'])
+def generate_ftr(request):
+    """
+    POST /idploy/generate-ftr/
+
+    Uses start/end date from date-range-selection.
+    Body: { "start_date": "2025-12-26", "end_date": "2026-01-25" }
+    """
+    start_str = request.data.get('start_date', '').strip()
+    end_str   = request.data.get('end_date',   '').strip()
+
+    start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+    if err:
+        return err
+
+    df, error = _get_input_df()
+    if error:
+        return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
+
+    df, col_error = _validate_ftr_columns(df)
+    if col_error:
+        return Response({'error': col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+    out_filename = "output_performance_FTR.xlsx"
+    out_file     = os.path.join(output_path, out_filename)
+
+    try:
+        summaries = _process_ftr(df, start_dt, end_dt)
+        if all(s.empty for s in summaries.values()):
+            return Response(
+                {'error': f"No data found for date range: {period_label}"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        _write_ftr_excel(summaries, period_label, out_file)
+    except Exception as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    download_url = request.build_absolute_uri(
+        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
+    )
+
+    return Response({
+        'status':       True,
+        'message':      'FTR report generated successfully.',
+        'date_range':   period_label,
+        'sheets':       ['4G', '5G', '4G+5G'],
+        'data': {
+            '4G':    summaries['4G'].to_dict(orient='records'),
+            '5G':    summaries['5G'].to_dict(orient='records'),
+            '4G+5G': summaries['4G+5G'].to_dict(orient='records'),
+        },
+        'download_url': download_url,
+    }, status=status.HTTP_200_OK)
 # ─────────────────────────────────────────────
 # API 4 — CLEANUP
 # ─────────────────────────────────────────────
 
+# ADDED FOR SCFT
+# ─────────────────────────────────────────────
+# API — GENERATE SCFT REPORT
+# ─────────────────────────────────────────────
+
+def _validate_scft_columns(df):
+    """
+    Check that SCFT-specific columns exist in the DataFrame.
+    Returns (df, error_message).
+    """
+    required = [
+        "SCFT AT Status",
+        "SCFT AT Rejection Counter",
+    ]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        return None, f"Missing columns for SCFT report: {missing}"
+
+    df["SCFT AT Rejection Counter"] = pd.to_numeric(
+        df["SCFT AT Rejection Counter"], errors="coerce"
+    ).fillna(0)
+    df["SCFT AT Status"] = df["SCFT AT Status"].astype(str).str.strip()
+
+    return df, None
+
+
+def _calc_scft_metrics(group):
+    """
+    Same FTR logic — just uses SCFT columns instead of Performance AT columns.
+    Total Site     = total rows
+    Pending        = SCFT AT Status == 'Pending'
+    Accepted 0     = Accepted + SCFT AT Rejection Counter == 0
+    Acc Pending 0  = Acceptance Pending + SCFT AT Rejection Counter == 0
+    SCFT            = Accepted with zero counter/(Total no of sites-Acceptance pending with zero counter)* 100
+    """
+    total   = len(group)
+    pending = (group["SCFT AT Status"] == "Pending").sum()
+
+    acc_zero = (
+        (group["SCFT AT Status"] == "Accepted") &
+        (group["SCFT AT Rejection Counter"] == 0)
+    ).sum()
+
+    acc_pend_zero = (
+        (group["SCFT AT Status"] == "Acceptance Pending") &
+        (group["SCFT AT Rejection Counter"] == 0)
+    ).sum()
+
+    denominator = total - acc_pend_zero
+    scft = round((acc_zero / denominator) * 100, 2) if denominator > 0 else 0.0
+
+    return pd.Series({
+        "Total Site":                           total,
+        "Pending":                              int(pending),
+        "Accepted with 0 counter":              int(acc_zero),
+        "Acceptance pending with 0 Counter":    int(acc_pend_zero),
+        "SCFT FTR":                             scft,
+    })
+
+
+def _build_scft_summary(df):
+    """
+    Circle-wise SCFT summary sorted alphabetically.
+    Grand Total row pinned at bottom.
+    Same as _build_ftr_summary — uses _calc_scft_metrics.
+    """
+    if df.empty:
+        return pd.DataFrame(columns=[
+            "Circle", "Total Site", "Pending",
+            "Accepted with 0 counter",
+            "Acceptance pending with 0 Counter", "SCFT FTR"
+        ])
+
+    if "Circle" not in df.columns:
+        metrics = _calc_scft_metrics(df)
+        summary = pd.DataFrame([metrics])
+        summary.insert(0, "Circle", "ALL")
+        return summary
+
+    summary   = df.groupby("Circle", sort=True).apply(_calc_scft_metrics).reset_index()
+    summary   = summary.sort_values("Circle", ascending=True).reset_index(drop=True)
+    total_row = pd.DataFrame([_calc_scft_metrics(df)])
+    total_row.insert(0, "Circle", "Grand Total")
+    return pd.concat([summary, total_row], ignore_index=True)
+
+
+def _process_scft(df, start_dt, end_dt):
+    """
+    Apply layer filters then date filter then build SCFT summary.
+    Same flow as _process_ftr — uses _build_scft_summary.
+    """
+    start = pd.Timestamp(start_dt)
+    end   = pd.Timestamp(end_dt)
+
+    results = {}
+    for case in ['4G', '5G', '4G+5G']:
+        df_layer = _apply_layer_filter(df, case)
+
+        df_layer['On Air Date'] = pd.to_datetime(df_layer['On Air Date'], errors='coerce')
+        mask     = (df_layer['On Air Date'] >= start) & (df_layer['On Air Date'] <= end)
+        df_range = df_layer[mask].copy()
+
+        results[case] = _build_scft_summary(df_range)
+
+    return results
+
+# ─────────────────────────────────────────────
+# API 7 — GENERATE SCFT (date range only)
+# ─────────────────────────────────────────────
+
+@api_view(['POST'])
+def generate_scft(request):
+    """
+    POST /idploy/generate-scft/
+
+    Uses start/end date from date-range-selection.
+    Body: { "start_date": "2025-12-26", "end_date": "2026-01-25" }
+    """
+    start_str = request.data.get('start_date', '').strip()
+    end_str   = request.data.get('end_date',   '').strip()
+
+    start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+    if err:
+        return err
+
+    df, error = _get_input_df()
+    if error:
+        return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
+
+    df, col_error = _validate_scft_columns(df)
+    if col_error:
+        return Response({'error': col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+    out_filename = "output_performance_SCFT FTR.xlsx"
+    out_file     = os.path.join(output_path, out_filename)
+
+    try:
+        summaries = _process_scft(df, start_dt, end_dt)
+        if all(s.empty for s in summaries.values()):
+            return Response(
+                {'error': f"No data found for date range: {period_label}"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        _write_ftr_excel(summaries, period_label, out_file, metric_col='SCFT FTR', report_title='SCFT FTR')
+    except Exception as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    download_url = request.build_absolute_uri(
+        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
+    )
+
+    return Response({
+        'status':       True,
+        'message':      'SCFT FTR report generated successfully.',
+        'date_range':   period_label,
+        'sheets':       ['4G', '5G', '4G+5G'],
+        'data': {
+            '4G':    summaries['4G'].to_dict(orient='records'),
+            '5G':    summaries['5G'].to_dict(orient='records'),
+            '4G+5G': summaries['4G+5G'].to_dict(orient='records'),
+        },
+        'download_url': download_url,
+    }, status=status.HTTP_200_OK)
+
+
+# Delete API
 @api_view(['DELETE'])
 def cleanup(request):
     """

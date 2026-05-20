@@ -21,142 +21,129 @@ from rest_framework import status
 
 ALL_COLUMNS = [
     "Circle",
-    "Site Tagging",
-    "Old TOCO Name",
-    "Old Site Id",
-    "New Site ID",
-    "New TOCO Name",
+    "Site ID",
+    "Project (NT/IBS/ULS)",
+    "TUR Breakup (Urban/Rural/Metro)",
+    "TOCO Name",
     "SR Number",
     "RAN OEM",
     "Media Type",
     "MW OEM",
-    "MW Partner",
-    "Relocation Method",
-    "Relocation Type",
-    "OLD Site Band",
-    "New Site Band",
-
+    "MW Installation Partner",
+    "Site Band",
     "RFAI Date",
     "Allocation Date",
     "RFAI Survey Date",
-    "Survey (Accepted/Rejected)",
     "WRFAI (YES/NO)",
-    "NWRFAI Reason(Material, Media, PRI)",
-    "Remarks For NWRFAI",
-    "NWRFAI To WRFAI Date",
-
     "MO Punch Date",
     "Material Dispatch Date",
     "Material Delivered Date",
+    "Material Type - HW(Fresh/SRN)",
+    "Material Type - IM(Fresh/SRN)",
     "Installation Start Date",
     "Installation End Date",
     "Integration Date",
-    "NEP ID",
+    "Sacfa Appied date",
+    "WPC No",
+    "WPC Date",
     "EMF Submission Date",
-
+    "NEP ID",
     "RAN LKF Status",
     "Alarm Status",
     "Alarm Rectification Done Date",
-
     "SCFT Done Date",
-    "SCFT I-Deploy Offered Date",
+    "SCFT Offered Date",
     "RAN PAT Offer Date",
     "RAN SAT Offer Date",
     "MW Plan ID",
     "MW PAT Offer Date",
-
     "RSL Value Status",
     "ENM Status",
     "MW LKF",
     "MW SAT Offer Date",
     "MW MS1 MIDS Date",
-
+    "MW Sacfa - A End",
+    "MW WPC - A End",
+    "MW Sacfa - B End",
+    "MW WPC - B End",
     "Site ONAIR Date",
     "I-Deploy ONAIR Date",
-
     "Current Status",
+    "Ideploy Status",
     "Detailed Remarks",
-    "Manual History",
-
     "RFAI Rejected Date",
-    "Re-RFAI Date",
-
+    "Ideploy PRI Taging",
+    "Re RFAI Date",
     "PRI Count",
     "PRI Issue Ageing",
-    "Other Issue Ageing",
+    "Other UST Issue Ageing",
+    "Other Airtel Issue Ageing",
     "Total Issue Ageing",
+    "Clear RFAI to MS1 Ageing",
     "RFAI to MS1 Ageing",
-
     "RAN PAT Accepted Date",
     "RAN SAT Accepted Date",
     "MW PAT Accepted Date",
     "MW SAT Accepted Date",
     "SCFT Accepted Date",
-
     "KPI AT offer Date",
     "KPI AT Accepted Date",
-
     "4G MS2 Date",
-    "5G MS2 Date",
-    "Final MS2 Date",
-
+    "SSID",
+    "PMIS Month",
+    "Airtel Sign off( Yes/No)",
     "Last Updated Date",
     "Last Updated By"
 ]
+# chnage model and coulm list
 
 COLUMN_MAP = {
-
     "Circle": "circle",
-    "Site Tagging": "site_tagging",
+    "Site ID": "site_id",
 
-    "Old TOCO Name": "old_toco_name",
-    "Old Site Id": "old_site_id",
+    "Project (NT/IBS/ULS)": "project_nt",
+    "TUR Breakup (Urban/Rural/Metro)": "tur_breakup",
 
-    "New Site ID": "new_site_id",
-    "New TOCO Name": "new_toco_name",
-
+    "TOCO Name": "new_toco_name",
     "SR Number": "sr_number",
 
     "RAN OEM": "ran_oem",
     "Media Type": "media_type",
     "MW OEM": "mw_oem",
-    "MW Partner": "mw_partner",
+    "MW Installation Partner": "mw_nstallation_partner",
 
-    "Relocation Method": "relocation_method",
-    "Relocation Type": "relocation_type",
-
-    "OLD Site Band": "old_site_band",
-    "New Site Band": "new_site_band",
-
-    # -------- RFAI / Survey --------
+    "Site Band": "site_band",
     "RFAI Date": "rfai_date",
     "Allocation Date": "allocation_date",
     "RFAI Survey Date": "rfai_survey_date",
 
-    "Survey (Accepted/Rejected)": "survey_status",
     "WRFAI (YES/NO)": "wrfai",
-    "NWRFAI Reason(Material, Media, PRI)": "nwrfai_reason",
-    "Remarks For NWRFAI": "remarks_for_nwrfai",
-    "NWRFAI To WRFAI Date": "nwrfai_to_wrfai_date",
 
-    # -------- Execution --------
     "MO Punch Date": "mo_punch_date",
     "Material Dispatch Date": "material_dispatch_date",
     "Material Delivered Date": "material_delivered_date",
+
+    "Material Type - HW(Fresh/SRN)": "material_type_hw",
+    "Material Type - IM(Fresh/SRN)": "material_type_im",
+
     "Installation Start Date": "installation_start_date",
     "Installation End Date": "installation_end_date",
     "Integration Date": "integration_date",
-    "NEP ID": "nep_id",
-    "EMF Submission Date": "emf_submission_date",
 
-    # -------- LKF / Alarm --------
+    "Sacfa Appied date": "Sacfa_Appied_date",
+    "WPC No": "wpc_no",
+    "WPC Date": "wpc_date",
+
+    "EMF Submission Date": "emf_submission_date",
+    "NEP ID": "nep_id",
+
     "RAN LKF Status": "ran_lkf_status",
     "Alarm Status": "alarm_status",
     "Alarm Rectification Done Date": "alarm_rectification_done_date",
 
-    # -------- SCFT / PAT / SAT --------
     "SCFT Done Date": "scft_done_date",
-    "SCFT I-Deploy Offered Date": "scft_i_deploy_offered_date",
+    "SCFT Offered Date": "scft_offered_date",
+
     "RAN PAT Offer Date": "ran_pat_offer_date",
     "RAN SAT Offer Date": "ran_sat_offer_date",
 
@@ -166,30 +153,35 @@ COLUMN_MAP = {
     "RSL Value Status": "rsl_value_status",
     "ENM Status": "enm_status",
     "MW LKF": "mw_lkf",
+
     "MW SAT Offer Date": "mw_sat_offer_date",
     "MW MS1 MIDS Date": "mw_ms1_mids_date",
 
-    # -------- ONAIR --------
+    "MW Sacfa - A End": "mw_sacfa_a_end",
+    "MW WPC - A End": "mw_wpc_a_end",
+    "MW Sacfa - B End": "mw_sacfa_b_end",
+    "MW WPC - B End": "mw_wpc_b_end",
+
     "Site ONAIR Date": "site_onair_date",
     "I-Deploy ONAIR Date": "i_deploy_onair_date",
 
-    # -------- Status --------
     "Current Status": "current_status",
+    "Ideploy Status": "ideploy_status",
     "Detailed Remarks": "detailed_remarks",
-    "Manual History": "manual_history",
 
-    # -------- Rework --------
     "RFAI Rejected Date": "rfai_rejected_date",
-    "Re-RFAI Date": "re_rfai_date",
+    "Ideploy PRI Taging": "ideploy_pri_taging",
+    "Re RFAI Date": "re_rfai_date",
 
-    # -------- Issues --------
     "PRI Count": "pri_count",
     "PRI Issue Ageing": "pri_issue_ageing",
-    "Other Issue Ageing": "other_issue_ageing",
+    "Other UST Issue Ageing": "other_ust_issue_ageing",
+    "Other Airtel Issue Ageing": "other_airtel_issue_ageing",
     "Total Issue Ageing": "total_issue_ageing",
+
+    "Clear RFAI to MS1 Ageing": "clear_rfai_ms1_ageing",
     "RFAI to MS1 Ageing": "rfai_to_ms1_ageing",
 
-    # -------- Acceptance --------
     "RAN PAT Accepted Date": "ran_pat_accepted_date",
     "RAN SAT Accepted Date": "ran_sat_accepted_date",
     "MW PAT Accepted Date": "mw_pat_accepted_date",
@@ -199,16 +191,15 @@ COLUMN_MAP = {
     "KPI AT offer Date": "kpi_at_offer_date",
     "KPI AT Accepted Date": "kpi_at_accepted_date",
 
-    # -------- MS2 --------
     "4G MS2 Date": "four_g_ms2_date",
-    "5G MS2 Date": "five_g_ms2_date",
-    "Final MS2 Date": "final_ms2_date",
+    "SSID": "ssid",
+    "PMIS Month": "pmis_month",
 
-    # -------- Audit --------
+    "Airtel Sign off( Yes/No)": "airtel_sign_off",
+
     "Last Updated Date": "last_updated_date",
     "Last Updated By": "last_updated_by",
 }
-
 
 # Create your views here.
 
@@ -262,7 +253,7 @@ def update_ageing_new(circle, site_id):
     # Fetch tracker row
     data_obj = NTSiteTracker.objects.filter(
         circle=circle,
-        new_site_id=site_id
+        site_id=site_id
     ).first()
 
     # if not data_obj:
@@ -346,13 +337,14 @@ def update_ageing_new(circle, site_id):
 
 @api_view(["POST"])
 def upload_tracker_data_view(request):
-    print("1")
+
     user_id = request.data.get("userId")
 
     if not user_id:
         return Response({"error": "userId required"}, status=400)
 
     user = RelocationUser.objects.filter(email__iexact=user_id).first()
+
     if not user:
         return Response({"error": "User not found"}, status=404)
 
@@ -360,113 +352,165 @@ def upload_tracker_data_view(request):
         return Response({"error": "ACCESS DENIED"}, status=403)
 
     file = request.data.get("file")
+
     if not file:
         return Response({"error": "No file uploaded"}, status=400)
-    print("1")
+
     try:
-        # ================= Read File =================
-        df = pd.read_csv(file, header=1) if file.name.endswith(".csv") else pd.read_excel(file, header=1)
+        if file.name.endswith(".csv"):
+            df = pd.read_csv(file, header=1)
+        else:
+            df = pd.read_excel(file, header=1)
+
         df.columns = df.columns.str.strip()
 
-        df = df.replace(["NaN", "nan", "", "NA", "N/A", "-"], None)
-
-        # ================= Circle Filtering =================
+        df = df.replace(
+            ["NaN", "nan", "", "NA", "N/A", "-"],
+            None
+        )
         circles = user.circles
-        if "CENTRAL" not in circles:
+
+        if circles and "CENTRAL" not in circles:
             df = df[df["Circle"].isin(circles)]
 
-        # ================= Validate Columns =================
-        missing = [c for c in ALL_COLUMNS if c not in df.columns]
+        missing = [
+            c for c in COLUMN_MAP.keys()
+            if c not in df.columns
+        ]
+
         if missing:
             return Response(
-                {"error": f"Missing columns: {', '.join(missing)}"},
-                status=400
-            )
+                {   "status":False,
+                    "message": f"Missing columns: {', '.join(missing)}" },)
 
-        # ================= Rename Excel → Model =================
         df = df.rename(columns=COLUMN_MAP)
         df = df[list(COLUMN_MAP.values())]
 
-        # ================= Safe Date Parsing =================
-        INVALID_DATE_STRINGS = {"need to check", "pending", "na", "tbd", "n/a", "-"}
+        INVALID_DATE_STRINGS = {
+            "need to check","pending","na",
+            "tbd","n/a","-"
+        }
 
         def safe_date(val):
             if val is None:
                 return None
-            if isinstance(val, (pd.Timestamp, )):
+
+            if isinstance(val, pd.Timestamp):
                 return val.date()
+
             if isinstance(val, str):
+
                 v = val.strip().lower()
+
                 if not v or v in INVALID_DATE_STRINGS:
                     return None
+
                 parsed = pd.to_datetime(val, errors="coerce")
-                return None if pd.isna(parsed) else parsed.date()
+
+                if pd.isna(parsed):
+                    return None
+
+                return parsed.date()
+
             return None
 
         for col in df.columns:
+
             if col.endswith("_date"):
                 df[col] = df[col].apply(safe_date)
 
-        # ================= Integers =================
+   
         INT_FIELDS = [
-            "pri_count", "pri_issue_ageing",
-            "other_issue_ageing", "total_issue_ageing",
+            "pri_count",
+            "pri_issue_ageing",
+            "other_ust_issue_ageing",
+            "other_airtel_issue_ageing",
+            "total_issue_ageing",
+            "clear_rfai_ms1_ageing",
             "rfai_to_ms1_ageing"
         ]
 
         for col in INT_FIELDS:
-            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
 
-        df["new_site_id"] = df["new_site_id"].astype(str)
+            if col in df.columns:
+                df[col] = pd.to_numeric(
+                    df[col],
+                    errors="coerce"
+                ).astype("Int64")
 
         records = df.to_dict("records")
-
-        # ================= Existing Records =================
         existing = {
-            (x.circle.lower(), x.new_site_id.lower()): x
-            for x in NTSiteTracker.objects.only("circle", "new_site_id")
+            (
+                str(x.circle).strip().lower() if x.circle else "",
+                str(x.site_id).strip().lower() if x.site_id else ""
+            ): x
+            for x in NTSiteTracker.objects.only(
+                "circle",
+                "site_id"
+            )
         }
 
-        to_create, to_update = [], []
+        to_create = []
+        to_update = []
 
         with transaction.atomic():
-            for row in records:
-                circle = row.get("circle")
-                new_site = row.get("new_site_id")
 
-                if not circle or not new_site:
+            for row in records:
+
+                circle = row.get("circle")
+                site_id = row.get("site_id")
+
+                if not circle or not site_id:
                     continue
 
-                row["last_updated_by"] = user
+                circle_key = str(circle).strip().lower()
+                site_id_key = str(site_id).strip().lower()
+
+                key = (circle_key, site_id_key)
+
+          
+                row["last_updated_by"] = user.email
                 row["last_updated_date"] = timezone.now()
 
-                key = (circle.lower(), new_site.lower())
-
+               
                 if key in existing:
                     obj = existing[key]
                     for field, value in row.items():
                         setattr(obj, field, value)
+
                     to_update.append(obj)
+
                 else:
-                    to_create.append(NTSiteTracker(**row))
+
+                    to_create.append(
+                        NTSiteTracker(**row)
+                    )
 
             if to_create:
-                NTSiteTracker.objects.bulk_create(to_create, batch_size=500)
 
+                NTSiteTracker.objects.bulk_create(
+                    to_create,
+                    batch_size=500
+                )
             if to_update:
+
                 NTSiteTracker.objects.bulk_update(
                     to_update,
                     fields=list(COLUMN_MAP.values()) + [
-                        "last_updated_by", "last_updated_date"
+                        "last_updated_by",
+                        "last_updated_date"
                     ],
                     batch_size=500
                 )
 
-        return Response({"status": True, "message": "Upload successful"})
+        return Response(
+            {"status": True,
+            "message": "NT Tracker Upload Successfully"})
 
     except Exception as e:
-        return Response({"status": False, "error": str(e)}, status=500)
-    
+        return Response(
+            {"status": False,
+              "message": str(e)},status=500)
     
 ############################################################ DOWNLOAD DATA ###################################################################
 
@@ -491,7 +535,9 @@ def download_tracker_data_view(request):
         df = pd.DataFrame(qs.values())
 
         if df.empty:
-            return Response({"error": "No data available"}, status=404)
+            return Response({
+                "status":False,
+                "message": "No data available"})
 
         # ================= Date Formatting =================
         for col in df.columns:
@@ -512,36 +558,39 @@ def download_tracker_data_view(request):
             "Unique ID",
 
             "circle",
-            "site_tagging",
-            "old_toco_name",
-            "old_site_id",
-            "new_site_id",
+            "site_id",
+            "project_nt",
+            "tur_breakup",
             "new_toco_name",
             "sr_number",
+
             "ran_oem",
             "media_type",
             "mw_oem",
-            "mw_partner",
-            "relocation_method",
-            "relocation_type",
-            "old_site_band",
-            "new_site_band",
+            "mw_nstallation_partner",
+
+            "site_band",
 
             "rfai_date",
             "allocation_date",
             "rfai_survey_date",
-            "survey_status",
             "wrfai",
-            "nwrfai_reason",
-            "remarks_for_nwrfai",
-            "nwrfai_to_wrfai_date",
 
             "mo_punch_date",
             "material_dispatch_date",
             "material_delivered_date",
+
+            "material_type_hw",
+            "material_type_im",
+
             "installation_start_date",
             "installation_end_date",
             "integration_date",
+
+            "Sacfa_Appied_date",
+            "wpc_no",
+            "wpc_date",
+
             "nep_id",
             "emf_submission_date",
 
@@ -550,9 +599,11 @@ def download_tracker_data_view(request):
             "alarm_rectification_done_date",
 
             "scft_done_date",
-            "scft_i_deploy_offered_date",
+            "scft_offered_date",
+
             "ran_pat_offer_date",
             "ran_sat_offer_date",
+
             "mw_plan_id",
             "mw_pat_offer_date",
 
@@ -562,20 +613,28 @@ def download_tracker_data_view(request):
             "mw_sat_offer_date",
             "mw_ms1_mids_date",
 
+            "mw_sacfa_a_end",
+            "mw_wpc_a_end",
+            "mw_sacfa_b_end",
+            "mw_wpc_b_end",
+
             "site_onair_date",
             "i_deploy_onair_date",
 
             "current_status",
+            "ideploy_status",
             "detailed_remarks",
-            "manual_history",
 
             "rfai_rejected_date",
+            "ideploy_pri_taging",
             "re_rfai_date",
 
             "pri_count",
             "pri_issue_ageing",
-            "other_issue_ageing",
+            "other_ust_issue_ageing",
+            "other_airtel_issue_ageing",
             "total_issue_ageing",
+            "clear_rfai_ms1_ageing",
             "rfai_to_ms1_ageing",
 
             "ran_pat_accepted_date",
@@ -588,8 +647,9 @@ def download_tracker_data_view(request):
             "kpi_at_accepted_date",
 
             "four_g_ms2_date",
-            "five_g_ms2_date",
-            "final_ms2_date",
+            "ssid",
+            "pmis_month",
+            "airtel_sign_off",
 
             "last_updated_date",
             "last_updated_by"
@@ -632,9 +692,9 @@ def download_tracker_data_view(request):
         wb.save(file_path)
 
         relative = file_path.replace(settings.MEDIA_ROOT, "").lstrip(os.sep)
-        url = request.build_absolute_uri(os.path.join(settings.MEDIA_URL, relative))
+        download_url = request.build_absolute_uri(os.path.join(settings.MEDIA_URL, relative))
 
-        return Response({"download_link": url})
+        return Response({"download_link":download_url})
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
@@ -642,10 +702,8 @@ def download_tracker_data_view(request):
 
 @api_view(['DELETE'])
 def delete_tracker_data_view(request):
-    sr_number = request.data.get('sr_number')
-    
+    sr_number = request.data.get('sr_number')   
     try:
-    
         if sr_number:
             qs = NTSiteTracker.objects.filter(sr_number=sr_number)
             
@@ -653,13 +711,9 @@ def delete_tracker_data_view(request):
                 return Response(
                     {"message": "No record found with this sr number"},
                     status=status.HTTP_404_NOT_FOUND
-                )
-            
-            qs.delete()
-            
+                )        
+            qs.delete()        
             return Response({"message": "1 site deleted successfully"})
-        
-    
         qs = NTSiteTracker.objects.all()
         
         qs.delete()
@@ -669,11 +723,13 @@ def delete_tracker_data_view(request):
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
+        
+
 
 @api_view(['GET', 'POST'])
 def daily_dashboard_view(request):
     circle = request.data.get('circle', [])
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('relocation_method', [])
     new_toco_name = request.data.get('new_toco_name', [])
     start_date = request.data.get('from_date')
@@ -702,11 +758,11 @@ def daily_dashboard_view(request):
         .values_list("circle", flat=True)
     )
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+    # all_unique_site_tagging = list(
+    #     NTSiteTracker.objects.exclude(site_tagging__isnull=True)
+    #     .distinct("site_tagging")
+    #     .values_list("site_tagging", flat=True)
+    # )
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -722,13 +778,13 @@ def daily_dashboard_view(request):
 
     unique_data = {
         "unique_circle": sorted(all_unique_circles),
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_relocation_method": sorted(all_unique_current_status),
         "unique_new_toco_name": sorted(all_unique_new_toco_name),
     }
 
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
 
@@ -739,8 +795,8 @@ def daily_dashboard_view(request):
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
-        if "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if "ALL" not in new_toco_name:
@@ -798,7 +854,8 @@ def daily_dashboard_view(request):
             "Integration Date",
             "EMF Submission Date",
             "Alarm Rectification Done Date",
-            "SCFT I-Deploy Offered Date",
+            # "SCFT I-Deploy Offered Date",
+            "SCFT Offered Date",
             "RAN PAT Offer Date",
             "RAN SAT Offer Date",
             "MW PAT Offer Date",
@@ -943,12 +1000,13 @@ def daily_dashboard_view(request):
 
     except Exception as e:
         return Response({"error": f"{str(e)}"}, status=500)
+    
 
 
 @api_view(['GET', 'POST'])
 def weekly_monthly_dashboard_view(request):
     circle = request.data.get('circle', [])
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('relocation_method', [])
     new_toco_name = request.data.get('new_toco_name', [])
     month_filtered = request.data.get('month')
@@ -957,7 +1015,7 @@ def weekly_monthly_dashboard_view(request):
  
     # Default to 'ALL' if not provided
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
     
@@ -981,11 +1039,11 @@ def weekly_monthly_dashboard_view(request):
         .values_list("circle", flat=True)
     )
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+    # all_unique_site_tagging = list(
+    #     NTSiteTracker.objects.exclude(site_tagging__isnull=True)
+    #     .distinct("site_tagging")
+    #     .values_list("site_tagging", flat=True)
+    # )
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -1002,7 +1060,7 @@ def weekly_monthly_dashboard_view(request):
     # ✅ Add "ALL" at the top of each list
     unique_data = {
         "unique_circle": sorted(all_unique_circles),
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_relocation_method": sorted(all_unique_current_status),
         "unique_new_toco_name": sorted(all_unique_new_toco_name),
     }
@@ -1012,8 +1070,8 @@ def weekly_monthly_dashboard_view(request):
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
-        if "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if "ALL" not in new_toco_name:
@@ -1056,7 +1114,7 @@ def weekly_monthly_dashboard_view(request):
                 current_cycle_start = dtime(today.year, today.month - 1, 26).date()
             current_cycle_end = dtime(today.year, today.month, 25).date()
  
-        # 🗓️ 3. Create monthly periods (Apr → month before current)
+        #  3. Create monthly periods (Apr → month before current)
         months = []
         start = fy_start
         while start <= current_cycle_start:
@@ -1067,7 +1125,7 @@ def weekly_monthly_dashboard_view(request):
             months.append((start, end))
             start = end + timedelta(days=1)
  
-        # 🗓️ 4. Create weekly periods for current month
+        #  4. Create weekly periods for current month
         weeks = []
         
         if month_start and month_end:
@@ -1084,35 +1142,35 @@ def weekly_monthly_dashboard_view(request):
             week_start = week_end + timedelta(days=1)
  
  
-        # 📊 5. Prepare result DataFrame
         result = pd.DataFrame()
        
        
         # result.set_index("Milestone Track/Site Count", inplace=True)
  
         milestones = [
-            "Allocation Date",
-            "RFAI Date",
-            "RFAI Survey Date",
-            # "RFAI Survey Done Date",
-            "MO Punch Date",
-            "Material Dispatch Date",
-            "Material Delivered Date",
-            # "Installation Start Date",
-            "Installation End Date",
-            "Integration Date",
-            "EMF Submission Date",
-            "Alarm Rectification Done Date",
-            # "SCFT Done Date",
-            "SCFT I-Deploy Offered Date",
-            "RAN PAT Offer Date",
-            "RAN SAT Offer Date",
-            "MW PAT Offer Date",
-            "MW SAT Offer Date",
-            # "MW MS1 Date (MIDS)",
-            "Site ONAIR Date",
-            "I-Deploy ONAIR Date",
-        ]
+        "Allocation Date",
+        "RFAI Date",
+        "RFAI Survey Date",
+        # "RFAI Survey Done Date",
+        "MO Punch Date",
+        "Material Dispatch Date",
+        "Material Delivered Date",
+        # "Installation Start Date",
+        "Installation End Date",
+        "Integration Date",
+        "EMF Submission Date",
+        "Alarm Rectification Done Date",
+        # "SCFT Done Date",
+        # "SCFT I-Deploy Offered Date",
+        "SCFT Offered Date",
+        "RAN PAT Offer Date",
+        "RAN SAT Offer Date",
+        "MW PAT Offer Date",
+        "MW SAT Offer Date",
+        # "MW MS1 Date (MIDS)",
+        "Site ONAIR Date",
+        "I-Deploy ONAIR Date",
+    ]
  
         data = []
         
@@ -1236,7 +1294,7 @@ def gap_view(request):
     circles = user.circles
     
     circle = request.data.get('circle', [])
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('relocation_method', [])
     new_toco_name = request.data.get('new_toco_name', [])
     last_date = request.data.get('last_date')
@@ -1245,13 +1303,22 @@ def gap_view(request):
     gap = request.data.get('gap')
     
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
 
     last_date = dtime.strptime(last_date, "%Y-%m-%d").date() if last_date else None
-    milestone1 = milestone1.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
-    milestone2 = milestone2.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
+    milestone1 = (milestone1 or "").strip().lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
+    milestone2 = (milestone2 or "").strip().lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
+
+    print("milestone1:", repr(milestone1))
+    print("milestone2:", repr(milestone2))
+
+    # if not milestone1:
+    #     return Response({"error": "milestone1 missing"}, status=400)
+
+    # if not milestone2:
+    #     return Response({"error": "milestone2 missing"}, status=400)
 
     try:
         
@@ -1271,8 +1338,8 @@ def gap_view(request):
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
-        if "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if "ALL" not in new_toco_name:
@@ -1301,8 +1368,8 @@ def gap_view(request):
         obj2 = NTSiteTracker.objects.filter(**filters)  # noqa: F405
         df2 = pd.DataFrame(obj2.values())
         
-        df1['key'] = df1['circle'].astype(str) + "_" + df1['new_site_id'].astype(str)
-        df2['key'] = df2['circle'].astype(str) + "_" + df2['new_site_id'].astype(str)
+        df1['key'] = df1['circle'].astype(str) + "_" + df1['site_id'].astype(str)
+        df2['key'] = df2['circle'].astype(str) + "_" + df2['site_id'].astype(str)
 
         # df = df1[~df1['key'].isin(df2['key'])].drop(columns=['key'])
         # if len(df1) > len(df2):  
@@ -1310,7 +1377,7 @@ def gap_view(request):
         # else:
         #     df = df2[~df2['key'].isin(df1['key'])].drop(columns=['key'])
         
-        sites = df['new_site_id'].dropna().unique().tolist()
+        sites = df['site_id'].dropna().unique().tolist()
 
         
         # filters = {
@@ -1374,7 +1441,7 @@ def gap_view(request):
         shutil.rmtree(output_folder, ignore_errors=True)
         os.makedirs(output_folder, exist_ok=True)
        
-        tracker_file_path = os.path.join(output_folder, f"NT_TRACKER_GAP_FILE_{milestone1}_{milestone2}_{circle}_{site_tagging}_{current_status}_{new_toco_name}_{current_date}_{current_time}.xlsx")
+        tracker_file_path = os.path.join(output_folder, f"NT_TRACKER_GAP_FILE_{milestone1}_{milestone2}_{circle}_{current_status}_{new_toco_name}_{current_date}_{current_time}.xlsx")
         
         df.insert(0, "Unique ID", range(1, len(df) + 1))
         
@@ -1382,37 +1449,41 @@ def gap_view(request):
         df.drop(columns=['id'], inplace=True)
 
         df = df[[
+            
             "circle",
-            "site_tagging",
-            "old_toco_name",
-            "old_site_id",
-            "new_site_id",
+            "site_id",
+            "project_nt",
+            "tur_breakup",
             "new_toco_name",
             "sr_number",
+
             "ran_oem",
             "media_type",
             "mw_oem",
-            "mw_partner",
-            "relocation_method",
-            "relocation_type",
-            "old_site_band",
-            "new_site_band",
+            "mw_nstallation_partner",
+
+            "site_band",
 
             "rfai_date",
             "allocation_date",
             "rfai_survey_date",
-            "survey_status",
             "wrfai",
-            "nwrfai_reason",
-            "remarks_for_nwrfai",
-            "nwrfai_to_wrfai_date",
 
             "mo_punch_date",
             "material_dispatch_date",
             "material_delivered_date",
+
+            "material_type_hw",
+            "material_type_im",
+
             "installation_start_date",
             "installation_end_date",
             "integration_date",
+
+            "Sacfa_Appied_date",
+            "wpc_no",
+            "wpc_date",
+
             "nep_id",
             "emf_submission_date",
 
@@ -1421,9 +1492,11 @@ def gap_view(request):
             "alarm_rectification_done_date",
 
             "scft_done_date",
-            "scft_i_deploy_offered_date",
+            "scft_offered_date",
+
             "ran_pat_offer_date",
             "ran_sat_offer_date",
+
             "mw_plan_id",
             "mw_pat_offer_date",
 
@@ -1433,20 +1506,28 @@ def gap_view(request):
             "mw_sat_offer_date",
             "mw_ms1_mids_date",
 
+            "mw_sacfa_a_end",
+            "mw_wpc_a_end",
+            "mw_sacfa_b_end",
+            "mw_wpc_b_end",
+
             "site_onair_date",
             "i_deploy_onair_date",
 
             "current_status",
+            "ideploy_status",
             "detailed_remarks",
-            "manual_history",
 
             "rfai_rejected_date",
+            "ideploy_pri_taging",
             "re_rfai_date",
 
             "pri_count",
             "pri_issue_ageing",
-            "other_issue_ageing",
+            "other_ust_issue_ageing",
+            "other_airtel_issue_ageing",
             "total_issue_ageing",
+            "clear_rfai_ms1_ageing",
             "rfai_to_ms1_ageing",
 
             "ran_pat_accepted_date",
@@ -1459,12 +1540,14 @@ def gap_view(request):
             "kpi_at_accepted_date",
 
             "four_g_ms2_date",
-            "five_g_ms2_date",
-            "final_ms2_date",
+            "ssid",
+            "pmis_month",
+            "airtel_sign_off",
 
             "last_updated_date",
             "last_updated_by"
         ]]
+        
 
  
  
@@ -1545,23 +1628,658 @@ def gap_view(request):
         
         return Response({'message': 'request processed successfully !!!', "data": json_val, "download_link": download_url}, status=200)
     except Exception as e:
-        return Response({"error": f"{str(e)}"},status=500)   
+        return Response({"error": f"{str(e)}"},status=500) 
+
+
+
+
+
+
+@api_view(['GET', 'POST'])
+def frontend_nt_display_view(request):
+    userId = request.data.get('userId')
+
+    try:
+        user = RelocationUser.objects.filter(email=userId.lower()).first()
+    except RelocationUser.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    
+    # circles = user.circles
+    circles ="CENTRAL"
+
+    type = request.data.get('day_type')
+    milestone = request.data.get('milestone')
+    col_name = request.data.get('col_name')
+    view = request.data.get('view')
+    circle = request.data.get('circle', [])
+    current_status = request.data.get('current_status', [])
+    toco_name = request.data.get('toco_name', [])
+    month_filtered = request.data.get('month')
+    year_filtered = request.data.get('year')
+    
+    if month_filtered and year_filtered:
+        month_filtered = int(month_filtered)
+        year_filtered = int(year_filtered)
+
+        month_end = date(year_filtered, month_filtered, 25)
+
+        if month_filtered == 1:
+            month_start = date(year_filtered - 1, 12, 26)
+        else:
+            month_start = date(year_filtered, month_filtered - 1, 26)
+    else:
+        month_start = None
+        month_end = None
+
+    # circle = [ACCESS_RIGHTS[userId]["Circle"]] if ACCESS_RIGHTS[userId]["Circle"] != 'CENTRAL' else [c.strip() for c in circle.split(',')] if circle else ["ALL"]
+    # if 'ALL' in circle:
+    #     circle = circles
+    # elif 'ALL' not in circles:
+    #     circle = [c for c in circle if c in circles]
+
+    circle = [c.strip() for c in circle.split(',')] if circle else ["CENTRAL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
+    toco_name = [n.strip() for n in toco_name.split(',')] if toco_name else ["ALL"]
+    
+    if 'CENTRAL' in circle:
+        circle = circles
+    elif 'CENTRAL' not in circles:
+        circle = [c for c in circle if c in circles]
+    
+    if not type or not milestone or not col_name or not view:
+        return Response({"error": "Missing required parameters"}, status=400)
+    
+    milestone = milestone.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+    
+    try:
+        def get_week_range(col_name):
+            month_str, week_part = col_name.split()
+            month_abbr, year_suffix = month_str.split('-')
+            week_num = int(week_part.replace('W', ''))
+
+            year = 2000 + int(year_suffix)  # '25' -> 2025
+            month = datetime.strptime(month_abbr, "%b").month
+
+            # Define cycle range: 26th of previous month → 25th of current month
+            prev_month = month - 1 if month > 1 else 12
+            prev_year = year if month > 1 else year - 1
+
+            cycle_start = date(prev_year, prev_month, 26)
+            cycle_end = date(year, month, 25)
+
+            # Build week ranges: every 7 days from cycle_start to cycle_end
+            weeks = []
+            start = cycle_start
+            while start <= cycle_end:
+                end = start + timedelta(days=6)
+                if end > cycle_end:
+                    end = cycle_end
+                weeks.append((start, end))
+                start = end + timedelta(days=1)
+
+            # Get requested week
+            week_start, week_end = weeks[week_num - 1]
+            return week_start, week_end, cycle_start
+        
+        filters = {}
+        if type == 'daily':
+            col_name = dtime.strptime(col_name, "%d-%b-%y").date()
+            if view == 'Cumulative':
+                filters[f"{milestone}__lte"] = col_name
+            else:
+                filters[milestone] = col_name
+            
+        elif type == 'weekly':
+            week_start, week_end, cycle_start = get_week_range(col_name)
+
+            if view == 'Cumulative':
+                filters[f"{milestone}__range"] = (cycle_start, week_end)
+            else:
+                filters[f"{milestone}__range"] = (week_start, week_end)
+
+        else:
+            month_abbr, year_suffix = col_name.split('-')
+            year = 2000 + int(year_suffix)
+            month = datetime.strptime(month_abbr, "%b").month
+
+            # Compute cycle range
+            prev_month = month - 1 if month > 1 else 12
+            prev_year = year if month > 1 else year - 1
+
+            cycle_start = datetime(prev_year, prev_month, 26)
+            cycle_end = datetime(year, month, 25)
+
+            if view == 'Cumulative':
+                filters[f"{milestone}__lte"] = cycle_end
+            else:
+                filters[f"{milestone}__range"] = (cycle_start, cycle_end)
+
+
+        if "CENTRAL" not in circle:
+            filters["circle__in"] = circle
+        # if "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
+        if "ALL" not in current_status:
+            filters["current_status__in"] = current_status
+        if "ALL" not in toco_name:
+            filters["new_toco_name__in"] = toco_name
+
+
+        obj = NTSiteTracker.objects.filter(**filters)  # noqa: F405
+        df = pd.DataFrame(obj.values())
+        
+        if df.empty :
+            json_data = []
+            json_val = json.dumps(json_data)
+            return Response({"message" : "No data found", "data": json_val},status = 200)
+        
+        if month_start and month_end:
+            df = df[df['site_onair_date'].isna() | (df['site_onair_date'] >= month_start)]
+        
+        sites = df['site_id'].dropna().unique().tolist()
+        
+        issue_obj = NTIssue.objects.filter(site_id__in=sites)
+        issue_df = pd.DataFrame(issue_obj.values())
+
+        rename_map = {
+            "circle": "Circle",
+            "site_id": "Site ID",
+            "issue_owner": "Issue Owner",
+            "milestone": "Milestone",
+            "issue_name": "Issue Name",
+            "start_date": "Start Date",
+            "close_date": "Close Date",
+            "status": "Status",
+            "duration": "Duration",
+            "remarks": "Remarks",
+            "updated_by": "Updated_by",
+            "updated_at": "Updated_at",
+            "created_by": "Created_by",
+            "created_at": "Created_at"
+        }
+
+        print(issue_df)
+        
+        issue_df = issue_df.rename(columns=rename_map)
+
+        required_cols = ["Circle", "Site ID", "Issue Owner", "Milestone", "Issue Name", "Start Date", "Close Date", "Status", "Duration", "Remarks", "Updated_by", "Updated_at", "Created_by", "Created_at"]
+        for col in required_cols:
+            if col not in issue_df.columns:
+                issue_df[col] = None
+
+        # # Convert date columns safely
+        # for col in ["Start Date", "Close Date"]:
+        #     if col in issue_df.columns:
+        #         issue_df[col] = pd.to_datetime(issue_df[col], errors='coerce')
+        
+        # df = update_ageing(df, issue_df)
+
+        for col in df.columns:
+            if 'date' in col:
+                if col != 'last_updated_date' :
+                    converted = pd.to_datetime(df[col], errors='coerce')
+    
+                    if converted.notna().sum() > 0:
+                        df[col] = converted.dt.strftime('%d-%b-%y')
+                else:
+                    converted = pd.to_datetime(df[col], errors='coerce')
+                    if converted.notna().sum() > 0:
+                        df[col] = converted.dt.strftime('%d-%b-%y %H:%M:%S')
+ 
+        current_date = dtime.now().strftime("%Y-%m-%d")
+        current_time = dtime.now().strftime("%H-%M-%S")
+ 
+        BASE_URL = os.path.join(settings.MEDIA_ROOT, "nt_tracking")
+        os.makedirs(BASE_URL, exist_ok=True)
+        output_folder = os.path.join(BASE_URL, f"generated_files_{current_date}")
+        shutil.rmtree(output_folder, ignore_errors=True)
+        os.makedirs(output_folder, exist_ok=True)
+       
+        tracker_file_path = os.path.join(output_folder, f"FRONTEND_NT_TRACKER_FILE_{current_date}_{current_time}.xlsx")
+        
+        df.insert(0, "Unique ID", range(1, len(df) + 1))
+        df.drop(columns=['id'], inplace=True)
+
+        df = df[[
+            'Unique ID','circle','site_id',
+            'project_nt',
+            'tur_breakup',
+            'new_toco_name',
+            'sr_number',
+
+            'ran_oem',
+            'media_type',
+            'mw_oem',
+            'mw_nstallation_partner',
+
+            'site_band',
+
+            'rfai_date',
+            'allocation_date',
+            'rfai_survey_date',
+            'wrfai',
+
+            'mo_punch_date',
+            'material_dispatch_date',
+            'material_delivered_date',
+
+            'material_type_hw',
+            'material_type_im',
+
+            'installation_start_date',
+            'installation_end_date',
+            'integration_date',
+
+            'Sacfa_Appied_date',
+            'wpc_no',
+            'wpc_date',
+
+            'emf_submission_date',
+            'nep_id',
+
+            'ran_lkf_status',
+            'alarm_status',
+            'alarm_rectification_done_date',
+
+            'scft_done_date',
+            'scft_offered_date',
+
+            'ran_pat_offer_date',
+            'ran_sat_offer_date',
+
+            'mw_plan_id',
+            'mw_pat_offer_date',
+
+            'rsl_value_status',
+            'enm_status',
+            'mw_lkf',
+            'mw_sat_offer_date',
+            'mw_ms1_mids_date',
+
+            'mw_sacfa_a_end',
+            'mw_wpc_a_end',
+            'mw_sacfa_b_end',
+            'mw_wpc_b_end',
+
+            'site_onair_date',
+            'i_deploy_onair_date',
+
+            'current_status',
+            'ideploy_status',
+            'detailed_remarks',
+
+            'rfai_rejected_date',
+            'ideploy_pri_taging',
+            're_rfai_date',
+
+            'pri_count',
+            'pri_issue_ageing',
+            'other_ust_issue_ageing',
+            'other_airtel_issue_ageing',
+            'total_issue_ageing',
+            'clear_rfai_ms1_ageing',
+            'rfai_to_ms1_ageing',
+
+            'ran_pat_accepted_date',
+            'ran_sat_accepted_date',
+            'mw_pat_accepted_date',
+            'mw_sat_accepted_date',
+            'scft_accepted_date',
+
+            'kpi_at_offer_date',
+            'kpi_at_accepted_date',
+
+            'four_g_ms2_date',
+            'ssid',
+            'pmis_month',
+            'airtel_sign_off',
+
+            'last_updated_date',
+            'last_updated_by'
+        ]]
+        
+        
+        template_path = os.path.join(BASE_URL, "template", "nt_template.xlsx")
+        wb = load_workbook(template_path)
+        ws = wb.active
+
+        # JSON response data
+        df_copy = df.copy()
+        df_copy = df_copy.fillna('').astype(str)
+
+        json_dict_data = df_copy.to_dict(orient="records")
+        json_val = json.dumps(json_dict_data)
+
+        # Convert date columns
+        date_columns = [
+            col for col in df.columns
+            if col.endswith("_date") and col != "last_updated_date"
+        ]
+
+        for col in date_columns:
+            df[col] = pd.to_datetime(df[col], errors="coerce")
+
+        # Write main tracker data
+        start_row = 3
+        for r_idx, row in enumerate(
+            dataframe_to_rows(df, index=False, header=False),
+            start=start_row
+        ):
+            for c_idx, value in enumerate(row, start=1):
+                cell = ws.cell(row=r_idx, column=c_idx)
+                cell.value = value
+
+                if (
+                    df.columns[c_idx - 1].endswith("_date")
+                    and hasattr(value, "strftime")
+                    and df.columns[c_idx - 1] != "last_updated_date"
+                ):
+                    cell.number_format = "dd-mmm-yy"
+
+
+        # ================= Issues Tracker Sheet =================
+        ws2 = wb.create_sheet(title="Issues Tracker")
+
+        # Remove id column
+        if "id" in issue_df.columns:
+            issue_df = issue_df.drop(columns=["id"])
+
+
+        def remove_tz_safe(x):
+            if isinstance(x, datetime) and x.tzinfo is not None:
+                return x.replace(tzinfo=None)
+            return x
+
+
+        # Remove timezone
+        issue_df = issue_df.applymap(remove_tz_safe)
+
+        # Convert issue dates
+        issue_date_columns = [
+            col for col in issue_df.columns
+            if "Date" in col
+        ]
+
+        for col in issue_date_columns:
+            issue_df[col] = pd.to_datetime(
+                issue_df[col],
+                errors="coerce"
+            )
+
+        # Write issue header
+        for col_idx, column_name in enumerate(
+            issue_df.columns,
+            start=1
+        ):
+            ws2.cell(
+                row=1,
+                column=col_idx,
+                value=column_name
+            )
+
+        # Write issue data
+        for r_idx, row in enumerate(
+            dataframe_to_rows(
+                issue_df,
+                index=False,
+                header=False
+            ),
+            start=2
+        ):
+            for c_idx, value in enumerate(row, start=1):
+                cell = ws2.cell(
+                    row=r_idx,
+                    column=c_idx
+                )
+                cell.value = value
+
+                if (
+                    issue_df.columns[c_idx - 1]
+                    in issue_date_columns
+                    and hasattr(value, "strftime")
+                ):
+                    cell.number_format = "dd-mmm-yy"
+
+
+        # Save file
+        wb.save(tracker_file_path)
+
+        relative_path = tracker_file_path.replace(
+            settings.MEDIA_ROOT,
+            ""
+        ).lstrip(os.sep)
+
+        download_url = request.build_absolute_uri(
+            os.path.join(
+                settings.MEDIA_URL,
+                relative_path
+            ).replace("\\", "/")
+        )
+
+        return Response(
+            {
+                "message": "request processed successfully !!!",
+                "data": json_val,
+                "download_link": download_url
+            },
+            status=200
+        )
+
+    except Exception as e:
+        return Response(
+                {"error": str(e)},
+                status=500
+            )
+
+
+@api_view(['POST'])
+def frontend_nt_update_view(request):
+    userId = request.data.get('userId')
+    data = request.data.get('data')
+
+    if not userId or not data:
+        return Response({'error': 'userId and data are required.'},status=400
+        )
+
+    try:
+        user = RelocationUser.objects.filter(
+            email=userId.lower()
+        ).first()
+
+        if not user:
+            return Response({"error": "User not found"},status=404
+            )
+
+        if user.right == 'Read':
+            return Response(
+                {'error': 'ACCESS DENIED'},
+                status=403
+            )
+
+        circles = user.circles
+        # circles ="CENTRAL"
+
+        # ================= Parse data =================
+        data = json.loads(data)
+        df = pd.DataFrame([data])
+
+        if df.empty:
+            return Response(
+                {'error': 'No data provided for update.'},
+                status=400
+            )
+
+        record = df.iloc[0].to_dict()
+
+        print(record)
+
+        # ================= Safe converters =================
+        INVALID_DATE_STRINGS = {
+            "need to check",
+            "pending",
+            "na",
+            "tbd",
+            "n/a",
+            "nan",
+            "-"
+        }
+
+        def safe_datetime(value):
+            if pd.isna(value) or value is pd.NaT:
+                return None
+
+            if isinstance(value, (pd.Timestamp, datetime)):
+                return value
+
+            if isinstance(value, str):
+                v = value.strip().lower()
+
+                if not v or v in INVALID_DATE_STRINGS:
+                    return None
+
+                try:
+                    val = pd.to_datetime(
+                        value,
+                        errors="coerce"
+                    )
+
+                    if pd.isna(val):
+                        return None
+
+                    return val.to_pydatetime()
+
+                except:
+                    return None
+
+            return None
+
+        def safe_int(value):
+            try:
+                return int(value)
+            except:
+                return None
+
+        # ================= Get identifiers =================
+        circle_val = (
+            str(record.get("circle")).strip()
+            if record.get("circle")
+            else None
+        )
+
+        site_id_val = (
+            str(record.get("site_id")).strip()
+            if record.get("site_id")
+            else None
+        )
+
+        if not circle_val or not site_id_val:
+            return Response(
+                {'error': 'Circle and Site ID are required.'},
+                status=400
+            )
+
+        # ================= Circle restriction =================
+        if 'CENTRAL' not in circles and circle_val not in circles:
+            return Response(
+                {
+                    'error':
+                    f'You are not allowed to edit {circle_val} circle data.'
+                },
+                status=403
+            )
+
+        # ================= Validate editable columns =================
+        required_columns = [
+            col.lower()
+            .strip()
+            .replace(" ", "_")
+            .replace("-", "_")
+            .replace("/", "_")
+            .replace("4", "four_")
+            .replace("5", "five_")
+            for col in user.columns
+        ]
+
+        allowed_data = {}
+
+        for col in record:
+            field_name = (
+                col.lower()
+                .strip()
+                .replace(" ", "_")
+                .replace("-", "_")
+                .replace("/", "_")
+                .replace("4", "four_")
+                .replace("5", "five_")
+            )
+
+            if field_name not in required_columns:
+                continue
+
+            val = record[col]
+
+            if "date" in field_name:
+                val = safe_datetime(val)
+
+            elif "ageing" in field_name or "count" in field_name:
+                val = safe_int(val)
+
+            allowed_data[field_name] = val
+
+        # ================= System fields =================
+        allowed_data["last_updated_by"] = userId
+        allowed_data["last_updated_date"] = timezone.now()
+
+        # ================= Fetch record =================
+        try:
+            obj = NTSiteTracker.objects.get(
+                circle__iexact=circle_val,
+                site_id__iexact=site_id_val
+            )
+
+        except NTSiteTracker.DoesNotExist:
+            return Response(
+                {'error': 'Record not found in database.'},
+                status=404
+            )
+
+        # ================= Update =================
+        for field, value in allowed_data.items():
+            setattr(obj, field, value)
+
+        obj.save(
+            update_fields=list(allowed_data.keys())
+        )
+
+        return Response(
+            {
+                'status': True,
+                'message': 'Record updated successfully.'
+            },
+            status=200
+        )
+
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=500
+        )
+
+
 
 
 @api_view(['GET', 'POST'])
 def ms1_ageing_dashboard_table1(request):
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('current_status', [])
     milestone1 = request.data.get('milestone1')
     milestone2 = request.data.get('milestone2')
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+  
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -1580,7 +2298,7 @@ def ms1_ageing_dashboard_table1(request):
         "Integration",
         "EMF Submission",
         "Alarm Rectification Done",
-        "SCFT I-Deploy Offered",
+        "SCFT Offered",
         "RAN PAT Offer",
         "RAN SAT Offer",
         "MW PAT Offer",
@@ -1590,12 +2308,12 @@ def ms1_ageing_dashboard_table1(request):
     ]
     
     unique_data = {
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_current_status": sorted(all_unique_current_status),
         "milestones": milestones
     }
 
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     
     try:
@@ -1615,8 +2333,9 @@ def ms1_ageing_dashboard_table1(request):
             month_end = None
         
         filters = {}
-        if site_tagging and "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if site_tagging and "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
+
         if current_status and "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if month_start and month_end:
@@ -1695,7 +2414,7 @@ def ms1_ageing_dashboard_table1(request):
   
 @api_view(['GET', 'POST'])
 def ms1_ageing_dashboard_table2(request):
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('current_status', [])
     milestone1 = request.data.get('milestone1')
     milestone2 = request.data.get('milestone2')
@@ -1705,11 +2424,12 @@ def ms1_ageing_dashboard_table2(request):
     year_filtered = request.data.get('year')
     type = request.data.get('type')
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+    # all_unique_site_tagging = list(
+    #     NTSiteTracker.objects.exclude(site_tagging__isnull=True)
+
+    #     .distinct("site_tagging")
+    #     .values_list("site_tagging", flat=True)
+    # )
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -1728,7 +2448,7 @@ def ms1_ageing_dashboard_table2(request):
         "Integration",
         "EMF Submission",
         "Alarm Rectification Done",
-        "SCFT I-Deploy Offered",
+        "SCFT Offered",
         "RAN PAT Offer",
         "RAN SAT Offer",
         "MW PAT Offer",
@@ -1738,13 +2458,13 @@ def ms1_ageing_dashboard_table2(request):
     ]
     
     unique_data = {
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_current_status": sorted(all_unique_current_status),
         "milestones" : milestones
     }
     
 
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     
     
@@ -1775,29 +2495,29 @@ def ms1_ageing_dashboard_table2(request):
             month_end = None
 
         milestones = [
-            "Allocation",
-            "RFAI",
-            "RFAI Survey",
-            "MO Punch",
-            "Material Dispatch",
-            "Material Delivered",
-            "Installation End",
-            "Integration",
-            "EMF Submission",
-            "Alarm Rectification Done",
-            "SCFT I-Deploy Offered",
-            "RAN PAT Offer",
-            "RAN SAT Offer",
-            "MW PAT Offer",
-            "MW SAT Offer",
-            "Site ONAIR",
-            "I-Deploy ONAIR",
-        ]
+        "Allocation",
+        "RFAI",
+        "RFAI Survey",
+        "MO Punch",
+        "Material Dispatch",
+        "Material Delivered",
+        "Installation End",
+        "Integration",
+        "EMF Submission",
+        "Alarm Rectification Done",
+        "SCFT Offered",
+        "RAN PAT Offer",
+        "RAN SAT Offer",
+        "MW PAT Offer",
+        "MW SAT Offer",
+        "Site ONAIR",
+        "I-Deploy ONAIR",
+    ]
         
 
         filters = {}
-        if "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if "ALL" not in current_status:
             filters["current_status__in"] = current_status
             
@@ -1973,7 +2693,7 @@ def ms1_ageing_dashboard_table2(request):
         shutil.rmtree(output_folder, ignore_errors=True)
         os.makedirs(output_folder, exist_ok=True)
        
-        dashboard_file_path = os.path.join(output_folder, f"AGEING_DASHBOARD_FILE_{site_tagging}_{current_date}_{current_time}.xlsx")
+        dashboard_file_path = os.path.join(output_folder, f"AGEING_DASHBOARD_FILE_{current_date}_{current_time}.xlsx")
 
         result_json = pending_summary.to_dict(orient="records")
         json_data2 = json.dumps(result_json)
@@ -2013,6 +2733,7 @@ def lifecycle_display(request):
         return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
     
     circles = user.circles
+    # circles='CENTRAL'
     
     if 'CENTRAL' not in circles and circle not in circles:
         return Response({"error" : f"Access to {circle} sites denied"}, status = 403)
@@ -2020,7 +2741,7 @@ def lifecycle_display(request):
     try:
         filter = {
             "circle": circle,
-            "new_site_id": siteId
+            "site_id": siteId
         }
 
         obj = NTSiteTracker.objects.filter(**filter).first()
@@ -2044,24 +2765,24 @@ def lifecycle_display(request):
                 issue_df[col] = None
         
         data_cols = [
-            "Allocation",
-            "RFAI",
-            "RFAI Survey",
-            "MO Punch",
-            "Material Dispatch",
-            "Material Delivered",
-            "Installation End",
-            "Integration",
-            "EMF Submission",
-            "Alarm Rectification Done",
-            "SCFT I-Deploy Offered",
-            "RAN PAT Offer",
-            "RAN SAT Offer",
-            "MW PAT Offer",
-            "MW SAT Offer",
-            "Site ONAIR",
-            "I-Deploy ONAIR",
-        ]
+        "Allocation",
+        "RFAI",
+        "RFAI Survey",
+        "MO Punch",
+        "Material Dispatch",
+        "Material Delivered",
+        "Installation End",
+        "Integration",
+        "EMF Submission",
+        "Alarm Rectification Done",
+        "SCFT Offered",
+        "RAN PAT Offer",
+        "RAN SAT Offer",
+        "MW PAT Offer",
+        "MW SAT Offer",
+        "Site ONAIR",
+        "I-Deploy ONAIR",
+    ]
         
         data_cols_1 = [col.lower().replace("-", "_").replace(" ", "_").replace("/", "_") + "_date" for col in data_cols] + ['circle']
         
@@ -2104,6 +2825,7 @@ def issue_timeline_display(request):
         return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
     
     
+    # circles = "CENTRAL"
     circles = user.circles
     
     siteId = request.data.get('siteId')
@@ -2431,18 +3153,18 @@ def issue_timeline_delete(request):
 
 @api_view(['GET', 'POST'])
 def graphs_view(request):
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('current_status', [])
     milestone1 = request.data.get('milestone1')
     milestone2 = request.data.get('milestone2')
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+    # all_unique_site_tagging = list(
+    #     NTSiteTracker.objects.exclude(site_tagging__isnull=True)
+    #     .distinct("site_tagging")
+    #     .values_list("site_tagging", flat=True)
+    # )
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -2461,7 +3183,7 @@ def graphs_view(request):
         "Integration",
         "EMF Submission",
         "Alarm Rectification Done",
-        "SCFT I-Deploy Offered",
+        "SCFT Offered",
         "RAN PAT Offer",
         "RAN SAT Offer",
         "MW PAT Offer",
@@ -2471,12 +3193,12 @@ def graphs_view(request):
     ]
     
     unique_data = {
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_current_status": sorted(all_unique_current_status),
         "milestones": milestones[milestones.index(milestone1):milestones.index(milestone2) + 1]
     }
 
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     
     try:
@@ -2496,8 +3218,8 @@ def graphs_view(request):
             month_end = None
         
         filters = {}
-        if site_tagging and "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if site_tagging and "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if current_status and "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if month_start and month_end:
@@ -2505,6 +3227,7 @@ def graphs_view(request):
 
         obj = NTSiteTracker.objects.filter(**filters)  # noqa: F405
         df = pd.DataFrame(obj.values())
+        print(df)
         
         df['Circle'] = df['circle']
 
@@ -2553,7 +3276,7 @@ def graphs_view(request):
 @api_view(['GET', 'POST'])
 def monthly_graph(request):
     circle = request.data.get('circle', [])
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('relocation_method', [])
     new_toco_name = request.data.get('new_toco_name', [])
     milestone1 = request.data.get('milestone1')
@@ -2562,7 +3285,7 @@ def monthly_graph(request):
     type = request.data.get('type')
     
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
     milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
@@ -2574,11 +3297,11 @@ def monthly_graph(request):
         .values_list("circle", flat=True)
     )
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+    # all_unique_site_tagging = list(
+    #     NTSiteTracker.objects.exclude(site_tagging__isnull=True)
+    #     .distinct("site_tagging")
+    #     .values_list("site_tagging", flat=True)
+    # )
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -2594,7 +3317,7 @@ def monthly_graph(request):
     
     unique_data = {
         "unique_circle": sorted(all_unique_circles),
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_relocation_method": sorted(all_unique_current_status),
         "unique_new_toco_name": sorted(all_unique_new_toco_name),
     }
@@ -2603,8 +3326,8 @@ def monthly_graph(request):
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
-        if "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if "ALL" not in new_toco_name:
@@ -2796,7 +3519,7 @@ def monthly_graph(request):
 @api_view(['GET', 'POST'])
 def ms2_daily_waterfall(request):
     circle = request.data.get('circle', [])
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('relocation_method', [])
     new_toco_name = request.data.get('new_toco_name', [])
     start_date = request.data.get('from_date')
@@ -2825,11 +3548,11 @@ def ms2_daily_waterfall(request):
         .values_list("circle", flat=True)
     )
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+    # all_unique_site_tagging = list(
+    #     NTSiteTracker.objects.exclude(site_tagging__isnull=True)
+    #     .distinct("site_tagging")
+    #     .values_list("site_tagging", flat=True)
+    # )
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -2845,13 +3568,13 @@ def ms2_daily_waterfall(request):
 
     unique_data = {
         "unique_circle": sorted(all_unique_circles),
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_relocation_method": sorted(all_unique_current_status),
         "unique_new_toco_name": sorted(all_unique_new_toco_name),
     }
 
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
 
@@ -2862,8 +3585,8 @@ def ms2_daily_waterfall(request):
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
-        if "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if "ALL" not in new_toco_name:
@@ -2922,8 +3645,8 @@ def ms2_daily_waterfall(request):
             "KPI AT Accepted Date",
 
             "4G MS2 Date",
-            "5G MS2 Date",
-            "Final MS2 Date",
+            # "5G MS2 Date",
+            # "Final MS2 Date",
         ]
 
         unique_data.update(**{"Milestone": milestones})
@@ -3067,7 +3790,7 @@ def ms2_daily_waterfall(request):
 @api_view(['GET', 'POST'])
 def ms2_weekly_monthly_waterfall(request):
     circle = request.data.get('circle', [])
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('relocation_method', [])
     new_toco_name = request.data.get('new_toco_name', [])
     month_filtered = request.data.get('month')
@@ -3076,7 +3799,7 @@ def ms2_weekly_monthly_waterfall(request):
  
     # Default to 'ALL' if not provided
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
     
@@ -3100,11 +3823,11 @@ def ms2_weekly_monthly_waterfall(request):
         .values_list("circle", flat=True)
     )
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+    # all_unique_site_tagging = list(
+    #     NTSiteTracker.objects.exclude(site_tagging__isnull=True)
+    #     .distinct("site_tagging")
+    #     .values_list("site_tagging", flat=True)
+    # )
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -3121,7 +3844,7 @@ def ms2_weekly_monthly_waterfall(request):
     # ✅ Add "ALL" at the top of each list
     unique_data = {
         "unique_circle": sorted(all_unique_circles),
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_relocation_method": sorted(all_unique_current_status),
         "unique_new_toco_name": sorted(all_unique_new_toco_name),
     }
@@ -3131,8 +3854,8 @@ def ms2_weekly_monthly_waterfall(request):
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
-        if "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if "ALL" not in new_toco_name:
@@ -3221,8 +3944,8 @@ def ms2_weekly_monthly_waterfall(request):
             "KPI AT Accepted Date",
 
             "4G MS2 Date",
-            "5G MS2 Date",
-            "Final MS2 Date",
+            # "5G MS2 Date",
+            # "Final MS2 Date",
         ]
  
         data = []
@@ -3337,18 +4060,18 @@ def ms2_weekly_monthly_waterfall(request):
 
 @api_view(['GET', 'POST'])
 def ms2_ageing_dashboard_table1(request):
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('current_status', [])
     milestone1 = request.data.get('milestone1')
     milestone2 = request.data.get('milestone2')
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+    # all_unique_site_tagging = list(
+    #     NTSiteTracker.objects.exclude(site_tagging__isnull=True)
+    #     .distinct("site_tagging")
+    #     .values_list("site_tagging", flat=True)
+    # )
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -3368,17 +4091,17 @@ def ms2_ageing_dashboard_table1(request):
         "KPI AT Accepted",
 
         "4G MS2",
-        "5G MS2",
-        "Final MS2",
+        # "5G MS2",
+        # "Final MS2",
     ]
     
     unique_data = {
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_current_status": sorted(all_unique_current_status),
         "milestones": milestones
     }
 
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     
     try:
@@ -3398,8 +4121,8 @@ def ms2_ageing_dashboard_table1(request):
             month_end = None
         
         filters = {}
-        if site_tagging and "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if site_tagging and "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if current_status and "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if month_start and month_end:
@@ -3408,9 +4131,24 @@ def ms2_ageing_dashboard_table1(request):
         obj = NTSiteTracker.objects.filter(**filters)  # noqa: F405
         df = pd.DataFrame(obj.values())
         
-        date_cols = [col.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_").replace("5", "five_") + '_date' for col in milestones]
+        date_cols = [
+            col.lower()
+            .replace(' ', '_')
+            .replace('-', '_')
+            .replace('(', '')
+            .replace(')', '')
+            .replace('/', '_')
+            .replace("4", "four_")
+            .replace("5", "five_") + '_date'
+                    for col in milestones
+                ]
+
+        # Convert only existing columns, create empty if missing
         for col in date_cols:
-            df[col] = pd.to_datetime(df[col], errors="coerce")
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors="coerce")
+            else:
+                df[col] = pd.NaT
 
         df['Circle'] = df['circle']
         
@@ -3478,7 +4216,7 @@ def ms2_ageing_dashboard_table1(request):
   
 @api_view(['GET', 'POST'])
 def ms2_ageing_dashboard_table2(request):
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('current_status', [])
     milestone1 = request.data.get('milestone1')
     milestone2 = request.data.get('milestone2')
@@ -3488,11 +4226,11 @@ def ms2_ageing_dashboard_table2(request):
     year_filtered = request.data.get('year')
     type = request.data.get('type')
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+    # all_unique_site_tagging = list(
+    #     NTSiteTracker.objects.exclude(site_tagging__isnull=True)
+    #     .distinct("site_tagging")
+    #     .values_list("site_tagging", flat=True)
+    # )
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -3512,18 +4250,18 @@ def ms2_ageing_dashboard_table2(request):
         "KPI AT Accepted",
 
         "4G MS2",
-        "5G MS2",
-        "Final MS2",
+        # "5G MS2",
+        # "Final MS2",
     ]
     
     unique_data = {
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_current_status": sorted(all_unique_current_status),
         "milestones" : milestones
     }
     
 
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     
     
@@ -3565,14 +4303,14 @@ def ms2_ageing_dashboard_table2(request):
             "KPI AT Accepted",
 
             "4G MS2",
-            "5G MS2",
-            "Final MS2",
+            # "5G MS2",
+            # "Final MS2",
         ]
         
 
         filters = {}
-        if "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if "ALL" not in current_status:
             filters["current_status__in"] = current_status
             
@@ -3594,9 +4332,24 @@ def ms2_ageing_dashboard_table2(request):
         df = pd.DataFrame(obj.values())
 
         
-        date_cols = [col.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_").replace("5", "five_") + '_date' for col in milestones]
+        date_cols = [
+            col.lower()
+            .replace(' ', '_')
+            .replace('-', '_')
+            .replace('(', '')
+            .replace(')', '')
+            .replace('/', '_')
+            .replace("4", "four_")
+            .replace("5", "five_") + '_date'
+            for col in milestones
+        ]
+
+        # Convert only existing columns, create empty if missing
         for col in date_cols:
-            df[col] = pd.to_datetime(df[col], errors="coerce")
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors="coerce")
+            else:
+                df[col] = pd.NaT
 
         df['Circle'] = df['circle']
 
@@ -3771,22 +4524,23 @@ def ms2_ageing_dashboard_table2(request):
         return Response({'message': 'request processed successfully !!!', "download_link": download_link, "json_data": json_data, "unique_data": unique_data, "breakpoint1" : breakpoint1, "breakpoint2" : breakpoint2}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
+    
 
 
 @api_view(['GET', 'POST'])
 def ms2_graphs_view(request):
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('current_status', [])
     milestone1 = request.data.get('milestone1')
     milestone2 = request.data.get('milestone2')
     month_filtered = request.data.get('month')
     year_filtered = request.data.get('year')
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+    # all_unique_site_tagging = list(
+    #     NTSiteTracker.objects.exclude(site_tagging__isnull=True)
+    #     .distinct("site_tagging")
+    #     .values_list("site_tagging", flat=True)
+    # )
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -3806,17 +4560,17 @@ def ms2_graphs_view(request):
         "KPI AT Accepted",
 
         "4G MS2",
-        "5G MS2",
-        "Final MS2",
+        # "5G MS2",
+        # "Final MS2",
     ]
     
     unique_data = {
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_current_status": sorted(all_unique_current_status),
         "milestones": milestones
     }
 
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     
     try:
@@ -3836,12 +4590,12 @@ def ms2_graphs_view(request):
             month_end = None
         
         filters = {}
-        if site_tagging and "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if site_tagging and "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if current_status and "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if month_start and month_end:
-            filters[f"{milestone1.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '') + '_date'}__range"] = (month_start, month_end)
+            filters[f"{milestone1.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_")+ '_date'}__range"] = (month_start, month_end)
 
         obj = NTSiteTracker.objects.filter(**filters)  # noqa: F405
         df = pd.DataFrame(obj.values())
@@ -3870,8 +4624,8 @@ def ms2_graphs_view(request):
         start_label = milestone1 if milestones.index(milestone1) < milestones.index(milestone2) else milestone2
         end_label = milestone2 if milestones.index(milestone1) < milestones.index(milestone2) else milestone1
 
-        start_col = start_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_") + "_date"
-        end_col = end_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_") + "_date"
+        start_col = start_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_") + "_date"
+        end_col = end_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_").replace("4", "four_") + "_date"
         
         graph_summary = generate_summary(df, start_label, end_label, start_col, end_col)
 
@@ -3893,7 +4647,7 @@ def ms2_graphs_view(request):
 @api_view(['GET', 'POST'])
 def ms2_monthly_graph(request):
     circle = request.data.get('circle', [])
-    site_tagging = request.data.get('site_tagging', [])
+    # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('relocation_method', [])
     new_toco_name = request.data.get('new_toco_name', [])
     milestone1 = request.data.get('milestone1')
@@ -3902,11 +4656,11 @@ def ms2_monthly_graph(request):
     type = request.data.get('type')
     
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
-    site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
+    # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
-    milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
-    milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
+    milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_") + "_date"
+    milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_") + "_date"
     
     all_unique_circles = list(
         NTSiteTracker.objects.exclude(circle__isnull=True)
@@ -3914,11 +4668,11 @@ def ms2_monthly_graph(request):
         .values_list("circle", flat=True)
     )
 
-    all_unique_site_tagging = list(
-        NTSiteTracker.objects.exclude(site_tagging__isnull=True)
-        .distinct("site_tagging")
-        .values_list("site_tagging", flat=True)
-    )
+    # all_unique_site_tagging = list(
+    #     NTSiteTracker.objects.exclude(site_tagging__isnull=True)
+    #     .distinct("site_tagging")
+    #     .values_list("site_tagging", flat=True)
+    # )
 
     all_unique_current_status = list(
         NTSiteTracker.objects.exclude(current_status__isnull=True)
@@ -3944,13 +4698,13 @@ def ms2_monthly_graph(request):
         "KPI AT Accepted",
 
         "4G MS2",
-        "5G MS2",
-        "Final MS2",
+    #     "5G MS2",
+    #     "Final MS2",
     ]
     
     unique_data = {
         "unique_circle": sorted(all_unique_circles),
-        "unique_site_tagging": sorted(all_unique_site_tagging),
+        # "unique_site_tagging": sorted(all_unique_site_tagging),
         "unique_relocation_method": sorted(all_unique_current_status),
         "unique_new_toco_name": sorted(all_unique_new_toco_name),
         "milestones": milestones
@@ -3960,8 +4714,8 @@ def ms2_monthly_graph(request):
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
-        if "ALL" not in site_tagging:
-            filters["site_tagging__in"] = site_tagging
+        # if "ALL" not in site_tagging:
+        #     filters["site_tagging__in"] = site_tagging
         if "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if "ALL" not in new_toco_name:
@@ -4147,4 +4901,83 @@ def ms2_monthly_graph(request):
     
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
-   
+
+
+
+@api_view(['GET', 'POST', 'DELETE'])
+def updtae_nt_template(request):
+    BASE = os.path.join(settings.MEDIA_ROOT, "nt_tracking")
+    template = os.path.join(BASE, "template", "nt_template.xlsx")
+
+    if request.method == "GET":
+        if not os.path.exists(template):
+            return Response(
+                {"error": "Template not found"},
+                status=404
+            )
+
+        return Response(
+            {"status": True,
+              "file": template},status=200
+        )
+
+    elif request.method == "POST":
+        file = request.FILES.get("file")
+        if not file:
+            return Response(
+                {"error": "No file uploaded"},
+                status=400
+            )
+        os.makedirs(
+            os.path.dirname(template),
+            exist_ok=True
+        )
+
+        with open(template, "wb+") as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+
+        return Response(
+            {"status": True,
+              "message": "Template updated successfully"},status=200
+        )
+
+    elif request.method == "DELETE":
+        if os.path.exists(template):
+            os.remove(template)
+
+            return Response(
+                {"status": True,
+                  "message": "Template deleted successfully"},status=200
+            )
+        return Response(
+            {"error": "Template not found"},
+            status=404
+        )
+
+
+@api_view(['DELETE'])
+def delete_nt_tracker(request):
+    try:
+        deleted_count, _ = NTSiteTracker.objects.all().delete()
+
+        return Response(
+            {
+                "status": True,
+                "message": f"{deleted_count} records deleted successfully"
+            },
+            status=200
+        )
+
+    except Exception as e:
+        return Response(
+            {"status": False,
+              "message": str(e)},
+          
+        )
+
+
+
+
+
+
