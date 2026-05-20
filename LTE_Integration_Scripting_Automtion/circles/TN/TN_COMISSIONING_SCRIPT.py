@@ -18,7 +18,7 @@ TN_SITEBASIC_SCRIPT_BBU6630_BBU6631 = """
           <systemFunctionsId>1</systemFunctionsId>
           <Lm xmlns="urn:com:ericsson:ecim:RcsLM">
             <lmId>1</lmId>
-            <fingerprint>{eNodeBName}</fingerprint>
+            <fingerprint>{fingerprint}</fingerprint>
           </Lm>
           <SecM xmlns="urn:com:ericsson:ecim:ComSecM">
             <secMId>1</secMId>
@@ -312,7 +312,7 @@ TN_SITEBASIC_SCRIPT_BBU6651 = """
           <systemFunctionsId>1</systemFunctionsId>
           <Lm xmlns="urn:com:ericsson:ecim:RcsLM">
             <lmId>1</lmId>
-            <fingerprint>{eNodeBName}</fingerprint>
+            <fingerprint>{fingerprint}</fingerprint>
           </Lm>
           <SecM xmlns="urn:com:ericsson:ecim:RcsSecM">
             <secMId>1</secMId>

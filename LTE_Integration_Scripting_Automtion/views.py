@@ -928,8 +928,10 @@ def generate_integration_script(request):
                     }
                     for bbu_prefix, template in bbu_script_mapping.items():
                         if bbu_prefix in bbu_type:
+                            fingerprint = row.get("Fingerprint", "NA")
                             formatted_text = template.format(
                                 eNodeBName=row["eNodeBName"],
+                                fingerprint=fingerprint,
                                 fieldReplaceableUnitId=row["fieldReplaceableUnitId"],
                                 tnPortId=row["tnPortId"],
                                 OAM_vlan=row["OAM_vlan"],
@@ -1102,8 +1104,10 @@ def generate_integration_script(request):
                     }
                     for bbu_prefix, template in bbu_script_mapping.items():
                         if bbu_prefix in bbu_type:
+                            fingerprint = row.get("Fingerprint", "NA")
                             formatted_text = template.format(
                                 eNodeBName=row["eNodeBName"],
+                                fingerprint=fingerprint,
                                 fieldReplaceableUnitId=row["fieldReplaceableUnitId"],
                                 tnPortId=row["tnPortId"],
                                 OAM_vlan=row["OAM_vlan"],
