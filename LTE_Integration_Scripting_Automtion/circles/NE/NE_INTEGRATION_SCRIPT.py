@@ -2119,7 +2119,7 @@ NE_5G_Cell_creation_Sctp_Endpoint_Creation = """
 ######################################################## IPV6 Interface for NR ####################################################################
 
 cr Transport=1,Router=LTEUP,InterfaceIPv6=NR
-VlanPort=TN_E_UP
+VlanPort={tnPortId}_UP
 false
 
 crn Transport=1,Router=LTEUP,InterfaceIPv6=NR,AddressIPv6=NR
