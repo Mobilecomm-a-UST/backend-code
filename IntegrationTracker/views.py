@@ -723,8 +723,15 @@ def datewise_integration_data(request):
         except ValueError:
             return JsonResponse({'error': 'Invalid date format'}, status=400)
     else:
-        latest_obj = IntegrationData.objects.order_by('-Integration_Date').first()
-        if latest_obj and latest_obj.Integration_Date:
+        # latest_obj = IntegrationData.objects.order_by('-Integration_Date').first()
+        latest_obj = (IntegrationData.objects.exclude(Integration_Date__isnull=True).order_by('-Integration_Date').first())
+        # if latest_obj and latest_obj.Integration_Date:
+        #     latest_date = latest_obj.Integration_Date
+        #     date1 = latest_date
+        #     date2 = latest_date - timedelta(days=1)
+        #     date3 = latest_date - timedelta(days=2)
+        #     year = latest_date.year
+        if latest_obj:
             latest_date = latest_obj.Integration_Date
             date1 = latest_date
             date2 = latest_date - timedelta(days=1)
@@ -1448,10 +1455,21 @@ def monthwise_integration_data(request):
             base_month = int(month)
             base_year = int(year)
         else:
-            print("Using default latest month/year")
-            latest_date = IntegrationData.objects.latest('Integration_Date').Integration_Date
-            base_month = latest_date.month
-            base_year = latest_date.year
+            # print("Using default latest month/year")
+            # latest_date = IntegrationData.objects.latest('Integration_Date').Integration_Date
+            latest_obj = (IntegrationData.objects.exclude(Integration_Date__isnull=True).order_by('-Integration_Date').first())
+            if latest_obj and latest_obj.Integration_Date:
+                latest_date = latest_obj.Integration_Date
+                base_month = latest_date.month
+                base_year = latest_date.year
+            else:
+                return Response({
+                    "table_data": [],
+                    "latest_months": [],
+                    "latest_year": [],
+                    "download_data": [],
+                    "message": "No Integration data available"
+                }, status=200)
 
         date_dict = calculate_previous_months(base_month, base_year)
 
@@ -1570,12 +1588,23 @@ def monthly_oemwise_integration_data(request):
         year=int(year)
 
     else:
-        print("default months......")
-        latest_month = IntegrationData.objects.latest('Integration_Date').Integration_Date.month
-        latest_year = IntegrationData.objects.latest('Integration_Date').Integration_Date.year
-         
-        month=latest_month
-        year=latest_year 
+        latest_obj = (
+            IntegrationData.objects
+            .exclude(Integration_Date__isnull=True)
+            .order_by('-Integration_Date')
+            .first()
+        )
+
+        if latest_obj and latest_obj.Integration_Date:
+            month = latest_obj.Integration_Date.month
+            year = latest_obj.Integration_Date.year
+        else:
+            return Response({
+                "table_data": [],
+                "month": None,
+                "year": None,
+                "message": "No Integration data available"
+            }, status=200)
 
     with connection.cursor() as cursor:
 

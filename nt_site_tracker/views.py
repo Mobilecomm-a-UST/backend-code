@@ -529,25 +529,47 @@ def download_tracker_data_view(request):
         # ================= Fetch Data =================
         if 'CENTRAL' in circles:
             qs = NTSiteTracker.objects.all()
+            issue_qs = NTIssue.objects.all()
         else:
             qs = NTSiteTracker.objects.filter(circle__in=circles)
+            issue_qs = NTIssue.objects.filter(circle__in=circles)
 
         df = pd.DataFrame(qs.values())
+        issue_df = pd.DataFrame(issue_qs.values())
 
         if df.empty:
             return Response({
                 "status":False,
                 "message": "No data available"})
+        
+        if issue_df.empty:
+            issue_df = pd.DataFrame(columns=[
+                "circle","site_id","issue_owner","milestone",
+                "issue_name","start_date","close_date","status",
+                "duration","remarks","updated_by","updated_at","created_by","created_at"
+            ])
 
         # ================= Date Formatting =================
+        # Main tracker date formatting
         for col in df.columns:
             if col.endswith("_date"):
-                df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%d-%b-%y')
+                df[col] = pd.to_datetime(df[col],errors='coerce').dt.strftime('%d-%b-%y')
+
+        # Issue tracker date formatting
+        for col in issue_df.columns:
+            if col.endswith("_date"):
+                issue_df[col] = pd.to_datetime(issue_df[col],errors='coerce').dt.strftime('%d-%b-%y')
 
         if "last_updated_date" in df.columns:
-            df["last_updated_date"] = pd.to_datetime(
-                df["last_updated_date"], errors='coerce'
-            ).dt.strftime('%d-%b-%y %H:%M:%S')
+            df["last_updated_date"] = pd.to_datetime(df["last_updated_date"], errors='coerce').dt.strftime('%d-%b-%y %H:%M:%S')
+
+        if "updated_at" in issue_df.columns:
+            issue_df["updated_at"] = pd.to_datetime(issue_df["updated_at"], errors='coerce').dt.strftime('%d-%b-%y %H:%M:%S')
+
+        if "created_at" in issue_df.columns:
+            issue_df["created_at"] = pd.to_datetime(issue_df["created_at"], errors='coerce').dt.strftime('%d-%b-%y %H:%M:%S')
+
+        issue_df = issue_df.where(pd.notna(issue_df), "")    
 
         # ================= Unique ID =================
         df.insert(0, "Unique ID", range(1, len(df) + 1))
@@ -675,7 +697,45 @@ def download_tracker_data_view(request):
         template = os.path.join(BASE, "template", "nt_template.xlsx")
         wb = load_workbook(template)
         ws = wb["Main Tracker"]
-        
+        issue_ws = wb["Issue Tracker"]
+        # ================= Fill Issue Tracker Sheet =================
+        issue_start_row = 2
+
+        # remove id column
+        if "id" in issue_df.columns:
+            issue_df.drop(columns=["id"], inplace=True)
+
+        # column order
+        issue_df = issue_df[
+            [
+                "circle",
+                "site_id",
+                "issue_owner",
+                "milestone",
+                "issue_name",
+                "start_date",
+                "close_date",
+                "status",
+                "duration",
+                "remarks",
+                "updated_by",
+                "updated_at",
+                "created_by",
+                "created_at",
+            ]
+        ]
+
+        for r_idx, row in enumerate(
+            dataframe_to_rows(issue_df, index=False, header=False),
+            start=issue_start_row
+        ):
+            for c_idx, value in enumerate(row, start=1):
+                cell = issue_ws.cell(row=r_idx, column=c_idx)
+                cell.value = value
+
+                if issue_df.columns[c_idx - 1] in ["start_date", "close_date"]:
+                    cell.number_format = "dd-mmm-yy"
+                
         date_columns = [col for col in df.columns if col.endswith("_date") and col != 'last_updated_date']
 
         for col in date_columns:
@@ -2099,10 +2159,12 @@ def frontend_nt_update_view(request):
             )
 
         circles = user.circles
-        # circles ="CENTRAL"
+        circles ="CENTRAL"
+        user="Admin"
 
         # ================= Parse data =================
-        data = json.loads(data)
+        if isinstance(data, str):
+            data = json.loads(data)
         df = pd.DataFrame([data])
 
         if df.empty:
@@ -2163,14 +2225,14 @@ def frontend_nt_update_view(request):
 
         # ================= Get identifiers =================
         circle_val = (
-            str(record.get("circle")).strip()
-            if record.get("circle")
+            str(record.get("circle") or record.get("Circle")).strip()
+            if record.get("circle") or record.get("Circle")
             else None
         )
 
         site_id_val = (
-            str(record.get("site_id")).strip()
-            if record.get("site_id")
+            str(record.get("site_id") or record.get("Site ID")).strip()
+            if record.get("site_id") or record.get("Site ID")
             else None
         )
 
