@@ -2158,9 +2158,9 @@ def frontend_nt_update_view(request):
                 status=403
             )
 
-        circles = user.circles
+        # circles = user.circles
         circles ="CENTRAL"
-        user="Admin"
+        # user="Admin"
 
         # ================= Parse data =================
         if isinstance(data, str):
