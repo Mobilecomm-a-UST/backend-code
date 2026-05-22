@@ -115,6 +115,7 @@ def _validate_file(filepath):
 
     df.rename(columns=rename, inplace=True)
 
+   
     for col in ('On Air Date', 'Performance AT Offered Date', 'Performance AT Status Date'):
         df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
 
@@ -186,7 +187,7 @@ def upload_file(request):
             ]
 
 
-           
+            
             for filename, report_type in file_map:
                 filepath = os.path.join(output_path, filename)
                 if os.path.exists(filepath):
@@ -252,7 +253,7 @@ def _get_input_df():
         else:
             continue
 
-       
+        
 
         for col in ('On Air Date', 'Performance AT Offered Date', 'Performance AT Status Date'):
             df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
@@ -440,7 +441,7 @@ def _classify(days):
         return '>30days'
 
 
-def _process_data(df, month_label, layer_case, date_col='Performance AT Offered Date'):
+def _process_data(df, month_label, layer_case, date_col='Performance AT Offered Date', df_full=None):
     """
     Step 1: Apply Offered Layer filter first.
     Step 2: Filter On Air Date within bucket (26th prev -> 25th current).
@@ -456,9 +457,9 @@ def _process_data(df, month_label, layer_case, date_col='Performance AT Offered 
     """
     start = _bucket_start(month_label)
     end   = _bucket_end(month_label)
-    return _process_data_by_date_range(df, start, end, layer_case, date_col, label=month_label)
+    return _process_data_by_date_range(df, start, end, layer_case, date_col, label=month_label,df_full=df_full)
 
-def _process_data_by_date_range(df, start_dt, end_dt, layer_case, date_col='Performance AT Offered Date', label=None):
+def _process_data_by_date_range(df, start_dt, end_dt, layer_case, date_col='Performance AT Offered Date', label=None, df_full=None):
     # Step 1 — layer filter first
     df_layer = _apply_layer_filter(df, layer_case)
 
@@ -474,9 +475,17 @@ def _process_data_by_date_range(df, start_dt, end_dt, layer_case, date_col='Perf
         )
 
     # Step 3 — split into pending and filled using date_col ← FIXED
-    mask_blank = df_oa[date_col].isna()
-    df_pending = df_oa[mask_blank].copy()
-    df_filled  = df_oa[~mask_blank].copy()
+    df_filled = df_oa[
+    df_oa['Performance AT Status'] == 'Accepted'].copy()
+    if df_full is not None:
+        df_full_layer = _apply_layer_filter(df_full, layer_case)
+        mask_oa_full  = (df_full_layer['On Air Date'] >= start_dt) & (df_full_layer['On Air Date'] <= end_dt)
+        df_oa_full    = df_full_layer[mask_oa_full].copy()
+        df_pending    = df_oa_full[df_oa_full['Performance AT Status'] != 'Accepted'].copy()
+    else:
+        df_pending = df_oa[
+        df_oa['Performance AT Status'] != 'Accepted'
+    ].copy()
 
     # Step 4 — compute diff using date_col ← FIXED
     df_filled['_diff'] = (
@@ -490,6 +499,11 @@ def _process_data_by_date_range(df, start_dt, end_dt, layer_case, date_col='Perf
 
     # Step 6 — count per circle alphabetically
     all_circles = sorted(df_oa['Circle'].dropna().unique())
+    
+    if df_full is not None:
+        all_circles = sorted(df_oa_full['Circle'].dropna().unique())
+    else:
+        all_circles = sorted(df_oa['Circle'].dropna().unique())
 
     result_circles = {}
     grand          = {c: 0 for c in CATEGORIES}
@@ -518,6 +532,9 @@ def _process_data_by_date_range(df, start_dt, end_dt, layer_case, date_col='Perf
         pct_gt_30 = round(
             (row['22-30days'] + row['<=12days'] + row['13-21days']+ row['>30days'])/ total * 100, 1
         ) if total > 0 else 0.0
+        pending_pct = round(
+            pending / total * 100, 1
+        ) if total > 0 else 0.0
 
         result_circles[circle] = {
             **row,
@@ -527,6 +544,7 @@ def _process_data_by_date_range(df, start_dt, end_dt, layer_case, date_col='Perf
             '<13-21%':     pct_lt21,
             '<22-30%':  pct_22_30,
             '>30days%':  pct_gt_30,
+            'Pending%':  pending_pct,
         }
 
         for cat in CATEGORIES:
@@ -548,6 +566,9 @@ def _process_data_by_date_range(df, start_dt, end_dt, layer_case, date_col='Perf
     grand_pct_gt_30 = round(
         (grand['<=12days'] + grand['13-21days']+grand['22-30days']+grand['>30days']) / grand_total * 100, 1
     ) if grand_total > 0 else 0.0
+    grand_pending_pct = round(
+    grand_pending / grand_total * 100, 1
+    ) if grand_total > 0 else 0.0
 
 
     period = label if label else f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
@@ -565,6 +586,7 @@ def _process_data_by_date_range(df, start_dt, end_dt, layer_case, date_col='Perf
             '<13-21%':     grand_pct_lt21,
             '<22-30%':  grand_pct_22_30,
             '>30days%':  grand_pct_gt_30,
+            'Pending%':   grand_pending_pct,
         },
     }
 
@@ -574,7 +596,7 @@ def _write_sheet(ws, result, thin):
     Write data into a single worksheet.
     Called once per layer case — 4G, 5G, 4G+5G.
     """
-    ALL_COLS = CATEGORIES + ['Pending', 'Total','<12%', '<13-21%', '<22-30%','>30days%']
+    ALL_COLS = CATEGORIES + ['Pending', 'Total','<12%', '<13-21%', '<22-30%','>30days%','Pending%']
 
     def _hdr_cell(cell, value, bg=HEADER_BG, fg=HEADER_FG):
         cell.value     = value
@@ -592,7 +614,7 @@ def _write_sheet(ws, result, thin):
             cell.fill = PatternFill('solid', start_color=bg)
 
     # Row 1 — month label spanning all columns A to I
-    ws.merge_cells('A1:K1')
+    ws.merge_cells('A1:L1')
     _hdr_cell(ws['A1'], result['month'])
 
     # Row 2 — column headers
@@ -610,7 +632,7 @@ def _write_sheet(ws, result, thin):
         for col_idx, col_name in enumerate(ALL_COLS, start=2):
             val = counts.get(col_name)
             # show blank instead of 0 for category counts and pending
-            if col_name not in ('%<13-21', '%<22-30', '%>30days','Total') and val == 0:
+            if col_name not in ('<13-21%', '<22-30%', '>30days%','Pending%','Total') and val == 0:
                 val = None
             _data_cell(ws.cell(row=row, column=col_idx), val, bg='FFFFFF')
         row += 1
@@ -620,7 +642,7 @@ def _write_sheet(ws, result, thin):
     _data_cell(ws.cell(row=row, column=1), 'Grand Total', bold=True, bg=TOTAL_BG)
     for col_idx, col_name in enumerate(ALL_COLS, start=2):
         val = grand.get(col_name)
-        if col_name not in ('<12%','13-<21%', '<22-30%','>30days%', 'Total') and val == 0:
+        if col_name not in ('<12%','13-<21%', '<22-30%','>30days%','Pending%', 'Total') and val == 0:
             val = None
         _data_cell(ws.cell(row=row, column=col_idx), val, bold=True, bg=TOTAL_BG)
 
@@ -636,7 +658,8 @@ def _write_sheet(ws, result, thin):
         'H': 8,    # %<12 
         'I': 8,    # %<13-21
         'J': 10,   # %<22-30
-        'K':10, # %>30days
+        'K': 10, # %>30days
+        'L': 12, #Pending%
     }
     for col_letter, width in col_widths.items():
         ws.column_dimensions[col_letter].width = width
@@ -703,7 +726,7 @@ def generate_offered(request):
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
 
-    
+   
 
     # ── resolve date range ───────────────────────────────────────
     if month_label:
@@ -790,9 +813,12 @@ def generate_performance(request):
         )
 
     df['Performance AT Status'] = df['Performance AT Status'].astype(str).str.strip()
-    df = df[df['Performance AT Status'] == 'Accepted'].copy()
+    df_full = df.copy()
+    
 
-    if df.empty:
+    df_accepted = df[df['Performance AT Status'] == 'Accepted'].copy()
+
+    if df_accepted.empty:
         return Response(
             {'error': "No rows found where Performance AT Status is 'Accepted'."},
             status=status.HTTP_404_NOT_FOUND,
@@ -803,9 +829,9 @@ def generate_performance(request):
         try:
             out_filename = "output_Performance vs OA TAT.xlsx"
             results = {
-                '4G':    _process_data(df, month_label, '4G',    'Performance AT Status Date'),
-                '5G':    _process_data(df, month_label, '5G',    'Performance AT Status Date'),
-                '4G+5G': _process_data(df, month_label, '4G+5G', 'Performance AT Status Date'),
+                '4G':    _process_data(df, month_label, '4G',    'Performance AT Status Date', df_full=df_full),
+                '5G':    _process_data(df, month_label, '5G',    'Performance AT Status Date', df_full=df_full),
+                '4G+5G': _process_data(df, month_label, '4G+5G', 'Performance AT Status Date', df_full=df_full),
             }
         except ValueError as ve:
             return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
@@ -832,6 +858,7 @@ def generate_performance(request):
         f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
     )
 
+    
     return Response({
         'status':       True,
         'message':      'Performance report generated successfully.',
@@ -846,8 +873,6 @@ def generate_performance(request):
 
 
 
-
-#added code new performance ftr
 # ─────────────────────────────────────────────
 # FTR CONSTANTS
 # ─────────────────────────────────────────────
@@ -1688,6 +1713,11 @@ def cleanup(request):
         'message':       'Cleanup complete.',
         'deleted_files': deleted,
     }, status=status.HTTP_200_OK)
+
+
+
+
+
 
 
 
