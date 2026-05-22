@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from django.urls import path 
 from alok_tracker.views import *
 
@@ -47,3 +48,15 @@ urlpatterns = [
     path("issue_summary/", issue_summary, name="issue_summary"),
     path("delete_sites_by_detailed_remarks/", delete_sites_by_detailed_remarks, name="delete_sites_by_detailed_remarks")
 ]
+=======
+from django.urls import path 
+from alok_tracker.views import *
+
+urlpatterns = [
+    path("upload_file/", upload_tracker_data_view, name="upload_tracker_data"),
+    path("download_tracker_file/", download_tracker_data_view, name="download_tracker_data"),
+    path("daily_dashboard_file/", daily_dashboard_view, name="daily_dashboard"),
+    path("weekly_monthly_dashboard_file/", weekly_monthly_dashboard_view, name="weekly_mpnthly_dashboard"),
+    path("gap_view/", gap_view, name="weekly_mpnthly_dashboard_GAP")
+]
+>>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28

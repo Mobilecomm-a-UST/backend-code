@@ -21,9 +21,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from mcom_website.views import home_page
 
 
 urlpatterns = [
+    path("", home_page, name="backend server is running"),
     path("admin/", admin.site.urls),
     # path('',views.index,name="main"),
     path("trend/", include("trend.urls")),
@@ -91,6 +93,7 @@ urlpatterns = [
     path("relocation_tracking/", include("relocation_tracking.urls")),
     path("degrow_dismental/" , include("degrowDismental.urls")),
     path("alok_tracker/" , include("alok_tracker.urls")),
+<<<<<<< HEAD
     path("Alarm/" , include("Alarm_old_new_Tool.urls")),
     path("xml_parser/", include("Xml_parsar_script_tool.urls")),
     path("ix_tracker_vi/", include("IX_Tracker_VI.urls")),
@@ -102,6 +105,9 @@ urlpatterns = [
     path("noika2G/",include("noika2G_tool.urls")),
     path("payload_traffic/",include("payload_traffic_tool.urls")),
     path("performance_idploy/",include("performance_idploy.urls")),
+=======
+    path("Alarm_old_new_Tool/" , include("Alarm_old_new_Tool.urls")),
+>>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
 
 ]
 
