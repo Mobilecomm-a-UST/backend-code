@@ -27,15 +27,11 @@ from LTE_Integration_Scripting_Automtion.circles.KK.KK_INTEGRATION_SCRIPT import
 )
 from LTE_Integration_Scripting_Automtion.circles.KK.KK_COMISSIONING_SCRIPT import (
     KK_SITE_BASIC_SCRIPT,
-<<<<<<< HEAD
     KK_SITE_BASIC_SCRIPT_6631,
     KK_SITE_BASIC_SCRIPT_6339,
     KK_SITE_BASIC_SCRIPT_6303,
     KK_SITE_BASIC_SCRIPT_6353,
     KK_SITE_BASIC_SCRIPT_6630,
-=======
-    KK_SITE_BASIC_SCRIPT_6303,
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
     KK_SITE_EQUIPMENT_SCRIPT,
     kk_5G_RRU_creation,
 )
@@ -236,7 +232,6 @@ from LTE_Integration_Scripting_Automtion.circles.AS.AS_COMISSIONING_SCRIPT impor
     AS_SiteBasic_ipv6_6651,
     AS_SiteBasic_5216_IPV4,
     AS_SiteBasic_5216_IPV6,
-<<<<<<< HEAD
 )
 
 from LTE_Integration_Scripting_Automtion.circles.DEL.DEL_INTEGRATION_SCRIPT import (
@@ -363,8 +358,6 @@ from LTE_Integration_Scripting_Automtion.circles.JK.JK_COMISSIONING_SCRIPT impor
     JK_SiteBasic_ipv6_6651,
     JK_SiteBasic_5216_IPV4,
     JK_SiteBasic_5216_IPV6,
-=======
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
 )
 
 
@@ -776,25 +769,17 @@ def generate_integration_script(request):
                 for idx, row in sitebasic_df.iterrows():
                     bbu_type = row.get("BB_Type", "UnknownType")
                     bbu_scritps_template = {
-<<<<<<< HEAD
                         "6651" : KK_SITE_BASIC_SCRIPT,
                         "6631" : KK_SITE_BASIC_SCRIPT_6631,
                         "6339" : KK_SITE_BASIC_SCRIPT_6339,
                         "6303" : KK_SITE_BASIC_SCRIPT_6303,
                         "6353" : KK_SITE_BASIC_SCRIPT_6353,
                         "6630" : KK_SITE_BASIC_SCRIPT_6630,
-=======
-                        "6651": KK_SITE_BASIC_SCRIPT,
-                        "6303" : KK_SITE_BASIC_SCRIPT_6303,
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
                         
                     }
                     for prefix, template in bbu_scritps_template.items():
                         if prefix in bbu_type:
-<<<<<<< HEAD
                             fingerprint = row.get("Fingerprint", "NA")
-=======
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
                             formatted_text = template.format(
                                 eNodeBName=row["eNodeBName"],
                                 fingerprint=fingerprint,
@@ -892,16 +877,9 @@ def generate_integration_script(request):
                             siteBasicFilePath=siteBasicFilePath,
                         )
                     )
-<<<<<<< HEAD
         #---------------------------------------------------------------- KK Circle-specific Script Generation ---------------------------------------------------------------------
         
         #---------------------------------------------------------------- TN Circle-specific Script Generation ---------------------------------------------------------------------      
-=======
-
-        ###############################################################################################################################################################################################################
-        
-        # --------------------------------------------------------------- TN Circle-specific Script Generation ---------------------------------------------------------------------
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
         elif circle == "TN":
             unique_nodes = lte_df["eNodeBName"].unique()
             for node_name in unique_nodes:
@@ -1002,11 +980,7 @@ def generate_integration_script(request):
                     }
                     for bbu_prefix, template in bbu_script_mapping.items():
                         if bbu_prefix in bbu_type:
-<<<<<<< HEAD
                             fingerprint = row.get("Fingerprint", "NA")
-=======
-                            print("inside bbu type tracker.....")
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
                             formatted_text = template.format(
                                 eNodeBName=row["eNodeBName"],
                                 fingerprint=fingerprint,
@@ -1031,54 +1005,22 @@ def generate_integration_script(request):
                 rru_hw_path = os.path.join(commision_scripts_dir, f"02_{node}_SiteEquipment_{current_time}.xml")
                 siteEquipmentFilePath = os.path.relpath(rru_hw_path, os.path.join(base_path_url, f"{node}_Integration_Sripts")).replace("\\", "/")
                 
-<<<<<<< HEAD
                 sitebasic_df_node.rename(columns={"Phy SiteID/Userlabel": "Phy_SiteID_Userlabel"}, inplace=True)
                 site_equipment_script_text = TN_SITEEQUIPMENT_SCRIPT.format(
                     fieldReplaceableUnitId=sitebasic_df_node["fieldReplaceableUnitId"].values[0],
                     Phy_SiteID_Userlabel=sitebasic_df_node["Phy_SiteID_Userlabel"].values[0],
-=======
-                os.makedirs(commissioning_scripts_dir, exist_ok=True)
-                
-                site_specific_rru_df = rru_hw_df[rru_hw_df["eNodeBName"] == node].copy()
-                rru_hw_path = os.path.join(commissioning_scripts_dir,f"02_{node}_SiteEquipment_{current_time}.xml")
-
-                site_equipment_text = ""
-                
-                relative_path = os.path.relpath(rru_hw_path,os.path.join(base_path_url, f"{node_name}_Integration_Sripts"))
-                
-                siteEquipmentFilePath = relative_path.replace("\\", "/")
-
-                siteEquipmentFilePath = os.path.relpath(rru_hw_path,os.path.join(base_path_url, f"{node}_Integration_Sripts")).replace("\\", "/")
-
-                if sitebasic_df.empty:
-                    print(f"Warning: No basic site data found for {node}")
-                    continue
-
-                sitebasic_df.rename(columns={"Phy SiteID/Userlabel": "Phy_SiteID_Userlabel"},inplace=True)
-
-                site_equipment_script_text = TN_SITEEQUIPMENT_SCRIPT.format(
-                    fieldReplaceableUnitId=sitebasic_df["fieldReplaceableUnitId"].values[0],
-                    Phy_SiteID_Userlabel=sitebasic_df["Phy_SiteID_Userlabel"].values[0],
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
                 )
                 
                 rru_type = {
                     "2219": RRU_2219_B0_B1_B3_2X2,
-<<<<<<< HEAD
                     "2279": RRU_2279_B1_B3_2X2,
-=======
-                    "2279": RRU_2219_B0_B1_B3_2X2,
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
                     "4412": RRU_4412_4418_4427_4428_4471_4X4,
                     "6626": RRU_6626_6X6,
                     "8863": RRU_8863_8X8,
                     "4418": RRU_4412_4418_4427_4428_4471_4X4,
                     "4427": RRU_4412_4418_4427_4428_4471_4X4,
                     "4471": RRU_4412_4418_4427_4428_4471_4X4,
-<<<<<<< HEAD
                     "AIR": AIR_5G_GENERATION_SCRIPT,  # <-- Added for AIR 
-=======
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
                 }
                 
                 site_equipment_text = ""
@@ -1088,11 +1030,7 @@ def generate_integration_script(request):
                             site_equipment_text += rru_template.format(
                                 eNodeBName=row["eNodeBName"],
                                 Radio_UnitId=row["Radio_UnitId"],
-<<<<<<< HEAD
                                 fieldReplaceableUnitId=sitebasic_df_node["fieldReplaceableUnitId"].values[0],
-=======
-                                fieldReplaceableUnitId=sitebasic_df["fieldReplaceableUnitId"].values[0],
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
                                 RiPort_BB=row["RiPort_BB"],
                                 RiPort_Radio=row["RiPort_Radio"],
                                 sectorEquipmentFunctionId=row["sectorEquipmentFunctionId"],
@@ -1103,7 +1041,6 @@ def generate_integration_script(request):
                 with open(rru_hw_path, "w") as file:
                     file.write(site_equipment_script_text + "\n" + site_equipment_text + "\n")
                 
-<<<<<<< HEAD
     
                 # RBSSummary script
                 site_equipment_script_path = os.path.join(commision_scripts_dir, f"RBSSummary_{node}_{current_time}.xml")
@@ -1307,31 +1244,6 @@ def generate_integration_script(request):
                 with open(AP_Route_4G_GPL_LMS_path, "a", encoding="utf-8") as file:
                     file.write(AP_Route_4G_GPL_LMS.format(Phy_SiteID_Userlabel = Phy_SiteID_Userlabel) + "\n")
 
-=======
-                with open(site_equipment_script_path, "a", encoding="utf-8") as file:
-                    file.write(RBSSummary_script.format(siteEquipmentFilePath=siteEquipmentFilePath,siteBasicFilePath=siteBasicFilePath))         
-        # --------------------------------------------------------------- TN Circle-specific Script Generation ---------------------------------------------------------------------                    
-                    
-        # --------------------------------------------------------------- AP Circle-specific Script Generation ---------------------------------------------------------------------
-        elif circle == "AP":
-            
-            unique_nodes = lte_df["eNodeBName"].dropna().unique()
-            
-            for node_name in unique_nodes:
-                
-                current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                
-                directories = create_script_paths(base_path_url, node_name)
-                
-                generate_lte_cell_def_scripts(lte_df=lte_df,directories=directories,node_name=node_name,current_time=current_time)
-                
-                # ---------------------------------------------------------- AP Circle-specific Script Generation ---------------------------------------------------------------------
-                AP_Route_4G_GPL_LMS_path = os.path.join(create_script_paths(base_path_url, node_name)["lte"],f"03_{node_name}_Route_GPL_LMS_{current_time}.txt")
-                Phy_SiteID_Userlabel = site_basic_df['Phy SiteID/Userlabel'].unique()[0]
-                with open(AP_Route_4G_GPL_LMS_path, "a", encoding="utf-8") as file:
-                    file.write(AP_Route_4G_GPL_LMS.format(Phy_SiteID_Userlabel = Phy_SiteID_Userlabel) + "\n")
-
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
                 temp_lte_df = lte_df[lte_df["eNodeBName"] == node_name].copy()
 
                 enodebname = (temp_lte_df["eNodeBName"].values[0] if not temp_lte_df.empty else "UnknownNode")
@@ -1779,7 +1691,6 @@ def generate_integration_script(request):
 
                     ############################################################ if ip_type in ["IPv4", "IPv6"]:git #####################################################################
                     bbu_script_mapping_ipv4 = {
-<<<<<<< HEAD
                         "6651": RJ_SiteBasic_ipv4_6651,
                         "6655": RJ_SiteBasic_ipv4_6655,
                         "6631": RJ_SiteBasic_ipv4_6631,
@@ -1796,31 +1707,12 @@ def generate_integration_script(request):
                         "6630": RJ_SiteBasic_ipv6_6630,
                         "6339": RJ_SiteBasic_ipv6_6339,
                         "6303": RJ_SiteBasic_ipv6_6303,
-=======
-                        "6651": AP_SiteBasic_ipv4_6651,
-                        "6631": AP_SiteBasic_ipv4_6631,
-                        "6630": AP_SiteBasic_ipv4_6630,
-                        "6353": AP_SiteBasic_ipv4_6353,
-                        "6339": AP_SiteBasic_ipv4_6339,
-                        "6303": AP_SiteBasic_ipv4_6303,
-                    }
-
-                    bbu_script_mapping_ipv6 = {
-                        "6651": AP_SiteBasic_ipv6_6651,
-                        "6631": AP_SiteBasic_ipv6_6631,
-                        "6630": AP_SiteBasic_ipv6_6630,
-                        "6339": AP_SiteBasic_ipv6_6339,
-                        "6303": AP_SiteBasic_ipv6_6303,
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
                     }
                     bbu_script_mapping = (bbu_script_mapping_ipv4 if ip_type == "IPv4" else bbu_script_mapping_ipv6)
 
                     for bbu_prefix, template in bbu_script_mapping.items():
                         if bbu_prefix in bbu_type:
-<<<<<<< HEAD
                             fingerprint = row.get("Fingerprint", "NA")
-=======
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
                             formatted_text = template.format(
                                 eNodeBName=row["eNodeBName"],
                                 fingerprint=fingerprint,
@@ -2133,15 +2025,10 @@ def generate_integration_script(request):
 
                     for bbu_prefix, template in bbu_script_mapping.items():
                         if bbu_prefix in bbu_type:
-<<<<<<< HEAD
                             fingerprint = row.get("Fingerprint", "NA")
                             formatted_text = template.format(
                                 eNodeBName=row["eNodeBName"],
                                 fingerprint=fingerprint,
-=======
-                            formatted_text = template.format(
-                                eNodeBName=row["eNodeBName"],
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
                                 fieldReplaceableUnitId=row["fieldReplaceableUnitId"],
                                 tnPortId=row["tnPortId"],
                                 OAM_vlan=row["OAM_vlan"],
@@ -2582,7 +2469,6 @@ def generate_integration_script(request):
                 with open(site_equipment_script_path, "a", encoding="utf-8") as file:
                     file.write(RBSSummary_script.format(siteEquipmentFilePath=siteEquipmentFilePath,siteBasicFilePath=siteBasicFilePath))
         # ---------------------------------------------------------------- AS Circle-specific Script Generation ----------------------------------------------------------------
-<<<<<<< HEAD
         
         # ---------------------------------------------------------------- DEL Circle-specific Script Generation ----------------------------------------------------------------
         elif circle == "DEL":
@@ -3842,8 +3728,6 @@ def generate_integration_script(request):
                     file.write(RBSSummary_script.format(siteEquipmentFilePath=siteEquipmentFilePath,siteBasicFilePath=siteBasicFilePath))
         # ---------------------------------------------------------------- JK Circle-specific Script Generation ----------------------------------------------------------------
 
-=======
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
         #####################################################################################################################################################
         # Add CIRCLES specific script generation logic here if needed
         ########################################################## MAKING THE ZIP FILE #############################################################

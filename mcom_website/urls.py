@@ -93,7 +93,6 @@ urlpatterns = [
     path("relocation_tracking/", include("relocation_tracking.urls")),
     path("degrow_dismental/" , include("degrowDismental.urls")),
     path("alok_tracker/" , include("alok_tracker.urls")),
-<<<<<<< HEAD
     path("Alarm/" , include("Alarm_old_new_Tool.urls")),
     path("xml_parser/", include("Xml_parsar_script_tool.urls")),
     path("ix_tracker_vi/", include("IX_Tracker_VI.urls")),
@@ -105,9 +104,6 @@ urlpatterns = [
     path("noika2G/",include("noika2G_tool.urls")),
     path("payload_traffic/",include("payload_traffic_tool.urls")),
     path("performance_idploy/",include("performance_idploy.urls")),
-=======
-    path("Alarm_old_new_Tool/" , include("Alarm_old_new_Tool.urls")),
->>>>>>> 0d16f92682e1356c95bc1e5d1f46547dc95cff28
 
 ]
 
