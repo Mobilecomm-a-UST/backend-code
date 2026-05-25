@@ -13,8 +13,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 #from project_pat.settings import MEDIA_ROOT, MEDIA_URL
-from django.shortcuts import render
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
+from django.shortcuts import render
 
 # ─────────────────────────────────────────────
 # PATHS
@@ -115,7 +115,7 @@ def _validate_file(filepath):
 
     df.rename(columns=rename, inplace=True)
 
-   
+    
     for col in ('On Air Date', 'Performance AT Offered Date', 'Performance AT Status Date'):
         df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
 
@@ -187,7 +187,7 @@ def upload_file(request):
             ]
 
 
-            
+           
             for filename, report_type in file_map:
                 filepath = os.path.join(output_path, filename)
                 if os.path.exists(filepath):
@@ -726,12 +726,13 @@ def generate_offered(request):
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
 
-   
+    
 
     # ── resolve date range ───────────────────────────────────────
     if month_label:
         try:
-            out_filename = OUTPUT_FILENAME
+            safe_label   = month_label.replace(' ', '_')
+            out_filename = f"output_Offered_Vs_OA_TAT_{safe_label}.xlsx"
             results = {
                 '4G':    _process_data(df, month_label, '4G'),
                 '5G':    _process_data(df, month_label, '5G'),
@@ -746,7 +747,7 @@ def generate_offered(request):
         if err:
             return err
         try:
-            out_filename = "output_Offered Vs OA TAT_DateRange.xlsx"
+            out_filename = f"output_Offered_Vs_OA_TAT_{start_str}_to_{end_str}.xlsx"
             results = {
                 case: _process_data_by_date_range(df, start_dt, end_dt, case, 'Performance AT Offered Date')
                 for case in ['4G', '5G', '4G+5G']
@@ -827,7 +828,9 @@ def generate_performance(request):
     # ── resolve date range ───────────────────────────────────────
     if month_label:
         try:
-            out_filename = "output_Performance vs OA TAT.xlsx"
+            safe_label   = month_label.replace(' ', '_')
+            out_filename = f"output_Performance_vs_OA_TAT_{safe_label}.xlsx"
+            
             results = {
                 '4G':    _process_data(df, month_label, '4G',    'Performance AT Status Date', df_full=df_full),
                 '5G':    _process_data(df, month_label, '5G',    'Performance AT Status Date', df_full=df_full),
@@ -842,9 +845,9 @@ def generate_performance(request):
         if err:
             return err
         try:
-            out_filename = "output_Performance vs OA TAT_DateRange.xlsx"
+            out_filename = f"output_Performance_vs_OA_TAT_{start_str}_to_{end_str}.xlsx"
             results = {
-                case: _process_data_by_date_range(df, start_dt, end_dt, case, 'Performance AT Status Date')
+                case: _process_data_by_date_range(df_accepted, start_dt, end_dt, case, 'Performance AT Status Date',df_full=df_full )
                 for case in ['4G', '5G', '4G+5G']
             }
         except ValueError as ve:
@@ -858,7 +861,6 @@ def generate_performance(request):
         f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
     )
 
-    
     return Response({
         'status':       True,
         'message':      'Performance report generated successfully.',
@@ -1109,10 +1111,6 @@ def _write_ftr_excel(summaries, period_label, out_filepath, metric_col = "FTR", 
                          report_title = report_title)
 
     wb.save(out_filepath)
-
-
-
-
 
 
 
@@ -1698,7 +1696,6 @@ def performance_at_sr_wise_tracking(request):
         "download_url": download_url,
     }, status=status.HTTP_200_OK)
 
-
     
 
 @api_view(['DELETE'])
@@ -1713,11 +1710,6 @@ def cleanup(request):
         'message':       'Cleanup complete.',
         'deleted_files': deleted,
     }, status=status.HTTP_200_OK)
-
-
-
-
-
 
 
 
