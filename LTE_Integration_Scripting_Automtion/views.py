@@ -3289,6 +3289,7 @@ def generate_integration_script(request):
 								fingerprint=fingerprint,
                                 fieldReplaceableUnitId=row["fieldReplaceableUnitId"],
                                 tnPortId=row["tnPortId"],
+                                Bridge_tnPortId=row["Bridge_tnPortId"],
                                 OAM_vlan=row["OAM_vlan"],
                                 OAM_IP=row["OAM_IP"],
                                 OAM_GW=row["OAM_GW"],
@@ -3298,6 +3299,7 @@ def generate_integration_script(request):
                                 LTE_UP_vlan=row["LTE_UP_vlan"],
                                 LTE_UP_IP=row["LTE_UP_IP"],
                                 LTE_UP_GW=row["LTE_UP_GW"],
+                                ABIS_vlan=row['ABIS_vlan'],
                             )
                             if not (pd.isna(abis_ip) or abis_ip in ['NA', 'nan']):
                                 print(f"abis generated for {node}")
