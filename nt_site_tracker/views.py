@@ -357,22 +357,27 @@ def upload_tracker_data_view(request):
         return Response({"error": "No file uploaded"}, status=400)
 
     try:
+        # ================= READ FILE =================
         if file.name.endswith(".csv"):
             df = pd.read_csv(file, header=1)
         else:
             df = pd.read_excel(file, header=1)
 
+        # ================= CLEAN COLUMN NAMES =================
         df.columns = df.columns.str.strip()
 
+        # ================= REPLACE EMPTY VALUES =================
         df = df.replace(
-            ["NaN", "nan", "", "NA", "N/A", "-"],
+            ["NaN", "nan", "", "NA", "N/A", "-", "NA_IBS"],
             None
         )
-        circles = user.circles
 
+        # ================= CIRCLE FILTER =================
+        circles = user.circles
         if circles and "CENTRAL" not in circles:
             df = df[df["Circle"].isin(circles)]
 
+        # ================= CHECK REQUIRED COLUMNS =================
         missing = [
             c for c in COLUMN_MAP.keys()
             if c not in df.columns
@@ -380,32 +385,56 @@ def upload_tracker_data_view(request):
 
         if missing:
             return Response(
-                {   "status":False,
-                    "message": f"Missing columns: {', '.join(missing)}" },)
+                {
+                    "status": False,
+                    "message": f"Missing columns: {', '.join(missing)}"
+                }
+            )
 
+        # ================= RENAME COLUMNS =================
         df = df.rename(columns=COLUMN_MAP)
         df = df[list(COLUMN_MAP.values())]
 
+        # ================= DATE CLEANING =================
         INVALID_DATE_STRINGS = {
-            "need to check","pending","na",
-            "tbd","n/a","-"
+            "need to check",
+            "pending",
+            "na",
+            "na_ibs",
+            "tbd",
+            "n/a",
+            "-"
         }
 
         def safe_date(val):
-            if val is None:
+            # Handle None / NaT
+            if val is None or pd.isna(val):
                 return None
 
+            # pandas Timestamp
             if isinstance(val, pd.Timestamp):
                 return val.date()
 
-            if isinstance(val, str):
+            # python datetime
+            if isinstance(val, datetime):
+                return val.date()
 
+            # python date
+            if isinstance(val, date):
+                return val
+
+            # string dates
+            if isinstance(val, str):
                 v = val.strip().lower()
 
-                if not v or v in INVALID_DATE_STRINGS:
+                if v in INVALID_DATE_STRINGS:
                     return None
 
-                parsed = pd.to_datetime(val, errors="coerce")
+                parsed = pd.to_datetime(
+                    val,
+                    format="%d-%b-%y",
+                    errors="coerce"
+                )
 
                 if pd.isna(parsed):
                     return None
@@ -414,12 +443,12 @@ def upload_tracker_data_view(request):
 
             return None
 
+        # Apply date conversion
         for col in df.columns:
-
             if col.endswith("_date"):
                 df[col] = df[col].apply(safe_date)
 
-   
+        # ================= INTEGER FIELD CLEANING =================
         INT_FIELDS = [
             "pri_count",
             "pri_issue_ageing",
@@ -431,14 +460,33 @@ def upload_tracker_data_view(request):
         ]
 
         for col in INT_FIELDS:
-
             if col in df.columns:
                 df[col] = pd.to_numeric(
                     df[col],
                     errors="coerce"
-                ).astype("Int64")
+                )
 
+                # convert NaN to None
+                df[col] = df[col].where(
+                    pd.notna(df[col]),
+                    None
+                )
+
+        # ================= FINAL CLEANUP =================
+        # Convert all pandas types to python objects
+        df = df.astype(object)
+
+        # Convert NaT / NaN / <NA> → None
+        df = df.where(pd.notna(df), None)
+
+        # ================= DEBUG (REMOVE LATER) =================
+        print("EMF CHECK:")
+        print(df[["emf_submission_date"]].head(20))
+
+        # ================= RECORDS =================
         records = df.to_dict("records")
+
+        # ================= EXISTING DATA =================
         existing = {
             (
                 str(x.circle).strip().lower() if x.circle else "",
@@ -453,6 +501,7 @@ def upload_tracker_data_view(request):
         to_create = []
         to_update = []
 
+        # ================= SAVE =================
         with transaction.atomic():
 
             for row in records:
@@ -468,32 +517,29 @@ def upload_tracker_data_view(request):
 
                 key = (circle_key, site_id_key)
 
-          
                 row["last_updated_by"] = user.email
                 row["last_updated_date"] = timezone.now()
 
-               
                 if key in existing:
                     obj = existing[key]
+
                     for field, value in row.items():
                         setattr(obj, field, value)
 
                     to_update.append(obj)
 
                 else:
-
                     to_create.append(
                         NTSiteTracker(**row)
                     )
 
             if to_create:
-
                 NTSiteTracker.objects.bulk_create(
                     to_create,
                     batch_size=500
                 )
-            if to_update:
 
+            if to_update:
                 NTSiteTracker.objects.bulk_update(
                     to_update,
                     fields=list(COLUMN_MAP.values()) + [
@@ -504,13 +550,20 @@ def upload_tracker_data_view(request):
                 )
 
         return Response(
-            {"status": True,
-            "message": "NT Tracker Upload Successfully"})
+            {
+                "status": True,
+                "message": "NT Tracker Upload Successfully"
+            }
+        )
 
     except Exception as e:
         return Response(
-            {"status": False,
-              "message": str(e)},status=500)
+            {
+                "status": False,
+                "message": str(e)
+            },
+            status=500
+        )
     
 ############################################################ DOWNLOAD DATA ###################################################################
 
@@ -613,8 +666,8 @@ def download_tracker_data_view(request):
             "wpc_no",
             "wpc_date",
 
-            "nep_id",
             "emf_submission_date",
+            "nep_id",
 
             "ran_lkf_status",
             "alarm_status",
@@ -2158,9 +2211,9 @@ def frontend_nt_update_view(request):
                 status=403
             )
 
-        circles = user.circles
+        # circles = user.circles
         circles ="CENTRAL"
-        user="Admin"
+        # user="Admin"
 
         # ================= Parse data =================
         if isinstance(data, str):
@@ -5037,9 +5090,24 @@ def delete_nt_tracker(request):
               "message": str(e)},
           
         )
+    
 
+@api_view(['DELETE'])
+def delete_ntissue(request):
+    try:
+        deleted_count, _ = NTIssue.objects.all().delete()
 
+        return Response(
+            {
+                "status": True,
+                "message": f"{deleted_count} records deleted successfully"
+            },
+            status=200
+        )
 
-
-
-
+    except Exception as e:
+        return Response(
+            {"status": False,
+              "message": str(e)},
+          
+        )

@@ -19,6 +19,7 @@ import numpy as np
 from rest_framework import status
 from openpyxl.styles import Font, PatternFill, Alignment
 
+
 CENTRAL_COLUMNS = [
     'Integration Date',    
     'EMF Submission Date',  
@@ -432,6 +433,11 @@ def get_ftr_month(date):
 
     # April special case: 29 Mar – 25 Apr
     if (month == 3 and day >= 29) or (month == 4 and day <= 25):
+
+        # March end should map to previous FY April
+        if month == 3:
+            return f"Apr'{str(year - 1)[-2:]}"
+        
         return f"Apr'{str(year)[-2:]}"
 
     # Normal months: 26th prev → 25th current
@@ -895,7 +901,7 @@ def upload_tracker_data_view(request):
                 else:
                     objects_to_create.append(AlokTrackerModel(**allowed_data))
 
-            if objects_to_create and (userId.lower() == 'manish.kumar4@ust.com' or userId.lower() == 'mohsin.khan@ust.com' or userId.lower() == 'girraj.singh@mcpsinc.in' or userId.lower() == 'devansh.jain@ust.com'):
+            if objects_to_create and (userId.lower() == 'manish.kumar4@ust.com' or userId.lower() == 'mohsin.khan@ust.com' or userId.lower() == 'girraj.singh@mcpsinc.in' or userId.lower() == '288558@ust.com'):
                 AlokTrackerModel.objects.bulk_create(objects_to_create, batch_size=500)
 
             if objects_to_update:
@@ -919,7 +925,7 @@ def upload_tracker_data_view(request):
     except Exception as e:
         return Response({"status": False, "error": str(e)}, status=500)
 
-
+#issue tracker upload 
 @api_view(["POST"])
 def upload_issues_data_view(request):
     file = request.data.get("tracker_file")
@@ -1078,7 +1084,7 @@ def fetch_sites(request):
             "status": False,
             "error": str(e)
         }, status=500)
-   
+
 
 @api_view(["POST"])
 def issue_summary(request):
@@ -1273,297 +1279,6 @@ def issue_summary(request):
 
 
 ############################################################ DOWNLOAD DATA ###################################################################
-
-# @api_view(['POST'])
-# def download_tracker_data_view(request):
-#     userId = request.data.get('userId')
-#     year = request.data.get('year')
-    
-#     try:
-#         user = RelocationUser.objects.filter(email=userId.lower()).first()
-#     except RelocationUser.DoesNotExist:
-#         return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-    
-    
-#     circles = user.circles
-
-#     # if not userId or not circle:
-#     #     return Response({'error': 'userId and circle are required.'}, status=400)
-
-#     try:
-#         if year:
-#             year = int(year)
-        
-#             fy_start = pd.Timestamp(year=year, month=3, day=26).date()
-#             fy_end   = pd.Timestamp(year=year + 1, month=3, day=25).date()
-        
-        
-#             today = dtime.today().date()
-
-#             # condition for FY range
-#             fy_filter = Q(site_onair_date__range=(fy_start, fy_end))
-#             null_filter = Q(site_onair_date__isnull=True)
-
-#             if fy_start <= today <= fy_end:
-#                 final_filter = fy_filter | null_filter
-#             else:
-#                 final_filter = fy_filter
-        
-#         if 'CENTRAL' in circles:
-#             if year:
-#                 obj = AlokTrackerModel.objects.filter(final_filter)
-#             else:
-#                 obj = AlokTrackerModel.objects.all()
-#             issue_obj = RelocationIssue.objects.all()
-#         else:
-#             if year:
-#                 obj = AlokTrackerModel.objects.filter(
-#                     final_filter,
-#                     circle__in=circles
-#                 )
-#             else:
-#                 obj = AlokTrackerModel.objects.filter(
-#                     circle__in=circles
-#                 )
-#             issue_obj = RelocationIssue.objects.filter(circle__in=circles)
-
-#         df = pd.DataFrame(obj.values())
-        
-#         if df.empty:
-#             return Response({"message": "No Data Found"}, status=404)
-        
-#         issue_df = pd.DataFrame(issue_obj.values())
-        
-#         rename_map = {
-#             "circle": "Circle",
-#             "site_id": "Site ID",
-#             "issue_owner": "Issue Owner",
-#             "milestone": "Milestone",
-#             "issue_name": "Issue Name",
-#             "start_date": "Start Date",
-#             "close_date": "Close Date",
-#             "status": "Status",
-#             "duration": "Duration",
-#             "remarks": "Remarks",
-#             "updated_by": "Updated_by",
-#             "updated_at": "Updated_at",
-#             "created_by": "Created_by",
-#             "created_at": "Created_at"
-#         }
-        
-#         issue_df = issue_df.rename(columns=rename_map)
-
-#         print("1")
-        
-#         required_cols = ["Circle", "Site ID", "Issue Owner", "Milestone", "Issue Name", "Start Date", "Close Date", "Status", "Duration", "Remarks", "Updated_by", "Updated_at", "Created_by", "Created_at"]
-#         for col in required_cols:
-#             if col not in issue_df.columns:
-#                 issue_df[col] = None
-
-#         # Convert date columns safely
-#         for col in ["Start Date", "Close Date"]:
-#             if col in issue_df.columns:
-#                 issue_df[col] = pd.to_datetime(issue_df[col], errors='coerce')
-        
-#         print("1.1")
-#         df = update_ageing(df, issue_df)
-
-#         print("2")
-
-#         for col in df.columns:
-#             if 'date' in col:
-#                 if col != 'last_updated_date':
-#                     converted = pd.to_datetime(df[col], errors='coerce')
-#                     if converted.notna().sum() > 0:
-#                         df[col] = converted.dt.strftime('%d-%b-%y')
-#                 else:
-#                     converted = pd.to_datetime(df[col], errors='coerce')
-#                     if converted.notna().sum() > 0:
-#                         df[col] = converted.dt.strftime('%d-%b-%y %H:%M:%S')
-
-#         print("3")
-        
-#         qs = SiteStatus.objects.all().values(
-#             "site_id", "date", "status"
-#         )
-
-#         # Create DataFrame
-#         status_df = pd.DataFrame(qs)
-        
-#         print(status_df)
-        
-#         required_cols = ["site_id", "date", "status"]
-#         for col in required_cols:
-#             if col not in status_df.columns:
-#                 status_df[col] = None
-        
-#         print(status_df['date'].dropna().unique().tolist())
-        
-
-        
-
-#         print("4")
-#         # Ensure datetime
-#         status_df["date"] = pd.to_datetime(status_df["date"])
-        
-#         print("5")
-
-#         # Pivot to required structure
-#         status_df = status_df.pivot_table(
-#             index="site_id",
-#             columns="date",
-#             values="status",
-#             aggfunc="last"
-#         )
-
-#         # Sort columns chronologically
-#         status_df = status_df.sort_index(axis=1)
-
-#         # Format date headers
-#         status_df.columns = status_df.columns.strftime("%d-%b-%y")
-
-#         # Rename index for display
-#         status_df.index.name = "Site ID"
-
-#         # 🔥 REMOVE JUNK ROW
-#         status_df = status_df[status_df.index != "Site ID"]
-        
-#         print("Index values:", list(status_df.index))
-
-        
-#         print(status_df)
-
-
-#         current_date = dtime.now().strftime("%Y-%m-%d")
-#         current_time = dtime.now().strftime("%H-%M-%S")
-
-#         BASE_URL = os.path.join(settings.MEDIA_ROOT, "alok_sir_tracking")
-#         os.makedirs(BASE_URL, exist_ok=True)
-
-#         output_folder = os.path.join(BASE_URL, f"generated_files_{current_date}")
-#         shutil.rmtree(output_folder, ignore_errors=True)
-#         os.makedirs(output_folder, exist_ok=True)
-
-#         tracker_file_path = os.path.join(output_folder, f"TRACKER_FILE_{current_date}_{current_time}.xlsx")
-#         df.insert(0, "Unique ID", range(1, len(df) + 1))
-
-#         df.drop(columns=['id'], inplace=True)
-
-#         df = df[['Unique ID', 'circle', 'site_tagging', 'old_toco_name', 'old_site_id', 'new_site_id', 'new_toco_name',
-#                  'sr_number', 'ran_oem', 'media_type', 'mw_oem', 'relocation_method', 'relocation_type', 'old_site_band',
-#                  'new_site_band', 'rfai_date', 'allocation_date', 'rfai_survey_date', 'mo_punch_date',
-#                  'material_dispatch_date', 'material_delivered_date', 'installation_start_date', 'installation_end_date',
-#                  'integration_date', 'emf_submission_date', 'ran_lkf_status', 'alarm_status', 'alarm_rectification_done_date',
-#                  'scft_done_date', 'scft_i_deploy_offered_date', 'ran_pat_offer_date', 'ran_sat_offer_date', 'mw_plan_id',
-#                  'mw_pat_offer_date', 'rsl_value_status', 'enm_status', 'mw_lkf', 'mw_sat_offer_date', 'mw_ms1_mids_date',
-#                  'site_onair_date', 'i_deploy_onair_date', 'current_status', 'detailed_remarks', 'rfai_rejected_date', 
-#                  'clear_rfai_date', 'pri_count', 'pri_issue_ageing', 'other_ust_issue_ageing', 'other_airtel_issue_ageing', 'total_issue_ageing', 
-#                  'clear_rfai_to_ms1_ageing', 'rfai_to_ms1_ageing', 'ran_pat_accepted_date', 'ran_sat_accepted_date', 
-#                  'mw_pat_accepted_date', 'mw_sat_accepted_date', 'scft_accepted_date', 'kpi_at_offer_date', 'kpi_at_accepted_date',
-#                  'four_g_ms2_date', 'five_g_ms2_date', 'final_ms2_date', "dismantling_survey_date", "sreq_creq_raised_date",
-#                  "dismantle_date", "material_pickup_date", "material_submission_date", "oci_done_date", "sign_off_date", "dismantling_status", 
-#                  'last_updated_date', 'last_updated_by']]
-
-#         template_path = os.path.join(BASE_URL, "template", "templateAlok_v.1.xlsx")
-#         wb = load_workbook(template_path)
-#         ws = wb["Sheet1"]   # or wb.create_sheet("Tracker")
-#         ws.title = "Main Tracker"
-
-#         date_columns = [col for col in df.columns if col.endswith("_date") and col != 'last_updated_date']
-
-#         for col in date_columns:
-#             df[col] = pd.to_datetime(df[col], errors="coerce")
-
-#         start_row = 3
-#         for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=False), start=start_row):
-#             for c_idx, value in enumerate(row, start=1):
-#                 cell = ws.cell(row=r_idx, column=c_idx)
-#                 cell.value = value
-
-#                 # apply formatting for date columns
-#                 if df.columns[c_idx - 1].endswith("_date") and hasattr(value, "strftime") and df.columns[c_idx - 1] != 'last_updated_date':
-#                     cell.number_format = "dd-mmm-yy"
-
-
-
-#         print("6")
-        
-#         ws2 = wb.create_sheet(title="Issues Tracker")
-
-#         # Clean issue_df (remove id if present)
-#         if "id" in issue_df.columns:
-#             issue_df = issue_df.drop(columns=["id"])
-            
-#         # print(issue_df['updated_by'])
-
-#         def remove_tz_safe(x):
-#             if isinstance(x, datetime) and x.tzinfo is not None:
-#                 return x.replace(tzinfo=None)
-#             return x
-
-#         # apply to every cell in issue_df
-#         issue_df = issue_df.applymap(remove_tz_safe)
-        
-#         # print(issue_df['updated_by'])
-
-
-#         # Convert date columns
-#         issue_date_columns = [col for col in issue_df.columns if "Date" in col]
-#         for col in issue_date_columns:
-#             issue_df[col] = pd.to_datetime(issue_df[col], errors='coerce')
-            
-#         # print(issue_df['updated_by'])
-
-#         # ---- Write header ----
-#         for col_idx, column_name in enumerate(issue_df.columns, start=1):
-#             ws2.cell(row=1, column=col_idx, value=column_name)
-            
-#         # print(issue_df['updated_by'])
-
-#         # ---- Write data ----
-#         for r_idx, row in enumerate(dataframe_to_rows(issue_df, index=False, header=False), start=2):
-#             for c_idx, value in enumerate(row, start=1):
-#                 cell = ws2.cell(row=r_idx, column=c_idx)
-#                 cell.value = value
-
-#                 # Apply date formatting
-#                 if issue_df.columns[c_idx - 1] in issue_date_columns and hasattr(value, "strftime"):
-#                     cell.number_format = "dd-mmm-yy"
-                    
-#         # print(issue_df['updated_by'])
-
-#         ws3 = wb.create_sheet(title="Site Status Tracker")
-
-#         # Remove index name to avoid Excel phantom row
-#         status_df.index.name = None
-
-#         # Write header
-#         headers = ["Site ID"] + list(status_df.columns)
-#         for col_idx, header in enumerate(headers, start=1):
-#             ws3.cell(row=1, column=col_idx, value=header)
-
-#         # Write data
-#         for r_idx, row in enumerate(
-#             dataframe_to_rows(status_df, index=True, header=False),
-#             start=2
-#         ):
-#             for c_idx, value in enumerate(row, start=1):
-#                 if value=='' and c_idx==0:
-#                     print("----------------------------------------------------------------------------------")
-#                 ws3.cell(row=r_idx, column=c_idx, value=value)
-
-#         wb.save(tracker_file_path)
-
-#         relative_path = tracker_file_path.replace(settings.MEDIA_ROOT, '').lstrip(os.sep)
-#         download_url = request.build_absolute_uri(
-#             os.path.join(settings.MEDIA_URL, relative_path).replace('\\', '/')
-#         )
-
-#         return Response({'message': f'Welcome {userId}! Credentials verified.', "download_link": download_url}, status=200)
-
-#     except Exception as e:
-#         return Response({"error": f"{str(e)}"}, status=500)
-
 
 @api_view(['POST'])
 def download_tracker_data_view(request):
@@ -2043,7 +1758,6 @@ def download_tracker_data_view(request):
         return Response({"error": f"{str(e)}"}, status=500)
 
 
-
 @api_view(["POST"])
 def upload_site_status_table(request):
     """
@@ -2152,6 +1866,8 @@ def delete_dropped_sites_status(request):
     )
     
 
+#site Status Tracker
+
 @api_view(["POST"])
 def sync_alok_tracker_to_site_status(request):
     """
@@ -2220,6 +1936,7 @@ def sync_alok_tracker_to_site_status(request):
         "records_created": len(records),
         "date": today
     })
+
 
 ############################################################# DASHBOARD ##########################################################################
 
@@ -3091,7 +2808,7 @@ def weekly_monthly_dashboard_view(request):
         return Response({'message': 'Weekly and Monthly Dashboard created successfully !!!', "download_link": download_link, "unique_data": unique_data, "months_data": month_json_data, "week_data": week_json_data}, status=200)
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
- 
+
 
 @api_view(['GET', 'POST'])
 def gap_view(request):
@@ -6277,7 +5994,7 @@ def monthly_graph(request):
     
 @api_view(['GET', 'POST'])
 def lifecycle_display(request):
-    userId = request.data.get('userId').lower()
+    userId = request.data.get('userId')
     siteId = request.data.get('siteId')
     circle = request.data.get('circle')
 
@@ -6285,7 +6002,7 @@ def lifecycle_display(request):
         return Response({"error": "input not provided"}, status = 400)
     
     try:
-        user = RelocationUser.objects.filter(email=userId.lower()).first()
+        user = RelocationUser.objects.filter(email=userId).first()
     except RelocationUser.DoesNotExist:
         return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
     
@@ -6969,8 +6686,15 @@ def ftr_table(request):
         report['Perf AT FTR %'] = (report['Perf AT FTR Count'] / report['Total'] * 100).round().astype(int)
 
 
-        report = report.sort_index(
-            key=lambda idx: idx.map(month_sort_key)
+        fy_months = pd.date_range(
+            start=fy_start,
+            end=fy_end,
+            freq='MS'
+        ).strftime("%b'%y")
+
+        report = report.reindex(
+            fy_months,
+            fill_value=0
         )
 
         overall_total = report['Total'].sum()
@@ -6996,7 +6720,7 @@ def ftr_table(request):
 
 
         final_table = report.T
-        print(final_table)
+        # print(final_table)
 
         final_table = final_table.reset_index()
         final_table = final_table.rename(columns={"index": "FTR"})
@@ -7189,13 +6913,17 @@ def ftr_table_circlewise(request):
     try:
         year = request.data.get("year")
         type = request.data.get("type")
+
         if not year or not type:
-            return Response({"error": "year/type are required"}, status=400)
+            return Response(
+                {"error": "year/type are required"},
+                status=400
+            )
 
         year = int(year)
 
-        fy_start = pd.Timestamp(year=year, month=3, day=29)
-        fy_end = pd.Timestamp(year=year + 1, month=3, day=28)
+        # FIXED FY
+        fy_start, fy_end = get_financial_year_dates(year)
 
         qs = ATDumpData.objects.all().values(
             'circle',
@@ -7205,31 +6933,38 @@ def ftr_table_circlewise(request):
             'soft_at_rejection_counter',
             'physical_at_status',
             'physical_at_rejection_counter',
-            'scft_at_status',                 
+            'scft_at_status',
             'scft_at_rejection_counter'
         )
 
         df = pd.DataFrame(qs)
 
         if df.empty:
-            return Response({"message": "No data found"}, status=200)
-        
-        if type == "Relocation":
-            relocation_sites = (
-                AlokTrackerModel.objects
-                .values_list('new_site_id', flat=True)
-                .distinct()
+            return Response(
+                {"message": "No data found"},
+                status=200
             )
-            df = df[df['site_id'].isin(relocation_sites)]
-        elif type != 'Overall':
-            relocation_sites = (
-                AlokTrackerModel.objects
-                .values_list('new_site_id', flat=True)
-                .distinct()
-            )
-            df = df[~df['site_id'].isin(relocation_sites)]
 
-        df['on_air_date'] = pd.to_datetime(df['on_air_date'], errors='coerce')
+        relocation_sites = (
+            AlokTrackerModel.objects
+            .values_list('new_site_id', flat=True)
+            .distinct()
+        )
+
+        if type == "Relocation":
+            df = df[
+                df['site_id'].isin(relocation_sites)
+            ]
+
+        elif type != 'Overall':
+            df = df[
+                ~df['site_id'].isin(relocation_sites)
+            ]
+
+        df['on_air_date'] = pd.to_datetime(
+            df['on_air_date'],
+            errors='coerce'
+        )
 
         # Financial year filter
         df = df[
@@ -7237,8 +6972,18 @@ def ftr_table_circlewise(request):
             (df['on_air_date'] <= fy_end)
         ]
 
-        df['FTR_Month'] = df['on_air_date'].apply(get_ftr_month)
-        df = df[df['FTR_Month'].notna()]
+        # print(
+        #     df['on_air_date'],
+        #     "----------on_air_date---------"
+        # )
+
+        df['FTR_Month'] = df[
+            'on_air_date'
+        ].apply(get_ftr_month)
+
+        df = df[
+            df['FTR_Month'].notna()
+        ]
 
         # Build tables
         soft_table = build_circlewise_ftr(
@@ -7252,36 +6997,82 @@ def ftr_table_circlewise(request):
             'physical_at_status',
             'physical_at_rejection_counter'
         )
+
         scft_table = build_circlewise_ftr(
             df,
             'scft_at_status',
             'scft_at_rejection_counter'
         )
-        
+
         print(soft_table)
-        
         print(phy_table)
-        print(scft_table,"--------------")
-        
+        print(scft_table, "--------------")
+
+        # ==========================
+        # FIX MONTHS (Apr → Mar only)
+        # ==========================
+        fy_months = pd.date_range(
+            start=fy_start,
+            end=fy_end,
+            freq='MS'
+        ).strftime("%b'%y").tolist()
+
+        final_columns = fy_months + ['Overall']
+
+        soft_table = soft_table.reindex(
+            columns=final_columns,
+            fill_value=0
+        )
+
+        phy_table = phy_table.reindex(
+            columns=final_columns,
+            fill_value=0
+        )
+
+        scft_table = scft_table.reindex(
+            columns=final_columns,
+            fill_value=0
+        )
+
+        # reset index
         soft_table = soft_table.reset_index()
-        soft_table = soft_table.rename(columns={"circle": "Circle"})
+        soft_table = soft_table.rename(
+            columns={"circle": "Circle"}
+        )
+
         phy_table = phy_table.reset_index()
-        phy_table = phy_table.rename(columns={"circle": "Circle"})
+        phy_table = phy_table.rename(
+            columns={"circle": "Circle"}
+        )
+
         scft_table = scft_table.reset_index()
-        scft_table = scft_table.rename(columns={"circle": "Circle"})
+        scft_table = scft_table.rename(
+            columns={"circle": "Circle"}
+        )
 
         return Response(
             {
-                "soft_at": soft_table.to_dict(orient="records"),
-                "physical_at": phy_table.to_dict(orient="records"),
-                "scft_at": scft_table.to_dict(orient="records"),
-                "months": list(soft_table.columns)
+                "soft_at": soft_table.to_dict(
+                    orient="records"
+                ),
+                "physical_at": phy_table.to_dict(
+                    orient="records"
+                ),
+                "scft_at": scft_table.to_dict(
+                    orient="records"
+                ),
+                "months": list(
+                    soft_table.columns
+                )
             },
             status=200
         )
 
     except Exception as e:
-        return Response({"error": str(e)}, status=500)
+        return Response(
+            {"error": str(e)},
+            status=500
+        )
 
 
 @api_view(['GET', 'POST'])
