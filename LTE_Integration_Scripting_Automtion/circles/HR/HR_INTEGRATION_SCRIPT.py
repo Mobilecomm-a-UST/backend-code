@@ -2380,17 +2380,8 @@ set ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1 anrStateNR 1
 set ENodeBFunction=1$  endcAllowed  true  
 set UePolicyOptimization=1                                  endcAwareImc 2
 
-
-set 0 Userlabel {Phy_SiteID_Userlabel}
-
-set . vswrSupervisionSensitivity 100
-set . vswrSupervisionActive true
-
 cvms _Post_4G_GPL_HY22
 
-
-confbd-
-gs-
 
 """
 
@@ -2469,7 +2460,7 @@ end
 ###################################### RN SCRIPT ######################################
 
 crn ENodeBFunction=1
-eNodeBPlmnId mcc=404,mnc=70,mncLength=2
+eNodeBPlmnId mcc=404,mnc=96,mncLength=2
 eNBId {eNBId}
 sctpRef              Transport=1,SctpEndpoint=1
 tRelocOverall 20
@@ -2532,7 +2523,7 @@ HR_Route_5G_GPL_LMS = """
 
 confb+
 gs+
-cvms Pre_5G_GPL_2234
+$cvms Pre_5G_GPL_2234
 lt all
 bl nrcell
 bl nrsec
@@ -4660,6 +4651,7 @@ st cell
 acc integration activate
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
 cvms post_5G_GPL_LMS_2234                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
 
 
 """
@@ -4834,8 +4826,8 @@ end
 
 ########################7. ENodeBFunction=1,GUtraNetwork=1,GUtranSyncSignalFrequency=######################################
 
-crn ENodeBFunction=1,GUtraNetwork=1,GUtranSyncSignalFrequency=627936-30
-arfcn 627936
+crn ENodeBFunction=1,GUtraNetwork=1,GUtranSyncSignalFrequency=629952-30
+arfcn 629952
 smtcScs 30
 userLabel
 end
@@ -4859,10 +4851,10 @@ ma L21_12_21 ^EUtranCell.DD
 
 for $mo in L21_12_21                                                                                                                                              
 $mordn = rdn($mo)                                                                                                                                                 
-pr ENodeBFunction=1,$mordn,GUtranFreqRelation=627936                                                                                                              
+pr ENodeBFunction=1,$mordn,GUtranFreqRelation=629952                                                                                                              
 if $nr_of_mos = 0                                                                                                                                                 
-cr ENodeBFunction=1,$mordn,GUtranFreqRelation=627936                                                                                                              
-GUtraNetwork=1,GUtranSyncSignalFrequency=627936-30                                                                                                       
+cr ENodeBFunction=1,$mordn,GUtranFreqRelation=629952                                                                                                              
+GUtraNetwork=1,GUtranSyncSignalFrequency=629952-30                                                                                                       
 fi                                                                                                                                                                
 done                                                                                                                                                              
 
@@ -4871,7 +4863,7 @@ func Relation_121L21
 for $j = 1 to 5                                                                                                                                                   
 pr GUtraNetwork=1,ExternalGNodeBFunction=40496-$gnbid,ExternalGUtranCell=40496-000000$gnbid-31$j                                                                  
 if $nr_of_mos = 1                                                                                                                                                 
-crn ENodeBFunction=1,$mordn,GUtranFreqRelation=627936,GUtranCellRelation=40496-000000$gnbid-31$j                                                                  
+crn ENodeBFunction=1,$mordn,GUtranFreqRelation=629952,GUtranCellRelation=40496-000000$gnbid-31$j                                                                  
 essEnabled false                                                                                                                                                  
 isRemoveAllowed false                                                                                                                                             
 neighborCellRef GUtraNetwork=1,ExternalGNodeBFunction=40496-$gnbid,ExternalGUtranCell=40496-000000$gnbid-31$j                                                     
@@ -4893,7 +4885,7 @@ endfunc
 Relation_121L2_18L        
 
 
-set EUtranCell.DD=.*,GUtranFreqRelation=627936 cellReselectionPriority 5
+set EUtranCell.DD=.*,GUtranFreqRelation=629952 cellReselectionPriority 5
 set CWA_CRP_2 cellReselectionPriority 2
 
 set ENodeBFunction=1$  endcAllowed  true                                                                                                                 
@@ -5209,7 +5201,7 @@ fi
 crn GNBCUUPFunction=1
 gNBId {gNBId}
 gNBIdLength 26
-pLMNIdList mcc=404,mnc=70
+pLMNIdList mcc=404,mnc=96
 end
 crn GNBCUUPFunction=1,EndpointResource=1
 end
@@ -5316,7 +5308,7 @@ end
 crn GNBCUCPFunction=1
 gNBId {gNBId}
 gNBIdLength 26
-pLMNId mcc=404,mnc=70
+pLMNId mcc=404,mnc=96
 end
 
 crn GNBCUCPFunction=1,EndpointResource=1
@@ -5413,8 +5405,8 @@ end
 crn GNBCUCPFunction=1,NRNetwork=1
 end
 
-crn GNBCUCPFunction=1,NRNetwork=1,NRFrequency=627936-30
-arfcnValueNRDl 627936
+crn GNBCUCPFunction=1,NRNetwork=1,NRFrequency=629952-30
+arfcnValueNRDl 629952
 bandListManual
 smtcDuration 1
 smtcOffset 0
@@ -5424,7 +5416,7 @@ ssRssiMeasIdle
 ssbToMeasureIdle
 end
 
-crn GNBCUCPFunction=1,NRNetwork=1,NRFrequency=627936-30,NRFrequencyUeCfg=Base
+crn GNBCUCPFunction=1,NRNetwork=1,NRFrequency=629952-30,NRFrequencyUeCfg=Base
 prefUeGroupList
 ssRssiMeasConnected
 ssbToMeasureConnected
@@ -5563,7 +5555,7 @@ csiRsConfig2P aRestriction=3F,csiRsControl2Ports=1
 csiRsConfig32P csiRsControl32Ports=0
 csiRsConfig4P csiRsControl4Ports=1,i11Restriction=FF
 csiRsConfig8P csiRsControl8Ports=1,i11Restriction=FFFF
-pLMNIdList mcc=404,mnc=70
+pLMNIdList mcc=404,mnc=96
 sibType2 siBroadcastStatus=0,siPeriodicity=64
 sibType4 siBroadcastStatus=0,siPeriodicity=64
 sibType5 siBroadcastStatus=0,siPeriodicity=64
@@ -5602,7 +5594,7 @@ rachRootSequence {rachRootSequence}
 secondaryCellOnly false
 siWindowLength 20
 ssbDuration 1
-ssbFrequency 627936
+ssbFrequency 629952
 ssbOffset 0
 ssbPeriodicity 20
 ssbSubCarrierSpacing 30
@@ -5644,14 +5636,14 @@ mdtCellProfileRef Mdt=1,MdtCellProfile=Default
 mdtEnabled false
 nCellChangeHigh
 nCellChangeMedium
-nRFrequencyRef NRNetwork=1,NRFrequency=627936-30
+nRFrequencyRef NRNetwork=1,NRFrequency=629952-30
 noOfPeriodicUeMeasPerRop 900
 nrdcMnCellProfileRef NrdcControl=1,NrdcMnCellProfile=Default
 offloadCellProfileRef TrafficOffload=1,OffloadCellProfile=Default
 periodicCellProfileRef
 pmUeIntraFreqCellProfileRef
 pmUeIntraFreqEnabled false
-primaryPLMNId mcc=404,mnc=70
+primaryPLMNId mcc=404,mnc=96
 pwsEmergencyAreaIdList
 qHyst 4
 qHystSfHigh
@@ -5683,7 +5675,7 @@ periodicEsDuration 120
 requiredWakeUpTime 180
 end
 
-crn GNBCUCPFunction=1,NRCellCU={gUtranCell},NRFreqRelation=627936
+crn GNBCUCPFunction=1,NRCellCU={gUtranCell},NRFreqRelation=629952
 anrMeasOn true
 caFreqRelMeasProfileRef CarrierAggregation=1,CaFreqRelMeasProfile=Default
 cellReselectionPriority 7
@@ -5691,7 +5683,7 @@ cellReselectionSubPriority
 mcpcPCellNrFreqRelProfileRef Mcpc=1,McpcPCellNrFreqRelProfile=Default
 mcpcPSCellNrFreqRelProfileRef Mcpc=1,McpcPSCellNrFreqRelProfile=Default
 mdtMeasOn true
-nRFrequencyRef NRNetwork=1,NRFrequency=627936-30
+nRFrequencyRef NRNetwork=1,NRFrequency=629952-30
 nrdcA4ThrRsrpFreqOffset 0
 offloadNrFreqRelProfileRef TrafficOffload=1,OffloadNrFreqRelProfile=Default
 pMax 23
@@ -5795,7 +5787,7 @@ end
 
 ###################################### CISCO MME SCRIPT ####################################################################################################
 CISCO_MME_SCRIPT_HR = """
-########################################################### CSICO MME ######################################################################################
+########################################################### CISCO MME ######################################################################################
                                                                                                                                              
 gs+                                                                                                                                                                               
                                                                                                                                                                                   
