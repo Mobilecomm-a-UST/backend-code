@@ -599,27 +599,62 @@ def rfs_dump(request):
     
     
  
-        #  Multiple HW Files--------------------------------------------------
+       # Multiple HW Files --------------------------------------------------
         hw_files = request.FILES.getlist("hw_file")
+
         if not hw_files:
             return Response({"error": "hw_file(s) not provided"}, status=400)
- 
+
         hw_df_list = []
+        no_need_list = []
+
         for hw_file in hw_files:
             try:
                 if hw_file.name.endswith('.csv'):
-                    df = pd.read_csv(hw_file, usecols=['ITEMCODE', 'Module Name'])
+
+                    df = pd.read_csv(hw_file)
+                    df.columns = df.columns.str.strip()
+
+                    hw_df_list.append(df[['ITEMCODE', 'Module Name']])
+
                 elif hw_file.name.endswith(('.xls', '.xlsx')):
-                 df = pd.read_excel(hw_file, engine='openpyxl', usecols=['ITEMCODE', 'Module Name'])
+
+                    # main sheet
+                    df = pd.read_excel(hw_file, engine='openpyxl')
+                    df.columns = df.columns.str.strip()
+
+                    hw_df_list.append(df[['ITEMCODE', 'Module Name']])
+
+                    # optional No module list sheet
+                    try:
+                        module_df = pd.read_excel( hw_file,engine='openpyxl',sheet_name="No module list")
+                        module_df.columns = module_df.columns.str.strip()
+
+                        if 'No Module' in module_df.columns:
+                            no_need_list.append(module_df[['No Module']])
+                    except:
+                        pass
                 else:
-                    return Response({"error": "Unsupported file format for hw_file"}, status=400)
-                df.columns = df.columns.str.strip()
-                hw_df_list.append(df)
+                    return Response(
+                        {"error": "Unsupported file format for hw_file"},
+                        status=400
+                    )
+
             except Exception as e:
-                return Response({"error": f"error reading a hw_file: {str(e)}"}, status=500)
+                return Response(
+                    {"error": f"error reading a hw_file: {str(e)}"},
+                    status=500
+                )
+
         hw_df = pd.concat(hw_df_list, ignore_index=True).drop_duplicates()
-        # print(hw_df.columns)
+
+        no_need_module = (
+            pd.concat(no_need_list, ignore_index=True).drop_duplicates()
+            if no_need_list
+            else pd.DataFrame(columns=['No Module'])
+        )
  
+
         #  Site List File-----------------------------------------------------------
         site_list_file = request.FILES.get("site_list_file")
         if not site_list_file:
@@ -785,7 +820,7 @@ def rfs_dump(request):
             right_on='Location Name',
             sort=False
         )
-        print('marge with locator',merged_df.head())
+        # print('marge with locator',merged_df.head())
        
         # Circle Mapping ----
         merged_df['Circle_Map'] = merged_df['Fromlocation'].astype(str).str[:3].astype(int)
@@ -796,15 +831,46 @@ def rfs_dump(request):
      
  
         # Merge with HW File -----
+        # merged_hw = pd.merge(
+        #     merged_df,
+        #     hw_df,
+        #     how='left',
+        #     left_on="Itemcode",
+        #     right_on='ITEMCODE',
+        #     sort=False
+        # )
+        # print('merge with Hardware',merged_hw.head())
+        #add filter filter and remove no neeed module----
+        print(no_need_module['No Module'])
+
         merged_hw = pd.merge(
             merged_df,
             hw_df,
             how='left',
             left_on="Itemcode",
-            right_on='ITEMCODE',
-            sort=False
+            right_on='ITEMCODE'
         )
-        print('merge with Hardware',merged_hw.head())
+
+        # remove no need modules
+        if not no_need_module.empty:
+            print("remove module---")
+            no_modules = (
+                no_need_module['No Module']
+                .dropna()
+                .astype(str)
+                .str.strip()
+                .unique()
+            )
+
+            merged_hw = merged_hw[
+                ~merged_hw['Module Name']
+                .astype(str)
+                .str.strip()
+                .isin(no_modules)
+            ]
+       
+
+
  
         #  Merge with site list
         merged_site_df = pd.merge(
@@ -961,8 +1027,29 @@ def rfs_dump(request):
             sort=False
         )
         merged_hw_ms_mf.drop(columns=['ITEMCODE'], inplace=True)
- 
-        print('merge with Hardware',merged_hw_ms_mf.head())
+
+        print(no_need_module['No Module'])
+
+        # remove no need modules
+        if not no_need_module.empty:
+            print("remove module---")
+            no_modules = (
+                no_need_module['No Module']
+                .dropna()
+                .astype(str)
+                .str.strip()
+                .unique()
+            )
+
+
+            merged_hw_ms_mf =  merged_hw_ms_mf[
+                ~ merged_hw_ms_mf['Module Name']
+                .astype(str)
+                .str.strip()
+                .isin(no_modules)
+            ]
+    
+        # print('merge with Hardware',merged_hw_ms_mf.head())
  
         #  Merge with site list
         merged_site_df_ms_mf = pd.merge(
@@ -1135,7 +1222,7 @@ def rfs_dump(request):
         new_df['SiteID in RFS'] = site_list_df['Unique ID'].map(site_count_rfs).fillna(0).astype(int)
         new_df['SiteID in MS-MF'] = site_list_df['Unique ID'].map(site_count_msmf).fillna(0).astype(int)
  
-        print("new_df", new_df)
+        # print("new_df", new_df)
         print("End all files Process. Saving the data in excel file")
  
        
@@ -1169,8 +1256,6 @@ def rfs_dump(request):
     except Exception as e:
         return Response({"error": f"find an error: {str(e)}"}, status=500)
     
-
-
 #api for  Rfs mapping tool----------------------------------------
 @api_view(["POST"])
 def rfs_site_mapping(request):
