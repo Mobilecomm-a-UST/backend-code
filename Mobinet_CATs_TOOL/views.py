@@ -808,7 +808,7 @@ def rfs_dump(request):
             na=False
         )
 
-        rfs_df.loc[mobile_mask | creator_mask, "Patner"] = "Mobliecomm"
+        rfs_df.loc[mobile_mask | creator_mask, "Partners"] = "Mobliecomm"
         rfs_df.drop(["Creatordepartment", "Partner Name"], axis=1, inplace=True)
  
         # Merge with locator----
@@ -992,11 +992,20 @@ def rfs_dump(request):
    
     #######for MS-MF file####################
         msmf_df["Partners"] = "Other TSP"
+
         msmf_df.loc[
-                msmf_df["Partner"].str.contains("Mobilecom|Mobilecomm", case=False, na=False),
-                "Patner"
-            ] = "Mobliecomm"
-        msmf_df.drop(["Partner"], axis=1, inplace=True)
+            msmf_df["Partner"].astype(str).str.contains(
+                "Mobilecom|Mobilecomm",
+                case=False,
+                na=False
+            ),
+            "Partners"
+        ] = "Mobliecomm"
+
+        msmf_df.drop(["Partner"], axis=1,
+            inplace=True,
+            errors="ignore"
+        )
 
         # Merge with locator----
         merged_df_ms_mf = pd.merge(
@@ -1255,6 +1264,7 @@ def rfs_dump(request):
         })
     except Exception as e:
         return Response({"error": f"find an error: {str(e)}"}, status=500)
+    
     
 #api for  Rfs mapping tool----------------------------------------
 @api_view(["POST"])
