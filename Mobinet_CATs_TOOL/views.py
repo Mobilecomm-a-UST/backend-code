@@ -897,8 +897,8 @@ def rfs_dump(request):
         merged_site_df["Dismantled date"] = pd.to_datetime(merged_site_df["Dismantled date"], errors='coerce')
         merged_site_df["Rfs Created Date"] = pd.to_datetime(merged_site_df["Rfs Created Date"], errors='coerce')
  
-        merged_site_df["Aging"] = (merged_site_df["Dismantled date"] - merged_site_df["Rfs Created Date"]).dt.days
-        merged_site_df = merged_site_df[merged_site_df["Aging"]<=-45]
+        # merged_site_df["Aging"] = (merged_site_df["Dismantled date"] - merged_site_df["Rfs Created Date"]).dt.days
+        # merged_site_df = merged_site_df[merged_site_df["Aging"]<=-45]
  
        
         merged_site_df["Site+Module"] = merged_site_df["Unique Site ID"].astype(str) + "_" + merged_site_df["Module Name"].astype(str)
@@ -1073,8 +1073,8 @@ def rfs_dump(request):
         merged_site_df_ms_mf["Dismantled date"] = pd.to_datetime(merged_site_df_ms_mf["Dismantled date"], errors='coerce')
         merged_site_df_ms_mf["Move Start Date"] = pd.to_datetime(merged_site_df_ms_mf["Move Start Date"], errors='coerce')
        
-        merged_site_df_ms_mf["Aging"] = (merged_site_df_ms_mf["Dismantled date"] - merged_site_df_ms_mf["Move Start Date"]).dt.days
-        merged_site_df_ms_mf =merged_site_df_ms_mf[merged_site_df_ms_mf["Aging"] <= -45]
+        # merged_site_df_ms_mf["Aging"] = (merged_site_df_ms_mf["Dismantled date"] - merged_site_df_ms_mf["Move Start Date"]).dt.days
+        # merged_site_df_ms_mf =merged_site_df_ms_mf[merged_site_df_ms_mf["Aging"] <= -45]
  
        
         merged_site_df_ms_mf["Site+Module"] = merged_site_df_ms_mf["Unique Site ID"].astype(str) + "_" + merged_site_df_ms_mf["Module Name"].astype(str)
