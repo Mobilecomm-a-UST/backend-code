@@ -119,7 +119,8 @@ INSTALLED_APPS = [
     "Noika_Slicing",
     "noika2G_tool",
     "payload_traffic_tool",
-    "performance_idploy"
+    "performance_idploy",
+    "DailyTaskReview",
 ]
 
 MIDDLEWARE = [
