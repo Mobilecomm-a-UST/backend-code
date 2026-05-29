@@ -154,58 +154,6 @@ from LTE_Integration_Scripting_Automtion.circles.NE.NE_COMISSION_SCRIPT import (
     NE_SiteBasic_5216_IPV6,
 )
 
-from LTE_Integration_Scripting_Automtion.circles.AP.AP_INTEGRATION_SCRIPT import (
-    AP_Route_4G_GPL_LMS,
-    AP_TN_RN_GPS_MME,
-    CISCO_MME_AP,
-    NOKIA_MME_AP,
-    AP_5G_Cell_creation_Sctp_Endpoint_Creation,
-    AP_5g_CgSwitch_text,
-    AP_GNBCUCPFunction_text,
-    AP_GNBDUFunction_text,
-    AP_Route_5G_GPL_LMS,
-    AP_Termpoint_GUtranFreqRelation
-)
-from LTE_Integration_Scripting_Automtion.circles.AP.AP_COMISSION_SCRIPT import (
-    AP_SiteBasic_ipv4_6303,
-    AP_SiteBasic_ipv6_6303,
-    AP_SiteBasic_ipv4_6339,
-    AP_SiteBasic_ipv4_6353,
-    AP_SiteBasic_ipv4_6630,
-    AP_SiteBasic_ipv4_6631,
-    AP_SiteBasic_ipv4_6651,
-    AP_SiteBasic_ipv6_6339,
-    AP_SiteBasic_ipv6_6630,
-    AP_SiteBasic_ipv6_6631,
-    AP_SiteBasic_ipv6_6651,
-)
-
-from LTE_Integration_Scripting_Automtion.circles.NE.NE_INTEGRATION_SCRIPT import (
-    NE_5G_Cell_creation_Sctp_Endpoint_Creation,
-    NE_CGSWITCH_SCRIPT,
-    NE_GNBCUCPFunction,
-    NE_GNBDUFunction,
-    NE_GPL_LMS_DST_SCRIPT,
-    NE_NR_GPL_LMS_SCRIPT,
-    NE_Termpoint_GUtranFreqRelation_script,
-    NE_TN_RN_GPS_MME_SCRIPT
-)
-from LTE_Integration_Scripting_Automtion.circles.NE.NE_COMISSION_SCRIPT import (
-    NE_SiteBasic_ipv4_6303,
-    NE_SiteBasic_ipv4_6339,
-    NE_SiteBasic_ipv4_6353,
-    NE_SiteBasic_ipv4_6630,
-    NE_SiteBasic_ipv4_6631,
-    NE_SiteBasic_ipv4_6651,
-    NE_SiteBasic_ipv6_6303,
-    NE_SiteBasic_ipv6_6339,
-    NE_SiteBasic_ipv6_6630,
-    NE_SiteBasic_ipv6_6631,
-    NE_SiteBasic_ipv6_6651,
-    NE_SiteBasic_5216_IPV4,
-    NE_SiteBasic_5216_IPV6,
-)
-
 
 from LTE_Integration_Scripting_Automtion.circles.AS.AS_INTEGRATION_SCRIPT import (
     AS_GPL_LMS_DST_SCRIPT,
@@ -3136,7 +3084,7 @@ def generate_integration_script(request):
                 mme_type = (NOKIA_MME_SCRIPT_HR if (str(temp_lte_df["MME"].unique()[0]).upper()).startswith("NOKIA") else CISCO_MME_SCRIPT_HR)
                 
                 with open(HR_TN_RN_GPS_MME_path, "a", encoding="utf-8") as file:
-                    file.write(HR_TN_RN_GPS_MME.format(eNodeBName=enodebname, tnPortId=tnPortId, eNBId=enbid) + mme_type + "\n")
+                    file.write(HR_TN_RN_GPS_MME.format(eNodeBName=enodebname, tnPortId=tnPortId,Phy_SiteID_Userlabel=site_basic["Phy SiteID/Userlabel"].values[0], eNBId=enbid) + mme_type + "\n")
 
             # --------------------------------------------------------------------------------------- 5G Cell Scripts ----------------------------------------------------------------#
             # Implemented HR Circle-specific 5G Script Generation Logic
