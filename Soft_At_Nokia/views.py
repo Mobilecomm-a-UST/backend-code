@@ -1269,17 +1269,70 @@ def upload_and_compare_xml_files(request):
             worksheet.set_column(ok_col_idx, ok_col_idx, None, None, {"hidden": True})
 
 
+        # if not df_summary.empty:
+        #     df_summary.to_excel(writer, index=False, sheet_name="FixedParameters")
+        #     format_excel_sheet(writer, "FixedParameters", df_summary)
         if not df_summary.empty:
-            df_summary.to_excel(writer, index=False, sheet_name="FixedParameters")
+            df_summary.to_excel(
+                writer,
+                index=False,
+                sheet_name="FixedParameters"
+            )
+
             format_excel_sheet(writer, "FixedParameters", df_summary)
+
+            workbook = writer.book
+            worksheet = writer.sheets["FixedParameters"]
+
+            green_fmt = workbook.add_format({
+                "bg_color": "#4DC765",
+                "border": 1
+            })
+
+            red_fmt = workbook.add_format({
+                "bg_color": "#DB6976",
+                "border": 1
+            })
+
+            parameter_col = df_summary.columns.get_loc("parameter")
+            value_col = df_summary.columns.get_loc("value")
+
+            for row_idx in range(len(df_summary)):
+
+                parameter_value = str(
+                    df_summary.iloc[row_idx, parameter_col]
+                ).strip().lower()
+
+                actual_value = str(
+                    df_summary.iloc[row_idx, value_col]
+                ).strip().lower()
+
+                # actLbPowerSaving validation
+                if parameter_value == "actlbpowersaving":
+
+                    fmt = green_fmt if actual_value == "true" else red_fmt
+
+                    worksheet.write(
+                        row_idx + 1,
+                        value_col,
+                        actual_value,
+                        fmt
+                    )
 
         if not df_ipmtu.empty:
             df_ipmtu.to_excel(writer, index=False, sheet_name="ipMtu Status")
             format_excel_sheet(writer, "ipMtu Status", df_ipmtu)
         
         if not df_nomenclature_4G.empty:
-            df_nomenclature_4G.to_excel(writer, index=False, sheet_name="Nomenclature 4G")
+
+            df_nomenclature_4G.to_excel(
+                writer,
+                index=False,
+                sheet_name="Nomenclature 4G"
+            )
+
             format_excel_sheet(writer, "Nomenclature 4G", df_nomenclature_4G)
+
             workbook = writer.book
             worksheet = writer.sheets["Nomenclature 4G"]
 
@@ -1289,17 +1342,75 @@ def upload_and_compare_xml_files(request):
             })
 
             template_col = df_nomenclature_4G.columns.get_loc("SiteTemplateName")
+            cell_col = df_nomenclature_4G.columns.get_loc("CELL_NAME")
+            site_col = df_nomenclature_4G.columns.get_loc("Site_id")
 
             for row_idx in range(len(df_nomenclature_4G)):
-                value = str(df_nomenclature_4G.iloc[row_idx, template_col])
 
-                # highlight invalid length
-                if len(value) != 15:
-                    worksheet.write(row_idx + 1, template_col, value, red_fmt)
+                template_value = str(
+                    df_nomenclature_4G.iloc[row_idx, template_col]
+                ).strip()
+
+                cell_value = str(
+                    df_nomenclature_4G.iloc[row_idx, cell_col]
+                ).strip()
+
+                site_value = str(
+                    df_nomenclature_4G.iloc[row_idx, site_col]
+                ).strip()
+
+                # SiteTemplateName length validation
+                if len(template_value) != 15:
+
+                    worksheet.write(
+                        row_idx + 1,
+                        template_col,
+                        template_value,
+                        red_fmt
+                    )
+
+                # CELL_NAME validation
+                if (
+                    " " in cell_value
+                    or site_value not in cell_value
+                ):
+
+                    worksheet.write(
+                        row_idx + 1,
+                        cell_col,
+                        cell_value,
+                        red_fmt
+                    )
                     
                     
+        # if not df_nomenclature_2G.empty:
+        #     df_nomenclature_2G.to_excel(writer, index=False, sheet_name="Nomenclature 2G")
+        #     format_excel_sheet(writer, "Nomenclature 2G", df_nomenclature_2G)
+
+        #     workbook = writer.book
+        #     worksheet = writer.sheets["Nomenclature 2G"]
+
+        #     red_fmt = workbook.add_format({
+        #         "bg_color": "#DB6976",
+        #         "border": 1
+        #     })
+
+        #     template_col = df_nomenclature_2G.columns.get_loc("SiteTemplateName")
+
+        #     for row_idx in range(len(df_nomenclature_2G)):
+        #         value = str(df_nomenclature_2G.iloc[row_idx, template_col])
+
+        #         # highlight invalid length
+        #         if len(value) != 15:
+        #             worksheet.write(row_idx + 1, template_col, value, red_fmt)
+        
         if not df_nomenclature_2G.empty:
-            df_nomenclature_2G.to_excel(writer, index=False, sheet_name="Nomenclature 2G")
+            df_nomenclature_2G.to_excel(
+                writer,
+                index=False,
+                sheet_name="Nomenclature 2G"
+            )
+
             format_excel_sheet(writer, "Nomenclature 2G", df_nomenclature_2G)
 
             workbook = writer.book
@@ -1311,18 +1422,48 @@ def upload_and_compare_xml_files(request):
             })
 
             template_col = df_nomenclature_2G.columns.get_loc("SiteTemplateName")
+            sector_col = df_nomenclature_2G.columns.get_loc("SECTOR_NAME")
+            site_col = df_nomenclature_2G.columns.get_loc("SITE_NAME")
 
             for row_idx in range(len(df_nomenclature_2G)):
-                value = str(df_nomenclature_2G.iloc[row_idx, template_col])
 
-                # highlight invalid length
-                if len(value) != 15:
-                    worksheet.write(row_idx + 1, template_col, value, red_fmt)
-                    
-        
-            
-            
+                template_value = str(
+                    df_nomenclature_2G.iloc[row_idx, template_col]
+                ).strip()
+
+                sector_value = str(
+                    df_nomenclature_2G.iloc[row_idx, sector_col]
+                ).strip()
+
+                site_value = str(
+                    df_nomenclature_2G.iloc[row_idx, site_col]
+                ).strip()
+
+                # SiteTemplateName length validation
+                if len(template_value) != 15:
+
+                    worksheet.write(
+                        row_idx + 1,
+                        template_col,
+                        template_value,
+                        red_fmt
+                    )
+
+                # SECTOR_NAME validation
+                if (
+                    " " in sector_value
+                    or site_value not in sector_value
+                ):
+
+                    worksheet.write(
+                        row_idx + 1,
+                        sector_col,
+                        sector_value,
+                        red_fmt
+                    )
+                
         if not df_ret.empty:
+
             df_ret = df_ret[
                 [
                     "Site_id",
@@ -1335,8 +1476,82 @@ def upload_and_compare_xml_files(request):
                     "Angle"
                 ]
             ]
-            df_ret.to_excel(writer, index=False, sheet_name="RET Counter")
+
+            df_ret.to_excel(
+                writer,
+                index=False,
+                sheet_name="RET Counter"
+            )
+
             format_excel_sheet(writer, "RET Counter", df_ret)
+
+            workbook = writer.book
+            worksheet = writer.sheets["RET Counter"]
+
+            green_fmt = workbook.add_format({
+                "bg_color": "#4DC765",
+                "border": 1
+            })
+
+            red_fmt = workbook.add_format({
+                "bg_color": "#DB6976",
+                "border": 1
+            })
+
+            mech_col = df_ret.columns.get_loc("Mech. angle")
+            angle_col = df_ret.columns.get_loc("Angle")
+
+            for row_idx in range(len(df_ret)):
+
+                mech_value = str(
+                    df_ret.iloc[row_idx, mech_col]
+                ).strip()
+
+                angle_value = str(
+                    df_ret.iloc[row_idx, angle_col]
+                ).strip()
+
+                # -------------------------
+                # Mech. angle validation
+                # 0 = GREEN else RED
+                # -------------------------
+                mech_fmt = green_fmt if mech_value == "0.0" else red_fmt
+
+                worksheet.write(
+                    row_idx + 1,
+                    mech_col,
+                    mech_value,
+                    mech_fmt
+                )
+
+                # -------------------------
+                # Angle validation
+                # not equal 0 = GREEN
+                # 0 = RED
+                # -------------------------
+                angle_fmt = red_fmt if angle_value == "0" else green_fmt
+
+                worksheet.write(
+                    row_idx + 1,
+                    angle_col,
+                    angle_value,
+                    angle_fmt
+                )
+        # if not df_ret.empty:
+        #     df_ret = df_ret[
+        #         [
+        #             "Site_id",
+        #             "MRBTS",
+        #             "ALD",
+        #             "RET Unit ID",
+        #             "Mech. angle",
+        #             "Min. angle",
+        #             "Max. angle",
+        #             "Angle"
+        #         ]
+        #     ]
+        #     df_ret.to_excel(writer, index=False, sheet_name="RET Counter")
+        #     format_excel_sheet(writer, "RET Counter", df_ret)
         
         if not df_vswr.empty:
             df_vswr.to_excel(writer, index=False, sheet_name="VSWR")
@@ -1838,6 +2053,7 @@ def upload_summary_xml_files_5G(request):
         def findall(path): return root.findall(path, ns)
 
         all_sites = []
+        print("bhai code chl rh h----------")
 
         for mrbts in findall(".//ns:managedObject[@class='MRBTS']"):
             data = {}
@@ -2126,7 +2342,8 @@ def upload_summary_xml_files_5G(request):
 
     relative_output_path = os.path.relpath(output_path, MEDIA_ROOT)
     download_link = request.build_absolute_uri(os.path.join(MEDIA_URL, relative_output_path).replace('\\', '/'))
-    api_usage_all(userId, api)
+    
+    api_usage_all(userId, api,"")
     return Response({
         "message": f"Report generated successfully for circle: {circle_name}",
         "download_link": download_link,
@@ -2147,11 +2364,42 @@ def upload_checklist_xml_files_5G(request):
         return Response({"error": "XML file required"}, status=status.HTTP_400_BAD_REQUEST)
 
     # Expected external values
+    # external_values = {
+    #     "actSliceSwitchToDefault": "1",
+    #     "sd": "2",
+    #     "sst": "0",
+    #     "userLabel": "Premium"
+    # }
     external_values = {
-        "actSliceSwitchToDefault": "1",
+
+        # NRBTS
+        "actSliceSwitchToDefault": "true",
+        "x2LinkSupervisionTmr": "6",
+        "actEnhancedX2LinkSupervision": "true",
+
+        # SNSSAI
         "sd": "2",
         "sst": "0",
-        "userLabel": "Premium"
+        "userLabel": "Premium",
+
+        # path supervision
+        "pathSupervisionIntfList_1": "S1-U",
+        "pathSupervisionIntfList_2": "NG-U",
+
+        # GTPU
+        "gtpuN3Reqs": "5",
+        "gtpuPathSupInt": "60",
+        "gtpuT3Resp": "2",
+        "pathRecoveryWaitTimer": "60",
+
+        # TIMER
+        "miNrE1InterfaceBts": "15 MIN/60 MIN",
+
+        # SCTP
+        "sctpRtoInit": "2000",
+        "sctpRtoMax": "4000",
+        "sctpRtoMin": "1000",
+        "sctpValidCookieLife": "60000"
     }
 
     rows = []
@@ -2168,10 +2416,40 @@ def upload_checklist_xml_files_5G(request):
     mrbts_site_map = get_mrbts_site_map(root, ns)
 
     # Only these parameters required
+    # allowed_parameters = {
+    #     "NRBTS": ["actSliceSwitchToDefault","x2LinkSupervisionTmr","actEnhancedX2LinkSupervision"],
+    #     "SNSSAI": ["sd", "sst", "userLabel"]
+    # } 
     allowed_parameters = {
-        "NRBTS": ["actSliceSwitchToDefault","x2LinkSupervisionTmr","actEnhancedX2LinkSupervision"],
-        "SNSSAI": ["sd", "sst", "userLabel"]
-    } 
+
+        "NRBTS": [
+            "actSliceSwitchToDefault",
+            "x2LinkSupervisionTmr",
+            "actEnhancedX2LinkSupervision",
+            "miNrE1InterfaceBts"
+        ],
+
+        "SNSSAI": [
+            "sd",
+            "sst",
+            "userLabel"
+        ],
+
+        "GTPU": [
+            "pathSupervisionIntfList",
+            "gtpuN3Reqs",
+            "gtpuPathSupInt",
+            "gtpuT3Resp",
+            "pathRecoveryWaitTimer"
+        ],
+
+        "SCTP": [
+            "sctpRtoInit",
+            "sctpRtoMax",
+            "sctpRtoMin",
+            "sctpValidCookieLife"
+        ]
+    }
 
     for mo in mo_elements:
 
@@ -2208,13 +2486,60 @@ def upload_checklist_xml_files_5G(request):
             external_value = external_values.get(param, "")
 
             # Custom logic for actSliceSwitchToDefault
+            # if param == "actSliceSwitchToDefault":
+            #     if internal_value.lower() in ["true", "1"]:
+            #         status_result = "OK"
+            #     else:
+            #         status_result = "NOK"
+            # else:
+            #     status_result = "OK" if internal_value == external_value else "NOK"
+            # ---------------------------------------
+            # Custom validations
+            # ---------------------------------------
+
+            # actSliceSwitchToDefault
             if param == "actSliceSwitchToDefault":
-                if internal_value.lower() in ["true", "1"]:
-                    status_result = "OK"
-                else:
-                    status_result = "NOK"
+
+                status_result = (
+                    "OK"
+                    if internal_value.lower() in ["true", "1"]
+                    else "NOK"
+                )
+
+            # pathSupervisionIntfList
+            elif param == "pathSupervisionIntfList":
+
+                valid_values = ["S1-U", "NG-U"]
+
+                status_result = (
+                    "OK"
+                    if internal_value in valid_values
+                    else "NOK"
+                )
+
+                external_value = ",".join(valid_values)
+
+            # miNrE1InterfaceBts
+            elif param == "miNrE1InterfaceBts":
+
+                valid_values = ["15 MIN", "60 MIN"]
+
+                status_result = (
+                    "OK"
+                    if internal_value in valid_values
+                    else "NOK"
+                )
+
+                external_value = "15 MIN/60 MIN"
+
+            # Normal validation
             else:
-                status_result = "OK" if internal_value == external_value else "NOK"
+
+                status_result = (
+                    "OK"
+                    if internal_value == external_value
+                    else "NOK"
+                )
 
             rows.append({
                 "Site_ID": site,

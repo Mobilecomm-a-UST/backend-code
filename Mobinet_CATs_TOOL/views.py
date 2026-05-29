@@ -555,11 +555,14 @@ def mobinet_dump(request):
  
     except Exception as e:
         return Response({"error": f"find an error: {str(e)}"}, status=500)
- 
-   
-   
-   
-# Second Api for CATs(rfs) and Locator files and hw files-------------
+
+circle_map_code = {
+        151: 'AP', 132: 'BR',152: 'CN',111: 'DL',113: 'HR', 114: 'JK',
+        153: 'KK', 174: 'MU', 172: 'MP',  134: 'OR', 115: 'PB', 176: 'RJ',
+        116: 'UE', 117: 'UW', 135: 'WB', 136: 'KO', 155: 'TN',133: 'NE',131: 'AS',
+        173:"MH"
+    }        
+  
 # Second Api for CATs(rfs) and Locator files and hw files-------------
 @api_view(['POST'])
 def rfs_dump(request):
@@ -589,48 +592,69 @@ def rfs_dump(request):
                 else:
                     return Response({"error": f"Unsupported file format: {file}"}, status=400)  
                 rfs_df.columns = rfs_df.columns.str.strip()
-                print("RFS Data columns:", rfs_df.columns)
+                # print("RFS Data columns:", rfs_df.columns)
             except Exception as e:
                 return Response({"error": f"error reading rfs file: {str(e)}"}, status=500)
            
-       
-        #OLM ID File------------------------------------------------------------``
-        olm_id_file = request.FILES.get("olm_id_file")
-        if not olm_id_file:
-            return Response({"error": "olm_id_file not provided"}, status=400)
-        try:
-            if olm_id_file.name.endswith('.csv'):
-                olm_id_df = pd.read_csv(olm_id_file, usecols=['OLM ID', 'Partner'])
-            elif olm_id_file.name.endswith(('.xls', '.xlsx')):
-                olm_id_df = pd.read_excel(olm_id_file, engine='openpyxl', usecols=['OLM ID', 'Partner'])
-            else:
-                return Response({"error": "Invalid file format for olm_id_file"}, status=400)
-            olm_id_df.columns = olm_id_df.columns.str.strip()
-            print(olm_id_df.columns)
-        except Exception as e:
-            return Response({"error": f"error reading olm_id_file: {str(e)}"}, status=500)
+    
+    
  
-        #  Multiple HW Files--------------------------------------------------
+       # Multiple HW Files --------------------------------------------------
         hw_files = request.FILES.getlist("hw_file")
+
         if not hw_files:
             return Response({"error": "hw_file(s) not provided"}, status=400)
- 
+
         hw_df_list = []
+        no_need_list = []
+
         for hw_file in hw_files:
             try:
                 if hw_file.name.endswith('.csv'):
-                    df = pd.read_csv(hw_file, usecols=['ITEMCODE', 'Module Name'])
+
+                    df = pd.read_csv(hw_file)
+                    df.columns = df.columns.str.strip()
+
+                    hw_df_list.append(df[['ITEMCODE', 'Module Name']])
+
                 elif hw_file.name.endswith(('.xls', '.xlsx')):
-                 df = pd.read_excel(hw_file, engine='openpyxl', usecols=['ITEMCODE', 'Module Name'])
+
+                    # main sheet
+                    df = pd.read_excel(hw_file, engine='openpyxl')
+                    df.columns = df.columns.str.strip()
+
+                    hw_df_list.append(df[['ITEMCODE', 'Module Name']])
+
+                    # optional No module list sheet
+                    try:
+                        module_df = pd.read_excel( hw_file,engine='openpyxl',sheet_name="No module list")
+                        module_df.columns = module_df.columns.str.strip()
+
+                        if 'No Module' in module_df.columns:
+                            no_need_list.append(module_df[['No Module']])
+                    except:
+                        pass
                 else:
-                    return Response({"error": "Unsupported file format for hw_file"}, status=400)
-                df.columns = df.columns.str.strip()
-                hw_df_list.append(df)
+                    return Response(
+                        {"error": "Unsupported file format for hw_file"},
+                        status=400
+                    )
+
             except Exception as e:
-                return Response({"error": f"error reading a hw_file: {str(e)}"}, status=500)
+                return Response(
+                    {"error": f"error reading a hw_file: {str(e)}"},
+                    status=500
+                )
+
         hw_df = pd.concat(hw_df_list, ignore_index=True).drop_duplicates()
-        print(hw_df.columns)
+
+        no_need_module = (
+            pd.concat(no_need_list, ignore_index=True).drop_duplicates()
+            if no_need_list
+            else pd.DataFrame(columns=['No Module'])
+        )
  
+
         #  Site List File-----------------------------------------------------------
         site_list_file = request.FILES.get("site_list_file")
         if not site_list_file:
@@ -641,7 +665,7 @@ def rfs_dump(request):
             elif site_list_file.name.endswith(('.xls', '.xlsx')):
               site_list_df = pd.read_excel(site_list_file, engine='openpyxl', usecols=['Unique ID', 'Dismantled date'])
             site_list_df.columns = site_list_df.columns.str.strip()
-            print(site_list_df.columns)
+            # print(site_list_df.columns)
         except Exception as e:
             return Response({"error": f"error reading site_list_file: {str(e)}"}, status=500)
  
@@ -657,9 +681,9 @@ def rfs_dump(request):
                 continue
             try:
                 if locator_file_path.endswith('.csv'):
-                    df = pd.read_csv(locator_file_path, usecols=['LOCATION_NAME', 'SITEID'])    
+                    df = pd.read_csv(locator_file_path, usecols=['Location Name', 'Siteid'])    
                 elif locator_file_path.endswith(('.xls', '.xlsx')):
-                    df = pd.read_excel(locator_file_path, engine='openpyxl', usecols=['LOCATION_NAME', 'SITEID'])
+                    df = pd.read_excel(locator_file_path, engine='openpyxl', usecols=['Location Name', 'Siteid'])  
                 elif locator_file_path.endswith('.xlsb'):
                     with open_workbook(locator_file_path) as wb:
                         with wb.get_sheet(wb.sheets[0]) as sheet:
@@ -674,18 +698,18 @@ def rfs_dump(request):
             except Exception as e:
                 return Response({"error": f"error reading locator file: {str(e)}"}, status=500)
         locator_df = pd.concat(locator_df_list, ignore_index=True).drop_duplicates()
-        print(locator_df.columns)
+        # print(locator_df.columns)
            
      
-        #    # Unmatched Sites...
-        #     unmatched_sites = request.POST.getlist('unmatched_sites')
-        #     if not unmatched_sites:
-        #         return Response({"error": "unmatched_sites not provided"}, status=400)
-        #     if len(unmatched_sites) == 1 and "\n" in unmatched_sites[0]:
-        #      unmatched_sites = unmatched_sites[0].strip().split("\n")
-        #     print("Aarry of unmatched_sites:",unmatched_sites)
-        #     unmatched_sites_df = pd.DataFrame(unmatched_sites, columns=["Unmatched Sites"])
-        #     print(unmatched_sites_df.head())
+    #    # Unmatched Sites...
+    #     unmatched_sites = request.POST.getlist('unmatched_sites')
+    #     if not unmatched_sites:
+    #         return Response({"error": "unmatched_sites not provided"}, status=400)
+    #     if len(unmatched_sites) == 1 and "\n" in unmatched_sites[0]:
+    #      unmatched_sites = unmatched_sites[0].strip().split("\n")
+    #     print("Aarry of unmatched_sites:",unmatched_sites)
+    #     unmatched_sites_df = pd.DataFrame(unmatched_sites, columns=["Unmatched Sites"])
+    #     print(unmatched_sites_df.head())
        
         # Mobinet Dump File--------------------------------------------
         mobinet_dump_file = request.FILES.get("mobinet_dump_file")
@@ -696,7 +720,7 @@ def rfs_dump(request):
             mobinet_output_df.columns = mobinet_output_df.columns.str.strip()
             mobinet_dump_df = pd.read_excel(mobinet_dump_file, engine='openpyxl',sheet_name='Mobinet_Backup_Data')
             mobinet_dump_df.columns = mobinet_dump_df.columns.str.strip()
-            print(mobinet_dump_df.columns)
+            # print(mobinet_dump_df.columns)
         except Exception as e:
             return Response({"error": f"error reading mobinet_dump_file: {str(e)}"}, status=500)
        
@@ -712,7 +736,7 @@ def rfs_dump(request):
                 continue
             try:
                 if msmf_file_path.endswith('.csv'):
-                    msmf_df = pd.read_csv(msmf_file_path)
+                    msmf_df = pd.read_csv(msmf_file_path,engine='python', on_bad_lines='skip')
                 elif msmf_file_path.endswith(('.xls', '.xlsx')):
                     msmf_df = pd.read_excel(msmf_file_path, engine='openpyxl')
                 elif msmf_file_path.endswith('.xlsb'):
@@ -726,7 +750,7 @@ def rfs_dump(request):
                     return Response({"error": f"Unsupported file format: {file}"}, status=400)
                    
                 msmf_df.columns = msmf_df.columns.str.strip()
-                print("MS-MF Data columns:", msmf_df.columns)
+                # print("MS-MF Data columns:", msmf_df.columns)
             except Exception as e:
                 return Response({"error": f"error reading ms-mf file: {str(e)}"}, status=500)
            
@@ -757,54 +781,96 @@ def rfs_dump(request):
                                 data.append([item.v for item in row])
                             stock_report_df = pd.DataFrame(data[1:], columns=data[0])
                 stock_report_df.columns = stock_report_df.columns.str.strip()
-                print("Stock Report Data columns:", stock_report_df.columns)
+                # print("Stock Report Data columns:", stock_report_df.columns)
             except Exception as e:
                 return Response({"error": f"error reading stock report file: {str(e)}"}, status=500)
        
  
    
-       
-        ########for RFS file#######################################
-        # Circle Mapping ....
-        circle_map_code = {
-            151: 'AP', 132: 'BR',152: 'CN',111: 'DL',113: 'HR', 114: 'JK',
-            153: 'KK', 174: 'MU', 172: 'MP',  134: 'OR', 115: 'PB', 176: 'RJ',
-            116: 'UE', 117: 'UW', 135: 'WB', 136: 'KO', 155: 'TN',133: 'NE',131: 'AS',173:'MH'
-        }
- 
- 
-        #  Add Patner information---
-        rfs_df["Patner"] = "Other TSP"
-        rfs_df.loc[rfs_df["RFS_CREATED_BY"].isin(olm_id_df["OLM ID"]), "Patner"] = "Mobliecomm"
+        print("#step1------")
+########for RFS file#######################################
+        
+      
+        rfs_df["Partners"] = "Other TSP"
+
+        mobile_mask = rfs_df["Partner Name"].str.contains(
+            "Mobilecom|Mobilecomm",
+            case=False,
+            na=False
+        )
+        # Step 2: if Partner Name blank then se check Creatordepartment ---
+        creator_mask = (
+            rfs_df["Partner Name"].isna() |
+            (rfs_df["Partner Name"].str.strip() == "")
+        ) & rfs_df["Creatordepartment"].str.contains(
+            "Mobilecom|Mobilecomm",
+            case=False,
+            na=False
+        )
+
+        rfs_df.loc[mobile_mask | creator_mask, "Partners"] = "Mobliecomm"
+        rfs_df.drop(["Creatordepartment", "Partner Name"], axis=1, inplace=True)
  
         # Merge with locator----
         merged_df = pd.merge(
             rfs_df,
-            locator_df[['LOCATION_NAME', 'SITEID']],
+            locator_df[['Location Name', 'Siteid']],
             how='inner',
-            left_on='FROMLOCATION',
-            right_on='LOCATION_NAME',
+            left_on='Fromlocation',
+            right_on='Location Name',
             sort=False
         )
-        print('marge with locator',merged_df.head())
+        # print('marge with locator',merged_df.head())
        
         # Circle Mapping ----
-        merged_df['Circle_Map'] = merged_df['FROMLOCATION'].astype(str).str[:3].astype(int)
+        merged_df['Circle_Map'] = merged_df['Fromlocation'].astype(str).str[:3].astype(int)
         merged_df['Circle'] = merged_df['Circle_Map'].map(circle_map_code)
-        merged_df['Unique Site ID'] = merged_df['SITEID'].astype(str) + "_" + merged_df['Circle'].astype(str)
-        merged_df.drop(columns=['LOCATION_NAME', 'Circle_Map'], inplace=True)
-       
+        merged_df['Unique Site ID'] = merged_df['Siteid'].astype(str) + "_" + merged_df['Circle'].astype(str)
+        merged_df.drop(columns=['Location Name', 'Circle_Map'], inplace=True)
+        print("#step2------")
      
  
         # Merge with HW File -----
+        # merged_hw = pd.merge(
+        #     merged_df,
+        #     hw_df,
+        #     how='left',
+        #     left_on="Itemcode",
+        #     right_on='ITEMCODE',
+        #     sort=False
+        # )
+        # print('merge with Hardware',merged_hw.head())
+        #add filter filter and remove no neeed module----
+        print(no_need_module['No Module'])
+
         merged_hw = pd.merge(
             merged_df,
             hw_df,
-            how='outer',
-            on='ITEMCODE',
-            sort=False
+            how='left',
+            left_on="Itemcode",
+            right_on='ITEMCODE'
         )
-        print('merge with Hardware',merged_hw.head())
+
+        # remove no need modules
+        if not no_need_module.empty:
+            print("remove module---")
+            no_modules = (
+                no_need_module['No Module']
+                .dropna()
+                .astype(str)
+                .str.strip()
+                .unique()
+            )
+
+            merged_hw = merged_hw[
+                ~merged_hw['Module Name']
+                .astype(str)
+                .str.strip()
+                .isin(no_modules)
+            ]
+       
+
+
  
         #  Merge with site list
         merged_site_df = pd.merge(
@@ -816,7 +882,10 @@ def rfs_dump(request):
             sort=False
         )
         merged_site_df.drop(columns=['Unique ID'], inplace=True)
-        print('merge with site list file',merged_site_df.head())
+       
+        # print('merge with site list file',merged_site_df.head())
+        # print(site_list_df['Unique ID'])
+     
        
         #  #data for unmatched site.
         # unmatched_data= merged_site_df[merged_site_df['Unique Site ID'].isin(unmatched_sites_df["Unmatched Sites"])]
@@ -826,29 +895,29 @@ def rfs_dump(request):
  
  
         merged_site_df["Dismantled date"] = pd.to_datetime(merged_site_df["Dismantled date"], errors='coerce')
-        merged_site_df["RFS_CREATED_DATE"] = pd.to_datetime(merged_site_df["RFS_CREATED_DATE"], errors='coerce')
+        merged_site_df["Rfs Created Date"] = pd.to_datetime(merged_site_df["Rfs Created Date"], errors='coerce')
  
-        # merged_site_df["Aging"] = (merged_site_df["Dismantled date"] - merged_site_df["RFS_CREATED_DATE"]).dt.days
-        merged_site_df["Aging"] = ( merged_site_df["RFS_CREATED_DATE"] - merged_site_df["Dismantled date"]).dt.days
-        # merged_site_df = merged_site_df[merged_site_df["Aging"].between(-45, 45, inclusive="both")]
-        merged_site_df = merged_site_df[merged_site_df["Aging"] >= -45]
+        # merged_site_df["Aging"] = (merged_site_df["Dismantled date"] - merged_site_df["Rfs Created Date"]).dt.days
+        # merged_site_df = merged_site_df[merged_site_df["Aging"]<=-45]
  
        
         merged_site_df["Site+Module"] = merged_site_df["Unique Site ID"].astype(str) + "_" + merged_site_df["Module Name"].astype(str)
         merged_site_df.drop_duplicates(inplace=True)
-       
+        
+        # merged_site_df.to_excel("mereged_site_data.xlsx")
+        print("#step3------")
        
  
        
        
         #work on serial number----------------------------------------------------------
         rfs_matched_sn =merged_site_df.copy()
-        rfs_matched_sn["Site+Serial"]= rfs_matched_sn["Unique Site ID"].astype(str) + "_" + rfs_matched_sn["SERIALNUMBER"].astype(str)
+        rfs_matched_sn["Site+Serial"]= rfs_matched_sn["Unique Site ID"].astype(str) + "_" + rfs_matched_sn["Serialnumber"].astype(str)
        
         #remove S from serial number
         rfs_matched_sn_2= rfs_matched_sn.copy()
-        rfs_matched_sn_2["SERIALNUMBER"]=rfs_matched_sn_2["SERIALNUMBER"].str.replace(r'^[Ss]', '', regex=True)
-        rfs_matched_sn_2["Site+Serial"]= rfs_matched_sn_2["Unique Site ID"].astype(str) + "_" + rfs_matched_sn_2["SERIALNUMBER"].astype(str)
+        rfs_matched_sn_2["Serialnumber"]=rfs_matched_sn_2["Serialnumber"].str.replace(r'^[Ss]', '', regex=True)
+        rfs_matched_sn_2["Site+Serial"]= rfs_matched_sn_2["Unique Site ID"].astype(str) + "_" + rfs_matched_sn_2["Serialnumber"].astype(str)
        
         #merge with serial number from mobinet dump file
         rfs_matched_sn=pd.merge(
@@ -870,9 +939,10 @@ def rfs_dump(request):
        
         rfs_matched_sn_merege=pd.concat([rfs_matched_sn, rfs_matched_sn_2], ignore_index=True)
         rfs_matched_sn_merege.drop_duplicates(inplace=True)
+        
        
          
-        # Merge with stock report file if provided-----------------------------------
+ # Merge with stock report file if provided-----------------------------------
         if stock_report_df is not None and not stock_report_df.empty:
             rfs_finally =merged_site_df.copy()
             rfs_with_stock_report = pd.merge(
@@ -887,65 +957,108 @@ def rfs_dump(request):
             print("rfs_with_stock_report", rfs_with_stock_report)
             
         else:
-            rfs_with_stock_report= merged_site_df.copy()     
+            rfs_with_stock_report= merged_site_df.copy()   
+        
+        print("#phase5-------------")
+        # print(rfs_with_stock_report)
+        # rfs_with_stock_report.to_excel("mereged_site_data.xlsx")
+       
+
+
     
        
        
-        # summary_df for RFS file------
+# summary_df for RFS file------
         summary_df = (
             merged_site_df.groupby("Site+Module", as_index=False)
             .agg({
-                "RECEIVED_QTY": "count",
-                "RFS_QTY": "count",
-                "SRNCAMREQSTATUS":lambda x: ", ".join(set(x)),
-               
-               
+                "Received Qty": "count",
+                "Rfs Qty": "count",
+                "Srncamreqstatus": lambda x: ", ".join(set(x.dropna().astype(str)))
             })
             .rename(columns={
-                "RECEIVED_QTY": "RECEIVED_QTY_COUNT(RFS_FILE)",
-                "RFS_QTY": "RFS_QTY_COUNT(RFS_FILE)"
+                "Received Qty": "RECEIVED_QTY_COUNT(RFS_FILE)",
+                "Rfs Qty": "RFS_QTY_COUNT(RFS_FILE)",
+                "Srncamreqstatus":"SRNCAMREQSTATUS"
             })
         )
        
-        print(summary_df)
-        #######################################################################################
+        # print(summary_df)
+    #######################################################################################
+
+
+
    
    
-        #######for MS-MF file####################
-        msmf_df["Patner"] = "Other TSP"
-        msmf_df.loc[msmf_df["MS_CREATED_BY"].isin(olm_id_df["OLM ID"]), "Patner"] = "Mobliecomm"
- 
+    #######for MS-MF file####################
+        msmf_df["Partners"] = "Other TSP"
+
+        msmf_df.loc[
+            msmf_df["Partner"].astype(str).str.contains(
+                "Mobilecom|Mobilecomm",
+                case=False,
+                na=False
+            ),
+            "Partners"
+        ] = "Mobliecomm"
+
+        msmf_df.drop(["Partner"], axis=1,
+            inplace=True,
+            errors="ignore"
+        )
+
         # Merge with locator----
         merged_df_ms_mf = pd.merge(
             msmf_df,
-            locator_df[['LOCATION_NAME', 'SITEID']],
+            locator_df[['Location Name', 'Siteid']],
             how='inner',
-            left_on='MS_FROMLOCATION',
-            right_on='LOCATION_NAME',
+            left_on='Ms Fromlocation',
+            right_on='Location Name',
             sort=False
         )
-        print('marge with locator',merged_df_ms_mf.head())
+        # print('marge with locator',merged_df_ms_mf.head())
        
         # Circle Mapping ----
-        merged_df_ms_mf['Circle_Map'] = merged_df_ms_mf['MS_FROMLOCATION'].astype(str).str[:3].astype(int)
+        merged_df_ms_mf['Circle_Map'] = merged_df_ms_mf['Ms Fromlocation'].astype(str).str[:3].astype(int)
         merged_df_ms_mf['Circle'] = merged_df_ms_mf['Circle_Map'].map(circle_map_code)
-        merged_df_ms_mf['Unique Site ID'] = merged_df_ms_mf['SITEID'].astype(str) + "_" + merged_df_ms_mf['Circle'].astype(str)
-        merged_df_ms_mf.drop(columns=['LOCATION_NAME', 'Circle_Map'], inplace=True)
+        merged_df_ms_mf['Unique Site ID'] = merged_df_ms_mf['Siteid'].astype(str) + "_" + merged_df_ms_mf['Circle'].astype(str)
+        merged_df_ms_mf.drop(columns=['Location Name', 'Circle_Map'], inplace=True)
        
-     
+        print("#step6------")
  
         # Merge with HW File -----
         merged_hw_ms_mf = pd.merge(
             merged_df_ms_mf,
             hw_df,
-            how='outer',
-            left_on='PARTCODE',
+            how='left',
+            left_on='Partcode',
             right_on='ITEMCODE',
             sort=False
         )
         merged_hw_ms_mf.drop(columns=['ITEMCODE'], inplace=True)
- 
-        print('merge with Hardware',merged_hw_ms_mf.head())
+
+        print(no_need_module['No Module'])
+
+        # remove no need modules
+        if not no_need_module.empty:
+            print("remove module---")
+            no_modules = (
+                no_need_module['No Module']
+                .dropna()
+                .astype(str)
+                .str.strip()
+                .unique()
+            )
+
+
+            merged_hw_ms_mf =  merged_hw_ms_mf[
+                ~ merged_hw_ms_mf['Module Name']
+                .astype(str)
+                .str.strip()
+                .isin(no_modules)
+            ]
+    
+        # print('merge with Hardware',merged_hw_ms_mf.head())
  
         #  Merge with site list
         merged_site_df_ms_mf = pd.merge(
@@ -957,7 +1070,7 @@ def rfs_dump(request):
             sort=False
         )
         merged_site_df_ms_mf.drop(columns=['Unique ID'], inplace=True)
-        print('merge with site list file',merged_site_df_ms_mf.head())
+        # print('merge with site list file',merged_site_df_ms_mf.head())
        
         # #data for unmatched site.
         # unmatched_data_ms_mf= merged_site_df_ms_mf[merged_site_df_ms_mf['Unique Site ID'].isin(unmatched_sites_df["Unmatched Sites"])]
@@ -967,12 +1080,10 @@ def rfs_dump(request):
      
        
         merged_site_df_ms_mf["Dismantled date"] = pd.to_datetime(merged_site_df_ms_mf["Dismantled date"], errors='coerce')
-        merged_site_df_ms_mf["MOVE_START_DATE"] = pd.to_datetime(merged_site_df_ms_mf["MOVE_START_DATE"], errors='coerce')
+        merged_site_df_ms_mf["Move Start Date"] = pd.to_datetime(merged_site_df_ms_mf["Move Start Date"], errors='coerce')
        
-        # merged_site_df_ms_mf["Aging"] = (merged_site_df_ms_mf["Dismantled date"] - merged_site_df_ms_mf["MOVE_START_DATE"]).dt.days
-        merged_site_df_ms_mf["Aging"] = (merged_site_df_ms_mf["MOVE_START_DATE"] - merged_site_df_ms_mf["Dismantled date"] ).dt.days
-        # merged_site_df_ms_mf = merged_site_df_ms_mf[merged_site_df_ms_mf["Aging"].between(-45, 45, inclusive="both")]
-        merged_site_df_ms_mf = merged_site_df_ms_mf[merged_site_df_ms_mf["Aging"] >= -45]
+        # merged_site_df_ms_mf["Aging"] = (merged_site_df_ms_mf["Dismantled date"] - merged_site_df_ms_mf["Move Start Date"]).dt.days
+        # merged_site_df_ms_mf =merged_site_df_ms_mf[merged_site_df_ms_mf["Aging"] <= -45]
  
        
         merged_site_df_ms_mf["Site+Module"] = merged_site_df_ms_mf["Unique Site ID"].astype(str) + "_" + merged_site_df_ms_mf["Module Name"].astype(str)
@@ -980,11 +1091,11 @@ def rfs_dump(request):
        
         #work with serial number----------------------------------------
         ms_mf_matched_sn =merged_site_df_ms_mf.copy()
-        ms_mf_matched_sn["Site+Serial"]= ms_mf_matched_sn["Unique Site ID"].astype(str) + "_" + ms_mf_matched_sn["SERIAL_NUMBER"].astype(str)
+        ms_mf_matched_sn["Site+Serial"]= ms_mf_matched_sn["Unique Site ID"].astype(str) + "_" + ms_mf_matched_sn["Serial Number"].astype(str)
          #remove S from serial number
         ms_mf_matched_sn_2= ms_mf_matched_sn.copy()
-        ms_mf_matched_sn_2["SERIAL_NUMBER"]=ms_mf_matched_sn_2["SERIAL_NUMBER"].str.replace(r'^[Ss]', '', regex=True)
-        ms_mf_matched_sn_2["Site+Serial"]= ms_mf_matched_sn_2["Unique Site ID"].astype(str) + "_" + ms_mf_matched_sn_2["SERIAL_NUMBER"].astype(str)
+        ms_mf_matched_sn_2["Serial Number"]=ms_mf_matched_sn_2["Serial Number"].str.replace(r'^[Ss]', '', regex=True)
+        ms_mf_matched_sn_2["Site+Serial"]= ms_mf_matched_sn_2["Unique Site ID"].astype(str) + "_" + ms_mf_matched_sn_2["Serial Number"].astype(str)
        
          
         #merge with serial number from mobinet dump file
@@ -1008,6 +1119,8 @@ def rfs_dump(request):
        
         ms_mf_matched_merged=pd.concat([ms_mf_matched_sn, ms_mf_matched_sn_2], ignore_index=True)
         ms_mf_matched_merged.drop_duplicates(inplace=True)
+        # print(ms_mf_matched_merged)
+        print("#step7------")
        
        
    
@@ -1018,24 +1131,24 @@ def rfs_dump(request):
         ms_mf_summary_df = (
             merged_site_df_ms_mf.groupby("Site+Module", as_index=False)
             .agg({
-                "RECEIVED_QTY": "count",
-                "QTY": "count"
+                "Received Qty": "count",
+                "Qty": "count"
             })
             .rename(columns={
-                "RECEIVED_QTY": "RECEIVED_QTY_COUNT(MS-MF FILE)",
-                "QTY": "RFS_QTY_COUNT(MS-MF FILE)"
+                "Received Qty": "RECEIVED_QTY_COUNT(MS-MF FILE)",
+                "Qty": "RFS_QTY_COUNT(MS-MF FILE)"
             })
         )
        
-        print("ms_mf_summary_df",ms_mf_summary_df)
+        # print("ms_mf_summary_df",ms_mf_summary_df)
      
-        #merge summary_df and ms_mf_summary_df
+    #merge summary_df and ms_mf_summary_df
         final_summary_df=pd.merge(
             summary_df,
             ms_mf_summary_df,
             how='outer',
             on='Site+Module',)
-        print(final_summary_df)
+        # print(final_summary_df)
        
         ## final Api work here-------------------------
         #site wise summary and circle wise summary data site wise  data count
@@ -1047,7 +1160,7 @@ def rfs_dump(request):
            
         )
         merged_find_summary['Unique ID'] = merged_find_summary['Site+Module'].str.split('_', expand=True)[0] + "_" + merged_find_summary['Site+Module'].str.split('_', expand=True)[1]
-        #site wise summay----------------------------------------------
+     #site wise summay----------------------------------------------
         site_wise_summary = (
         merged_find_summary
         .groupby('Unique ID', as_index=False)
@@ -1072,8 +1185,9 @@ def rfs_dump(request):
         .rename(columns={
             'Unique ID': 'Site ID',
             'Serial Number_count': 'Mobinet_Count(Serial Number)',
-        }))
-        print(site_wise_summary)
+        })
+    )
+        # print(site_wise_summary)
        
         #Circle wise summary----------------------------------------------
         merged_find_summary['Circle'] = merged_find_summary['Unique ID'].str.split('_', expand=True)[1]
@@ -1103,7 +1217,7 @@ def rfs_dump(request):
                
                 })
             )
-        print(circle_wise_summary)
+        # print(circle_wise_summary)
        
         #count of matched sites in mobinet and rfs file ms-mf------------------------
        
@@ -1117,7 +1231,7 @@ def rfs_dump(request):
         new_df['SiteID in RFS'] = site_list_df['Unique ID'].map(site_count_rfs).fillna(0).astype(int)
         new_df['SiteID in MS-MF'] = site_list_df['Unique ID'].map(site_count_msmf).fillna(0).astype(int)
  
-        print("new_df", new_df)
+        # print("new_df", new_df)
         print("End all files Process. Saving the data in excel file")
  
        
@@ -1151,7 +1265,7 @@ def rfs_dump(request):
     except Exception as e:
         return Response({"error": f"find an error: {str(e)}"}, status=500)
     
-
+    
 #api for  Rfs mapping tool----------------------------------------
 @api_view(["POST"])
 def rfs_site_mapping(request):

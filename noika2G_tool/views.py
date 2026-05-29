@@ -114,11 +114,13 @@ def nokia_2g(request):
 
     #work for LAPD------------------  ZDWP:OM152:BCXU,2:0,62:BCF152OMU;
     lapd_df=ref_sctp_df.copy()
-    lapd_df["Command"]=lapd_df.apply(
-        lambda raw :(
-            f"ZDWP:OM{raw['BCF_ID']}:{raw['unit']},{raw['index(BCSU)']}:0,{raw['SCTP parameter set']}:{raw['SCTP association name']}"
-        ),axis=1
-    )
+    lapd_df["Command"] = lapd_df.apply(
+    lambda row: (
+        f"ZDWP:OM{row['BCF_ID']}:{row['unit']},{row['index(BCSU)']}:"
+        f"0,{row['SCTP parameter set']}:{row['SCTP association name']};"
+    ),
+    axis=1
+)
 
     # work for BCF for command-------
 
@@ -154,45 +156,45 @@ def nokia_2g(request):
     bts_df.columns = bts_df.columns.str.strip()
     bts_df["Command"] = bts_df.apply(
     lambda row: "\n".join([
-        f"ZEQC:BCF={row['BCF']},BTS={row['BTS_ID']},SEG={row['SEG_ID']},REF={row['MR ID']},NAME={row['NW_NAME']},SEGNAME={row['SEG_NAME']}:CI={row['CI']},BAND={row['BAND']}:NCC={row['NCC']},BCC={row['BCC']}:MCC={row['MCC']},MNC={row['MNC']},LAC={row['LAC']}::GENA={row['GENA']},RAC={row['RAC']};",
+        f"ZEQC:BCF={row['BCF']},BTS={row['BTS_ID']},SEG={row['BTS_ID']},REF={row['MR ID']},NAME={row['NW_NAME']},SEGNAME={row['SEG_NAME']}:CI={row['CI']},BAND={row['BAND']}:NCC={row['NCC']},BCC={row['BCC']}:MCC={row['MCC']},MNC={row['MNC']},LAC={row['LAC']}::GENA={row['GENA']},RAC={row['RAC']};",
 
         f"ZEQA:BTS={row['BTS_ID']}:MAL={row['MAL']},MO={row['MO']},MS={row['MS']};",
 
         f"ZEQE:BTS={row['BTS_ID']}:HOP={row['HOP']},HSN1={row['HSN1']};",
 
-        f"ZEUC:SEG={row['SEG_ID']},RSEG={row['MR ID']};",
-        f"ZEHC:SEG={row['SEG_ID']},RSEG={row['MR ID']};",
-        f"ZEHC:SEG={row['SEG_ID']},RSEG={row['MR ID']};",
+        f"ZEUC:SEG={row['BTS_ID']},RSEG={row['MR ID']};",
+        f"ZEHC:SEG={row['BTS_ID']},RSEG={row['MR ID']};",
+        f"ZEHC:SEG={row['BTS_ID']},RSEG={row['MR ID']};",
 
-        f"ZEQV:SEG={row['SEG_ID']}:GENA={row['GENA']},:PCU={row['PCU']};",
+        f"ZEQV:SEG={row['BTS_ID']}:GENA={row['GENA']},:PCU={row['PCU']};",
         f"ZEQV:BTS={row['BTS_ID']}:EGENA={row['EGENA']};",
         f"ZEQV:BTS={row['BTS_ID']}:CDED={row['CDED']},CDEF={row['CDEF']};",
 
         f"ZEFM:{row['BCF']}::T200S={row['T200S']},T200F={row['T200F']};",
 
         f"ZEQM:BTS={row['BTS_ID']}:RDIV={row['RXDIV']};",
-        f"ZEQV:SEG={row['SEG_ID']}:BFG={row['BFG']};",
+        f"ZEQV:SEG={row['BTS_ID']}:BFG={row['BFG']};",
 
-        f"ZEQM:SEG={row['SEG_ID']}:PMAX1={row['PMAX1']},PMAX2={row['PMAX2']},FRL={row['FRL']},FRU={row['FRU']},AFRL={row['AFRL']},AFRU={row['AFRU']},BMA={row['BMA']};",
+        f"ZEQM:SEG={row['BTS_ID']}:PMAX1={row['PMAX1']},PMAX2={row['PMAX2']},FRL={row['FRL']},FRU={row['FRU']},AFRL={row['AFRL']},AFRU={row['AFRU']},BMA={row['BMA']};",
 
-        f"ZEQF:SEG={row['SEG_ID']}:PLMN={row['PLMN']},;",
-        f"ZEQY:SEG={row['SEG_ID']}:AHRLT={row['AHRLT']},ARLT={row['ARLT']},;",
-        f"ZEQG:SEG={row['SEG_ID']}:RLT={row['RLT']};",
+        f"ZEQF:SEG={row['BTS_ID']}:PLMN={row['PLMN']},;",
+        f"ZEQY:SEG={row['BTS_ID']}:AHRLT={row['AHRLT']},ARLT={row['ARLT']},;",
+        f"ZEQG:SEG={row['BTS_ID']}:RLT={row['RLT']};",
 
-        f"ZEQM:SEG={row['SEG_ID']}::::QSRI={row['QSRI']},QSRP={row['QSRP']},:::::;",
+        f"ZEQM:SEG={row['BTS_ID']}::::QSRI={row['QSRI']},QSRP={row['QSRP']},:::::;",
         f"ZEQM:BTS={row['BTS_ID']}:RDIV={row['RXDIV']},;",
-        f"ZEQM:SEG={row['SEG_ID']}::::FDD={row['FDD']},FDM={row['FDM']},;",
+        f"ZEQM:SEG={row['BTS_ID']}::::FDD={row['FDD']},FDM={row['FDM']},;",
 
-        f"ZEQF:SEG={row['SEG_ID']}:FRLTE={row['FRLTE']};",
-        f"ZEQM:SEG={row['SEG_ID']}:SLO={row['SLO']},CB={row['CB']},BLT={row['BLT']},NECI={row['NECI']},CABE={row['CABE']};",
-        f"ZEQB:SEG={row['SEG_ID']}:IDLE={row['BAL']},ACT={row['ACT']},;",
+        f"ZEQF:SEG={row['BTS_ID']}:FRLTE={row['FRLTE']};",
+        f"ZEQM:SEG={row['BTS_ID']}:SLO={row['SLO']},CB={row['CB']},BLT={row['BLT']},NECI={row['NECI']},CABE={row['CABE']};",
+        f"ZEQB:SEG={row['BTS_ID']}:IDLE={row['BAL']},ACT={row['ACT']},;",
 
-        f"ZEQF:SEG={row['SEG_ID']}:RE={row['RE']},;",
-        f"ZEQM:SEG={row['SEG_ID']}:TRP={row['TRP']};",
+        f"ZEQF:SEG={row['BTS_ID']}:RE={row['RE']},;",
+        f"ZEQM:SEG={row['BTS_ID']}:TRP={row['TRP']};",
         f"ZEQE:BTS={row['BTS_ID']}:AHOP={row['AHOP']};",
-        f"ZEQF:SEG={row['SEG_ID']}:DR={row['DR']};",
-        f"ZEQJ:SEG={row['SEG_ID']}:PER={row['PER']};",
-        f"ZEQV:SEG={row['SEG_ID']}:GENA={row['GENA']};"
+        f"ZEQF:SEG={row['BTS_ID']}:DR={row['DR']};",
+        f"ZEQJ:SEG={row['BTS_ID']}:PER={row['PER']};",
+        f"ZEQV:SEG={row['BTS_ID']}:GENA={row['GENA']};"
     ]),
     axis=1
 )
