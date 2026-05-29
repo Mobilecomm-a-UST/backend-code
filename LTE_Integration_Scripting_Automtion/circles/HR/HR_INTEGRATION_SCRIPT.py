@@ -1615,12 +1615,12 @@ set $mordn,EUtranFreqRelation=2438  EUtranFreqToQciProfileRelation qciProfileRef
 
 set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold1Rsrp -140
 set $mordn,UeMeasControl=1,ReportConfigB2Geran=1 b2Threshold2Geran -110
-set $mordn,EUtranFreqRelation=39150 cellReselectionPriority 6
-set $mordn,EUtranFreqRelation=39348 cellReselectionPriority 6
-set $mordn,EUtranFreqRelation=1434 cellReselectionPriority 5
-set $mordn,EUtranFreqRelation=415$ cellReselectionPriority 4
+set $mordn,EUtranFreqRelation=39150 cellReselectionPriority 5
+set $mordn,EUtranFreqRelation=39348 cellReselectionPriority 5
+set $mordn,EUtranFreqRelation=1434 cellReselectionPriority 4
+set $mordn,EUtranFreqRelation=415$ cellReselectionPriority 6
 set $mordn,EUtranFreqRelation=2438 cellReselectionPriority 3
-set $mordn,GeranFreqGroupRelation=1         cellReselectionPriority 1
+set $mordn,GeranFreqGroupRelation=1 cellReselectionPriority 1
 
 set $mordn,EUtranFreqRelation=39150 connectedmodemobilityprio 6
 set $mordn,EUtranFreqRelation=39348 connectedmodemobilityprio 6
@@ -1647,7 +1647,7 @@ set $mordn,GeranFreqGroupRelation=1     threshXLow  62
 set $mordn,EUtranFreqRelation=39150 voicePrio -1
 set $mordn,EUtranFreqRelation=39348 voicePrio -1
 set $mordn,EUtranFreqRelation=1434 voicePrio 5
-set $mordn,EUtranFreqRelation=415$ voicePrio -1
+set $mordn,EUtranFreqRelation=415$ voicePrio 6
 set $mordn,EUtranFreqRelation=2438 voicePrio 3
 set $mordn cellSubscriptionCapacity 3000
 set $mordn,EUtranFreqRelation  interFreqMeasType 0
@@ -2481,7 +2481,7 @@ y
 del Transport=1,Synchronization=1,FrequencySyncIO=1
 y
 
-crn Equipment=1,FieldReplaceableUnit=4,SyncPort=1
+crn Equipment=1,FieldReplaceableUnit=BB-1,SyncPort=1
 userLabel
 end
 
@@ -2490,7 +2490,7 @@ lset Transport=1,Synchronization=1$ fixedPosition true
 lset Transport=1,Synchronization=1$ telecomStandard 1
 
 crn Transport=1,Synchronization=1,TimeSyncIO=1
-encapsulation Equipment=1,FieldReplaceableUnit=4,SyncPort=1
+encapsulation Equipment=1,FieldReplaceableUnit=BB-1,SyncPort=1
 end
 
 cr Transport=1,Synchronization=1,TimeSyncIO=1,GnssInfo=1
@@ -2512,7 +2512,7 @@ deb Transport=1,Synchronization=1,RadioEquipmentClock=1,NodeGroupSyncMember=1
 
 ldeb RadioEquipmentClockReference=1
 
-
+set 0 Userlabel {Phy_SiteID_Userlabel}
 
 """
 
@@ -4779,13 +4779,27 @@ set  CXC4012381   featurestate 1
 set  CXC4012385   featurestate 1 
 set  CXC4040006   featurestate 1                                                                                                                                   
 
-set EUtranCellFDD=HR_.*,EUtranFreqRelation=240 endcHoFreqPriority 6
-set EUtranCellFDD=HR_.*,EUtranFreqRelation=1511 endcHoFreqPriority 7
-set EUtranCellFDD=HR_.*,EUtranFreqRelation=3663 endcAwareIdleModePriority 3
-set EUtranCellTDD=HR_.*,EUtranFreqRelation=39150 endcAwareIdleModePriority 5
-set EUtranCellTDD=HR_.*,EUtranFreqRelation=39151 endcAwareIdleModePriority 7
-set EUtranCellTDD=HR_.*,EUtranFreqRelation=39348 endcAwareIdleModePriority 5
-set EUtranCellTDD=HR_.*,EUtranFreqRelation=39349 endcAwareIdleModePriority 7             
+set EUtranCellFDD=HR_.*,EUtranFreqRelation=1434          endcHoFreqPriority -1
+set EUtranCellFDD=HR_.*,EUtranFreqRelation=2438          endcHoFreqPriority 6
+set EUtranCellFDD=HR_.*,EUtranFreqRelation=39150         endcHoFreqPriority -1
+set EUtranCellFDD=HR_.*,EUtranFreqRelation=39348         endcHoFreqPriority -1
+set EUtranCellFDD=HR_.*,EUtranFreqRelation=415           endcHoFreqPriority 7
+set EUtranCellTDD=HR_.*,EUtranFreqRelation=1434          endcHoFreqPriority -1
+set EUtranCellTDD=HR_.*,EUtranFreqRelation=2438          endcHoFreqPriority 6
+set EUtranCellTDD=HR_.*,EUtranFreqRelation=39150         endcHoFreqPriority -1
+set EUtranCellTDD=HR_.*,EUtranFreqRelation=39348         endcHoFreqPriority -1
+set EUtranCellTDD=HR_.*,EUtranFreqRelation=415           endcHoFreqPriority 7
+set EUtranCellFDD=HR_.*,EUtranFreqRelation=1434          endcAwareIdleModePriority 4
+set EUtranCellFDD=HR_.*,EUtranFreqRelation=2438          endcAwareIdleModePriority 5
+set EUtranCellFDD=HR_.*,EUtranFreqRelation=39150         endcAwareIdleModePriority 3
+set EUtranCellFDD=HR_.*,EUtranFreqRelation=39348         endcAwareIdleModePriority 2
+set EUtranCellFDD=HR_.*,EUtranFreqRelation=415           endcAwareIdleModePriority 6
+set EUtranCellTDD=HR_.*,EUtranFreqRelation=1434          endcAwareIdleModePriority 4
+set EUtranCellTDD=HR_.*,EUtranFreqRelation=2438          endcAwareIdleModePriority 5
+set EUtranCellTDD=HR_.*,EUtranFreqRelation=39150         endcAwareIdleModePriority 3
+set EUtranCellTDD=HR_.*,EUtranFreqRelation=39348         endcAwareIdleModePriority 2
+set EUtranCellTDD=HR_.*,EUtranFreqRelation=415           endcAwareIdleModePriority 6
+
 
 get Router=*.*,RouteTableIPv6Static=.*,Dst=default,NextHop= address > $gwip                                                                                          
 mcc Router=*.*,InterfaceIPv6=NR,AddressIPv6=X2 ping6 $gwip -c 4
