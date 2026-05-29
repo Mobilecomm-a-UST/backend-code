@@ -1080,9 +1080,6 @@ def generate_integration_script(request):
                     with open(gpl_5g_path, "w") as file:
                         file.write(CHN_05_5G_LMS_GPL_CHN + "\n")
                     
-                    sa_path = os.path.join(node_dir_5g, f"04_{node}_SA_CONFIGURATION_RIM_ACTIVATION_{current_time}.txt")
-                    with open(sa_path, "w") as file:
-                        file.write("")
             
             # --------------------------------------------------------- CHN Commissioning Scripts -----------------------------------------#
             for node in site_basic_df["eNodeBName"].unique():

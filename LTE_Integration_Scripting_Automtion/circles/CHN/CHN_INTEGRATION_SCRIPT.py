@@ -101,7 +101,7 @@ gs+
 
 crn Transport=1,Synchronization=1,TimeSyncIO=1
 compensationDelay 0
-encapsulation FieldReplaceableUnit=BB-1,SyncPort=SYNC
+encapsulation FieldReplaceableUnit=BB-1,SyncPort=1
 filterTime 12
 end
 
@@ -118,7 +118,7 @@ ReplaceableUnit=BB-1,RiPort=D
 userLabel
 end
 
-crn Equipment=1,FieldReplaceableUnit=BB-1,SyncPort=SYNC
+crn Equipment=1,FieldReplaceableUnit=BB-1,SyncPort=1
 userLabel
 end
 gs-
@@ -610,7 +610,7 @@ crn ENodeBFunction=1
 eNodeBPlmnId mcc=404,mnc=40,mncLength=2
 eNBId {eNBId}
 sctpRef Transport=1,SctpEndpoint=1
-upIpAddressRef Transport=1,Router=LTEUP,InterfaceIPv4=TN_C_UP,AddressIPv4=TN_C_UP\
+upIpAddressRef Transport=1,Router=LTEUP,InterfaceIPv4=TN_C_UP,AddressIPv4=TN_C_UP
 end
 #END ENodeBFunction=1 --------------------
 
@@ -6942,7 +6942,7 @@ end
 #END Transport=1,Synchronization=1,RadioEquipmentClock=1 --------------------
 
 crn Transport=1,Synchronization=1,TimeSyncIO=1
-encapsulation Equipment=1,FieldReplaceableUnit=BB-1,SyncPort=SYNC
+encapsulation Equipment=1,FieldReplaceableUnit=BB-1,SyncPort=1
 end
 #END Transport=1,Synchronization=1,TimeSyncIO=1 --------------------
 
