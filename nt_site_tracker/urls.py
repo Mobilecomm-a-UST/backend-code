@@ -15,6 +15,7 @@ urlpatterns = [
     path("update_nt_template/",updtae_nt_template),
     path("delete_nt_data/",delete_nt_tracker),
     path("delete_ntissue/",delete_ntissue),
+    
     path("ms1_ageing_dashboard_table1/", ms1_ageing_dashboard_table1, name="ms1_ageing_dashboard_table1"),
     path("ms1_ageing_dashboard_table2/", ms1_ageing_dashboard_table2, name="ms1_ageing_dashboard_table2"),
     path("graphs/", graphs_view, name="graphs"),
@@ -35,10 +36,17 @@ urlpatterns = [
 
     path("ms2_daily_dashboard/", ms2_daily_waterfall, name="ms2_daily_dashboard"),
     path("ms2_weekly_monthly_dashboard/", ms2_weekly_monthly_waterfall, name="ms2_weekly_monthly_dashboard"),    
-    path("graphs/", graphs_view, name="graphs"),
-    path("monthly_graph/", monthly_graph, name="monthly_graph"),
+
     path("ms2_ageing_dashboard_table1/", ms2_ageing_dashboard_table1, name="ms2_ageing_dashboard_table1"),
     path("ms2_ageing_dashboard_table2/", ms2_ageing_dashboard_table2, name="ms2_ageing_dashboard_table2"),
     path("ms2_graphs/", ms2_graphs_view, name="graphs"),
     path("ms2_monthly_graph/", ms2_monthly_graph, name="monthly_graph"),
+
+#add new api-
+    path("nt_issue_summary/",nt_issue_summary),
+    path("upload_nt_issue/",upload_nt_issue_view),
+    path("sync_nt_site_status",sync_nt_site_status),
+    path("nt_issue_frontend_hyperlink/",nt_issue_summary_frontend),
+    path("nt_aging_frontend_hyperlink/",ageing_dashboard_hyperlink)
 ]
+

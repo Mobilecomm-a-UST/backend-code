@@ -18,6 +18,8 @@ from django.db.models import Q
 from django.forms.models import model_to_dict
 import numpy as np
 from rest_framework import status
+from openpyxl.utils import get_column_letter
+from .utils import format_excel
 
 ALL_COLUMNS = [
     "Circle",
@@ -35,6 +37,7 @@ ALL_COLUMNS = [
     "Allocation Date",
     "RFAI Survey Date",
     "WRFAI (YES/NO)",
+    "WRFAI Date",
     "MO Punch Date",
     "Material Dispatch Date",
     "Material Delivered Date",
@@ -118,6 +121,7 @@ COLUMN_MAP = {
     "RFAI Survey Date": "rfai_survey_date",
 
     "WRFAI (YES/NO)": "wrfai",
+    "WRFAI Date":"wrfai_date",
 
     "MO Punch Date": "mo_punch_date",
     "Material Dispatch Date": "material_dispatch_date",
@@ -205,41 +209,52 @@ COLUMN_MAP = {
 
 
 def compute_union_ageing(rows):
+
     if rows.empty:
         return 0
 
     today = datetime.today()
 
     def to_datetime(x):
+
         if isinstance(x, datetime):
             return x
+
         if isinstance(x, date):
             return datetime.combine(x, datetime.min.time())
+
         if isinstance(x, str) and x not in ["", "-", "nan", None]:
             return datetime.strptime(x, "%d-%b-%y")
+
         return None
 
     ranges = []
 
     for _, row in rows.iterrows():
+
         start = to_datetime(row["Start Date"])
         close = row["Close Date"]
-        # close = to_datetime(close)
-
         end = today if close in ["", "-", "nan", None, "undefined"] else close
-        end = to_datetime(end)
-        ranges.append((start, end))
 
-    # Sort
+        end = to_datetime(end)
+
+        if start and end:
+            ranges.append((start, end))
+
+    if not ranges:
+        return 0
+
     ranges.sort(key=lambda x: x[0])
 
-    # Merge intervals
     merged = []
+
     current_start, current_end = ranges[0]
 
     for start, end in ranges[1:]:
+
         if start <= current_end:
             current_end = max(current_end, end)
+
         else:
             merged.append((current_start, current_end))
             current_start, current_end = start, end
@@ -250,87 +265,114 @@ def compute_union_ageing(rows):
 
 
 def update_ageing_new(circle, site_id):
-    # Fetch tracker row
+
     data_obj = NTSiteTracker.objects.filter(
         circle=circle,
         site_id=site_id
     ).first()
 
-    # if not data_obj:
-    #     return None
+    if not data_obj:
+        return
 
-    # Fetch issues
-    issue_obj = NTIssue.objects.filter(
-        circle=circle,
-        site_id=site_id
+    issue_df = pd.DataFrame(
+        NTIssue.objects.filter(
+            circle=circle,
+            site_id=site_id
+        ).values()
     )
 
-    issue_df = pd.DataFrame(issue_obj.values())
-    
-    rename_map = {
-        "circle": "Circle",
-        "site_id": "Site ID",
-        "issue_owner": "Issue Owner",
-        "milestone": "Milestone",
-        "issue_name": "Issue Name",
-        "start_date": "Start Date",
-        "close_date": "Close Date",
-        "status": "Status",
-        "duration": "Duration",
-        "updated_by": "Updated_by",
-        "updated_at": "Updated_at",
-        "created_by": "Created_by",
-        "created_at": "Created_at"
-    }
-
-    print(issue_df)
-    
-    issue_df = issue_df.rename(columns=rename_map)
-
     if issue_df.empty:
+
         pri_ageing = 0
-        other_issue_ageing = 0
+        other_ust_ageing = 0
+        other_airtel_ageing = 0
         total_issue_ageing = 0
         pri_count = 0
+
     else:
-        pri_rows = issue_df[issue_df["Issue Name"] == "PRI"]
-        other_rows = issue_df[issue_df["Issue Name"] != "PRI"]
+
+        rename_map = {
+            "start_date": "Start Date",
+            "close_date": "Close Date",
+            "issue_name": "Issue Name",
+            "issue_owner": "Issue Owner"
+        }
+
+        issue_df = issue_df.rename(columns=rename_map)
+
+        pri_rows = issue_df[
+            issue_df["Issue Name"] == "PRI"
+        ]
+
+        other_ust_rows = issue_df[
+            (issue_df["Issue Name"] != "PRI") &
+            (issue_df["Issue Owner"] == "Mobilecomm")
+        ]
+
+        other_airtel_rows = issue_df[
+            (issue_df["Issue Name"] != "PRI") &
+            (issue_df["Issue Owner"] == "Airtel")
+        ]
 
         pri_ageing = compute_union_ageing(pri_rows)
-        other_issue_ageing = compute_union_ageing(other_rows)
-        total_issue_ageing = compute_union_ageing(issue_df)
+
+        other_ust_ageing = compute_union_ageing(
+            other_ust_rows
+        )
+
+        other_airtel_ageing = compute_union_ageing(
+            other_airtel_rows
+        )
+
+        total_issue_ageing = compute_union_ageing(
+            issue_df
+        )
+
         pri_count = len(pri_rows)
 
-    # Assign ageing values
     data_obj.pri_issue_ageing = pri_ageing
-    data_obj.other_issue_ageing = other_issue_ageing
+    data_obj.other_ust_issue_ageing = other_ust_ageing
+    data_obj.other_airtel_issue_ageing = other_airtel_ageing
     data_obj.total_issue_ageing = total_issue_ageing
     data_obj.pri_count = pri_count
 
-    # Convert dates
-    site_onair = pd.to_datetime(data_obj.site_onair_date, errors="coerce")
-    re_rfai = pd.to_datetime(data_obj.re_rfai_date, errors="coerce")
-    rfai = pd.to_datetime(data_obj.rfai_date, errors="coerce")
+    site_onair = pd.to_datetime(
+        data_obj.site_onair_date,
+        errors="coerce"
+    )
+
+    re_rfai = pd.to_datetime(
+        data_obj.re_rfai_date,
+        errors="coerce"
+    )
+
+    rfai = pd.to_datetime(
+        data_obj.rfai_date,
+        errors="coerce"
+    )
 
     rfai_final = re_rfai if pd.notna(re_rfai) else rfai
 
-    # Calculate rfai_to_ms1_ageing
     if pd.isna(rfai_final):
+
         data_obj.rfai_to_ms1_ageing = "-"
+
     else:
-        issue_ageing = total_issue_ageing or 0
 
-        if pd.isna(site_onair):
-            today = datetime.today()
-            data_obj.rfai_to_ms1_ageing = (today - rfai_final).days - issue_ageing
-        else:
-            data_obj.rfai_to_ms1_ageing = (site_onair - rfai_final).days - issue_ageing
+        end_date = (
+            datetime.today()
+            if pd.isna(site_onair)
+            else site_onair
+        )
 
-    # Save changes
+        data_obj.rfai_to_ms1_ageing = (
+            (end_date - rfai_final).days
+            - total_issue_ageing
+        )
+
     data_obj.save()
 
     return
- 
 
 
 ############################################################  UPLOAD DATA #####################################################################################
@@ -569,26 +611,82 @@ def upload_tracker_data_view(request):
 
 @api_view(['POST'])
 def download_tracker_data_view(request):
-
     userId = request.data.get('userId')
+    year = request.data.get('year')
+
 
     user = RelocationUser.objects.filter(email__iexact=userId).first()
     if not user:
         return Response({"error": "User not found"}, status=404)
+    
+    sync_nt_site_status(request._request)
 
+    # ================= Financial Year Logic =================
+
+    final_filter = Q()
+    if year:
+        year = int(year)
+
+        fy_start = pd.Timestamp(year=year,
+            month=3,
+            day=26).date()
+
+        fy_end = pd.Timestamp(year=year + 1,
+            month=3,
+            day=25).date()
+
+        today = dtime.today().date()
+
+        fy_filter = Q(
+            site_onair_date__range=(fy_start,fy_end)
+        )
+
+        null_filter = Q(
+            site_onair_date__isnull=True
+        )
+
+        if fy_start <= today <= fy_end:
+            final_filter = fy_filter | null_filter
+
+        else:
+            final_filter = fy_filter
+   
     circles = user.circles
+
+    
 
     try:
         # ================= Fetch Data =================
         if 'CENTRAL' in circles:
-            qs = NTSiteTracker.objects.all()
+            if year:
+                qs = NTSiteTracker.objects.filter(final_filter)
+            else:
+                qs = NTSiteTracker.objects.all()
+
             issue_qs = NTIssue.objects.all()
+            site_status_qs = SiteStatus.objects.all()
+
         else:
-            qs = NTSiteTracker.objects.filter(circle__in=circles)
-            issue_qs = NTIssue.objects.filter(circle__in=circles)
+            if year:
+                qs = NTSiteTracker.objects.filter(
+                    final_filter,
+                    circle__in=circles
+                )
+            else:
+                qs = NTSiteTracker.objects.filter(
+                    circle__in=circles
+                )
+            issue_qs = NTIssue.objects.filter(
+                circle__in=circles
+            )
+
+            site_status_qs = SiteStatus.objects.filter(
+                circle__in=circles
+            )
 
         df = pd.DataFrame(qs.values())
         issue_df = pd.DataFrame(issue_qs.values())
+        site_status_df = pd.DataFrame(site_status_qs.values())
 
         if df.empty:
             return Response({
@@ -602,6 +700,14 @@ def download_tracker_data_view(request):
                 "duration","remarks","updated_by","updated_at","created_by","created_at"
             ])
 
+        if site_status_df.empty:
+            site_status_df = pd.DataFrame(columns=[
+                "site_id",
+                "circle",
+                "status",
+                "date"
+            ])    
+
         # ================= Date Formatting =================
         # Main tracker date formatting
         for col in df.columns:
@@ -612,6 +718,7 @@ def download_tracker_data_view(request):
         for col in issue_df.columns:
             if col.endswith("_date"):
                 issue_df[col] = pd.to_datetime(issue_df[col],errors='coerce').dt.strftime('%d-%b-%y')
+
 
         if "last_updated_date" in df.columns:
             df["last_updated_date"] = pd.to_datetime(df["last_updated_date"], errors='coerce').dt.strftime('%d-%b-%y %H:%M:%S')
@@ -650,6 +757,8 @@ def download_tracker_data_view(request):
             "allocation_date",
             "rfai_survey_date",
             "wrfai",
+            "wrfai_date",
+
 
             "mo_punch_date",
             "material_dispatch_date",
@@ -751,6 +860,10 @@ def download_tracker_data_view(request):
         wb = load_workbook(template)
         ws = wb["Main Tracker"]
         issue_ws = wb["Issue Tracker"]
+        status_ws = wb["Site Status"]
+      
+        status_ws["A1"] = "Circle"
+        status_ws["B1"] = "Site ID"
         # ================= Fill Issue Tracker Sheet =================
         issue_start_row = 2
 
@@ -788,7 +901,84 @@ def download_tracker_data_view(request):
 
                 if issue_df.columns[c_idx - 1] in ["start_date", "close_date"]:
                     cell.number_format = "dd-mmm-yy"
-                
+
+    #site sttus--------------------------------------
+        if not site_status_df.empty:
+
+            # remove id if exists
+            if "id" in site_status_df.columns:
+                site_status_df.drop(columns=["id"], inplace=True)
+
+            # keep required columns
+            site_status_df = site_status_df[
+                [
+                    "circle",
+                    "site_id",
+                    "date",
+                    "status"
+                ]
+            ]
+
+            # date format
+            site_status_df["date"] = pd.to_datetime(
+                site_status_df["date"],
+                errors="coerce"
+            ).dt.strftime("%d-%b-%y")
+
+            # pivot
+            pivot_status = site_status_df.pivot_table(
+                index=["circle", "site_id"],
+                columns="date",
+                values="status",
+                aggfunc="first",
+                fill_value=""
+            ).reset_index()
+
+            # header rename
+            pivot_status = pivot_status.rename(
+                columns={
+                    "circle": "Circle",
+                    "site_id": "Site ID"
+                }
+            )
+
+            # clear old sheet
+            status_ws.delete_rows(1, status_ws.max_row)
+            # write pivot data
+            for r_idx, row in enumerate(
+                dataframe_to_rows(
+                    pivot_status,
+                    index=False,
+                    header=True
+                ),
+                start=1
+            ):
+                for c_idx, value in enumerate(
+                    row,
+                    start=1
+                ):
+                    cell = status_ws.cell(
+                        row=r_idx,
+                        column=c_idx
+                    )
+
+                    cell.value = value
+
+                    # header color
+                    if r_idx == 1:
+                        from openpyxl.styles import PatternFill, Font
+
+                        cell.fill = PatternFill(
+                            fill_type="solid",
+                            start_color="800080",
+                            end_color="800080"
+                        )
+
+                        cell.font = Font(
+                            color="FFFFFF",
+                            bold=True
+                        )      
+       #--------------------------------         
         date_columns = [col for col in df.columns if col.endswith("_date") and col != 'last_updated_date']
 
         for col in date_columns:
@@ -801,6 +991,26 @@ def download_tracker_data_view(request):
                 cell.value = value
                 if df.columns[c_idx - 1].endswith("_date") and value:
                     cell.number_format = "dd-mmm-yy"
+
+        for sheet in [ws, issue_ws, status_ws]:
+            for column_cells in sheet.columns:
+                max_length = 0
+                column = get_column_letter(column_cells[0].column)
+
+                for cell in column_cells:
+                    try:
+                        if cell.value:
+                            max_length = max(
+                                max_length,
+                                len(str(cell.value))
+                            )
+                    except:
+                        pass
+
+                adjusted_width = max_length + 2
+                sheet.column_dimensions[
+                    column
+                ].width = adjusted_width            
 
         wb.save(file_path)
 
@@ -959,6 +1169,7 @@ def daily_dashboard_view(request):
         milestones = [
             "Allocation Date",
             "RFAI Date",
+            "WRFAI",
             "RFAI Survey Date",
             "MO Punch Date",
             "Material Dispatch Date",
@@ -987,6 +1198,10 @@ def daily_dashboard_view(request):
                 .replace("(", "")
                 .replace(")", "")
             )
+
+            # WRFAI special fix
+            if milestone == "WRFAI":
+                milestone_df_format = "wrfai_date"
 
             if milestone_df_format not in df.columns:
                 continue
@@ -1264,6 +1479,7 @@ def weekly_monthly_dashboard_view(request):
         "Allocation Date",
         "RFAI Date",
         "RFAI Survey Date",
+        "WRFAI",
         # "RFAI Survey Done Date",
         "MO Punch Date",
         "Material Dispatch Date",
@@ -1288,8 +1504,16 @@ def weekly_monthly_dashboard_view(request):
         data = []
         
         for milestone in milestones:
-            
-            milestone_df_format = milestone.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
+            milestone_df_format = (
+                milestone.lower()
+                .replace(" ", "_")
+                .replace("-", "_")
+                .replace("(", "")
+                .replace(")", "")
+            )
+
+            if milestone == "WRFAI":
+                milestone_df_format = "wrfai_date"
 
             if milestone_df_format not in df.columns:
                 continue
@@ -1973,6 +2197,7 @@ def frontend_nt_display_view(request):
             'allocation_date',
             'rfai_survey_date',
             'wrfai',
+            'wrfai_date',
 
             'mo_punch_date',
             'material_dispatch_date',
@@ -2405,6 +2630,7 @@ def ms1_ageing_dashboard_table1(request):
     milestones = [
         "Allocation",
         "RFAI",
+        "WRFAI",
         "RFAI Survey",
         "MO Punch",
         "Material Dispatch",
@@ -2432,6 +2658,8 @@ def ms1_ageing_dashboard_table1(request):
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     
     try:
+        month_filtered = int(month_filtered) if str(month_filtered).strip() else None
+        year_filtered = int(year_filtered) if str(year_filtered).strip() else None
 
         if month_filtered and year_filtered:
             month_filtered = int(month_filtered)
@@ -2453,13 +2681,17 @@ def ms1_ageing_dashboard_table1(request):
 
         if current_status and "ALL" not in current_status:
             filters["current_status__in"] = current_status
-        if month_start and month_end:
-            filters[f"{milestone1.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_").replace("5", "five_") + '_date'}__range"] = (month_start, month_end)
 
+        # if month_start and month_end:
+        #     milestone1_col = "wrfai_date" if milestone1 == "WRFAI" else milestone1.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_").replace("5", "five_") + "_date"
+        #     filters[f"{milestone1_col}__range"] = (month_start, month_end)
+            
         obj = NTSiteTracker.objects.filter(**filters)  # noqa: F405
         df = pd.DataFrame(obj.values())
         
-        date_cols = [col.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_").replace("5", "five_") + '_date' for col in milestones]
+        date_cols = [
+            "wrfai_date" if col == "WRFAI"else col.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_").replace("5", "five_") + "_date" for col in milestones
+        ]
         for col in date_cols:
             df[col] = pd.to_datetime(df[col], errors="coerce")
 
@@ -2469,7 +2701,9 @@ def ms1_ageing_dashboard_table1(request):
         def generate_table_summary(df, milestone1, milestone2):
 
 
-            milestone_cols = [(col.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date") for col in milestones[milestones.index(milestone1):milestones.index(milestone2) + 1]]
+            milestone_cols = ["wrfai_date" if col == "WRFAI"else col.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+                for col in milestones[milestones.index(milestone1):milestones.index(milestone2) + 1]
+            ]
 
             temp = df.copy()
 
@@ -2477,9 +2711,9 @@ def ms1_ageing_dashboard_table1(request):
 
             final_df = pd.DataFrame()
 
-            milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
-            milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
-
+            milestone1_col = "wrfai_date" if milestone1 == "WRFAI" else milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+            milestone2_col = "wrfai_date" if milestone2 == "WRFAI" else milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+            
             for circle in circles:
                 if circle != "ALL":
                     temp  = df[df["circle"] == circle]
@@ -2487,11 +2721,56 @@ def ms1_ageing_dashboard_table1(request):
                 done_row = {}
                 pending_row = {}
 
-                for col, label in zip(milestone_cols, milestones[milestones.index(milestone1):milestones.index(milestone2) + 1]):
+                for col, label in zip(
+                    milestone_cols,
+                    milestones[milestones.index(milestone1):milestones.index(milestone2) + 1]
+                ):
 
-                    done_row[label] = (temp[col].notna() & temp[milestone1_col].notna() ).sum()
+                    done_count = (
+                        temp[col].notna() &
+                        temp[milestone1_col].notna()
+                    ).sum()
 
-                    pending_row[label] = (temp[col].isna() & temp[milestone1_col].notna() ).sum()
+                    pending_count = (
+                        temp[col].isna() &
+                        temp[milestone1_col].notna()
+                    ).sum()
+
+                    # normal columns
+                    done_row[label] = done_count
+                    pending_row[label] = pending_count
+
+                    # only for RFAI
+                    if label == "RFAI":
+                        if month_start and month_end:
+                            current_rfai = (
+                                temp["rfai_date"].notna() &
+                                (temp["rfai_date"] >= pd.Timestamp(month_start)) &
+                                (temp["rfai_date"] <= pd.Timestamp(month_end))
+                            ).sum()
+
+                            cf_rfai = (
+                                temp["rfai_date"].notna() &
+                                (temp["rfai_date"] < pd.Timestamp(month_start)) &
+                                temp["site_onair_date"].isna()
+                            ).sum()
+
+                            total_rfai = current_rfai + cf_rfai
+                        else:
+                            current_rfai = temp["rfai_date"].notna().sum()
+                            cf_rfai = 0
+                            total_rfai = current_rfai
+
+                        done_row["RFAI"] = int(current_rfai)
+                        done_row["CF RFAI"] = int(cf_rfai)
+                        done_row["Total RFAI"] = int(total_rfai)
+
+                        pending_row["RFAI"] = 0
+                        pending_row["CF RFAI"] = 0
+                        pending_row["Total RFAI"] = 0
+
+                        continue
+
 
                 rows_to_add = pd.DataFrame([
                     {"Circle": circle, "Site Status": "Done", **done_row},
@@ -2502,7 +2781,11 @@ def ms1_ageing_dashboard_table1(request):
 
             for c in final_df.columns:
                 if c != "Site Status" and c != "Circle":
-                    final_df[c] = final_df[c].astype("Int64")
+                    final_df[c] = (
+                        pd.to_numeric(final_df[c], errors="coerce")
+                        .fillna(0)
+                        .astype(int)
+                    )
 
             return final_df
 
@@ -2526,6 +2809,8 @@ def ms1_ageing_dashboard_table1(request):
     except Exception as e:
         return Response({"error": f"{str(e)}"}, status=500)
   
+
+
   
 @api_view(['GET', 'POST'])
 def ms1_ageing_dashboard_table2(request):
@@ -2555,6 +2840,7 @@ def ms1_ageing_dashboard_table2(request):
     milestones = [
         "Allocation",
         "RFAI",
+        "WRFAI",
         "RFAI Survey",
         "MO Punch",
         "Material Dispatch",
@@ -2585,8 +2871,8 @@ def ms1_ageing_dashboard_table2(request):
     
     try:
 
-        milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
-        milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date"
+        milestone1_col = "wrfai_date" if milestone1 == "WRFAI" else (milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date")
+        milestone2_col = "wrfai_date" if milestone1 == "WRFAI" else (milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_").replace("4", "four_").replace("5", "five_") + "_date")
 
         breakpoint1 = int(breakpoint1)
         breakpoint2 = int(breakpoint2)
@@ -2612,6 +2898,7 @@ def ms1_ageing_dashboard_table2(request):
         milestones = [
         "Allocation",
         "RFAI",
+        "WRFAI",
         "RFAI Survey",
         "MO Punch",
         "Material Dispatch",
@@ -2654,7 +2941,7 @@ def ms1_ageing_dashboard_table2(request):
         df = pd.DataFrame(obj.values())
 
         
-        date_cols = [col.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_").replace("5", "five_") + '_date' for col in milestones]
+        date_cols = ["wrfai_date" if col == "WRFAI" else col.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace("4", "four_") .replace("5", "five_") + '_date'for col in milestones]
         for col in date_cols:
             df[col] = pd.to_datetime(df[col], errors="coerce")
 
@@ -2882,6 +3169,7 @@ def lifecycle_display(request):
         data_cols = [
         "Allocation",
         "RFAI",
+        "WRFAI",
         "RFAI Survey",
         "MO Punch",
         "Material Dispatch",
@@ -3290,6 +3578,7 @@ def graphs_view(request):
     milestones = [
         "Allocation",
         "RFAI",
+        "WRFAI",
         "RFAI Survey",
         "MO Punch",
         "Material Dispatch",
@@ -3338,7 +3627,12 @@ def graphs_view(request):
         if current_status and "ALL" not in current_status:
             filters["current_status__in"] = current_status
         if month_start and month_end:
-            filters[f"{milestone1.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '') + '_date'}__range"] = (month_start, month_end)
+            filter_col = milestone1.lower().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '') + '_date'
+            
+            if milestone1 == "WRFAI":
+                filter_col = "wrfai_date"
+
+            filters[f"{filter_col}__range"] = (month_start, month_end)
 
         obj = NTSiteTracker.objects.filter(**filters)  # noqa: F405
         df = pd.DataFrame(obj.values())
@@ -3370,7 +3664,14 @@ def graphs_view(request):
 
         start_col = start_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_") + "_date"
         end_col = end_label.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("/", "_") + "_date"
-        
+
+        if start_label == "WRFAI":
+            start_col = "wrfai_date"
+
+        if end_label == "WRFAI":
+            end_col = "wrfai_date"
+
+            
         graph_summary = generate_summary(df, start_label, end_label, start_col, end_col)
 
         graph_summary = graph_summary.applymap(lambda x: str(x) if pd.notna(x) else "")   
@@ -3398,13 +3699,23 @@ def monthly_graph(request):
     milestone2 = request.data.get('milestone2')
     view = request.data.get('view')
     type = request.data.get('type')
+    year_filtered = request.data.get('years')
     
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
     # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
     current_status = [cs.strip() for cs in current_status.split(',')] if current_status else ["ALL"]
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
-    milestone1_col = milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
-    milestone2_col = milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
+    milestone1_col = (
+        "wrfai_date"
+        if milestone1 == "WRFAI"
+        else milestone1.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
+    )
+
+    milestone2_col = (
+        "wrfai_date"
+        if milestone2 == "WRFAI"
+        else milestone2.lower().replace(" ", "_").replace("-", "_").replace("/", "_") + "_date"
+    )
     
     all_unique_circles = list(
         NTSiteTracker.objects.exclude(circle__isnull=True)
@@ -3438,6 +3749,8 @@ def monthly_graph(request):
     }
     
     try:
+        year_filtered = int(year_filtered)
+
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
@@ -3452,6 +3765,7 @@ def monthly_graph(request):
             
         obj = NTSiteTracker.objects.filter(**filters)  # noqa: F405
         df = pd.DataFrame(obj.values())
+
         
         # print(df)
  
@@ -3476,6 +3790,10 @@ def monthly_graph(request):
             )
         ).astype("Int64")
 
+        # if year_filtered:
+        #     df = df[df["year1"] == year_filtered]
+
+
         # 3️⃣ Display year
         df["display_year"] = df["year1"] + (df["month_num1"] <= 3)
 
@@ -3487,11 +3805,19 @@ def monthly_graph(request):
         ).dt.strftime("%b-%y")
 
         # 5️⃣ Current FY
-        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
+        current_fy = year_filtered
 
-        # 6️⃣ CF logic
-        df.loc[df["year1"] < current_fy, "month_name1"] = "CF"
+# CF
+        df.loc[
+            df["year1"].notna() & (df["year1"] < current_fy),
+            "month_name1"
+        ] = "CF"
 
+        # Future
+        df.loc[
+            df["year1"].notna() & (df["year1"] > current_fy),
+            "month_name1"
+        ] = "Future"
 
 
         df['month_num2'] = df[milestone2_col].dt.month + (df[milestone2_col].dt.day >= 26)
@@ -3534,27 +3860,42 @@ def monthly_graph(request):
         print(df['year2'])
 
         def sort_financial_year(summary):
-            # Extract sorted unique Month-Year (excluding CF)
-            months = [m for m in summary['month_name'].unique() if m != "CF"]
+            # CF aur Future hata ke sirf actual month values lo
+            months = [
+                m for m in summary['month_name'].unique()
+                if m not in ["CF", "Future"] and pd.notna(m)
+            ]
 
-            # Convert to datetime to sort correctly
+            # Sirf real months sort honge
             months_sorted = sorted(
                 months,
                 key=lambda x: pd.to_datetime(x, format='%b-%y')
             )
 
-            # CF should always be first
-            ordered = ["CF"] + months_sorted if "CF" in summary['month_name'].values else months_sorted
+            ordered = []
 
-            # Convert into ordered categorical for final sort
-            summary['month_name'] = pd.Categorical(summary['month_name'], ordered, ordered=True)
+            # CF hamesha first
+            if "CF" in summary['month_name'].values:
+                ordered.append("CF")
+
+            # Actual months
+            ordered += months_sorted
+
+            # Future hamesha last
+            if "Future" in summary['month_name'].values:
+                ordered.append("Future")
+
+            summary['month_name'] = pd.Categorical(
+                summary['month_name'],
+                categories=ordered,
+                ordered=True
+            )
 
             return summary.sort_values('month_name')
         
         def generate_type1_summary(df, start_label, end_label, start_col, end_col):
             temp = df.copy()
 
-            # Start counts by month_name
             start_counts = (
                 temp[temp[start_col].notna()]
                 .groupby("month_name1")
@@ -3563,7 +3904,6 @@ def monthly_graph(request):
                 .rename(columns={"month_name1": "month_name"})
             )
 
-            # End counts by month_name2
             end_counts = (
                 temp[temp[end_col].notna()]
                 .groupby("month_name2")
@@ -3572,7 +3912,6 @@ def monthly_graph(request):
                 .rename(columns={"month_name2": "month_name"})
             )
 
-            # Merge both results
             summary = pd.merge(start_counts, end_counts, on="month_name", how="outer")
 
             # Convert to Int64 nullable type
@@ -3584,6 +3923,23 @@ def monthly_graph(request):
             if view == "Cumulative":
                 summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].cumsum()
                 summary[f"{end_label} Done Count"] = summary[f"{end_label} Done Count"].cumsum()
+
+            else:
+                # Only for RFAI → add CF into last visible month
+                if start_label == "RFAI" and "CF" in summary["month_name"].values:
+
+                    cf_rfai = summary.loc[
+                        summary["month_name"] == "CF",
+                        f"{start_label} Done Count"
+                    ].values[0]
+
+                    # last month (May)
+                    last_idx = summary[summary["month_name"] != "CF"].index.max()
+
+                    summary.loc[
+                        last_idx,
+                        f"{start_label} Done Count"
+                    ] += cf_rfai
 
             return summary.reset_index(drop=True)
         
@@ -3610,6 +3966,23 @@ def monthly_graph(request):
             if view == "Cumulative":
                 summary[f"{start_label} Done Count"] = summary[f"{start_label} Done Count"].cumsum()
                 summary[f"{end_label} Done Count"] = summary[f"{end_label} Done Count"].cumsum()
+
+            else:
+                if "CF" in summary["month_name"].values:
+
+                    cf_row = summary[summary["month_name"] == "CF"]
+
+                    # CF value nikal lo
+                    cf_rfai = 0
+                    if start_label == "RFAI":
+                        cf_rfai = cf_row[f"{start_label} Done Count"].iloc[0]
+
+                    # Pehle CF row hatao
+                    summary = summary[summary["month_name"] != "CF"].copy()
+
+                    # Fir last visible month me add karo
+                    if start_label == "RFAI" and len(summary) > 0:
+                        summary.iloc[-1, summary.columns.get_loc(f"{start_label} Done Count")] += cf_rfai
 
             return summary.reset_index(drop=True)
         
@@ -4769,6 +5142,8 @@ def ms2_monthly_graph(request):
     milestone2 = request.data.get('milestone2')
     view = request.data.get('view')
     type = request.data.get('type')
+    year_filtered = request.data.get('years')
+   
     
     circle = [c.strip() for c in circle.split(',')] if circle else ["ALL"]
     # site_tagging = [s.strip() for s in site_tagging.split(',')] if site_tagging else ["ALL"]
@@ -4826,6 +5201,8 @@ def ms2_monthly_graph(request):
     }
     
     try:
+        year_filtered = int(year_filtered)
+
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
@@ -4875,12 +5252,19 @@ def ms2_monthly_graph(request):
         ).dt.strftime("%b-%y")
 
         # 5️⃣ Current FY
-        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
+        current_fy = year_filtered
 
         # 6️⃣ CF logic
-        df.loc[df["year1"] < current_fy, "month_name1"] = "CF"
+        df.loc[
+            df["year1"].notna() & (df["year1"] < current_fy),
+            "month_name1"
+        ] = "CF"
 
-
+        # Future
+        df.loc[
+            df["year1"].notna() & (df["year1"] > current_fy),
+            "month_name1"
+        ] = "Future"
 
         df['month_num2'] = df[milestone2_col].dt.month + (df[milestone2_col].dt.day >= 26)
         df['month_num2'] = df['month_num2'].replace({13: 1})
@@ -4907,10 +5291,20 @@ def ms2_monthly_graph(request):
         ).dt.strftime('%b-%y')
 
         # 6️⃣ Current financial year
-        current_fy = today.year if today >= date(today.year, 3, 26) else today.year - 1
+        # 6️⃣ Selected financial year
+        current_fy = year_filtered
 
-        # 7️⃣ Carry Forward (only where year2 exists)
-        df.loc[df['year2'].notna() & (df['year2'] < current_fy), 'month_name2'] = 'CF'
+        # 7️⃣ Carry Forward
+        df.loc[
+            df['year2'].notna() & (df['year2'] < current_fy),
+            'month_name2'
+        ] = 'CF'
+
+        # 8️⃣ Future
+        df.loc[
+            df['year2'].notna() & (df['year2'] > current_fy),
+            'month_name2'
+        ] = 'Future'
         
         print(df['month_name1'].dropna().unique().tolist())
 
@@ -4922,20 +5316,36 @@ def ms2_monthly_graph(request):
         print(df['year2'])
 
         def sort_financial_year(summary):
-            # Extract sorted unique Month-Year (excluding CF)
-            months = [m for m in summary['month_name'].unique() if m != "CF"]
+            # CF aur Future hata ke sirf actual month values lo
+            months = [
+                m for m in summary['month_name'].unique()
+                if m not in ["CF", "Future"] and pd.notna(m)
+            ]
 
-            # Convert to datetime to sort correctly
+            # Sirf real months sort honge
             months_sorted = sorted(
                 months,
                 key=lambda x: pd.to_datetime(x, format='%b-%y')
             )
 
-            # CF should always be first
-            ordered = ["CF"] + months_sorted if "CF" in summary['month_name'].values else months_sorted
+            ordered = []
 
-            # Convert into ordered categorical for final sort
-            summary['month_name'] = pd.Categorical(summary['month_name'], ordered, ordered=True)
+            # CF hamesha first
+            if "CF" in summary['month_name'].values:
+                ordered.append("CF")
+
+            # Actual months
+            ordered += months_sorted
+
+            # Future hamesha last
+            if "Future" in summary['month_name'].values:
+                ordered.append("Future")
+
+            summary['month_name'] = pd.Categorical(
+                summary['month_name'],
+                categories=ordered,
+                ordered=True
+            )
 
             return summary.sort_values('month_name')
         
@@ -5017,6 +5427,434 @@ def ms2_monthly_graph(request):
     except Exception as e:
         return Response({"error": f"{str(e)}"},status=500)
 
+@api_view(["POST"])
+def nt_issue_summary(request):
+    try:
+        status = request.data.get('status', 'ALL')
+        milestone = request.data.get('milestone', '')
+        owner = request.data.get('owner', '')
+        duration_start = request.data.get('duration_start')
+        duration_end = request.data.get('duration_end')
+        site_on_air = request.data.get('is_on_air')
+
+        duration_start = int(duration_start) if duration_start not in [None, ""] else None
+        duration_end = int(duration_end) if duration_end not in [None, ""] else None
+
+
+        qs = NTIssue.objects.all().values(
+            "circle",
+            "issue_name",
+            "issue_owner",
+            "milestone",
+            "site_id",
+            "status",
+            "duration",   
+            "start_date",
+            "close_date"
+        )
+
+        df = pd.DataFrame(list(qs))
+
+        if df.empty:
+            return Response({"message": "No data found"}, status=200)
+
+        df["circle"] = df["circle"].astype(str).str.strip()
+        df["issue_name"] = df["issue_name"].astype(str).str.strip()
+        df["site_id"] = df["site_id"].astype(str).str.strip()
+        df["milestone"]=df["milestone"].astype(str).str.strip()
+
+  
+        if site_on_air in ["Yes", "No"]:
+            qs1 = NTSiteTracker.objects.all().values(
+                "circle", "site_id", "site_onair_date"
+            )
+
+            df1 = pd.DataFrame(list(qs1))
+
+            if not df1.empty:
+                df1["circle"] = df1["circle"].fillna("").astype(str).str.strip()
+                df1["site_id"] = df1["site_id"].fillna("").astype(str).str.strip()
+
+                df1 = df1.rename(columns={"site_id": "site_id"})
+                df1["is_on_air"] = df1["site_onair_date"].notna()
+
+           
+                df = df.merge(
+                    df1[["circle", "site_id", "is_on_air"]],
+                    on=["circle", "site_id"],
+                    how="left"
+                )
+
+             
+                df["is_on_air"] = df["is_on_air"].fillna(False)
+
+                if site_on_air == "No":
+                    df = df[df["is_on_air"] == False]
+
+                elif site_on_air == "Yes":
+                    df = df[df["is_on_air"] == True]
+
+                
+                df = df.drop(columns=["is_on_air"])
+
+                if df.empty:
+                    return Response({"message": "No data found"}, status=200)
+                
+        
+        milestone = [c.strip() for c in milestone.split(',')] if milestone else ["ALL"]
+        owner = [c.strip() for c in owner.split(',')] if owner else ["ALL"]
+        
+        if status != 'ALL':
+            df = df[df['status'] == status]
+
+        if duration_start is not None:
+            df = df[df['duration'] >= duration_start]
+
+        if duration_end is not None:
+            df = df[df['duration'] <= duration_end]
+
+        if 'ALL' not in milestone:
+            df = df[df['milestone'].isin(milestone)]
+
+        if 'ALL' not in owner:
+            df = df[df['issue_owner'].isin(owner)]
+
+        df = df.drop_duplicates(subset=["circle", "issue_name", "site_id", 'issue_owner', 'milestone'])
+        
+        all_unique_milestones = list(
+            NTIssue.objects.exclude(milestone__isnull=True)
+            .distinct("milestone")
+            .values_list("milestone", flat=True)
+        )
+        
+        all_unique_owners = list(
+             NTIssue.objects.exclude(issue_owner__isnull=True)
+            .distinct("issue_owner")
+            .values_list("issue_owner", flat=True)
+        )
+        
+        unique_data = {
+            "unique_milestone": sorted(all_unique_milestones),
+            "unique_owners": sorted(all_unique_owners),
+        }
+        
+
+        pivot_df = pd.pivot_table(
+            df,
+            index="issue_name",
+            columns="circle",
+            values="site_id",
+            aggfunc="size",
+            fill_value=0
+        )
+
+    
+       
+        pivot_df["Total"] = pivot_df.sum(axis=1)
+        circle_unique_sites = (
+            df.groupby("circle")["site_id"]
+            .nunique()
+        )
+
+        total_row = circle_unique_sites.to_dict() 
+        total_row["Total"] = df["site_id"].nunique()
+        total_row_df = pd.DataFrame([total_row], index=["Total"])
+        pivot_df = pd.concat([pivot_df, total_row_df])
+        circle_order = [
+            "AP","ASM","BIH","CHN","DEL","HRY","JK","JRK",
+            "KK","KOL","MAH","MP","MUM","NE","ORI","PUN",
+            "RAJ","ROTN","UPE","UPW","WB"
+        ]
+
+        existing_cols = [c for c in circle_order if c in pivot_df.columns]
+        pivot_df = pivot_df.reindex(columns=existing_cols + ["Total"], fill_value=0)
+        pivot_df = pivot_df.sort_values(by="Total", ascending=False)
+        pivot_df = pivot_df.reset_index().rename(columns={"index": "Issue"})
+
+        return Response({
+            "status": True,
+            "message": "request processed successfully!",
+            "data": pivot_df.to_dict(orient="records"),
+            "unique_data": unique_data
+        }, status=200)
+
+    except Exception as e:
+        return Response({
+            "status": False,
+            "message": str(e),}, status=500)
+
+
+
+
+ISSUE_COLUMN_MAP = {
+    "Circle": "circle",
+    "Site ID": "site_id",
+    "Issue Owner": "issue_owner",
+    "Milestone": "milestone",
+    "Issue Name": "issue_name",
+    "Start Date": "start_date",
+    "Close Date": "close_date",
+    "Status": "status",
+    "Duration (Days)": "duration",
+    "Remarks": "remarks",
+}
+
+
+@api_view(["POST"])
+def upload_nt_issue_view(request):
+   
+    user_id =request.user.username
+    if not user_id:
+        return Response(
+            {"status": False, "message": "userId required"},
+            status=400
+        )
+    user_email = user_id.strip().lower()
+  
+    file = request.data.get("file")
+    if not file:
+        return Response(
+            {"status": False, "message": "No file uploaded"},
+            status=400
+        )
+    try:
+        df = pd.read_excel(file,sheet_name="Issue Tracker")
+        df.columns = df.columns.str.strip()
+        df = df.replace(
+            ["NaN", "nan", "", "NA", "N/A", "-", "null"],
+            None
+        )
+        missing = [
+            c for c in ISSUE_COLUMN_MAP.keys()
+            if c not in df.columns
+        ]
+
+        if missing:
+            return Response(
+                {
+                    "status": False,
+                    "message": f"Missing columns: {', '.join(missing)}"
+                }
+            )
+        df = df.rename(columns=ISSUE_COLUMN_MAP)
+        df = df[list(ISSUE_COLUMN_MAP.values())]
+
+        INVALID_DATE_STRINGS = {
+            "need to check", "pending",
+            "na","n/a","-","null","none"
+        }
+
+        def safe_date(val):
+            try:
+                if val is None or pd.isna(val):
+                    return None
+
+                if isinstance(val, pd.Timestamp):
+                    return val.date()
+
+                if isinstance(val, datetime):
+                    return val.date()
+
+                if isinstance(val, date):
+                    return val
+
+                val = str(val).strip()
+
+                if val.lower() in INVALID_DATE_STRINGS:
+                    return None
+
+                parsed = pd.to_datetime(
+                    val,
+                    errors="coerce",
+                    dayfirst=True
+                )
+
+                if pd.isna(parsed):
+                    return None
+
+                return parsed.date()
+
+            except:
+                return None
+
+        df["start_date"] = df["start_date"].apply(safe_date)
+        df["close_date"] = df["close_date"].apply(safe_date)
+
+
+        df["duration"] = pd.to_numeric(
+            df["duration"],
+            errors="coerce"
+        )
+
+        df["duration"] = df["duration"].where(
+            pd.notna(df["duration"]),
+            None
+        )
+
+        df = df.astype(object)
+        df = df.where(pd.notna(df), None)
+
+        records = df.to_dict("records")
+        existing = {
+            (
+                str(x.circle).strip().lower(),
+                str(x.site_id).strip().lower(),
+                str(x.issue_name).strip().lower(),
+                str(x.issue_owner).strip().lower(),
+                str(x.milestone).strip().lower(),
+            ): x
+            for x in NTIssue.objects.all()
+        }
+
+        to_create = []
+        to_update = []
+        with transaction.atomic():
+            for row in records:
+                if not row.get("circle") or not row.get("site_id"):
+                    continue
+                key = (
+                    str(row["circle"]).strip().lower(),
+                    str(row["site_id"]).strip().lower(),
+                    str(row["issue_name"]).strip().lower(),
+                    str(row["issue_owner"]).strip().lower(),
+                    str(row["milestone"]).strip().lower(),
+                )
+                row["updated_by"] = user_email
+
+                if key in existing:
+                    obj = existing[key]
+
+                    for field, value in row.items():
+                        setattr(obj, field, value)
+
+                    to_update.append(obj)
+
+                else:
+                    row["created_by"] = user_email
+                    row["updated_by"] = user_email
+
+                    to_create.append(
+                        NTIssue(**row)
+                    )
+            if to_create:
+                NTIssue.objects.bulk_create(
+                    to_create,
+                    batch_size=500
+                )
+
+            if to_update:
+                NTIssue.objects.bulk_update(
+                    to_update,
+                    fields=[
+                        "start_date",
+                        "close_date",
+                        "status",
+                        "duration",
+                        "remarks",
+                        "updated_by",
+                    ],
+                    batch_size=500
+                )
+
+        return Response(
+            {
+                "status": True,
+                "message": "NT Issue Upload Successfully"
+            }
+        )
+
+    except Exception as e:
+        return Response(
+            {
+                "status": False,
+                "message": str(e)
+            },
+            status=500
+        )
+    
+#site Status Tracker
+@api_view(["POST"])
+def sync_nt_site_status(request):
+    today = date.today()-timedelta(days=1)
+
+    qs = NTSiteTracker.objects.values(
+        "site_id",
+        "circle",
+        "current_status"
+        
+    )
+    if not qs.exists():
+        return Response(
+            {"error": "No data found in NT_Tracker"},
+            status=400
+        )
+
+    records = []
+    seen = set()
+
+    for row in qs:
+        site_id = row["site_id"]
+        circle = row["circle"]
+        status = row["current_status"]
+
+        if not site_id or not status:
+            continue
+
+        site_id = str(site_id).strip()
+        circle = str(circle).strip()
+        status = str(status).strip()
+
+        key = (site_id, today)
+        if key in seen:
+            continue
+
+        seen.add(key)
+
+        records.append(
+            SiteStatus(
+                site_id=site_id,
+                circle=circle,
+                status=status,
+                date=today
+            )
+        )
+
+    if not records:
+        return Response(
+            {"error": "No valid records to insert"},
+            status=400
+        )
+
+    # Optional overwrite logic for today
+    # SiteStatus.objects.filter(date=today).delete()
+
+    SiteStatus.objects.bulk_create(records)
+
+    return Response({
+        "message": " NTD data synced successfully",
+        "records_created": len(records),
+        "date": today
+    })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @api_view(['GET', 'POST', 'DELETE'])
@@ -5071,6 +5909,382 @@ def updtae_nt_template(request):
         )
 
 
+@api_view(["POST"])
+def nt_issue_summary_frontend(request):
+
+    try:
+        issue_name = request.data.get("issue_name")
+        circle = request.data.get("circle")
+        status = request.data.get("status", "ALL")
+        owner = request.data.get("owner", "")
+        milestone = request.data.get("milestone", "")
+        duration_start = request.data.get("duration_start")
+        duration_end = request.data.get("duration_end")
+        site_on_air = request.data.get("is_on_air")
+
+        duration_start = int(duration_start) if duration_start not in [None, ""] else None
+        duration_end = int(duration_end) if duration_end not in [None, ""] else None
+
+        qs = NTIssue.objects.all().values(
+            "circle",
+            "site_id",
+            "issue_name",
+            "issue_owner",
+            "milestone",
+            "status",
+            "duration",
+            "start_date",
+            "close_date",
+            "remarks"
+        )
+
+        df = pd.DataFrame(list(qs))
+
+        if df.empty:
+            return Response({
+                "status": False,
+                "message": "No data found"
+            }, status=200)
+
+        if issue_name:
+            df = df[df["issue_name"] == issue_name]
+
+        if circle and circle != "Total":
+            df = df[df["circle"] == circle]
+
+        if status != "ALL":
+            df = df[df["status"] == status]
+
+        milestone = [x.strip() for x in milestone.split(",")] if milestone else ["ALL"]
+        owner = [x.strip() for x in owner.split(",")] if owner else ["ALL"]
+
+        if "ALL" not in milestone:
+            df = df[df["milestone"].isin(milestone)]
+
+        if "ALL" not in owner:
+            df = df[df["issue_owner"].isin(owner)]
+
+        if duration_start is not None:
+            df = df[df["duration"] >= duration_start]
+
+        if duration_end is not None:
+            df = df[df["duration"] <= duration_end]
+
+        if site_on_air in ["Yes", "No"]:
+
+            tracker_df = pd.DataFrame(
+                NTSiteTracker.objects.all().values(
+                    "circle",
+                    "site_id",
+                    "site_onair_date"
+                )
+            )
+
+            if not tracker_df.empty:
+
+                tracker_df["is_on_air"] = tracker_df["site_onair_date"].notna()
+
+                df = df.merge(
+                    tracker_df[["circle", "site_id", "is_on_air"]],
+                    on=["circle", "site_id"],
+                    how="left"
+                )
+
+                df["is_on_air"] = df["is_on_air"].fillna(False)
+
+                if site_on_air == "Yes":
+                    df = df[df["is_on_air"] == True]
+
+                else:
+                    df = df[df["is_on_air"] == False]
+
+                df.drop(columns=["is_on_air"], inplace=True)
+
+        if df.empty:
+            return Response({
+                "status": False,
+                "message": "No data found"
+            }, status=200)
+
+        df["start_date"] = pd.to_datetime(
+            df["start_date"],
+            errors="coerce"
+        ).dt.strftime("%d-%b-%y")
+
+        df["close_date"] = pd.to_datetime(
+            df["close_date"],
+            errors="coerce"
+        ).dt.strftime("%d-%b-%y")
+
+        df = df.fillna("")
+        current_date = dtime.now().strftime("%Y-%m-%d")
+        current_time = dtime.now().strftime("%H-%M-%S")
+
+        BASE_URL = os.path.join(settings.MEDIA_ROOT, "nt_tracking")
+        os.makedirs(BASE_URL, exist_ok=True)
+
+        output_folder = os.path.join(
+            BASE_URL,
+            f"generated_files_{current_date}"
+        )
+
+        shutil.rmtree(output_folder, ignore_errors=True)
+        os.makedirs(output_folder, exist_ok=True)
+
+        file_path = os.path.join(
+            output_folder,
+            f"NT_ISSUE_SUMMARY_DETAIL_{current_date}_{current_time}.xlsx"
+        )
+
+        download_df = df.copy()
+
+        download_df.columns = [
+            "Circle",
+            "Site ID",
+            "Issue Name",
+            "Issue Owner",
+            "Milestone",
+            "Status",
+            "Duration",
+            "Start Date",
+            "Close Date",
+            "Remarks"
+        ]
+
+        with pd.ExcelWriter(file_path, engine="xlsxwriter") as writer:
+            download_df.to_excel( writer, index=False, sheet_name="Issue Summary"
+            )
+        format_excel(file_path)
+
+
+        relative_path = file_path.replace(
+            settings.MEDIA_ROOT,
+            ""
+        ).lstrip(os.sep)
+
+        download_link = request.build_absolute_uri(
+            os.path.join(
+                settings.MEDIA_URL,
+                relative_path
+            ).replace("\\", "/")
+        )
+
+        return Response({
+            "status": True,
+            "message": "request processed successfully!",
+            "data": df.to_dict(orient="records"),
+            "download_url":download_link
+        }, status=200)
+
+    except Exception as e:
+
+        return Response({
+            "status": False,
+            "message": str(e)
+        }, status=500)
+    
+
+
+@api_view(["POST"])
+def ageing_dashboard_hyperlink(request):
+    try:
+        circle = request.data.get("circle")
+        site_status = request.data.get("site_status")   # Done / Pending
+        milestone = request.data.get("milestone")
+
+        current_status = request.data.get("current_status", [])
+        milestone1 = request.data.get("milestone1")
+        milestone2 = request.data.get("milestone2")
+        month_filtered = request.data.get("month")
+        year_filtered = request.data.get("year")
+
+        current_status = [x.strip() for x in current_status.split(",")] if current_status else ["ALL"]
+
+        month_filtered = int(month_filtered) if str(month_filtered).strip() else None
+        year_filtered = int(year_filtered) if str(year_filtered).strip() else None
+
+        if month_filtered and year_filtered:
+            month_end = date(year_filtered, month_filtered, 25)
+
+            if month_filtered == 1:
+                month_start = date(year_filtered - 1, 12, 26)
+            else:
+                month_start = date(year_filtered, month_filtered - 1, 26)
+        else:
+            month_start = None
+            month_end = None
+
+        filters = {}
+
+        if current_status and "ALL" not in current_status:
+            filters["current_status__in"] = current_status
+
+        if circle and circle != "ALL":
+            filters["circle"] = circle
+
+        obj = NTSiteTracker.objects.filter(**filters)
+        df = pd.DataFrame(obj.values())
+
+        if df.empty:
+            return Response(
+                {"message": "No data found", "data": []},
+                status=200
+            )
+
+        milestone_col = (
+            "wrfai_date"
+            if milestone == "WRFAI"
+            else milestone.lower()
+                .replace(" ", "_")
+                .replace("-", "_")
+                .replace("/", "_")
+                .replace("4", "four_")
+                .replace("5", "five_") + "_date"
+        )
+
+        milestone1_col = (
+            "wrfai_date"
+            if milestone1 == "WRFAI"
+            else milestone1.lower()
+                .replace(" ", "_")
+                .replace("-", "_")
+                .replace("/", "_")
+                .replace("4", "four_")
+                .replace("5", "five_") + "_date"
+        )
+
+        df[milestone_col] = pd.to_datetime(df[milestone_col], errors="coerce")
+        df[milestone1_col] = pd.to_datetime(df[milestone1_col], errors="coerce")
+
+        # ================= FILTER LOGIC =================
+
+        if milestone == "RFAI":
+
+            if site_status == "Done":
+
+                if month_start and month_end:
+                    df = df[
+                        (
+                            (df["rfai_date"] >= pd.Timestamp(month_start)) &
+                            (df["rfai_date"] <= pd.Timestamp(month_end))
+                        )
+                        |
+                        (
+                            (df["rfai_date"] < pd.Timestamp(month_start)) &
+                            (df["site_onair_date"].isna())
+                        )
+                    ]
+                else:
+                    df = df[df["rfai_date"].notna()]
+
+            else:
+                df = df.iloc[0:0]
+
+        else:
+
+            if site_status == "Done":
+                df = df[
+                    df[milestone_col].notna() &
+                    df[milestone1_col].notna()
+                ]
+
+            else:
+                df = df[
+                    df[milestone_col].isna() &
+                    df[milestone1_col].notna()
+                ]
+
+        if df.empty:
+            return Response(
+                {"message": "No data found", "data": []},
+                status=200
+            )
+
+        # ================= DATE FORMAT =================
+
+        for col in df.columns:
+            if "date" in col:
+                converted = pd.to_datetime(df[col], errors="coerce")
+
+                if col != "last_updated_date":
+                    df[col] = converted.dt.strftime("%d-%b-%y")
+                else:
+                    df[col] = converted.dt.strftime("%d-%b-%y %H:%M:%S")
+
+        # ================= DOWNLOAD FILE =================
+
+        current_date = dtime.now().strftime("%Y-%m-%d")
+        current_time = dtime.now().strftime("%H-%M-%S")
+
+        BASE_URL = os.path.join(settings.MEDIA_ROOT, "nt_tracking")
+        os.makedirs(BASE_URL, exist_ok=True)
+
+        output_folder = os.path.join(
+            BASE_URL,
+            f"generated_files_{current_date}"
+        )
+
+        shutil.rmtree(output_folder, ignore_errors=True)
+        os.makedirs(output_folder, exist_ok=True)
+
+        tracker_file_path = os.path.join(
+            output_folder,
+            f"MS1_AGEING_HYPERLINK_{current_date}_{current_time}.xlsx"
+        )
+
+        df.insert(0, "Unique ID", range(1, len(df) + 1))
+        drop_cols = ["id", "Unique ID"]
+
+        df = df.drop(
+            columns=[c for c in drop_cols if c in df.columns],
+            errors="ignore"
+        )
+
+        reverse_column_map = {
+            v: k for k, v in COLUMN_MAP.items()
+        }
+
+        df.rename(
+            columns=reverse_column_map,
+            inplace=True
+        )
+
+        with pd.ExcelWriter(tracker_file_path, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="AGEING_DETAIL")
+           
+        format_excel(tracker_file_path)    
+
+        relative_path = tracker_file_path.replace(
+            settings.MEDIA_ROOT,
+            ""
+        ).lstrip(os.sep)
+
+        download_url = request.build_absolute_uri(
+            os.path.join(
+                settings.MEDIA_URL,
+                relative_path
+            ).replace("\\", "/")
+        )
+
+        json_data = json.dumps(
+            df.fillna("").astype(str).to_dict(orient="records")
+        )
+
+        return Response(
+            {
+                "message": "request processed successfully !!!",
+                "data": json_data,
+                "download_link": download_url
+            },
+            status=200
+        )
+
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=500
+        )
+    
 @api_view(['DELETE'])
 def delete_nt_tracker(request):
     try:
@@ -5111,3 +6325,6 @@ def delete_ntissue(request):
               "message": str(e)},
           
         )
+    
+
+

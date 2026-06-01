@@ -20,7 +20,8 @@ class NTSiteTracker(models.Model):
     rfai_survey_date = models.DateField(null=True, blank=True)
 
     survey_status = models.CharField(max_length=50, null=True, blank=True)   # Accepted / Rejected
-    wrfai = models.CharField(max_length=10, null=True, blank=True)          # YES / NO
+    wrfai = models.CharField(max_length=10, null=True, blank=True)  # YES / NO
+    wrfai_date = models.DateField(null=True, blank=True)
    
     mo_punch_date = models.DateField(null=True, blank=True)
     material_dispatch_date = models.DateField(null=True, blank=True)
@@ -147,4 +148,18 @@ class NTIssue(models.Model):
     
     def __str__(self):
         return f"{self.circle} | {self.site_id} | {self.issue_owner} | {self.milestone}"
-   
+    
+
+class SiteStatus(models.Model):
+    circle=models.CharField(max_length=10,blank=True,null=True)
+    site_id = models.CharField(max_length=200)
+    status = models.CharField(max_length=100)
+    date = models.DateField()
+
+    class Meta:
+        db_table = "nt_site_status"
+     
+
+    def __str__(self):
+        return f"{self.circle} - {self.site_id} - {self.date} - {self.status}"
+    
