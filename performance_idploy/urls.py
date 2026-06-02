@@ -11,5 +11,7 @@ urlpatterns = [
     path('generate-performance-at-srwise-report/', performance_at_sr_wise_tracking),
     path('generate-ftr/', generate_ftr),
     path('generate-scft/', generate_scft),
+    path('generate-scft-offered/',generate_scft_offered),
+    path('generate-scft-performance/',generate_scft_performance), 
     path('cleanup/',  cleanup),
 ]

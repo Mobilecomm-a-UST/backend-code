@@ -1696,7 +1696,463 @@ def performance_at_sr_wise_tracking(request):
         "download_url": download_url,
     }, status=status.HTTP_200_OK)
 
-    
+#_________________________________________
+# SCFT AGING
+#_________________________________________
+ 
+# ─────────────────────────────────────────────
+# SCFT TAT CONSTANTS
+# ─────────────────────────────────────────────
+ 
+SCFT_TAT_CATEGORIES = ['0-3days', '3-5days', '5-7days', '>7days']
+ 
+OUTPUT_SCFT_OFFERED = "output_SCFT_Offered_Vs_OA_TAT_{start}_to_{end}.xlsx"
+OUTPUT_SCFT_STATUS  = "output_SCFT_Status_Vs_OA_TAT_{start}_to_{end}.xlsx"
+ 
+ 
+# ─────────────────────────────────────────────
+# SCFT TAT HELPERS
+# ─────────────────────────────────────────────
+ 
+def _classify_scft_tat(days):
+    """
+    0-3days  : days <= 3
+    3-5days  : days <= 5
+    5-7days  : days <= 7
+    >7days   : days > 7
+    """
+    if days <= 3:
+        return '0-3days'
+    elif days <= 5:
+        return '3-5days'
+    elif days <= 7:
+        return '5-7days'
+    else:
+        return '>7days'
+ 
+ 
+def _validate_scft_tat_col(df, date_col):
+    """
+    Check the required SCFT date column exists and parse it.
+    Returns (df, error_message).
+    """
+    df.rename(columns={c: c.strip() for c in df.columns}, inplace=True)
+    lower_map = {c.lower(): c for c in df.columns}
+ 
+    if date_col not in df.columns:
+        key   = date_col.lower()
+        match = lower_map.get(key) or next(
+            (c for c in df.columns if key in c.lower()), None
+        )
+        if match:
+            df.rename(columns={match: date_col}, inplace=True)
+        else:
+            return None, (
+                f"Column '{date_col}' not found. "
+                f"Available columns: {list(df.columns)}"
+            )
+ 
+    df[date_col] = pd.to_datetime(df[date_col], errors='coerce').dt.date
+    return df, None
+ 
+ 
+def _process_scft_tat_by_date_range(df, start_dt, end_dt, layer_case, date_col, df_full=None, pending_statuses=None,):
+    """
+    Core SCFT TAT processing.
+ 
+    df        — Accepted-only rows for diff calculation
+                (for offered: all rows, pending = blank date_col)
+    df_full   — full unfiltered df for pending count
+                (for status: non-Accepted rows counted as pending)
+    date_col  — 'SCFT AT Offered Date' or 'SCFT AT Status Date'
+ 
+    Categories: 0-3days | 3-5days | 5-7days | >7days
+    Pending   — rows where date_col is blank (offered)
+                or rows where SCFT AT Status != Accepted (status)
+    """
+    # Step 1 — layer filter
+    df_layer = _apply_layer_filter(df, layer_case)
+ 
+    # Step 2 — filter On Air Date within range
+    mask_oa = (df_layer['On Air Date'] >= start_dt) & (df_layer['On Air Date'] <= end_dt)
+    df_oa   = df_layer[mask_oa].copy()
+ 
+    if df_oa.empty:
+        available = _get_available_months(df)
+        raise ValueError(
+            f"No data found for '{start_dt} to {end_dt}' "
+            f"with layer '{layer_case}'. Available months: {available}"
+        )
+ 
+    # Step 3 — split filled vs pending
+    df_filled  = df_oa[df_oa[date_col].notna()].copy()
+ 
+    if df_full is not None:
+        # status report: pending = non-Accepted in full df
+        df_full_layer = _apply_layer_filter(df_full, layer_case)
+        mask_full     = (df_full_layer['On Air Date'] >= start_dt) & (df_full_layer['On Air Date'] <= end_dt)
+        df_oa_full    = df_full_layer[mask_full].copy()
+        #df_pending    = df_oa_full[df_oa_full['SCFT AT Status'] != 'Accepted'].copy()
+        if pending_statuses:
+            # offered: Pending + Rejected explicitly
+            df_pending = df_oa_full[df_oa_full['SCFT AT Status'].isin(pending_statuses)].copy()
+        else:
+            # status: anything that isn't Accepted (original behaviour)
+            df_pending = df_oa_full[df_oa_full['SCFT AT Status'] != 'Accepted'].copy()
+        all_circles   = sorted(df_oa_full['Circle'].dropna().unique())
+    else:
+        # offered report: pending = blank date_col
+        df_pending  = df_oa[df_oa[date_col].isna()].copy()
+        all_circles = sorted(df_oa['Circle'].dropna().unique())
+ 
+    # Step 4 — compute diff
+    df_filled['_diff'] = (
+        df_filled[date_col] - df_filled['On Air Date']
+    ).apply(lambda x: x.days if hasattr(x, 'days') else None)
+    df_filled = df_filled[df_filled['_diff'].notna()]
+ 
+    # Step 5 — classify
+    df_filled['_category'] = df_filled['_diff'].apply(_classify_scft_tat)
+ 
+    # Step 6 — count per circle
+    result_circles = {}
+    grand          = {c: 0 for c in SCFT_TAT_CATEGORIES}
+    grand_pending  = 0
+    grand_total    = 0
+ 
+    for circle in all_circles:
+        df_c   = df_filled[df_filled['Circle'] == circle]
+        counts = df_c['_category'].value_counts()
+        row    = {cat: int(counts.get(cat, 0)) for cat in SCFT_TAT_CATEGORIES}
+ 
+        pending = int((df_pending['Circle'] == circle).sum())
+        total   = sum(row.values()) + pending
+ 
+        pct_0_3 = round(row['0-3days'] / total * 100, 1) if total > 0 else 0.0
+        pct_3_5 = round(row['3-5days'] / total * 100, 1) if total > 0 else 0.0
+        pct_5_7 = round(row['5-7days'] / total * 100, 1) if total > 0 else 0.0
+        pct_gt7 = round(row['>7days']  / total * 100, 1) if total > 0 else 0.0
+        pending_pct = round(pending / total * 100, 1) if total > 0 else 0.0
+ 
+        result_circles[circle] = {
+            **row,
+            'Pending':   pending,
+            'Total':     total,
+            '0-3days%':  pct_0_3,
+            '3-5days%':  pct_3_5,
+            '5-7days%':  pct_5_7,
+            '>7days%':   pct_gt7,
+            'Pending%':  pending_pct,
+        }
+ 
+        for cat in SCFT_TAT_CATEGORIES:
+            grand[cat] += row[cat]
+        grand_pending += pending
+        grand_total   += total
+ 
+    grand_pct_0_3 = round(grand['0-3days'] / grand_total * 100, 1) if grand_total > 0 else 0.0
+    grand_pct_3_5 = round(grand['3-5days'] / grand_total * 100, 1) if grand_total > 0 else 0.0
+    grand_pct_5_7 = round(grand['5-7days'] / grand_total * 100, 1) if grand_total > 0 else 0.0
+    grand_pct_gt7 = round(grand['>7days']  / grand_total * 100, 1) if grand_total > 0 else 0.0
+    grand_pending_pct = round(grand_pending    / grand_total * 100, 1) if grand_total > 0 else 0.0
+ 
+    period = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+ 
+    return {
+        'month':       period,
+        'start':       start_dt.strftime('%d-%b-%Y'),
+        'end':         end_dt.strftime('%d-%b-%Y'),
+        'circles':     result_circles,
+        'grand_total': {
+            **grand,
+            'Pending':  grand_pending,
+            'Total':    grand_total,
+            '0-3days%': grand_pct_0_3,
+            '3-5days%': grand_pct_3_5,
+            '5-7days%': grand_pct_5_7,
+            '>7days%':  grand_pct_gt7,
+            'Pending%':  grand_pending_pct,
+        },
+    }
+ 
+ 
+def _write_scft_tat_sheet(ws, result, thin):
+    """
+    Write SCFT TAT data into one worksheet.
+    Columns: Circle | 0-3days | 3-5days | 5-7days | >7days |
+             Pending | Total | 0-3days% | 3-5days% | 5-7days% | >7days%
+    """
+    ALL_COLS = SCFT_TAT_CATEGORIES + [
+        'Pending', 'Total',
+        '0-3days%', '3-5days%', '5-7days%', '>7days%','Pending%'
+    ]
+ 
+    def _hdr_cell(cell, value, bg=HEADER_BG, fg=HEADER_FG):
+        cell.value     = value
+        cell.font      = Font(name='Arial', bold=True, color=fg, size=10)
+        cell.fill      = PatternFill('solid', start_color=bg)
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        cell.border    = thin
+ 
+    def _data_cell(cell, value, bold=False, bg=None):
+        cell.value     = value
+        cell.font      = Font(name='Arial', bold=bold, size=10)
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border    = thin
+        if bg:
+            cell.fill = PatternFill('solid', start_color=bg)
+ 
+    # Row 1 — period label  (12 columns: Circle + 11)
+    ws.merge_cells('A1:L1')
+    _hdr_cell(ws['A1'], result['month'])
+ 
+    # Row 2 — headers
+    _hdr_cell(ws['A2'], 'Circle')
+    for col_idx, col_name in enumerate(ALL_COLS, start=2):
+        _hdr_cell(ws.cell(row=2, column=col_idx), col_name)
+ 
+    # Data rows
+    PCT_COLS = {'0-3days%', '3-5days%', '5-7days%', '>7days%','Pending%'}
+    row = 3
+    for circle, counts in result['circles'].items():
+        _data_cell(ws.cell(row=row, column=1), circle, bg='FFFFFF')
+        for col_idx, col_name in enumerate(ALL_COLS, start=2):
+            val = counts.get(col_name)
+            if col_name not in PCT_COLS and col_name != 'Total' and val == 0:
+                val = None
+            _data_cell(ws.cell(row=row, column=col_idx), val, bg='FFFFFF')
+        row += 1
+ 
+    # Grand Total row
+    grand = result['grand_total']
+    _data_cell(ws.cell(row=row, column=1), 'Grand Total', bold=True, bg=TOTAL_BG)
+    for col_idx, col_name in enumerate(ALL_COLS, start=2):
+        val = grand.get(col_name)
+        if col_name not in PCT_COLS and col_name != 'Total' and val == 0:
+            val = None
+        _data_cell(ws.cell(row=row, column=col_idx), val, bold=True, bg=TOTAL_BG)
+ 
+    # Column widths
+    col_widths = {
+        'A': 10,   # Circle
+        'B': 10,   # 0-3days
+        'C': 10,   # 3-5days
+        'D': 10,   # 5-7days
+        'E': 10,   # >7days
+        'F': 10,   # Pending
+        'G': 8,    # Total
+        'H': 10,   # 0-3days%
+        'I': 10,   # 3-5days%
+        'J': 10,   # 5-7days%
+        'K': 10,   # >7days%
+        'L': 10,   #Pending%
+    }
+    for col_letter, width in col_widths.items():
+        ws.column_dimensions[col_letter].width = width
+ 
+    ws.row_dimensions[1].height = 20
+    ws.row_dimensions[2].height = 30
+ 
+ 
+def _write_scft_tat_excel(results, out_filepath):
+    """Write 3-sheet Excel: 4G | 5G | 4G+5G."""
+    wb = Workbook()
+    wb.remove(wb.active)
+ 
+    side = Side(style='thin', color=BORDER_CLR)
+    thin = Border(left=side, right=side, top=side, bottom=side)
+ 
+    for sheet_name in ['4G', '5G', '4G+5G']:
+        ws = wb.create_sheet(title=sheet_name)
+        _write_scft_tat_sheet(ws, results[sheet_name], thin)
+ 
+    wb.save(out_filepath)
+ 
+ 
+# ─────────────────────────────────────────────
+# API — GENERATE SCFT OFFERED TAT
+# ─────────────────────────────────────────────
+ 
+@api_view(['POST'])
+def generate_scft_offered(request):
+    """
+    POST /idploy/generate-scft-offered/
+ 
+    Same logic as generate_scft_status but uses SCFT AT Offered Date.
+ 
+    Diff calculation — only rows where SCFT AT Status == 'Accepted'
+    Pending count    — all rows where SCFT AT Status != 'Accepted'
+ 
+    Body:
+    {
+        "start_date": "2025-12-26",
+        "end_date":   "2026-01-25"
+    }
+    """
+    start_str = request.data.get('start_date', '').strip()
+    end_str   = request.data.get('end_date',   '').strip()
+ 
+    start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+    if err:
+        return err
+ 
+    df, error = _get_input_df()
+    if error:
+        return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
+ 
+    #── validate SCFT AT Status column ───────────────────────────
+    if 'SCFT AT Status' not in df.columns:
+        return Response(
+            {'error': "Column 'SCFT AT Status' not found in uploaded file."},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+ 
+    #── validate & parse SCFT AT Offered Date ───────────────────
+    date_col = 'SCFT AT Offerred Date'
+    df, col_error = _validate_scft_tat_col(df, date_col)
+    if col_error:
+        return Response({'error': col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+ 
+    # ── normalise status + split ─────────────────────────────────
+    df['SCFT AT Status'] = df['SCFT AT Status'].astype(str).str.strip()
+    df_full = df.copy()        # all rows — for pending count (Pending + Rejected)
+
+ 
+    # Accepted + Acceptance Pending → TAT ranges
+    RANGE_STATUSES = {'Accepted', 'Acceptance Pending'}
+    df_range = df[df['SCFT AT Status'].isin(RANGE_STATUSES)].copy()
+ 
+    period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+    out_filename = f"output_SCFT_Offerred_Vs_OA_TAT_{start_str}_to_{end_str}.xlsx"
+    out_file     = os.path.join(output_path, out_filename)
+ 
+    try:
+        results = {
+            case: _process_scft_tat_by_date_range(
+                df_range, start_dt, end_dt, case, date_col,
+                df_full=df_full,
+                pending_statuses={'Pending', 'Rejected'},   # ← new param
+            )
+            for case in ['4G', '5G', '4G+5G']
+        }
+        _write_scft_tat_excel(results, out_file)
+ 
+    except ValueError as ve:
+        return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+ 
+    download_url = request.build_absolute_uri(
+        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
+    )
+ 
+    return Response({
+        'status':      True,
+        'message':     'SCFT Offered TAT report generated successfully.',
+        'date_range':  period_label,
+        'sheets':      ['4G', '5G', '4G+5G'],
+        'data': {
+            '4G':    {'circles': results['4G']['circles'],    'grand_total': results['4G']['grand_total']},
+            '5G':    {'circles': results['5G']['circles'],    'grand_total': results['5G']['grand_total']},
+            '4G+5G': {'circles': results['4G+5G']['circles'], 'grand_total': results['4G+5G']['grand_total']},
+        },
+        'download_url': download_url,
+    }, status=status.HTTP_200_OK)
+
+ 
+ 
+# ─────────────────────────────────────────────
+# API — GENERATE SCFT STATUS TAT
+# ─────────────────────────────────────────────
+ 
+@api_view(['POST'])
+def generate_scft_performance(request):
+    """
+    POST /idploy/generate-scft-status/
+ 
+    Same logic as generate_performance but uses:
+      SCFT AT Status      instead of Performance AT Status
+      SCFT AT Status Date instead of Performance AT Status Date
+ 
+    Diff calculation — only rows where SCFT AT Status == 'Accepted'
+    Pending count    — all rows where SCFT AT Status != 'Accepted'
+ 
+    Body:
+    {
+        "start_date": "2025-12-26",
+        "end_date":   "2026-01-25"
+    }
+    """
+    start_str = request.data.get('start_date', '').strip()
+    end_str   = request.data.get('end_date',   '').strip()
+ 
+    start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+    if err:
+        return err
+ 
+    df, error = _get_input_df()
+    if error:
+        return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
+ 
+    # ── validate SCFT AT Status column ───────────────────────────
+    if 'SCFT AT Status' not in df.columns:
+        return Response(
+            {'error': "Column 'SCFT AT Status' not found in uploaded file."},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+ 
+    # ── validate & parse SCFT AT Status Date ────────────────────
+    date_col = 'SCFT AT Status Date'
+    df, col_error = _validate_scft_tat_col(df, date_col)
+    if col_error:
+        return Response({'error': col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+ 
+    # ── normalise status + split ─────────────────────────────────
+    df['SCFT AT Status'] = df['SCFT AT Status'].astype(str).str.strip()
+    df_full     = df.copy()                                              # all rows — for pending count
+    df_accepted = df[df['SCFT AT Status'] == 'Accepted'].copy()        # Accepted only — for diff
+ 
+    if df_accepted.empty:
+        return Response(
+            {'error': "No rows found where SCFT AT Status is 'Accepted'."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+ 
+    period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+    out_filename = f"output_SCFT_performance_Vs_OA_TAT_{start_str}_to_{end_str}.xlsx"
+    out_file     = os.path.join(output_path, out_filename)
+ 
+    try:
+        results = {
+            case: _process_scft_tat_by_date_range(
+                df_accepted, start_dt, end_dt, case, date_col,
+                df_full=df_full    # non-Accepted rows counted as pending
+            )
+            for case in ['4G', '5G', '4G+5G']
+        }
+        _write_scft_tat_excel(results, out_file)
+ 
+    except ValueError as ve:
+        return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+ 
+    download_url = request.build_absolute_uri(
+        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
+    )
+ 
+    return Response({
+        'status':      True,
+        'message':     'SCFT Performance TAT report generated successfully.',
+        'date_range':  period_label,
+        'sheets':      ['4G', '5G', '4G+5G'],
+        'data': {
+            '4G':    {'circles': results['4G']['circles'],    'grand_total': results['4G']['grand_total']},
+            '5G':    {'circles': results['5G']['circles'],    'grand_total': results['5G']['grand_total']},
+            '4G+5G': {'circles': results['4G+5G']['circles'], 'grand_total': results['4G+5G']['grand_total']},
+        },
+        'download_url': download_url,
+    }, status=status.HTTP_200_OK)    
 
 @api_view(['DELETE'])
 def cleanup(request):
