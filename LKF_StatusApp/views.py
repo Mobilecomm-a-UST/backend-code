@@ -169,6 +169,10 @@ def LKF_Upload(request):
     files = request.FILES.getlist("files")
     if not files:
         return Response({"status": "ERROR", "message": "No files uploaded"}, status=HTTP_400_BAD_REQUEST)
+    
+    site_map_file=request.FILES.get("site_file")
+    if not site_map_file:
+        pass
 
     base_media_url = os.path.join(MEDIA_ROOT, "LKF_StatusApp")
     output_path = os.path.join(base_media_url, "LKF_Final_Output")
@@ -300,7 +304,7 @@ def LKF_Upload(request):
                     mask = ((df['Attribute'] == 'fingerprint') & (df['Value'].notna()) & (~df['Value'].str.contains(":", na=False)))
                     fingerprint_row = df[mask]
                     finger_print = fingerprint_row['Value'].iloc[0] if not fingerprint_row.empty else "NA"
-                    template_df.loc[0, 'New FINGER PRINT'] = finger_print
+                    template_df.loc[0, 'OLD finger Prints'] = finger_print
                    
 
                 
@@ -317,6 +321,7 @@ def LKF_Upload(request):
                     baseband = base.iloc[0] if not base.empty else "NA"
                     template_df.loc[0, 'Baseband'] = baseband
                     template_df.loc[0, 'OLD Baseband'] = baseband
+                    
                     
                     rru_pattern = (
                         r'(AIR\s\d+\sB\d+[A-Z0-9]*|'
@@ -461,7 +466,7 @@ def LKF_Upload(request):
                             site_id = df['site_id'].iloc[0] if not df['site_id'].empty and pd.notna(df['site_id'].iloc[0]) else "NA"
                             #for DL circle remove X in Site Id
                             finall_site_id = re.sub(r'^[Xx]', '', site_id)
-                            template_df.loc[0, "Site Id"] = finall_site_id
+                            template_df.loc[0, "Old Site ID"] = finall_site_id
                             
                             template_df.loc[0, "Activity"] = "Relocation"
                             template_df.loc[0, "Additional Remak"] = "UST"
@@ -507,6 +512,29 @@ def LKF_Upload(request):
         
 
     final_output_df = pd.concat(final_output_df_list, ignore_index=True)
+    # print(final_output_df)
+    if site_map_file:
+        site_map_df=pd.read_excel(site_map_file)
+        print(site_map_df)
+    else:
+        site_map_df = pd.DataFrame(columns=['OLD SITE', 'NEW SITE'])
+
+    site_mapping = dict(
+        zip(
+            site_map_df['OLD SITE'],
+            site_map_df['NEW SITE']
+        )
+    )
+    final_output_df['Site Id'] = final_output_df['Old Site ID'].map(site_mapping)
+
+    # New FINGER PRINT
+    final_output_df['New FINGER PRINT'] = final_output_df.apply(
+        lambda x: str(x['OLD finger Prints']).replace(
+            str(x['Old Site ID']),
+            str(x['Site Id'])
+        ),
+        axis=1
+)
     print(final_output_df)
 
 
