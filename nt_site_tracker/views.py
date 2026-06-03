@@ -1630,7 +1630,7 @@ def gap_view(request):
     
     circles = user.circles
     
-    circle = request.data.get('circle', [])
+    circle = request.data.get('circle', ["ALL"])
     # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('relocation_method', [])
     new_toco_name = request.data.get('new_toco_name', [])
@@ -1645,8 +1645,21 @@ def gap_view(request):
     new_toco_name = [n.strip() for n in new_toco_name.split(',')] if new_toco_name else ["ALL"]
 
     last_date = dtime.strptime(last_date, "%Y-%m-%d").date() if last_date else None
+    
     milestone1 = (milestone1 or "").strip().lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
+
+    if milestone1 == "wrfai":
+        milestone1 = "wrfai_date"
+    elif not milestone1.endswith("_date"):
+        milestone1 = f"{milestone1}_date"
+
+
     milestone2 = (milestone2 or "").strip().lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
+
+    if milestone2 == "wrfai":
+        milestone2 = "wrfai_date"
+    elif not milestone2.endswith("_date"):
+        milestone2 = f"{milestone2}_date"
 
     print("milestone1:", repr(milestone1))
     print("milestone2:", repr(milestone2))
@@ -1707,6 +1720,14 @@ def gap_view(request):
         
         df1['key'] = df1['circle'].astype(str) + "_" + df1['site_id'].astype(str)
         df2['key'] = df2['circle'].astype(str) + "_" + df2['site_id'].astype(str)
+
+        if 'circle' not in df1.columns:
+            print("circle missing in df1")
+            print(df1.head())
+            
+        if 'circle' not in df2.columns:
+            print("circle missing in df2")
+            print(df2.head())
 
         # df = df1[~df1['key'].isin(df2['key'])].drop(columns=['key'])
         # if len(df1) > len(df2):  
@@ -1786,7 +1807,7 @@ def gap_view(request):
         df.drop(columns=['id'], inplace=True)
 
         df = df[[
-            
+    
             "circle",
             "site_id",
             "project_nt",
@@ -1805,6 +1826,8 @@ def gap_view(request):
             "allocation_date",
             "rfai_survey_date",
             "wrfai",
+            "wrfai_date",
+
 
             "mo_punch_date",
             "material_dispatch_date",
@@ -1821,8 +1844,8 @@ def gap_view(request):
             "wpc_no",
             "wpc_date",
 
-            "nep_id",
             "emf_submission_date",
+            "nep_id",
 
             "ran_lkf_status",
             "alarm_status",
@@ -1909,49 +1932,7 @@ def gap_view(request):
                 # apply date format for *_date columns
                 if df.columns[c_idx - 1].endswith("_date") and hasattr(value, "strftime") and df.columns[c_idx - 1] != 'last_updated_date':
                     cell.number_format = "dd-mmm-yy"
- 
 
-        # ws2 = wb.create_sheet(title="Issues Tracker")
-
-        # # Clean issue_df (remove id if present)
-        # if "id" in issue_df.columns:
-        #     issue_df = issue_df.drop(columns=["id"])
-            
-        # # print(issue_df['updated_by'])
-
-        # def remove_tz_safe(x):
-        #     if isinstance(x, datetime) and x.tzinfo is not None:
-        #         return x.replace(tzinfo=None)
-        #     return x
-
-        # # apply to every cell in issue_df
-        # issue_df = issue_df.applymap(remove_tz_safe)
-        
-        # # print(issue_df['updated_by'])
-
-
-        # # Convert date columns
-        # issue_date_columns = [col for col in issue_df.columns if "Date" in col]
-        # for col in issue_date_columns:
-        #     issue_df[col] = pd.to_datetime(issue_df[col], errors='coerce')
-            
-        # # print(issue_df['updated_by'])
-
-        # # ---- Write header ----
-        # for col_idx, column_name in enumerate(issue_df.columns, start=1):
-        #     ws2.cell(row=1, column=col_idx, value=column_name)
-            
-        # # print(issue_df['updated_by'])
-
-        # # ---- Write data ----
-        # for r_idx, row in enumerate(dataframe_to_rows(issue_df, index=False, header=False), start=2):
-        #     for c_idx, value in enumerate(row, start=1):
-        #         cell = ws2.cell(row=r_idx, column=c_idx)
-        #         cell.value = value
-
-        #         # Apply date formatting
-        #         if issue_df.columns[c_idx - 1] in issue_date_columns and hasattr(value, "strftime"):
-        #             cell.number_format = "dd-mmm-yy"
 
         wb.save(tracker_file_path)
         
@@ -3749,8 +3730,7 @@ def monthly_graph(request):
     }
     
     try:
-        year_filtered = int(year_filtered)
-
+        year_filtered = int(year_filtered) 
         filters = {}
         if "ALL" not in circle:
             filters["circle__in"] = circle
@@ -4123,6 +4103,7 @@ def ms2_daily_waterfall(request):
 
         milestones = [
             "Site ONAIR Date",
+            "I-Deploy ONAIR Date",
             "RAN PAT Accepted Date",
             "RAN SAT Accepted Date",
             "MW PAT Accepted Date",
@@ -4131,7 +4112,6 @@ def ms2_daily_waterfall(request):
 
             "KPI AT offer Date",
             "KPI AT Accepted Date",
-
             "4G MS2 Date",
             # "5G MS2 Date",
             # "Final MS2 Date",
@@ -4146,6 +4126,7 @@ def ms2_daily_waterfall(request):
                 .replace("-", "_")
                 .replace("(", "")
                 .replace(")", "")
+                .replace("4", "four_")
             )
 
             if milestone_df_format not in df.columns:
@@ -4422,6 +4403,7 @@ def ms2_weekly_monthly_waterfall(request):
  
         milestones = [
             "Site ONAIR Date",
+            "I-Deploy ONAIR Date",
             "RAN PAT Accepted Date",
             "RAN SAT Accepted Date",
             "MW PAT Accepted Date",
@@ -4440,7 +4422,7 @@ def ms2_weekly_monthly_waterfall(request):
         
         for milestone in milestones:
             
-            milestone_df_format = milestone.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
+            milestone_df_format = milestone.lower().replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").replace("4", "four_")
 
             if milestone_df_format not in df.columns:
                 continue
@@ -4569,6 +4551,7 @@ def ms2_ageing_dashboard_table1(request):
     
     milestones = [
         "Site ONAIR",
+        "I-Deploy ONAIR",
         "RAN PAT Accepted",
         "RAN SAT Accepted",
         "MW PAT Accepted",
@@ -4728,6 +4711,8 @@ def ms2_ageing_dashboard_table2(request):
     
     milestones = [
         "Site ONAIR",
+        "I-Deploy ONAIR",
+    
         "RAN PAT Accepted",
         "RAN SAT Accepted",
         "MW PAT Accepted",
@@ -5038,6 +5023,7 @@ def ms2_graphs_view(request):
     
     milestones = [
         "Site ONAIR",
+        "I-Deploy ONAIR",
         "RAN PAT Accepted",
         "RAN SAT Accepted",
         "MW PAT Accepted",
@@ -5178,6 +5164,7 @@ def ms2_monthly_graph(request):
     
     milestones = [
         "Site ONAIR",
+        "I-Deploy ONAIR",
         "RAN PAT Accepted",
         "RAN SAT Accepted",
         "MW PAT Accepted",
@@ -5201,7 +5188,8 @@ def ms2_monthly_graph(request):
     }
     
     try:
-        year_filtered = int(year_filtered)
+        year_filtered = int(year_filtered) 
+    
 
         filters = {}
         if "ALL" not in circle:

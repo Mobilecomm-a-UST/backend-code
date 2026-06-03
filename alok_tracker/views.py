@@ -7694,7 +7694,7 @@ def ms2_monthly_graph(request):
     
     try:
         
-        year_filtered = int(year_filtered)
+        year_filtered = int(year_filtered or 0)
         
         filters = {}
         if "ALL" not in circle:
