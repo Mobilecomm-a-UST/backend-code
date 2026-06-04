@@ -1169,8 +1169,8 @@ def daily_dashboard_view(request):
         milestones = [
             "Allocation Date",
             "RFAI Date",
-            "WRFAI",
             "RFAI Survey Date",
+            "WRFAI",
             "MO Punch Date",
             "Material Dispatch Date",
             "Material Delivered Date",
@@ -2611,8 +2611,8 @@ def ms1_ageing_dashboard_table1(request):
     milestones = [
         "Allocation",
         "RFAI",
-        "WRFAI",
         "RFAI Survey",
+        "WRFAI",
         "MO Punch",
         "Material Dispatch",
         "Material Delivered",
@@ -2821,8 +2821,8 @@ def ms1_ageing_dashboard_table2(request):
     milestones = [
         "Allocation",
         "RFAI",
-        "WRFAI",
         "RFAI Survey",
+        "WRFAI",
         "MO Punch",
         "Material Dispatch",
         "Material Delivered",
@@ -2879,8 +2879,8 @@ def ms1_ageing_dashboard_table2(request):
         milestones = [
         "Allocation",
         "RFAI",
-        "WRFAI",
         "RFAI Survey",
+        "WRFAI",
         "MO Punch",
         "Material Dispatch",
         "Material Delivered",
@@ -5588,25 +5588,30 @@ ISSUE_COLUMN_MAP = {
 }
 
 
+
 @api_view(["POST"])
 def upload_nt_issue_view(request):
-   
-    user_id =request.user.username
+
+    user_id = request.user.username
     if not user_id:
         return Response(
             {"status": False, "message": "userId required"},
             status=400
         )
+
     user_email = user_id.strip().lower()
-  
     file = request.data.get("file")
     if not file:
         return Response(
             {"status": False, "message": "No file uploaded"},
             status=400
         )
+
     try:
-        df = pd.read_excel(file,sheet_name="Issue Tracker")
+        df = pd.read_excel(
+            file,
+            sheet_name="Issue Tracker"
+        )
         df.columns = df.columns.str.strip()
         df = df.replace(
             ["NaN", "nan", "", "NA", "N/A", "-", "null"],
@@ -5616,19 +5621,20 @@ def upload_nt_issue_view(request):
             c for c in ISSUE_COLUMN_MAP.keys()
             if c not in df.columns
         ]
-
         if missing:
             return Response(
                 {
                     "status": False,
                     "message": f"Missing columns: {', '.join(missing)}"
-                }
+                },
+                status=400
             )
+
         df = df.rename(columns=ISSUE_COLUMN_MAP)
         df = df[list(ISSUE_COLUMN_MAP.values())]
 
         INVALID_DATE_STRINGS = {
-            "need to check", "pending",
+            "need to check","pending",
             "na","n/a","-","null","none"
         }
 
@@ -5636,21 +5642,15 @@ def upload_nt_issue_view(request):
             try:
                 if val is None or pd.isna(val):
                     return None
-
                 if isinstance(val, pd.Timestamp):
                     return val.date()
-
                 if isinstance(val, datetime):
                     return val.date()
-
                 if isinstance(val, date):
                     return val
-
                 val = str(val).strip()
-
                 if val.lower() in INVALID_DATE_STRINGS:
                     return None
-
                 parsed = pd.to_datetime(
                     val,
                     errors="coerce",
@@ -5659,33 +5659,19 @@ def upload_nt_issue_view(request):
 
                 if pd.isna(parsed):
                     return None
-
                 return parsed.date()
-
-            except:
+            except Exception:
                 return None
 
         df["start_date"] = df["start_date"].apply(safe_date)
         df["close_date"] = df["close_date"].apply(safe_date)
-
-
-        df["duration"] = pd.to_numeric(
-            df["duration"],
-            errors="coerce"
-        )
-
-        df["duration"] = df["duration"].where(
-            pd.notna(df["duration"]),
-            None
-        )
 
         df = df.astype(object)
         df = df.where(pd.notna(df), None)
 
         records = df.to_dict("records")
         existing = {
-            (
-                str(x.circle).strip().lower(),
+            (   str(x.circle).strip().lower(),
                 str(x.site_id).strip().lower(),
                 str(x.issue_name).strip().lower(),
                 str(x.issue_owner).strip().lower(),
@@ -5696,10 +5682,40 @@ def upload_nt_issue_view(request):
 
         to_create = []
         to_update = []
+
+        today = date.today()
+
         with transaction.atomic():
+
             for row in records:
+
                 if not row.get("circle") or not row.get("site_id"):
                     continue
+
+                start_date = row.get("start_date")
+                close_date = row.get("close_date")
+
+                if start_date and close_date:
+                    row["status"] = "Closed"
+                elif start_date:
+                    row["status"] = "Open"
+                else:
+                    row["status"] = None
+                if start_date:
+                    end_date = close_date if close_date else today
+                    try:
+                        row["duration"] = (
+                            end_date - start_date
+                        ).days
+                    except Exception:
+                        row["duration"] = None
+                else:
+                    row["duration"] = None
+
+              
+                if not row.get("remarks"):
+                    row["remarks"] = ""
+
                 key = (
                     str(row["circle"]).strip().lower(),
                     str(row["site_id"]).strip().lower(),
@@ -5707,14 +5723,12 @@ def upload_nt_issue_view(request):
                     str(row["issue_owner"]).strip().lower(),
                     str(row["milestone"]).strip().lower(),
                 )
-                row["updated_by"] = user_email
 
+                row["updated_by"] = user_email
                 if key in existing:
                     obj = existing[key]
-
                     for field, value in row.items():
-                        setattr(obj, field, value)
-
+                     setattr(obj, field, value)
                     to_update.append(obj)
 
                 else:
@@ -5724,12 +5738,12 @@ def upload_nt_issue_view(request):
                     to_create.append(
                         NTIssue(**row)
                     )
+
             if to_create:
                 NTIssue.objects.bulk_create(
                     to_create,
                     batch_size=500
                 )
-
             if to_update:
                 NTIssue.objects.bulk_update(
                     to_update,
@@ -5760,6 +5774,8 @@ def upload_nt_issue_view(request):
             status=500
         )
     
+
+
 #site Status Tracker
 @api_view(["POST"])
 def sync_nt_site_status(request):
