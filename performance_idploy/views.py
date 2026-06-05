@@ -1,20 +1,27 @@
 
 import os
 import pandas as pd
-from datetime import date
+from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-
+from openpyxl.chart import LineChart, Reference, Series,  BarChart
+#from openpyxl.chart.data_source import DLbls
+ 
+from openpyxl.chart.data_source import NumDataSource, NumRef
+from openpyxl.chart.series import SeriesLabel
+from openpyxl.chart.label import DataLabel, DataLabelList
+ 
 from django.conf import settings
 from django.http import FileResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-#from project_pat.settings import MEDIA_ROOT, MEDIA_URL
-from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
+# from project_pat.settings import MEDIA_ROOT, MEDIA_URL
 from django.shortcuts import render
+from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
+
 
 # ─────────────────────────────────────────────
 # PATHS
