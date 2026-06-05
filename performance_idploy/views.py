@@ -2152,7 +2152,502 @@ def generate_scft_performance(request):
             '4G+5G': {'circles': results['4G+5G']['circles'], 'grand_total': results['4G+5G']['grand_total']},
         },
         'download_url': download_url,
-    }, status=status.HTTP_200_OK)    
+    }, status=status.HTTP_200_OK)   
+
+#_____________________________________________________________________________________________________________
+         # Graph portion
+#_______________________________________________________________________________________________________________
+ 
+# ─────────────────────────────────────────────
+# HELPER — Split a date range into monthly buckets
+# ─────────────────────────────────────────────
+ 
+ 
+ 
+def _month_to_bucket(month_str):
+    """
+    Convert a month label like 'Jun 2026' into its 26-to-25 bucket.
+ 
+    'Jun 2026' → start: 2026-05-26, end: 2026-06-25, label: 'Jun 2026'
+ 
+    The bucket whose 25th lands in the given month is returned.
+    So for 'Jun 2026' the 25th is Jun 25 → bucket is May 26 – Jun 25.
+    """
+    try:
+        anchor = datetime.strptime(month_str.strip(), '%b %Y').date()
+    except ValueError:
+        raise ValueError(f"Invalid month format '{month_str}'. Use 'Mon YYYY' e.g. 'Jun 2026'.")
+ 
+    # 25th of the requested month is the bucket end
+    bucket_end   = anchor.replace(day=25)
+    # 26th of the previous month is the bucket start
+    bucket_start = (anchor.replace(day=1) - relativedelta(months=1)).replace(day=26)
+    # Label is the month the 25th falls in — which is exactly month_str
+    label = anchor.strftime('%b %Y')
+ 
+    return {'label': label, 'start': bucket_start, 'end': bucket_end}
+ 
+ 
+# ─────────────────────────────────────────────
+# GRAPH DATA API — /idploy/graph-data/
+# ─────────────────────────────────────────────
+ 
+GRAPH_METRICS = ['<12%', '<13-21%', '<22-30%', '>30days%', 'Pending%']
+ 
+ 
+def _build_graph_series(monthly_results, layer_case):
+    """
+    Convert a list of monthly _process_data results into chart-ready series.
+ 
+    Returns:
+    {
+        "categories": ["<12%", "<13-21%", "<22-30%", ">30days%", "Pending%"],
+        "series": [
+            {"name": "Jun 2026", "start": "26-May-2026", "end": "25-Jun-2026",
+             "data": [23.4, 27.9, 28.3, 28.3, 71.7]}
+        ]
+    }
+    """
+    series = []
+    for res in monthly_results:
+        grand = res[layer_case]['grand_total']
+        series.append({
+            'name':       res['label'],
+            'start':      res['start'],
+            'end':        res['end'],
+            'data':       [grand.get(m, 0.0) for m in GRAPH_METRICS],
+        })
+    return {
+        'categories': GRAPH_METRICS,
+        'series':     series,
+    }
+ 
+def get_thin_border():
+    thin = Side(style='thin')
+    return Border(left=thin, right=thin, top=thin, bottom=thin)
+ 
+ 
+ 
+def _build_graph_excel(monthly_results, layers, metric_type):
+    from openpyxl.chart import LineChart, Reference, Series
+ 
+    output_dir = os.path.join(settings.MEDIA_ROOT, 'graph_exports')
+    os.makedirs(output_dir, exist_ok=True)
+ 
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename  = f'graph_{metric_type}_{timestamp}.xlsx'
+    filepath  = os.path.join(output_dir, filename)
+ 
+    wb = Workbook()
+    wb.remove(wb.active)
+ 
+    header_fill = PatternFill('solid', fgColor='1F4E79')
+    header_font = Font(bold=True, color='FFFFFF', size=11)
+    thin_border = get_thin_border()
+ 
+    for layer in layers:
+        ws = wb.create_sheet(title=layer)
+ 
+        # ── Header row ───────────────────────────────────────────
+        headers = ['Month'] + GRAPH_METRICS
+        for col_idx, h in enumerate(headers, start=1):
+            cell           = ws.cell(row=1, column=col_idx, value=h)
+            cell.fill      = header_fill
+            cell.font      = header_font
+            cell.border    = thin_border
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+ 
+        # ── Data rows ────────────────────────────────────────────
+        for row_idx, res in enumerate(monthly_results, start=2):
+            grand    = res[layer]['grand_total']
+            row_data = [res['label']] + [grand.get(m, 0.0) for m in GRAPH_METRICS]
+            for col_idx, val in enumerate(row_data, start=1):
+                cell           = ws.cell(row=row_idx, column=col_idx, value=val)
+                cell.border    = thin_border
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                if col_idx > 1:
+                    cell.number_format = '0.00'
+ 
+        # ── Column widths + freeze ────────────────────────────────
+        for col in ws.columns:
+            max_len = max((len(str(c.value)) for c in col if c.value), default=8)
+            ws.column_dimensions[col[0].column_letter].width = max_len + 4
+        ws.freeze_panes = 'B2'
+ 
+        # ── Line chart ────────────────────────────────────────────
+        num_months  = len(monthly_results)
+        num_metrics = len(GRAPH_METRICS)
+ 
+        chart          = LineChart()
+        chart.title    = f'{layer} — {metric_type.capitalize()} Graph'
+        chart.style    = 10
+        chart.height   = 14
+        chart.width    = 28
+        chart.grouping = 'standard'
+ 
+        # X-axis: metric category names from header row (cols B–F)
+        cats = Reference(ws, min_col=2, max_col=1 + num_metrics, min_row=1, max_row=1)
+ 
+        # One series per month row
+        for row_idx in range(2, 2 + num_months):
+            values      = Reference(ws, min_col=2, max_col=1 + num_metrics, min_row=row_idx, max_row=row_idx)
+            month_label = ws.cell(row=row_idx, column=1).value
+ 
+            ser               = Series(values, title=month_label)
+            ser.smooth        = False
+            ser.marker.symbol = 'circle'
+            ser.marker.size   = 5
+            chart.series.append(ser)
+ 
+        chart.set_categories(cats)
+ 
+        # Data labels on all points
+        from openpyxl.chart.label import DataLabelList
+ 
+        chart.dataLabels                = DataLabelList()
+        chart.dataLabels.showVal        = True
+        chart.dataLabels.showLegendKey  = False
+        chart.dataLabels.showCatName    = False
+        chart.dataLabels.showSerName    = False
+        chart.dataLabels.showPercent    = False
+        chart.dataLabels.showBubbleSize = False
+ 
+        chart.legend.position = 'b'
+ 
+        chart_anchor = f'A{num_months + 3}'
+        ws.add_chart(chart, chart_anchor)
+ 
+    wb.save(filepath)
+    return filepath
+ 
+ 
+ 
+@api_view(['POST'])
+def generate_offered_graph(request):
+   
+    """
+    POST /idploy/generate-offered-graph/
+ 
+    Returns single-month chart data + Excel download URL for the Offered report.
+ 
+    Request:
+    {
+        "month": "Jun 2026",          ← required; maps to May 26 – Jun 25 bucket
+        "layer": "4G"                 ← optional; "4G" | "5G" | "4G+5G" (default: all)
+    }
+ 
+    Response:
+    {
+        "status": true,
+        "metric_type": "offered",
+        "layer": "4G",
+        "graph_data": {
+            "categories": ["<12%", "<13-21%", "<22-30%", ">30days%", "Pending%"],
+            "series": [
+                {
+                    "name": "Jun 2026",
+                    "start": "26-May-2026",
+                    "end": "25-Jun-2026",
+                    "data": [23.4, 27.9, 28.3, 28.3, 71.7]
+                }
+            ]
+        },
+        "download_url": "/media/graph_exports/graph_offered_20260603_141022.xlsx"
+    }
+    """
+    return _generate_graph_response(request, metric_type='offered')
+ 
+ 
+@api_view(['POST'])
+def generate_performance_graph(request):
+    """
+    POST /idploy/generate-performance-graph/
+ 
+    Same interface as generate-offered-graph but uses
+    'Performance AT Status Date' for diff calculation.
+ 
+    Request:
+    {
+        "month": "Jun 2026",
+        "layer": "5G"        ← optional
+    }
+    """
+    return _generate_graph_response(request, metric_type='performance')
+ 
+ 
+def _generate_graph_response(request, metric_type):
+    month_input  = request.data.get('month', '')   # can be str or list
+    layer_filter = request.data.get('layer', '').strip()
+ 
+    # ── Normalise month input to a list ─────────────────────────
+    if isinstance(month_input, str):
+        months = [m.strip() for m in month_input.split(',') if m.strip()]
+    elif isinstance(month_input, list):
+        months = [m.strip() for m in month_input if m.strip()]
+    else:
+        months = []
+ 
+    if not months:
+        return Response(
+            {'error': 'Provide {"month": "Mon YYYY"} or {"month": ["Mon YYYY", "Mon YYYY"]}.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+ 
+    valid_layers = ['4G', '5G', '4G+5G']
+    if layer_filter and layer_filter not in valid_layers:
+        return Response(
+            {'error': f"Invalid layer '{layer_filter}'. Choose from: {valid_layers}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+ 
+    # ── Parse all months → buckets ───────────────────────────────
+    buckets = []
+    for m in months:
+        try:
+            buckets.append(_month_to_bucket(m))
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+ 
+    # ── Load data once ───────────────────────────────────────────
+    df, error = _get_input_df()
+    if error:
+        return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
+ 
+    df_full = None
+    if metric_type == 'performance':
+        if 'Performance AT Status' not in df.columns:
+            return Response(
+                {'error': "Column 'Performance AT Status' not found."},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        df['Performance AT Status'] = df['Performance AT Status'].astype(str).str.strip()
+        df_full = df.copy()
+ 
+    date_col = (
+        'Performance AT Offered Date' if metric_type == 'offered'
+        else 'Performance AT Status Date'
+    )
+    layers_to_run = [layer_filter] if layer_filter else valid_layers
+ 
+    # ── Process each bucket separately ──────────────────────────
+    monthly_results = []
+    for bucket in buckets:
+        bucket_data = {
+            'label': bucket['label'],
+            'start': bucket['start'].strftime('%d-%b-%Y'),
+            'end':   bucket['end'].strftime('%d-%b-%Y'),
+        }
+        for layer in layers_to_run:
+            try:
+                result = _process_data_by_date_range(
+                    df,
+                    bucket['start'],
+                    bucket['end'],
+                    layer,
+                    date_col,
+                    label=bucket['label'],
+                    df_full=df_full,
+                )
+                bucket_data[layer] = result
+            except ValueError:
+                bucket_data[layer] = {
+                    'grand_total': {m: 0.0 for m in GRAPH_METRICS}
+                }
+        monthly_results.append(bucket_data)
+ 
+    # ── Build graph payload ──────────────────────────────────────
+    if layer_filter:
+        graph_data = _build_graph_series(monthly_results, layer_filter)
+    else:
+        graph_data = {
+            layer: _build_graph_series(monthly_results, layer)
+            for layer in valid_layers
+        }
+ 
+    # ── Generate Excel ───────────────────────────────────────────
+    try:
+        filepath     = _build_graph_excel(monthly_results, layers_to_run, metric_type)
+        rel_path     = os.path.relpath(filepath, settings.MEDIA_ROOT)
+        download_url = request.build_absolute_uri(
+            os.path.join(settings.MEDIA_URL, rel_path).replace("\\", "/")
+        )
+    except Exception as e:
+        print(f"Excel generation error: {e}")
+        import traceback
+        traceback.print_exc()
+        download_url = None
+ 
+    return Response({
+        'status':       True,
+        'metric_type':  metric_type,
+        'layer':        layer_filter or 'all',
+        'graph_data':   graph_data,
+        'download_url': download_url,
+    }, status=status.HTTP_200_OK)
+ 
+ 
+#________________________________________________________
+#SCFT Aging Graph
+#________________________________________________________
+ 
+SCFT_GRAPH_METRICS = ['0-3days%', '3-5days%', '5-7days%', '>7days%', 'Pending%']
+ 
+def _build_scft_graph_series(monthly_results, layer_case):
+    series = []
+    for res in monthly_results:
+        grand = res[layer_case]['grand_total']
+        series.append({
+            'name':  res['label'],
+            'start': res['start'],
+            'end':   res['end'],
+            'data':  [grand.get(m, 0.0) for m in SCFT_GRAPH_METRICS],
+        })
+    return {
+        'categories': SCFT_GRAPH_METRICS,
+        'series':     series,
+    }
+ 
+def _generate_scft_graph_response(request, metric_type):
+    """
+    metric_type: 'offered' | 'performance'
+    """
+    month_input  = request.data.get('month', '')
+    layer_filter = request.data.get('layer', '').strip()
+ 
+    # ── Normalise month input to list ────────────────────────────
+    if isinstance(month_input, str):
+        months = [m.strip() for m in month_input.split(',') if m.strip()]
+    elif isinstance(month_input, list):
+        months = [m.strip() for m in month_input if m.strip()]
+    else:
+        months = []
+ 
+    if not months:
+        return Response(
+            {'error': 'Provide {"month": "Mon YYYY"} or {"month": ["Mon YYYY", "Mon YYYY"]}.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+ 
+    valid_layers = ['4G', '5G', '4G+5G']
+    if layer_filter and layer_filter not in valid_layers:
+        return Response(
+            {'error': f"Invalid layer '{layer_filter}'. Choose from: {valid_layers}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+ 
+    # ── Parse months → buckets ───────────────────────────────────
+    buckets = []
+    for m in months:
+        try:
+            buckets.append(_month_to_bucket(m))
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+ 
+    # ── Load data ────────────────────────────────────────────────
+    df, error = _get_input_df()
+    if error:
+        return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
+ 
+    if 'SCFT AT Status' not in df.columns:
+        return Response(
+            {'error': "Column 'SCFT AT Status' not found in uploaded file."},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+ 
+    # ── Set date_col and prepare df based on metric_type ─────────
+    if metric_type == 'offered':
+        date_col = 'SCFT AT Offerred Date'
+    else:
+        date_col = 'SCFT AT Status Date'
+ 
+    df, col_error = _validate_scft_tat_col(df, date_col)
+    if col_error:
+        return Response({'error': col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+ 
+    df['SCFT AT Status'] = df['SCFT AT Status'].astype(str).str.strip()
+    df_full = df.copy()
+ 
+    if metric_type == 'offered':
+        RANGE_STATUSES = {'Accepted', 'Acceptance Pending'}
+        df_range = df[df['SCFT AT Status'].isin(RANGE_STATUSES)].copy()
+        pending_statuses = {'Pending', 'Rejected'}
+    else:
+        df_range         = df[df['SCFT AT Status'] == 'Accepted'].copy()
+        pending_statuses = None   # status mode: anything != Accepted is pending
+ 
+    layers_to_run = [layer_filter] if layer_filter else valid_layers
+ 
+    # ── Process each bucket separately ───────────────────────────
+    monthly_results = []
+    for bucket in buckets:
+        bucket_data = {
+            'label': bucket['label'],
+            'start': bucket['start'].strftime('%d-%b-%Y'),
+            'end':   bucket['end'].strftime('%d-%b-%Y'),
+        }
+        for layer in layers_to_run:
+            try:
+                result = _process_scft_tat_by_date_range(
+                    df_range,
+                    bucket['start'],
+                    bucket['end'],
+                    layer,
+                    date_col,
+                    df_full=df_full,
+                    pending_statuses=pending_statuses,
+                )
+                bucket_data[layer] = result
+            except ValueError:
+                bucket_data[layer] = {
+                    'grand_total': {m: 0.0 for m in SCFT_GRAPH_METRICS}
+                }
+        monthly_results.append(bucket_data)
+ 
+    # ── Build graph payload ───────────────────────────────────────
+    if layer_filter:
+        graph_data = _build_scft_graph_series(monthly_results, layer_filter)
+    else:
+        graph_data = {
+            layer: _build_scft_graph_series(monthly_results, layer)
+            for layer in valid_layers
+        }
+ 
+    return Response({
+        'status':      True,
+        'metric_type': metric_type,
+        'layer':       layer_filter or 'all',
+        'graph_data':  graph_data,
+    }, status=status.HTTP_200_OK)
+ 
+ 
+@api_view(['POST'])
+def generate_scft_offered_graph(request):
+    """
+    POST /idploy/generate-scft-offered-graph/
+ 
+    Request:
+    {
+        "month": ["Apr 2026", "May 2026"],
+        "layer": "4G"     <- optional
+    }
+    """
+    return _generate_scft_graph_response(request, metric_type='offered')
+ 
+ 
+@api_view(['POST'])
+def generate_scft_performance_graph(request):
+    """
+    POST /idploy/generate-scft-performance-graph/
+ 
+    Request:
+    {
+        "month": ["Apr 2026", "May 2026"],
+        "layer": "5G"     <- optional
+    }
+    """
+    return _generate_scft_graph_response(request, metric_type='performance')
+ 
+
 
 @api_view(['DELETE'])
 def cleanup(request):

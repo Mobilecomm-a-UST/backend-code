@@ -13,5 +13,10 @@ urlpatterns = [
     path('generate-scft/', generate_scft),
     path('generate-scft-offered/',generate_scft_offered),
     path('generate-scft-performance/',generate_scft_performance), 
+    path('generate-offered-graph/', generate_offered_graph),
+    path('generate-performance-graph/',generate_performance_graph),
+    path('generate-scft-offered-graph/', generate_scft_offered_graph),
+    path('generate-scft-performance-graph/', generate_scft_performance_graph),
     path('cleanup/',  cleanup),
+
 ]

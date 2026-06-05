@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     "payload_traffic_tool",
     "performance_idploy",
     "DailyTaskReview",
+    "performance_tat",
 ]
 
 MIDDLEWARE = [
