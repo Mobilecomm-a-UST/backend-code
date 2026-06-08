@@ -1836,9 +1836,9 @@ def _process_scft_tat_by_date_range(df, start_dt, end_dt, layer_case, date_col, 
         total   = sum(row.values()) + pending
  
         pct_0_3 = round(row['0-3days'] / total * 100, 1) if total > 0 else 0.0
-        pct_3_5 = round(row['3-5days'] / total * 100, 1) if total > 0 else 0.0
-        pct_5_7 = round(row['5-7days'] / total * 100, 1) if total > 0 else 0.0
-        pct_gt7 = round(row['>7days']  / total * 100, 1) if total > 0 else 0.0
+        pct_3_5 = round((row['0-3days'] + row['3-5days']) / total * 100, 1) if total > 0 else 0.0
+        pct_5_7 = round((row['0-3days'] + row['3-5days'] + row['5-7days'] )/ total * 100, 1) if total > 0 else 0.0
+        pct_gt7 = round((row['0-3days'] + row['3-5days'] + row['5-7days'] + row['>7days'])  / total * 100, 1) if total > 0 else 0.0
         pending_pct = round(pending / total * 100, 1) if total > 0 else 0.0
  
         result_circles[circle] = {
@@ -1858,9 +1858,9 @@ def _process_scft_tat_by_date_range(df, start_dt, end_dt, layer_case, date_col, 
         grand_total   += total
  
     grand_pct_0_3 = round(grand['0-3days'] / grand_total * 100, 1) if grand_total > 0 else 0.0
-    grand_pct_3_5 = round(grand['3-5days'] / grand_total * 100, 1) if grand_total > 0 else 0.0
-    grand_pct_5_7 = round(grand['5-7days'] / grand_total * 100, 1) if grand_total > 0 else 0.0
-    grand_pct_gt7 = round(grand['>7days']  / grand_total * 100, 1) if grand_total > 0 else 0.0
+    grand_pct_3_5 = round((grand['0-3days'] + grand['3-5days']) / grand_total * 100, 1) if grand_total > 0 else 0.0
+    grand_pct_5_7 = round((grand['0-3days'] + grand['3-5days'] + grand['5-7days']) / grand_total * 100, 1) if grand_total > 0 else 0.0
+    grand_pct_gt7 = round((grand['0-3days'] + grand['3-5days'] + grand['5-7days'] + grand['>7days'] ) / grand_total * 100, 1) if grand_total > 0 else 0.0
     grand_pending_pct = round(grand_pending    / grand_total * 100, 1) if grand_total > 0 else 0.0
  
     period = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
