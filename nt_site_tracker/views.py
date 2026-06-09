@@ -1051,6 +1051,8 @@ def delete_tracker_data_view(request):
 
 @api_view(['GET', 'POST'])
 def daily_dashboard_view(request):
+    sync_nt_site_status(request._request)
+    
     circle = request.data.get('circle', [])
     # site_tagging = request.data.get('site_tagging', [])
     current_status = request.data.get('relocation_method', [])
