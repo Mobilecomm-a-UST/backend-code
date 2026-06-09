@@ -105,7 +105,8 @@ urlpatterns = [
     path("payload_traffic/",include("payload_traffic_tool.urls")),
     path("performance_idploy/",include("performance_idploy.urls")),
     path("dailytask_review/",include("DailyTaskReview.urls")),
-    path("performance_tat/",include("performance_tat.urls"))
+    path("performance_tat/",include("performance_tat.urls")),
+    path("vi/",include("VI_checklist_tool.urls")),
 
 ]
 

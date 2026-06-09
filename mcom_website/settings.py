@@ -122,6 +122,7 @@ INSTALLED_APPS = [
     "performance_idploy",
     "DailyTaskReview",
     "performance_tat",
+    "VI_checklist_tool",
 ]
 
 MIDDLEWARE = [

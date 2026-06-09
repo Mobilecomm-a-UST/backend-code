@@ -1,0 +1,6 @@
+from django.apps import AppConfig
+
+
+class ViChecklistToolConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "VI_checklist_tool"
