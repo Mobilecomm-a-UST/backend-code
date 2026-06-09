@@ -310,7 +310,7 @@ def write_excel_sheet(ws, pivot, sheet_title, start_date, end_date):
     # Data rows
     for row_offset, (_, row) in enumerate(pivot.iterrows()):
         excel_row = row_offset + 4
-        is_grand  = str(row.get("Row Label", "")).strip() == "Grand Total"
+        is_grand  = str(row.get("Circle", "")).strip() == "Grand Total"
         is_alt    = (row_offset % 2 == 1) and not is_grand
 
         row_bg = GRAND_TOTAL_BG if is_grand else (ALT_ROW_BG if is_alt else "FFFFFF")
@@ -319,14 +319,14 @@ def write_excel_sheet(ws, pivot, sheet_title, start_date, end_date):
         for col_idx, col_name in enumerate(headers, start=1):
             raw_val = row.get(col_name, "")
             try:
-                val = int(raw_val) if col_name != "Row Label" else str(raw_val)
+                val = int(raw_val) if col_name != "Circle" else str(raw_val)
             except (ValueError, TypeError):
                 val = raw_val
 
             c = ws.cell(row=excel_row, column=col_idx, value=val)
             c.font      = Font(name="Arial", bold=is_grand, size=10, color=row_fg)
             c.alignment = Alignment(
-                horizontal="left" if col_name == "Row Label" else "center",
+                horizontal="left" if col_name == "Circle" else "center",
                 vertical="center"
             )
             c.border = thin_border
