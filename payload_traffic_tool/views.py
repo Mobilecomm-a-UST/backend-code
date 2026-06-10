@@ -49,6 +49,14 @@ def upload_4g_payload(request):
     df.columns = df.columns.astype(str).str.strip()
     df = df.dropna(how='all')
 
+    required_cols = ['Short name', 'Site ID', '4G Data Volume [GB]']
+    missing_cols = [col for col in required_cols if col not in df.columns]
+    if missing_cols:
+        return Response({
+            "status": False,
+            "message": f"Missing 4G column(s): {', '.join(missing_cols)}"
+        })
+
     fixed_cols = ['Short name', 'Site ID']
     date_cols = [
         col for col in df.columns
@@ -213,6 +221,14 @@ def upload_5g_payload(request):
     # ── Step 2: Clean columns ──────────────────────
     df.columns = df.columns.astype(str).str.strip()
     df = df.dropna(how='all')
+    required_cols = ['Short name', 'Site ID', '5G Data Volume [GB]']
+    missing_cols = [col for col in required_cols if col not in df.columns]
+    if missing_cols:
+        return Response({
+            "status": False,
+            "message": f"Missing 5G column(s): {', '.join(missing_cols)}"
+        })
+    
 
     fixed_cols = ['Short name', 'Site ID']
     date_cols = [
