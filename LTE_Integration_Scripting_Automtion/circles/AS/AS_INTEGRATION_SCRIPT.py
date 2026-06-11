@@ -2692,6 +2692,7 @@ eNodeBPlmnId mcc=405,mnc=56,mncLength=2
 dscpLabel 46
 eNBId {eNBId}
 sctpRef Transport=1,SctpEndpoint=1
+timeAndPhaseSynchAlignment true
 upIpAddressRef Transport=1,Router=LTEUP,InterfaceIPv4={tnPortId}_UP,AddressIPv4={tnPortId}_UP
 end
 #END ENodeBFunction=1 --------------------
@@ -2910,7 +2911,20 @@ mmeSupportLegacyLte true
 mmeSupportNbIoT false                                                                                                                                                             
                                                                                                                                                              
 end                                                                                                                                                                               
-gs-                                                                                                                                                                            
+gs-
+
+crn ENodeBFunction=1,TermPointToMme=AS_MME07                                                                                                                                      
+additionalCnRef                                                                                                                                                                   
+administrativeState 1                                                                                                                                                             
+dcnType 0                                                                                                                                                                         
+domainName                                                                                                                                                                        
+ipAddress1 10.103.249.85                                                                                                                                                          
+ipAddress2 10.103.249.87                                                                                                                                                           
+ipv6Address1 ::                                                                                                                                                                   
+ipv6Address2 ::                                                                                                                                                                   
+mmeSupportLegacyLte true                                                                                                                                                          
+mmeSupportNbIoT false                                                                                                                                                             
+end                                                                                                                                                                                
     
 """
 

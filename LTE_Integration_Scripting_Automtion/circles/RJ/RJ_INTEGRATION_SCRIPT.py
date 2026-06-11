@@ -3414,6 +3414,7 @@ crn ENodeBFunction=1
 eNodeBPlmnId mcc=404,mnc=70,mncLength=2
 eNBId {eNBId}
 sctpRef              Transport=1,SctpEndpoint=1
+timeAndPhaseSynchAlignment true
 tRelocOverall 20
 upIpAddressRef       Transport=1,Router=LTEUP,InterfaceIPv4={tnPortId}_UP,AddressIPv4={tnPortId}_UP
 end
