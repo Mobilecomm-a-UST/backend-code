@@ -6,15 +6,25 @@ from .serializers import *
 from django.contrib.auth.models import User
 
 
-@api_view(['GET'])
+@api_view(['GET','POST'])
 def get_users(request):
-    users = User.objects.all().values()
+    users = User.objects.all().values('username')
+    return Response(list(users))
+
+@api_view(['POST'])
+def search_users(request):
+    search_text = request.data.get('search', '')
+
+    if not search_text:
+        return Response([])
+
+    users = User.objects.filter(
+        username__icontains=search_text
+    ).values_list('username', flat=True)[:10]
+
     return Response(list(users))
 
 
-
-
-   
 
 @api_view(['POST'])
 def fatch_username(request):
@@ -56,20 +66,19 @@ def create_task(request):
 
 @api_view(['GET'])
 def get_tasks(request):
-    tasks = DailyreviewTask.objects.all()
-    serializer = DailyreviewTaskSerializer(tasks, many=True)
+    queryset = Dailytaskreviewmodel.objects.all()
+    serializer = DailytaskreviewmodelSerializer(queryset, many=True)
     return Response(serializer.data)
 
 
-@api_view(['GET'])
-def get_task(request, pk):
-    try:
-        task = DailyreviewTask.objects.get(pk=pk)
-    except DailyreviewTask.DoesNotExist:
-        return Response({"error": "Task not found"}, status=404)
-
-    serializer = DailyreviewTaskSerializer(task)
-    return Response(serializer.data)
+# @api_view(['GET'])
+# def get_task(request, pk):
+#     try:
+#         task = DailyreviewTask.objects.get(pk=pk)
+#     except DailyreviewTask.DoesNotExist:
+#         return Response({"error": "Task not found"}, status=404)
+#     serializer = DailyreviewTaskSerializer(task)
+#     return Response(serializer.data)
 
 
 @api_view(['PUT'])
@@ -78,7 +87,6 @@ def update_task(request, pk):
         task = DailyreviewTask.objects.get(pk=pk)
     except DailyreviewTask.DoesNotExist:
         return Response({"error": "Task not found"}, status=404)
-
     serializer = DailyreviewTaskSerializer(task, data=request.data)
     if serializer.is_valid():
         serializer.save()
@@ -93,7 +101,6 @@ def delete_task(request, pk):
         task = DailyreviewTask.objects.get(pk=pk)
     except DailyreviewTask.DoesNotExist:
         return Response({"error": "Task not found"}, status=404)
-
     task.delete()
     return Response({"message": "Task deleted successfully"})
 
