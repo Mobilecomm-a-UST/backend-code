@@ -20,7 +20,7 @@ import re
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 import math
 import gzip
-# from openpyxl import workbook
+from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from django.utils import timezone
@@ -774,7 +774,7 @@ def upload_and_compare_xml_files(request):
 
             if not (port_id and descr and polarity):
                 continue
-
+                        
             if site_id not in site_alarm_counts:
                 site_alarm_counts[site_id] = 0
 
@@ -857,6 +857,7 @@ def upload_and_compare_xml_files(request):
             site = mrbts_site_map.get(site_id, "")
 
             bts_name = ""
+            lnbts_name = ""
             cell_name = ""
             itemname = ""
             tac = ""
@@ -869,8 +870,14 @@ def upload_and_compare_xml_files(request):
                     if p.attrib.get("name", "").lower() == "btsname":
                         bts_name = (p.text or "").strip()
                         break
-
-            # 👉 LNCEL → CELL NAME + TAC
+                    
+            elif mo_class == "BCF":
+                for p in mo.findall(p_tag):
+                    pname = p.attrib.get("name", "").lower()
+                    if pname == "name":
+                        lnbts_name = (p.text or "").strip()
+                        break
+                    
             elif mo_class == "LNCEL":
                 for p in mo.findall(p_tag):
                     pname = p.attrib.get("name", "").lower()
@@ -890,18 +897,28 @@ def upload_and_compare_xml_files(request):
             
             elif mo_class == "LNBTS":
                 for p in mo.findall(p_tag):
-                    if p.attrib.get("name", "").lower() == "sitetemplatename":
-                        itemname = (p.text or "").strip()
+                    pname = p.attrib.get("name", "").lower()
 
-                        if len(itemname) != 15:
-                            itemname = f"{itemname[:15]} (Invalid Length)"
+                    if pname == "sitetemplatename":
+                        raw_itemname = (p.text or "").strip()
 
-                        break
+                        itemname = raw_itemname
 
-            if bts_name or cell_name or itemname or tac:
+                        # validation only (do NOT overwrite original logic flow)
+                        if len(raw_itemname) != 15:
+                            itemname = f"{raw_itemname[:15]} (Invalid Length)"
+
+                        if not raw_itemname.endswith("1"):
+                            itemname = f"{itemname} (Invalid - must end with 1)"
+
+                    elif pname == "name":
+                        lnbts_name = (p.text or "").strip()
+
+            if bts_name or cell_name or itemname or tac or lnbts_name:
                 nomenclature_4G.append({
                     "Site_id": site,
                     "MRBTS": site_id,
+                    "LNBTS_NAME": lnbts_name,
                     "BTS_NAME": bts_name,
                     "CELL_NAME": cell_name,
                     "SiteTemplateName": itemname,
@@ -920,6 +937,7 @@ def upload_and_compare_xml_files(request):
 
             sector_name = ""
             bcf_name = ""
+            bcf = ""
             mrbts_name = ""
             site_name = ""
             itemname = ""
@@ -952,22 +970,43 @@ def upload_and_compare_xml_files(request):
                         print("LAC:", lac)
 
             elif mo_class == "BCF":
-                bcf_name = dist_name.split("BCF-")[-1]
+                bcf = dist_name.split("BCF-")[-1]
                 for p in mo.findall(p_tag):
                     pname = p.attrib.get("name", "").lower()
                     if pname == "sbtsid":
                         mrbts_name = (p.text or "").strip()
                         print("MRBTS_NAME:", mrbts_name)
-
+                    
                     elif pname == "name":
-                        site_name = (p.text or "").strip()
-                        print("SITE_NAME:", site_name)
+                        raw_name = (p.text or "").strip()
 
+                        bcf_name = raw_name
+                        site_name = raw_name
+
+                        # remove first character only (EMB5906 -> MB5906)
+                        if len(site_name) > 1:
+                            site_name = site_name[1:]
+                            
+                        print("BCF_NAME:", bcf_name)
+                        print("SITE_NAME:", site_name)
+                    # elif pname == "name":
+                    #     site_name = (p.text or "").strip()
+                    #     matches = re.findall(r"[A-Z0-9_]+", site_name.upper())
+                    #     if matches:
+                    #         site_name = matches[-1]
+                    #     print("SITE_NAME:", site_name)
+                        
+                    # elif pname == "name":
+                    #     bcf_name = (p.text or "").strip()
+                    #     print("BCF_NAME:", bcf_name)
+
+                    
             if bcf_name or sector_name or itemname or lac or mrbts_name or site_name:
                 nomenclature_2G.append({
                     "SITE_NAME": site_name,
+                    "BCF_NAME": bcf_name,
                     "MRBTS_NAME": mrbts_name,
-                    "BCF": bcf_name,
+                    "BCF": bcf,
                     "SECTOR_NAME": sector_name,
                     "SiteTemplateName": itemname,
                     "LAC": lac,
@@ -1066,23 +1105,41 @@ def upload_and_compare_xml_files(request):
     # Deduplicate final outputs
     # ---------------------------------------
     all_alarms = deduplicate_alarms(all_alarms)
+    df_results = pd.DataFrame(results)
 
+    
     df_results = pd.DataFrame(results).drop_duplicates(
         subset=["file","MRBTS", "mo_path", "parameter", "actual_value", "expected_value"],
         keep="first"
     )
-
+    df_results = df_results[
+        df_results["file"].str.contains("4G", case=False, na=False)
+    ]
+    
+    
     df_alarms = pd.DataFrame(all_alarms).drop_duplicates(
         subset=["file", "MRBTS", "mo_path", "parameter", "Status"],
         keep="first"
     )
+    df_alarms = df_alarms[
+        df_alarms["file"].str.contains("4G", case=False, na=False)
+    ]
 
+    
     df_summary = pd.DataFrame(summary_rows).drop_duplicates()
-
+    df_summary = df_summary[
+        df_summary["file"].str.contains("4G", case=False, na=False)
+    ]
+    
+    
     df_ipmtu = pd.DataFrame(ipmtu_rows).drop_duplicates(
         subset=["file", "MRBTS","dist_name", "ipMtu", "status"],
         keep="first"
     )
+    df_ipmtu = df_ipmtu[
+        df_ipmtu["file"].str.contains("4G", case=False, na=False)
+    ]
+    
     df_nomenclature_4G = pd.DataFrame(nomenclature_4G).drop_duplicates()
     # ---------------- Fix Nomenclature 4G format ----------------
     if not df_nomenclature_4G.empty:
@@ -1090,6 +1147,7 @@ def upload_and_compare_xml_files(request):
         fill_columns = [
             "Site_id",
             "MRBTS",
+            "LNBTS_NAME",
             "BTS_NAME",
             "SiteTemplateName"
         ]
@@ -1106,6 +1164,32 @@ def upload_and_compare_xml_files(request):
         ]
 
         df_nomenclature_4G.reset_index(drop=True, inplace=True)
+        # ---------------- Excel export ----------------
+        wb = Workbook()
+        ws = wb.active
+
+        # header
+        ws.append(list(df_nomenclature_4G.columns))
+
+        # red style
+        red_font = Font(color="FF0000")
+        red_fill = PatternFill(start_color="FFFF0000", end_color="FFFF0000", fill_type="solid")
+
+        cell_name_index = df_nomenclature_4G.columns.get_loc("CELL_NAME")
+
+        # data rows
+        for row in df_nomenclature_4G.itertuples(index=False):
+            ws.append(list(row))
+
+        # ---------------- RED highlight ONLY CELL_NAME ----------------
+        for row in ws.iter_rows(min_row=2):
+
+            cell_value = str(row[cell_name_index].value)
+
+            # space check
+            if " " in cell_value:
+                row[cell_name_index].font = red_font
+                row[cell_name_index].fill = red_fill
 
     df_nomenclature_2G = pd.DataFrame(nomenclature_2G).drop_duplicates()
     print("df_nomenclature_2G", df_nomenclature_2G  )
@@ -1115,6 +1199,7 @@ def upload_and_compare_xml_files(request):
 
         fill_columns = [
             "SITE_NAME",
+            "BCF_NAME",
             "MRBTS_NAME",
             "BCF",
             "SiteTemplateName",
@@ -1137,8 +1222,10 @@ def upload_and_compare_xml_files(request):
         df_nomenclature_2G.reset_index(drop=True, inplace=True)
 
     df_vswr = pd.DataFrame(VSWR)
+    df_vswr = df_vswr[df_vswr["MRBTS"].notna()]
 
     df_ret = pd.DataFrame(ret_counter).drop_duplicates()
+    df_ret = df_ret[df_ret["MRBTS"].notna()]
 
     # ---------------------------------------
     # SAVE EXCEL REPORT
@@ -1779,7 +1866,8 @@ def upload_summary_xml_files(request):
                 if mrbts_id in hw.attrib.get("distName", ""):
                     for p in hw.findall("ns:p", ns):
                         if p.attrib.get("name") == "activeSWReleaseVersion":
-                            data["swVersion"] = p.text.strip()
+                            full_version = p.text.strip()
+                            data["swVersion"] = full_version.split("_")[0]
                             break
 
             # ----------------- MPlane IP -----------------
@@ -1899,7 +1987,25 @@ def upload_summary_xml_files(request):
                         lncel_ids.append(match.group(1))
 
             data["LCR_ID"] = "&".join(lncel_ids)
+            
+            # ----------------- LAC (from BTS) -----------------
+            lac = []
 
+            p_tag = f"{{{ns.get('ns','')}}}p" if ns else "p"
+
+            for bts in root.findall(".//ns:managedObject[@class='BTS']", ns):
+                dist = bts.attrib.get("distName", "")
+
+                if mrbts_id in dist:
+                    for p in bts.findall(p_tag, ns):
+                        if p.attrib.get("name", "").lower() == "locationareaidlac":
+                            value = (p.text or "").strip()
+                            if value:
+                                lac.append(value)
+
+            data["LAC"] = "&".join(lac)
+            print("lac of 2g is ",data["LAC"])
+            
             # ----------Determine Activity Type based on project_type---------------------------------
             Activity_Type = []
             if project_type.lower() == 'uls':
@@ -1954,13 +2060,24 @@ def upload_summary_xml_files(request):
             # template_df.loc[0, 'LNCEL_ID'] = data['cells'][0]['LNCEL_ID'] if data.get("cells") else ''
             template_df.loc[0, 'DPR_Cell_Name'] = data.get('DPR_Cell_Name', '')
             template_df.loc[0, 'Band'] = data.get('Band', '')
- 
-            
+            template_df.loc[0, 'Toco'] = 'INDUS'
+            template_df.loc[0, 'Offered_Date'] = datetime.now().strftime('%d-%m-%Y')
 
+            
             # Dynamic (from XML)
             for key, value in data.items():
                 if key in template_df.columns:
                     template_df.loc[0, key] = value
+            
+            if project_type.lower() in ['nt','relocation']:
+                template_df.loc[0, 'Reference_Id'] = 'NA'
+                template_df.loc[0, 'Cell_ID'] = 'NA'
+                template_df.loc[0, 'DPR_Cell_Name'] = 'NA'
+                template_df.loc[0, 'LNCEL_ID'] = 'NA' 
+                template_df.loc[0, 'FDD_MRBTS_ID'] = 'NA'
+                template_df.loc[0, 'FDD_Mplane_IP'] = 'NA'
+                template_df.loc[0, 'Ckt Id'] = 'NA'
+                template_df.loc[0, 'Nominal_Type'] = 'NA'
 
             template_df.loc[0, 'Circle'] = circle_name
 
