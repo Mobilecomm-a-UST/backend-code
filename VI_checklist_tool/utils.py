@@ -11,11 +11,7 @@ from openpyxl.utils import get_column_letter
 import re
 
 
-def create_config_report(output_path, data):
-
-    wb = Workbook()
-    ws = wb.active
- 
+def create_config_report(ws, data):
 
     # Header
     header_fill = PatternFill(
@@ -73,14 +69,12 @@ def create_config_report(output_path, data):
         size=10
     )
 
-    # Fonts
     normal_font = Font(
         name="Calibri",
         size=10
     )
 
     first_col_font = Font(
-  
         name="Calibri",
         size=10
     )
@@ -89,7 +83,6 @@ def create_config_report(output_path, data):
         horizontal="center",
         vertical="center"
     )
-
 
     thin = Side(style="thin", color="D9D9D9")
 
@@ -102,7 +95,7 @@ def create_config_report(output_path, data):
 
     num_cols = len(data[0])
 
-   
+    # Header row
     for col_idx, header in enumerate(data[0], 1):
 
         cell = ws.cell(
@@ -118,9 +111,10 @@ def create_config_report(output_path, data):
 
     ws.row_dimensions[1].height = 25
 
-    # Freeze Header
+    # Freeze header
     ws.freeze_panes = "A2"
 
+    # Data rows
     for row_idx, row_data in enumerate(data[1:], 2):
 
         for col_idx, value in enumerate(row_data, 1):
@@ -134,7 +128,7 @@ def create_config_report(output_path, data):
             cell.alignment = center
             cell.border = border
 
-       
+            # Alternate row color
             if row_idx % 2 == 0:
                 cell.fill = stripe_fill
 
@@ -143,7 +137,7 @@ def create_config_report(output_path, data):
             else:
                 cell.font = normal_font
 
-  
+            # Status column
             if col_idx == num_cols:
 
                 status = str(value).strip().upper()
@@ -152,19 +146,17 @@ def create_config_report(output_path, data):
                     cell.fill = ok_fill
                     cell.font = ok_font
 
-                elif status == "NOT OK":
+                elif status in ["NOT OK", "NOT FOUND"]:
                     cell.fill = notok_fill
                     cell.font = notok_font
 
-                elif status == "NOT FOUND":
-                    cell.fill = notok_fill
-                    cell.font = notok_font    
-
+            # NA highlight
             if str(value).strip().upper() == "NA":
                 cell.fill = yellow_fill
 
         ws.row_dimensions[row_idx].height = 20
 
+    # Auto-fit columns
     for col in ws.columns:
 
         max_length = 0
@@ -181,8 +173,6 @@ def create_config_report(output_path, data):
                 pass
 
         ws.column_dimensions[column_letter].width = max_length + 4
-
-    wb.save(output_path)
 
 
 def normalize_value(v):
@@ -211,7 +201,7 @@ def check_status(actual, expected):
     # -------- Actual values --------
     actual_values = set()
 
-    for val in re.split(r"[;,]", str(actual)):
+    for val in re.split(r"[;,/]", str(actual)):   # <-- / added
         val = val.strip().lower()
 
         if not val:
@@ -229,7 +219,7 @@ def check_status(actual, expected):
     # -------- Expected values --------
     expected_values = set()
 
-    for item in re.split(r"[,;]", str(expected)):
+    for item in re.split(r"[,;/]", str(expected)):   # <-- / added
 
         item = item.strip()
 
@@ -254,11 +244,17 @@ def check_status(actual, expected):
             expected_values.add(val)
 
     # Match if at least one value matches
+    if expected_values == {"0db", "3db"}:
+        if actual_values.issubset({"0db", "3db"}) and actual_values:
+            return "OK"
+        else:
+            return "NOT OK"
+
+    # Normal matching for all other parameters
     if actual_values.intersection(expected_values):
         return "OK"
 
     return "NOT OK"
-
 
 parameter_map = {
     "actCoMp": "fixedULCoMp",
@@ -277,7 +273,7 @@ parameter_map = {
     "ulsSchedMethod": "TDD:channelaware, FDD:interference aware",
     "b2Threshold2RssiGERANQci1": "15",
     "qrxlevmin": "-124",
-    "dlRsBoost": "0dB",
+    "dlRsBoost": "FDD:0dB ,TDD:3dB",
     "actLBPowerSaving": "1",
     "lbpsLastCellMinLoad": "40",
     "lbpsLastCellRTXMinLoad": "40",
@@ -302,7 +298,23 @@ parameter_map = {
     "actAutoPucchAllo":"1",
     "actMicroDtx":"1",
     "actAutoPucchAlloc":"FDD:1,TDD:0",
-    "allowTrafficConcentration":"1"
+    "allowTrafficConcentration":"1",
+    "alVoltHighThreshold":"58/107",
+    "alVoltLowThreshold":"40.5/-100",
+    "alVoltUnstableThreshold":"5",
+    "ttibSinrThresholdIn":"3",
+    "scellFastSchedulingSelect":"fast",
+    "userLabel-IPIF-1": "LTE_UP",
+    "userLabel-IPIF-2": "LTE_CP",
+    "userLabel-IPIF-3": "LTE_OM",
+    "userLabel-IPIF-5": "GSM_ABIS",
+    "userLabel(SR)-IPRT-1":	"LTE_UP",
+    "userLabel(SR)-IPRT-2":"LTE_CP",
+    "userLabel(SR)-IPRT-3":"LTE_OM",
+    "userLabel(SR)-IPRT-5":"GSM_ABIS",
+    "userLabel(SR)-IPRTV6-1":"LTE_UP",	
+   "userLabel(SR)-IPRTV6-2":"LTE_CP",
+
 }
 
 master_parameters = [
@@ -344,4 +356,18 @@ master_parameters = [
     "rrcGuardTimer",
     "ttibOperMode",
     "ulsSchedMethod",
+    "alVoltHighThreshold",
+    "alVoltLowThreshold",
+    "alVoltUnstableThreshold",
+    "ttibSinrThresholdIn",
+    "scellFastSchedulingSelect",
+     "userLabel-IPIF-1",
+    "userLabel-IPIF-2",
+    "userLabel-IPIF-3",
+    "userLabel-IPIF-5", 
+    "userLabel(SR)-IPRT-3",
+    "userLabel(SR)-IPRT-5",
+    "userLabel(SR)-IPRTV6-1",	
+   "userLabel(SR)-IPRTV6-2",	
+
 ]

@@ -24,7 +24,8 @@ def vi_tracker_dump(request):
     output_folder = os.path.join(main_folder, "Output")
     os.makedirs(output_folder, exist_ok=True)
 
-    dumy_data = []
+
+
     required_parameters= {
     # NOKLTE:LNBTS------  
     "actCoMp",
@@ -46,6 +47,8 @@ def vi_tracker_dump(request):
     "allowTrafficConcentration",
     "mdtxAggressiveness",
     "mdtxPdcchSymb",
+    "ttibSinrThresholdIn",
+    "scellFastSchedulingSelect",
 
 
 
@@ -63,6 +66,8 @@ def vi_tracker_dump(request):
     "actFastMimoSwitch",
     "actMMimo",
     "actAutoPucchAlloc",
+   
+
 
     
 
@@ -79,10 +84,19 @@ def vi_tracker_dump(request):
 
     #"com.nokia.srbts.mnl:FMCADM"-----
     "actRadioFanFailureEarlyNotif",
+    
+    #com.nokia.srbts.eqm:RMOD--
+    "alVoltHighThreshold",
+    "alVoltLowThreshold",
+    "alVoltUnstableThreshold",
 
-}
+
+}   
+    wb = Workbook()
+    wb.remove(wb.active)
 
     for file in xml_files:
+        dumy_data = []
         file_name = file.name.lower()
        
         if file_name.endswith(".gz"):
@@ -300,58 +314,142 @@ def vi_tracker_dump(request):
                             "Parameter": name,
                             "Value": value
                         })
+
+            elif mo_class == "com.nokia.srbts.eqm:RMOD":
+                p_tags = mo.findall("ns:p", ns) if ns else mo.findall("p")
+
+                for p in p_tags:
+                    name = p.attrib.get("name")
+                
+                    if name in required_parameters:
+                        value = p.text
+                        dumy_data.append({
+                            "MO": "com.nokia.srbts.eqm:RMOD",
+                            "DistName": dist_name,
+                            "Parameter": name,
+                            "Value": value
+                        })   
+
    
-             
-               
-    vi_df = pd.DataFrame(dumy_data)
-    vi_df.to_excel("dumy_vi.xlsx",index=False)
+            elif mo_class == "com.nokia.srbts.tnl:IPIF":
+                ipif_id = dist_name.split("/")[-1]      # IPIF-1, IPIF-2 ...
+                p_tags = (
+                    mo.findall("ns:p", ns)
+                    if ns else
+                    mo.findall("p")
+                )
 
-    vi_df = (
-    vi_df.groupby(["Parameter"], as_index=False)
-         .agg({
-             "Value": lambda x: ";".join(sorted(set(map(str, x))))
-         })
-)    
-    
-    found_params = set(vi_df["Parameter"])
-    missing_rows = []
+                for p in p_tags:
 
-    for param in master_parameters:
-        if param not in found_params:
-            missing_rows.append({
-                "Parameter": param,
-                "Value": "Not Found In SCF"
-            })
+                    name = p.attrib.get("name", "").strip()
 
-    if missing_rows:
-        vi_df = pd.concat(
-            [vi_df, pd.DataFrame(missing_rows)],
-            ignore_index=True
-        )
+                    if name == "userLabel":
+
+                        value = (p.text or "").strip()
+
+                        dumy_data.append({
+                            "Parameter": f"userLabel-{ipif_id}",
+                            "Value": value
+                        })
+
+            elif mo_class in ["com.nokia.srbts.tnl:IPRT", "com.nokia.srbts.tnl:IPRTV6"]:
+                iprt_id = dist_name.split("/")[-1]   # IPRT-3, IPRT-5, IPRTV6-1 ...
+                p_tags = mo.findall("ns:p", ns) if ns else mo.findall("p")
+                for p in p_tags:
+                    name = p.attrib.get("name", "").strip()
+                    if name == "userLabel":
+                        value = (p.text or "").strip()
+                        dumy_data.append({
+                            "Parameter": f"userLabel(SR)-{iprt_id}",
+                            "Value": value
+                        })
+
+
+            elif mo_class == "com.nokia.srbts:MRBTS":
+                params_lnbts = {}
+                p_tags = (
+                    mo.findall("ns:p", ns) if ns else mo.findall("p"))
+
+                for p in p_tags:
+                    name = p.attrib.get("name")
+                    if name == "btsName":
+                        value = p.text
+                        params_lnbts[name] = value
+                        bts_name=value
         
-    vi_df.drop_duplicates(subset=["Parameter"], inplace=True)
-    vi_df["Expected Value"] = vi_df["Parameter"].map(parameter_map)
+        print(bts_name)
+                
+                         
+        vi_df = pd.DataFrame(dumy_data)
+        # vi_df.to_excel("dumy_vi.xlsx",index=False)
 
-    vi_df["Status"] = vi_df.apply(
-    lambda row:
-        "NOT FOUND"
-        if row["Value"] == "Not Found In SCF"
-        else check_status(
-            row["Value"],
-            row["Expected Value"]
-        ),
-    axis=1
-)  
+        vi_df = (
+        vi_df.groupby(["Parameter"], as_index=False)
+            .agg({
+                "Value": lambda x: ";".join(sorted(set(map(str, x))))
+            })
+    )    
     
-    vi_df.rename(
-    columns={"Value": "Actual Value"},
-    inplace=True
-    )
+        found_params = set(vi_df["Parameter"])
+        missing_rows = []
 
-    report_data = [vi_df.columns.tolist()] + vi_df.values.tolist()
-    output_file = os.path.join(output_folder, "VI_Config_Report.xlsx")
-    create_config_report(output_file, report_data)
+        for param in master_parameters:
+            if param not in found_params:
+                missing_rows.append({
+                    "Parameter": param,
+                    "Value": "Not Found In SCF"
+                })
 
+        if missing_rows:
+            vi_df = pd.concat(
+                [vi_df, pd.DataFrame(missing_rows)],
+                ignore_index=True
+            )
+            
+        vi_df.drop_duplicates(subset=["Parameter"], inplace=True)
+        vi_df["Expected Value"] = vi_df["Parameter"].map(parameter_map)
+
+
+        vi_df.loc[
+        vi_df["Parameter"] == "ttibSinrThresholdIn",
+        "Value"
+    ] = (
+        pd.to_numeric(
+            vi_df.loc[
+                vi_df["Parameter"] == "ttibSinrThresholdIn",
+                "Value"
+            ],
+            errors="coerce"
+        ) / 4
+    ).astype(int).astype(str)
+
+        # Existing code
+        vi_df["Status"] = vi_df.apply(
+            lambda row:
+                "NOT FOUND"
+                if row["Value"] == "Not Found In SCF"
+                else check_status(
+                    row["Value"],
+                    row["Expected Value"]
+                ),
+            axis=1
+        )
+
+
+        
+        vi_df.rename(
+        columns={"Value": "Actual Value"},
+        inplace=True
+        )
+
+        report_data = [vi_df.columns.tolist()] + vi_df.values.tolist()
+        ws = wb.create_sheet(title=str(bts_name)[:31])
+
+        create_config_report(ws, report_data)
+
+        output_file = os.path.join(output_folder, "VI_Config_Report.xlsx")
+
+        wb.save(output_file)
 
 
   
@@ -363,7 +461,7 @@ def vi_tracker_dump(request):
 
     return Response({
         "status": True,
-        "message": "SCF data parsed ",
+        "message":f"{len(xml_files)} SCF files parsed successfully.",
         "download_url": download_url
     }, status=HTTP_200_OK)
 
