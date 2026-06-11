@@ -154,6 +154,7 @@ eNBId {eNBId}
 gtpuErrorIndicationDscp 46
 s1GtpuEchoDscp 46
 sctpRef Transport=1,SctpEndpoint=1
+timeAndPhaseSynchAlignment true
 tRelocOverall 5
 upIpAddressRef Transport=1,Router=LTE_NR,InterfaceIPv4=LTE,AddressIPv4=LTE_S1_CPUP
 x2GtpuEchoDscp 46

@@ -184,6 +184,7 @@ eNodeBPlmnId mcc=404,mnc=40,mncLength=2
 dscpLabel 46
 eNBId {eNBId}
 sctpRef Transport=1,SctpEndpoint=1
+timeAndPhaseSynchAlignment true
 upIpAddressRef Router=LTE_NR,InterfaceIPv4=LTE_UP,AddressIPv4=LTE_UP
 end
 #END ENodeBFunction=1 --------------------
@@ -397,6 +398,7 @@ eNodeBPlmnId mcc=404,mnc=40,mncLength=2
 dscpLabel 46
 eNBId {eNBId}
 sctpRef Transport=1,SctpEndpoint=1
+timeAndPhaseSynchAlignment true
 upIpAddressRef Transport=1,Router=LTEUP,InterfaceIPv4=TN_E_UP,AddressIPv4=TN_E_UP
 end
 #END ENodeBFunction=1 --------------------
@@ -610,6 +612,7 @@ crn ENodeBFunction=1
 eNodeBPlmnId mcc=404,mnc=40,mncLength=2
 eNBId {eNBId}
 sctpRef Transport=1,SctpEndpoint=1
+timeAndPhaseSynchAlignment true
 upIpAddressRef Transport=1,Router=LTEUP,InterfaceIPv4=TN_C_UP,AddressIPv4=TN_C_UP
 end
 #END ENodeBFunction=1 --------------------

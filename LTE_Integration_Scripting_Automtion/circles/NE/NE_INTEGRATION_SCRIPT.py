@@ -1919,6 +1919,7 @@ crn ENodeBFunction=1
 eNodeBPlmnId mcc=404,mnc=16,mncLength=2
 eNBId {eNBId}
 sctpRef Transport=1,SctpEndpoint=1
+timeAndPhaseSynchAlignment true
 upIpAddressRef Transport=1,Router=LTEUP,InterfaceIPv4={tnPortId}_UP,AddressIPv4={tnPortId}_UP
 end
 #END ENodeBFunction=1 --------------------
