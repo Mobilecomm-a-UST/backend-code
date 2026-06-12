@@ -61,15 +61,11 @@ def vi_tracker_dump(request):
     "qrxlevmin",
 
     # "NOKLTE:LNCEL_FDD"-------
-    "dlRsBoost",
     "actDlMuMimo",
     "actFastMimoSwitch",
     "actMMimo",
     "actAutoPucchAlloc",
    
-
-
-    
 
     #"NOKLTE:PSGRP"----
     "lbpsLastCellMinLoad",
@@ -196,17 +192,14 @@ def vi_tracker_dump(request):
 
             elif mo_class == "NOKLTE:LNCEL_FDD":
                 print("FDD FOUND:", dist_name)
-                params_lncel_fdd = {}
+
                 p_tags = mo.findall("ns:p", ns) if ns else mo.findall("p")
+
                 for p in p_tags:
                     name = p.attrib.get("name", "").strip()
+                    value = (p.text or "").strip()
 
                     if name in required_parameters:
-
-                        value = (p.text or "").strip()
-
-                        params_lncel_fdd[name] = value
-
                         dumy_data.append({
                             "MO": "NOKLTE:LNCEL_FDD",
                             "DistName": dist_name,
@@ -214,20 +207,39 @@ def vi_tracker_dump(request):
                             "Value": value
                         })
 
+                    if name == "dlRsBoost":
+                        dumy_data.append({
+                            "MO": "NOKLTE:LNCEL_FDD",
+                            "DistName": dist_name,
+                            "Parameter": f"{name}-FDD",
+                            "Value": value
+                        })
+
+
             elif mo_class == "NOKLTE:LNCEL_TDD":
-                 print("TDD FOUND:", dist_name)
-                 p_tags = mo.findall("ns:p", ns) if ns else mo.findall("p")
-  
-                 for p in p_tags:
+                print("TDD FOUND:", dist_name)
+
+                p_tags = mo.findall("ns:p", ns) if ns else mo.findall("p")
+
+                for p in p_tags:
                     name = p.attrib.get("name", "").strip()
+                    value = (p.text or "").strip()
 
                     if name in required_parameters:
                         dumy_data.append({
                             "MO": "NOKLTE:LNCEL_TDD",
                             "DistName": dist_name,
                             "Parameter": name,
-                            "Value": p.text
-                        })           
+                            "Value": value
+                        })
+
+                    if name == "dlRsBoost":
+                        dumy_data.append({
+                            "MO": "NOKLTE:LNCEL_TDD",
+                            "DistName": dist_name,
+                            "Parameter": f"{name}-TDD",
+                            "Value": value
+                        })                    
     
             
             elif mo_class == "NOKLTE:PSGRP":

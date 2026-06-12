@@ -202,7 +202,7 @@ def check_status(actual, expected):
     actual_values = set()
 
     for val in re.split(r"[;,/]", str(actual)):   # <-- / added
-        val = val.strip().lower()
+        val = re.sub(r"\s+", "", val.strip().lower())
 
         if not val:
             continue
@@ -232,7 +232,7 @@ def check_status(actual, expected):
         else:
             val = item
 
-        val = val.lower()
+        val = re.sub(r"\s+", "", val.lower())
 
         if val in ["true", "1"]:
             expected_values.update(["true", "1"])
@@ -242,13 +242,6 @@ def check_status(actual, expected):
 
         else:
             expected_values.add(val)
-
-    # Match if at least one value matches
-    if expected_values == {"0db", "3db"}:
-        if actual_values.issubset({"0db", "3db"}) and actual_values:
-            return "OK"
-        else:
-            return "NOT OK"
 
     # Normal matching for all other parameters
     if actual_values.intersection(expected_values):
@@ -273,7 +266,8 @@ parameter_map = {
     "ulsSchedMethod": "TDD:channelaware, FDD:interference aware",
     "b2Threshold2RssiGERANQci1": "15",
     "qrxlevmin": "-124",
-    "dlRsBoost": "FDD:0dB ,TDD:3dB",
+    "dlRsBoost-FDD":"0dB",
+    "dlRsBoost-TDD":"3dB",
     "actLBPowerSaving": "1",
     "lbpsLastCellMinLoad": "40",
     "lbpsLastCellRTXMinLoad": "40",
@@ -299,8 +293,8 @@ parameter_map = {
     "actMicroDtx":"1",
     "actAutoPucchAlloc":"FDD:1,TDD:0",
     "allowTrafficConcentration":"1",
-    "alVoltHighThreshold":"580/107",
-    "alVoltLowThreshold":"405/-100",
+    "alVoltHighThreshold":"58/107",
+    "alVoltLowThreshold":"40.5/-100",
     "alVoltUnstableThreshold":"5",
     "ttibSinrThresholdIn":"3",
     "scellFastSchedulingSelect":"fast",
@@ -314,6 +308,8 @@ parameter_map = {
     "userLabel(SR)-IPRT-5":"GSM_ABIS",
     "userLabel(SR)-IPRTV6-1":"LTE_UP",	
    "userLabel(SR)-IPRTV6-2":"LTE_CP",
+   "userLabel(SR)-IPRTV6-3":"LTE_OM",
+   "userLabel(SR)-IPRTV6-5":"GSM_ABIS",
 
 }
 
@@ -334,7 +330,8 @@ master_parameters = [
     "allowTrafficConcentration",
     "b2Threshold2RssiGERANQci1",
     "dlCaMinPcellCqiQci1",
-    "dlRsBoost",
+    "dlRsBoost-FDD",
+    "dlRsBoost-TDD",
     "harqMaxTrUlTtiBundling",
     "lbpsDayOfWeek",
     "lbpsDuration",
