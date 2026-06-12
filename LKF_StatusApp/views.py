@@ -519,6 +519,19 @@ def LKF_Upload(request):
     else:
         site_map_df = pd.DataFrame(columns=['OLD SITE', 'NEW SITE'])
 
+    final_output_df['Old Site ID'] = (
+    final_output_df['Old Site ID']
+        .astype(str)
+        .str.replace('X', '', regex=False)
+        .str.strip()
+    )
+
+    site_map_df['OLD SITE'] = (
+        site_map_df['OLD SITE']
+        .astype(str)
+        .str.strip()
+    )    
+
     site_mapping = dict(
         zip(
             site_map_df['OLD SITE'],
@@ -527,7 +540,7 @@ def LKF_Upload(request):
     )
     final_output_df['Site Id'] = final_output_df['Old Site ID'].map(site_mapping)
 
-    # New FINGER PRINT
+    # OLD fingerprint
     final_output_df['New FINGER PRINT'] = final_output_df.apply(
         lambda x: str(x['OLD finger Prints']).replace(
             str(x['Old Site ID']),
