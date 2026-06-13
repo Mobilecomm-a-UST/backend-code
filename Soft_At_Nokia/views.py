@@ -1106,23 +1106,24 @@ def upload_and_compare_xml_files(request):
     # ---------------------------------------
     all_alarms = deduplicate_alarms(all_alarms)
     df_results = pd.DataFrame(results)
-
+    print("DF Results before deduplication:", df_results)
     
     df_results = pd.DataFrame(results).drop_duplicates(
         subset=["file","MRBTS", "mo_path", "parameter", "actual_value", "expected_value"],
         keep="first"
     )
+    # 2G files remove karo
     df_results = df_results[
-        df_results["file"].str.contains("4G", case=False, na=False)
+        ~df_results["file"].str.contains("2G", case=False, na=False)
     ]
-    
+        
     
     df_alarms = pd.DataFrame(all_alarms).drop_duplicates(
         subset=["file", "MRBTS", "mo_path", "parameter", "Status"],
         keep="first"
     )
     df_alarms = df_alarms[
-        df_alarms["file"].str.contains("4G", case=False, na=False)
+        ~df_alarms["file"].str.contains("2G", case=False, na=False)
     ]
 
     
@@ -2675,15 +2676,21 @@ def upload_checklist_xml_files_5G(request):
     report_folder = os.path.join(settings.MEDIA_ROOT, "reports")
     os.makedirs(report_folder, exist_ok=True)
 
-    filepath = os.path.join(report_folder, "5G-AT_Checklist.xlsx")
+    filename = "5G-AT_Checklist.xlsx"
+    filepath = os.path.join(report_folder, filename)
 
     with pd.ExcelWriter(filepath, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name="Comparison")
         format_excel_sheet(writer, "Comparison", df)
 
+    # Download URL
+    download_link = request.build_absolute_uri(
+        settings.MEDIA_URL + "reports/" + filename
+    )
+
     return Response({
         "status": True,
         "message": "XML parsed successfully",
         "rows_generated": len(df),
-        "file_path": filepath
+        "download_link": download_link
     })
