@@ -1129,7 +1129,7 @@ def upload_and_compare_xml_files(request):
     
     df_summary = pd.DataFrame(summary_rows).drop_duplicates()
     df_summary = df_summary[
-        df_summary["file"].str.contains("4G", case=False, na=False)
+        ~df_summary["file"].str.contains("2G", case=False, na=False)
     ]
     
     
@@ -1138,7 +1138,7 @@ def upload_and_compare_xml_files(request):
         keep="first"
     )
     df_ipmtu = df_ipmtu[
-        df_ipmtu["file"].str.contains("4G", case=False, na=False)
+        ~df_ipmtu["file"].str.contains("2G", case=False, na=False)
     ]
     
     df_nomenclature_4G = pd.DataFrame(nomenclature_4G).drop_duplicates()
