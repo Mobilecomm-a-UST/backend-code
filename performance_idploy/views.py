@@ -1,4 +1,5 @@
 
+
 import os
 import pandas as pd
 from datetime import date, datetime
@@ -8,20 +9,19 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.chart import LineChart, Reference, Series,  BarChart
 #from openpyxl.chart.data_source import DLbls
- 
+
 from openpyxl.chart.data_source import NumDataSource, NumRef
 from openpyxl.chart.series import SeriesLabel
 from openpyxl.chart.label import DataLabel, DataLabelList
- 
+
 from django.conf import settings
 from django.http import FileResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-# from project_pat.settings import MEDIA_ROOT, MEDIA_URL
-from django.shortcuts import render
+#from project_pat.settings import MEDIA_ROOT, MEDIA_URL
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
-
+from django.shortcuts import render
 
 # ─────────────────────────────────────────────
 # PATHS
@@ -50,6 +50,20 @@ LAYERS_4G_EXCLUDE   = {"3500", "L3500", "N3500", "N2600"}
 LAYERS_5G_INCLUDE   = {"3500", "L3500", "N3500"}
 LAYERS_4G5G_EXCLUDE = {"N2600"}
 
+#Circle combination mapping: list of source circles → combined label
+CIRCLE_COMBINE = {
+    'TNCH':    ['CN', 'TN'],
+    'NESA':    ['AS', 'NE'],
+    'HPHP':    ['HR', 'PB'],
+    'WB/KOL':  ['WB', 'KO'],
+}
+
+#Reverse lookup: source circle → combined label
+_CIRCLE_MERGE_MAP = {
+    src: combined
+    for combined, sources in CIRCLE_COMBINE.items()
+    for src in sources
+}
 
 # ─────────────────────────────────────────────
 # API 1 — UPLOAD
@@ -260,7 +274,6 @@ def _get_input_df():
         else:
             continue
 
-        
 
         for col in ('On Air Date', 'Performance AT Offered Date', 'Performance AT Status Date'):
             df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
@@ -431,7 +444,17 @@ def _apply_layer_filter(df, case):
         return df[~df[col].isin(LAYERS_4G5G_EXCLUDE)].copy()
     else:
         raise ValueError(f"Unknown layer case: {case}")
-
+    
+    
+def _apply_circle_combine(df):
+    """
+    Replace Circle values with their combined label where applicable.
+    CN → TNCH, TN → TNCH, AS → NESA, etc.
+    Original DataFrame is not mutated.
+    """
+    df = df.copy()
+    df['Circle'] = df['Circle'].astype(str).str.strip().replace(_CIRCLE_MERGE_MAP)
+    return df
 
 def _classify(days):
     """
@@ -469,6 +492,8 @@ def _process_data(df, month_label, layer_case, date_col='Performance AT Offered 
 def _process_data_by_date_range(df, start_dt, end_dt, layer_case, date_col='Performance AT Offered Date', label=None, df_full=None):
     # Step 1 — layer filter first
     df_layer = _apply_layer_filter(df, layer_case)
+    #circle filter
+    df_layer = _apply_circle_combine(df_layer)   
 
     # Step 2 — filter On Air Date within bucket
     mask_oa = (df_layer['On Air Date'] >= start_dt) & (df_layer['On Air Date'] <= end_dt)
@@ -486,6 +511,8 @@ def _process_data_by_date_range(df, start_dt, end_dt, layer_case, date_col='Perf
     df_oa['Performance AT Status'] == 'Accepted'].copy()
     if df_full is not None:
         df_full_layer = _apply_layer_filter(df_full, layer_case)
+        #added for circle
+        df_full_layer = _apply_circle_combine(df_full_layer) 
         mask_oa_full  = (df_full_layer['On Air Date'] >= start_dt) & (df_full_layer['On Air Date'] <= end_dt)
         df_oa_full    = df_full_layer[mask_oa_full].copy()
         df_pending    = df_oa_full[df_oa_full['Performance AT Status'] != 'Accepted'].copy()
@@ -868,6 +895,7 @@ def generate_performance(request):
         f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
     )
 
+    
     return Response({
         'status':       True,
         'message':      'Performance report generated successfully.',
@@ -882,6 +910,8 @@ def generate_performance(request):
 
 
 
+
+#added code new performance ftr
 # ─────────────────────────────────────────────
 # FTR CONSTANTS
 # ─────────────────────────────────────────────
@@ -1017,6 +1047,7 @@ def _process_ftr(df, start_dt, end_dt):
     results = {}
     for case in ['4G', '5G', '4G+5G']:
         df_layer = _apply_layer_filter(df, case)
+        df_layer = _apply_circle_combine(df_layer)
         df_layer['On Air Date'] = pd.to_datetime(df_layer['On Air Date'], errors='coerce')
         mask     = (df_layer['On Air Date'] >= start) & (df_layer['On Air Date'] <= end)
         df_range = df_layer[mask].copy()
@@ -1121,6 +1152,8 @@ def _write_ftr_excel(summaries, period_label, out_filepath, metric_col = "FTR", 
 
 
 
+
+
 # ─────────────────────────────────────────────
 # API — GENERATE FTR REPORT (date range only)
 # ─────────────────────────────────────────────
@@ -1133,12 +1166,17 @@ def generate_ftr(request):
     Uses start/end date from date-range-selection.
     Body: { "start_date": "2025-12-26", "end_date": "2026-01-25" }
     """
+    month_label = request.data.get('month', '').strip()
     start_str = request.data.get('start_date', '').strip()
     end_str   = request.data.get('end_date',   '').strip()
 
-    start_dt, end_dt, err = _validate_date_range(start_str, end_str)
-    if err:
-        return err
+    if not month_label and not (start_str or end_str):
+        return Response(
+            {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    
 
     df, error = _get_input_df()
     if error:
@@ -1147,9 +1185,20 @@ def generate_ftr(request):
     df, col_error = _validate_ftr_columns(df)
     if col_error:
         return Response({'error': col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    
+    if month_label:
+        start_dt     = _bucket_start(month_label)
+        end_dt       = _bucket_end(month_label)
+        safe_label   = month_label.replace(' ', '_')
+        out_filename = f"output_performance_FTR_{safe_label}.xlsx"
+    else:
+        start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+        if err:
+            return err
+        out_filename = f"output_performance_FTR_{start_str}_to_{end_str}.xlsx"
 
     period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
-    out_filename = "output_performance_FTR.xlsx"
+    
     out_file     = os.path.join(output_path, out_filename)
 
     try:
@@ -1180,7 +1229,7 @@ def generate_ftr(request):
         'download_url': download_url,
     }, status=status.HTTP_200_OK)
 # ─────────────────────────────────────────────
-# API 4 — CLEANUP
+# SCFT
 # ─────────────────────────────────────────────
 
 # ADDED FOR SCFT
@@ -1280,6 +1329,7 @@ def _process_scft(df, start_dt, end_dt):
     results = {}
     for case in ['4G', '5G', '4G+5G']:
         df_layer = _apply_layer_filter(df, case)
+        df_layer = _apply_circle_combine(df_layer)
 
         df_layer['On Air Date'] = pd.to_datetime(df_layer['On Air Date'], errors='coerce')
         mask     = (df_layer['On Air Date'] >= start) & (df_layer['On Air Date'] <= end)
@@ -1301,12 +1351,17 @@ def generate_scft(request):
     Uses start/end date from date-range-selection.
     Body: { "start_date": "2025-12-26", "end_date": "2026-01-25" }
     """
+    month_label = request.data.get('month', '').strip()
     start_str = request.data.get('start_date', '').strip()
     end_str   = request.data.get('end_date',   '').strip()
 
-    start_dt, end_dt, err = _validate_date_range(start_str, end_str)
-    if err:
-        return err
+    
+    
+    if not month_label and not (start_str or end_str):
+        return Response(
+            {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     df, error = _get_input_df()
     if error:
@@ -1315,9 +1370,20 @@ def generate_scft(request):
     df, col_error = _validate_scft_columns(df)
     if col_error:
         return Response({'error': col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    
+    if month_label:
+        start_dt     = _bucket_start(month_label)
+        end_dt       = _bucket_end(month_label)
+        safe_label   = month_label.replace(' ', '_')
+        out_filename = f"output_performance_SCFT_FTR_{safe_label}.xlsx"
+    else:
+        start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+        if err:
+            return err
+        out_filename = f"output_performance_SCFT_FTR_{start_str}_to_{end_str}.xlsx"
 
     period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
-    out_filename = "output_performance_SCFT FTR.xlsx"
+    
     out_file     = os.path.join(output_path, out_filename)
 
     try:
@@ -1355,6 +1421,8 @@ def generate_scft(request):
 # ─────────────────────────────────────────────
 
 AT_REPORT_FILENAME  = "Performance_AT_SR-WISE_Report.xlsx"
+# Remove N2600 from offered layers
+# LAYERS_OFFERED_EXCLUDE = ["N2600"]  # add to your existing exclude list wherever N2600 was included
 
 AT_HEADER_FILL      = PatternFill("solid", start_color="1F4E79")
 AT_HEADER_FONT      = Font(name="Arial", bold=True, color="FFFFFF", size=10)
@@ -1703,24 +1771,25 @@ def performance_at_sr_wise_tracking(request):
         "download_url": download_url,
     }, status=status.HTTP_200_OK)
 
+
 #_________________________________________
 # SCFT AGING
 #_________________________________________
- 
+
 # ─────────────────────────────────────────────
 # SCFT TAT CONSTANTS
 # ─────────────────────────────────────────────
- 
+
 SCFT_TAT_CATEGORIES = ['0-3days', '3-5days', '5-7days', '>7days']
- 
+
 OUTPUT_SCFT_OFFERED = "output_SCFT_Offered_Vs_OA_TAT_{start}_to_{end}.xlsx"
 OUTPUT_SCFT_STATUS  = "output_SCFT_Status_Vs_OA_TAT_{start}_to_{end}.xlsx"
- 
- 
+
+
 # ─────────────────────────────────────────────
 # SCFT TAT HELPERS
 # ─────────────────────────────────────────────
- 
+
 def _classify_scft_tat(days):
     """
     0-3days  : days <= 3
@@ -1736,8 +1805,8 @@ def _classify_scft_tat(days):
         return '5-7days'
     else:
         return '>7days'
- 
- 
+
+
 def _validate_scft_tat_col(df, date_col):
     """
     Check the required SCFT date column exists and parse it.
@@ -1745,7 +1814,7 @@ def _validate_scft_tat_col(df, date_col):
     """
     df.rename(columns={c: c.strip() for c in df.columns}, inplace=True)
     lower_map = {c.lower(): c for c in df.columns}
- 
+
     if date_col not in df.columns:
         key   = date_col.lower()
         match = lower_map.get(key) or next(
@@ -1758,45 +1827,47 @@ def _validate_scft_tat_col(df, date_col):
                 f"Column '{date_col}' not found. "
                 f"Available columns: {list(df.columns)}"
             )
- 
+
     df[date_col] = pd.to_datetime(df[date_col], errors='coerce').dt.date
     return df, None
- 
- 
+
+
 def _process_scft_tat_by_date_range(df, start_dt, end_dt, layer_case, date_col, df_full=None, pending_statuses=None,):
     """
     Core SCFT TAT processing.
- 
+
     df        — Accepted-only rows for diff calculation
                 (for offered: all rows, pending = blank date_col)
     df_full   — full unfiltered df for pending count
                 (for status: non-Accepted rows counted as pending)
     date_col  — 'SCFT AT Offered Date' or 'SCFT AT Status Date'
- 
+
     Categories: 0-3days | 3-5days | 5-7days | >7days
     Pending   — rows where date_col is blank (offered)
                 or rows where SCFT AT Status != Accepted (status)
     """
     # Step 1 — layer filter
     df_layer = _apply_layer_filter(df, layer_case)
- 
+    df_layer = _apply_circle_combine(df_layer)
+
     # Step 2 — filter On Air Date within range
     mask_oa = (df_layer['On Air Date'] >= start_dt) & (df_layer['On Air Date'] <= end_dt)
     df_oa   = df_layer[mask_oa].copy()
- 
+
     if df_oa.empty:
         available = _get_available_months(df)
         raise ValueError(
             f"No data found for '{start_dt} to {end_dt}' "
             f"with layer '{layer_case}'. Available months: {available}"
         )
- 
+
     # Step 3 — split filled vs pending
     df_filled  = df_oa[df_oa[date_col].notna()].copy()
- 
+
     if df_full is not None:
         # status report: pending = non-Accepted in full df
         df_full_layer = _apply_layer_filter(df_full, layer_case)
+        df_full_layer = _apply_circle_combine(df_full_layer)
         mask_full     = (df_full_layer['On Air Date'] >= start_dt) & (df_full_layer['On Air Date'] <= end_dt)
         df_oa_full    = df_full_layer[mask_full].copy()
         #df_pending    = df_oa_full[df_oa_full['SCFT AT Status'] != 'Accepted'].copy()
@@ -1811,36 +1882,36 @@ def _process_scft_tat_by_date_range(df, start_dt, end_dt, layer_case, date_col, 
         # offered report: pending = blank date_col
         df_pending  = df_oa[df_oa[date_col].isna()].copy()
         all_circles = sorted(df_oa['Circle'].dropna().unique())
- 
+
     # Step 4 — compute diff
     df_filled['_diff'] = (
         df_filled[date_col] - df_filled['On Air Date']
     ).apply(lambda x: x.days if hasattr(x, 'days') else None)
     df_filled = df_filled[df_filled['_diff'].notna()]
- 
+
     # Step 5 — classify
     df_filled['_category'] = df_filled['_diff'].apply(_classify_scft_tat)
- 
+
     # Step 6 — count per circle
     result_circles = {}
     grand          = {c: 0 for c in SCFT_TAT_CATEGORIES}
     grand_pending  = 0
     grand_total    = 0
- 
+
     for circle in all_circles:
         df_c   = df_filled[df_filled['Circle'] == circle]
         counts = df_c['_category'].value_counts()
         row    = {cat: int(counts.get(cat, 0)) for cat in SCFT_TAT_CATEGORIES}
- 
+
         pending = int((df_pending['Circle'] == circle).sum())
         total   = sum(row.values()) + pending
- 
+
         pct_0_3 = round(row['0-3days'] / total * 100, 1) if total > 0 else 0.0
         pct_3_5 = round((row['0-3days'] + row['3-5days']) / total * 100, 1) if total > 0 else 0.0
         pct_5_7 = round((row['0-3days'] + row['3-5days'] + row['5-7days'] )/ total * 100, 1) if total > 0 else 0.0
         pct_gt7 = round((row['0-3days'] + row['3-5days'] + row['5-7days'] + row['>7days'])  / total * 100, 1) if total > 0 else 0.0
         pending_pct = round(pending / total * 100, 1) if total > 0 else 0.0
- 
+
         result_circles[circle] = {
             **row,
             'Pending':   pending,
@@ -1851,20 +1922,20 @@ def _process_scft_tat_by_date_range(df, start_dt, end_dt, layer_case, date_col, 
             '>7days%':   pct_gt7,
             'Pending%':  pending_pct,
         }
- 
+
         for cat in SCFT_TAT_CATEGORIES:
             grand[cat] += row[cat]
         grand_pending += pending
         grand_total   += total
- 
+
     grand_pct_0_3 = round(grand['0-3days'] / grand_total * 100, 1) if grand_total > 0 else 0.0
     grand_pct_3_5 = round((grand['0-3days'] + grand['3-5days']) / grand_total * 100, 1) if grand_total > 0 else 0.0
     grand_pct_5_7 = round((grand['0-3days'] + grand['3-5days'] + grand['5-7days']) / grand_total * 100, 1) if grand_total > 0 else 0.0
     grand_pct_gt7 = round((grand['0-3days'] + grand['3-5days'] + grand['5-7days'] + grand['>7days'] ) / grand_total * 100, 1) if grand_total > 0 else 0.0
     grand_pending_pct = round(grand_pending    / grand_total * 100, 1) if grand_total > 0 else 0.0
- 
+
     period = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
- 
+
     return {
         'month':       period,
         'start':       start_dt.strftime('%d-%b-%Y'),
@@ -1881,8 +1952,8 @@ def _process_scft_tat_by_date_range(df, start_dt, end_dt, layer_case, date_col, 
             'Pending%':  grand_pending_pct,
         },
     }
- 
- 
+
+
 def _write_scft_tat_sheet(ws, result, thin):
     """
     Write SCFT TAT data into one worksheet.
@@ -1893,14 +1964,14 @@ def _write_scft_tat_sheet(ws, result, thin):
         'Pending', 'Total',
         '0-3days%', '3-5days%', '5-7days%', '>7days%','Pending%'
     ]
- 
+
     def _hdr_cell(cell, value, bg=HEADER_BG, fg=HEADER_FG):
         cell.value     = value
         cell.font      = Font(name='Arial', bold=True, color=fg, size=10)
         cell.fill      = PatternFill('solid', start_color=bg)
         cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         cell.border    = thin
- 
+
     def _data_cell(cell, value, bold=False, bg=None):
         cell.value     = value
         cell.font      = Font(name='Arial', bold=bold, size=10)
@@ -1908,16 +1979,16 @@ def _write_scft_tat_sheet(ws, result, thin):
         cell.border    = thin
         if bg:
             cell.fill = PatternFill('solid', start_color=bg)
- 
+
     # Row 1 — period label  (12 columns: Circle + 11)
     ws.merge_cells('A1:L1')
     _hdr_cell(ws['A1'], result['month'])
- 
+
     # Row 2 — headers
     _hdr_cell(ws['A2'], 'Circle')
     for col_idx, col_name in enumerate(ALL_COLS, start=2):
         _hdr_cell(ws.cell(row=2, column=col_idx), col_name)
- 
+
     # Data rows
     PCT_COLS = {'0-3days%', '3-5days%', '5-7days%', '>7days%','Pending%'}
     row = 3
@@ -1929,7 +2000,7 @@ def _write_scft_tat_sheet(ws, result, thin):
                 val = None
             _data_cell(ws.cell(row=row, column=col_idx), val, bg='FFFFFF')
         row += 1
- 
+
     # Grand Total row
     grand = result['grand_total']
     _data_cell(ws.cell(row=row, column=1), 'Grand Total', bold=True, bg=TOTAL_BG)
@@ -1938,7 +2009,7 @@ def _write_scft_tat_sheet(ws, result, thin):
         if col_name not in PCT_COLS and col_name != 'Total' and val == 0:
             val = None
         _data_cell(ws.cell(row=row, column=col_idx), val, bold=True, bg=TOTAL_BG)
- 
+
     # Column widths
     col_widths = {
         'A': 10,   # Circle
@@ -1956,83 +2027,101 @@ def _write_scft_tat_sheet(ws, result, thin):
     }
     for col_letter, width in col_widths.items():
         ws.column_dimensions[col_letter].width = width
- 
+
     ws.row_dimensions[1].height = 20
     ws.row_dimensions[2].height = 30
- 
- 
+
+
 def _write_scft_tat_excel(results, out_filepath):
     """Write 3-sheet Excel: 4G | 5G | 4G+5G."""
     wb = Workbook()
     wb.remove(wb.active)
- 
+
     side = Side(style='thin', color=BORDER_CLR)
     thin = Border(left=side, right=side, top=side, bottom=side)
- 
+
     for sheet_name in ['4G', '5G', '4G+5G']:
         ws = wb.create_sheet(title=sheet_name)
         _write_scft_tat_sheet(ws, results[sheet_name], thin)
- 
+
     wb.save(out_filepath)
- 
- 
+
+
 # ─────────────────────────────────────────────
 # API — GENERATE SCFT OFFERED TAT
 # ─────────────────────────────────────────────
- 
+
 @api_view(['POST'])
 def generate_scft_offered(request):
     """
     POST /idploy/generate-scft-offered/
- 
+
     Same logic as generate_scft_status but uses SCFT AT Offered Date.
- 
+
     Diff calculation — only rows where SCFT AT Status == 'Accepted'
     Pending count    — all rows where SCFT AT Status != 'Accepted'
- 
+
     Body:
     {
         "start_date": "2025-12-26",
         "end_date":   "2026-01-25"
     }
     """
+    month_label = request.data.get('month', '').strip()
     start_str = request.data.get('start_date', '').strip()
     end_str   = request.data.get('end_date',   '').strip()
- 
-    start_dt, end_dt, err = _validate_date_range(start_str, end_str)
-    if err:
-        return err
- 
+
+    # start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+    # if err:
+    #     return err
+    
+    if not month_label and not (start_str or end_str):
+        return Response(
+            {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     df, error = _get_input_df()
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
- 
+
     #── validate SCFT AT Status column ───────────────────────────
     if 'SCFT AT Status' not in df.columns:
         return Response(
             {'error': "Column 'SCFT AT Status' not found in uploaded file."},
             status=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
- 
+
     #── validate & parse SCFT AT Offered Date ───────────────────
     date_col = 'SCFT AT Offerred Date'
     df, col_error = _validate_scft_tat_col(df, date_col)
     if col_error:
         return Response({'error': col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
- 
+
     # ── normalise status + split ─────────────────────────────────
     df['SCFT AT Status'] = df['SCFT AT Status'].astype(str).str.strip()
     df_full = df.copy()        # all rows — for pending count (Pending + Rejected)
+    
 
- 
     # Accepted + Acceptance Pending → TAT ranges
     RANGE_STATUSES = {'Accepted', 'Acceptance Pending'}
     df_range = df[df['SCFT AT Status'].isin(RANGE_STATUSES)].copy()
- 
+
+    if month_label:
+        start_dt     = _bucket_start(month_label)
+        end_dt       = _bucket_end(month_label)
+        safe_label   = month_label.replace(' ', '_')
+        out_filename = f"output_SCFT_Offerred_Vs_OA_TAT_{safe_label}.xlsx"
+    else:
+        start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+        if err:
+            return err
+        out_filename = f"output_SCFT_Offerred_Vs_OA_TAT_{start_str}_to_{end_str}.xlsx"
+
     period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
-    out_filename = f"output_SCFT_Offerred_Vs_OA_TAT_{start_str}_to_{end_str}.xlsx"
+    # out_filename = f"output_SCFT_Offerred_Vs_OA_TAT_{start_str}_to_{end_str}.xlsx"
     out_file     = os.path.join(output_path, out_filename)
- 
+
     try:
         results = {
             case: _process_scft_tat_by_date_range(
@@ -2043,16 +2132,16 @@ def generate_scft_offered(request):
             for case in ['4G', '5G', '4G+5G']
         }
         _write_scft_tat_excel(results, out_file)
- 
+
     except ValueError as ve:
         return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as exc:
         return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
- 
+
     download_url = request.build_absolute_uri(
         f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
     )
- 
+
     return Response({
         'status':      True,
         'message':     'SCFT Offered TAT report generated successfully.',
@@ -2065,70 +2154,89 @@ def generate_scft_offered(request):
         },
         'download_url': download_url,
     }, status=status.HTTP_200_OK)
+    
 
- 
- 
+
 # ─────────────────────────────────────────────
 # API — GENERATE SCFT STATUS TAT
 # ─────────────────────────────────────────────
- 
+
 @api_view(['POST'])
 def generate_scft_performance(request):
     """
     POST /idploy/generate-scft-status/
- 
+
     Same logic as generate_performance but uses:
       SCFT AT Status      instead of Performance AT Status
       SCFT AT Status Date instead of Performance AT Status Date
- 
+
     Diff calculation — only rows where SCFT AT Status == 'Accepted'
     Pending count    — all rows where SCFT AT Status != 'Accepted'
- 
+
     Body:
     {
         "start_date": "2025-12-26",
         "end_date":   "2026-01-25"
     }
     """
+    month_label = request.data.get('month', '').strip()
     start_str = request.data.get('start_date', '').strip()
     end_str   = request.data.get('end_date',   '').strip()
- 
-    start_dt, end_dt, err = _validate_date_range(start_str, end_str)
-    if err:
-        return err
- 
+
+    # start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+    # if err:
+    #     return err
+
+    if not month_label and not (start_str or end_str):
+        return Response(
+            {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     df, error = _get_input_df()
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
- 
+
     # ── validate SCFT AT Status column ───────────────────────────
     if 'SCFT AT Status' not in df.columns:
         return Response(
             {'error': "Column 'SCFT AT Status' not found in uploaded file."},
             status=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
- 
+
     # ── validate & parse SCFT AT Status Date ────────────────────
     date_col = 'SCFT AT Status Date'
     df, col_error = _validate_scft_tat_col(df, date_col)
     if col_error:
         return Response({'error': col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
- 
+
     # ── normalise status + split ─────────────────────────────────
     df['SCFT AT Status'] = df['SCFT AT Status'].astype(str).str.strip()
     df_full     = df.copy()                                              # all rows — for pending count
     df_accepted = df[df['SCFT AT Status'] == 'Accepted'].copy()        # Accepted only — for diff
- 
+
     if df_accepted.empty:
         return Response(
             {'error': "No rows found where SCFT AT Status is 'Accepted'."},
             status=status.HTTP_404_NOT_FOUND,
         )
- 
+    
+    if month_label:
+        start_dt     = _bucket_start(month_label)
+        end_dt       = _bucket_end(month_label)
+        safe_label   = month_label.replace(' ', '_')
+        out_filename = f"output_SCFT_Offerred_Vs_OA_TAT_{safe_label}.xlsx"
+    else:
+        start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+        if err:
+            return err
+        # out_filename = f"output_SCFT_Offerred_Vs_OA_TAT_{start_str}_to_{end_str}.xlsx"
+
+
     period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
     out_filename = f"output_SCFT_performance_Vs_OA_TAT_{start_str}_to_{end_str}.xlsx"
     out_file     = os.path.join(output_path, out_filename)
- 
+
     try:
         results = {
             case: _process_scft_tat_by_date_range(
@@ -2138,16 +2246,16 @@ def generate_scft_performance(request):
             for case in ['4G', '5G', '4G+5G']
         }
         _write_scft_tat_excel(results, out_file)
- 
+
     except ValueError as ve:
         return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as exc:
         return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
- 
+
     download_url = request.build_absolute_uri(
         f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
     )
- 
+
     return Response({
         'status':      True,
         'message':     'SCFT Performance TAT report generated successfully.',
@@ -2159,24 +2267,22 @@ def generate_scft_performance(request):
             '4G+5G': {'circles': results['4G+5G']['circles'], 'grand_total': results['4G+5G']['grand_total']},
         },
         'download_url': download_url,
-    }, status=status.HTTP_200_OK)   
+    }, status=status.HTTP_200_OK)
 
-#_____________________________________________________________________________________________________________
-         # Graph portion
-#_______________________________________________________________________________________________________________
- 
+
+
 # ─────────────────────────────────────────────
 # HELPER — Split a date range into monthly buckets
 # ─────────────────────────────────────────────
- 
- 
- 
+
+
+
 def _month_to_bucket(month_str):
     """
     Convert a month label like 'Jun 2026' into its 26-to-25 bucket.
- 
+
     'Jun 2026' → start: 2026-05-26, end: 2026-06-25, label: 'Jun 2026'
- 
+
     The bucket whose 25th lands in the given month is returned.
     So for 'Jun 2026' the 25th is Jun 25 → bucket is May 26 – Jun 25.
     """
@@ -2184,28 +2290,28 @@ def _month_to_bucket(month_str):
         anchor = datetime.strptime(month_str.strip(), '%b %Y').date()
     except ValueError:
         raise ValueError(f"Invalid month format '{month_str}'. Use 'Mon YYYY' e.g. 'Jun 2026'.")
- 
+
     # 25th of the requested month is the bucket end
     bucket_end   = anchor.replace(day=25)
     # 26th of the previous month is the bucket start
     bucket_start = (anchor.replace(day=1) - relativedelta(months=1)).replace(day=26)
     # Label is the month the 25th falls in — which is exactly month_str
     label = anchor.strftime('%b %Y')
- 
+
     return {'label': label, 'start': bucket_start, 'end': bucket_end}
- 
- 
+
+
 # ─────────────────────────────────────────────
 # GRAPH DATA API — /idploy/graph-data/
 # ─────────────────────────────────────────────
- 
+
 GRAPH_METRICS = ['<12%', '<13-21%', '<22-30%', '>30days%', 'Pending%']
- 
- 
+
+
 def _build_graph_series(monthly_results, layer_case):
     """
     Convert a list of monthly _process_data results into chart-ready series.
- 
+
     Returns:
     {
         "categories": ["<12%", "<13-21%", "<22-30%", ">30days%", "Pending%"],
@@ -2228,33 +2334,33 @@ def _build_graph_series(monthly_results, layer_case):
         'categories': GRAPH_METRICS,
         'series':     series,
     }
- 
+
 def get_thin_border():
     thin = Side(style='thin')
     return Border(left=thin, right=thin, top=thin, bottom=thin)
- 
- 
- 
+
+
+
 def _build_graph_excel(monthly_results, layers, metric_type):
     from openpyxl.chart import LineChart, Reference, Series
- 
+
     output_dir = os.path.join(settings.MEDIA_ROOT, 'graph_exports')
     os.makedirs(output_dir, exist_ok=True)
- 
+
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename  = f'graph_{metric_type}_{timestamp}.xlsx'
     filepath  = os.path.join(output_dir, filename)
- 
+
     wb = Workbook()
     wb.remove(wb.active)
- 
+
     header_fill = PatternFill('solid', fgColor='1F4E79')
     header_font = Font(bold=True, color='FFFFFF', size=11)
     thin_border = get_thin_border()
- 
+
     for layer in layers:
         ws = wb.create_sheet(title=layer)
- 
+
         # ── Header row ───────────────────────────────────────────
         headers = ['Month'] + GRAPH_METRICS
         for col_idx, h in enumerate(headers, start=1):
@@ -2263,7 +2369,7 @@ def _build_graph_excel(monthly_results, layers, metric_type):
             cell.font      = header_font
             cell.border    = thin_border
             cell.alignment = Alignment(horizontal='center', vertical='center')
- 
+
         # ── Data rows ────────────────────────────────────────────
         for row_idx, res in enumerate(monthly_results, start=2):
             grand    = res[layer]['grand_total']
@@ -2274,43 +2380,43 @@ def _build_graph_excel(monthly_results, layers, metric_type):
                 cell.alignment = Alignment(horizontal='center', vertical='center')
                 if col_idx > 1:
                     cell.number_format = '0.00'
- 
+
         # ── Column widths + freeze ────────────────────────────────
         for col in ws.columns:
             max_len = max((len(str(c.value)) for c in col if c.value), default=8)
             ws.column_dimensions[col[0].column_letter].width = max_len + 4
         ws.freeze_panes = 'B2'
- 
+
         # ── Line chart ────────────────────────────────────────────
         num_months  = len(monthly_results)
         num_metrics = len(GRAPH_METRICS)
- 
+
         chart          = LineChart()
         chart.title    = f'{layer} — {metric_type.capitalize()} Graph'
         chart.style    = 10
         chart.height   = 14
         chart.width    = 28
         chart.grouping = 'standard'
- 
+
         # X-axis: metric category names from header row (cols B–F)
         cats = Reference(ws, min_col=2, max_col=1 + num_metrics, min_row=1, max_row=1)
- 
+
         # One series per month row
         for row_idx in range(2, 2 + num_months):
             values      = Reference(ws, min_col=2, max_col=1 + num_metrics, min_row=row_idx, max_row=row_idx)
             month_label = ws.cell(row=row_idx, column=1).value
- 
+
             ser               = Series(values, title=month_label)
             ser.smooth        = False
             ser.marker.symbol = 'circle'
             ser.marker.size   = 5
             chart.series.append(ser)
- 
+
         chart.set_categories(cats)
- 
+
         # Data labels on all points
         from openpyxl.chart.label import DataLabelList
- 
+
         chart.dataLabels                = DataLabelList()
         chart.dataLabels.showVal        = True
         chart.dataLabels.showLegendKey  = False
@@ -2318,31 +2424,31 @@ def _build_graph_excel(monthly_results, layers, metric_type):
         chart.dataLabels.showSerName    = False
         chart.dataLabels.showPercent    = False
         chart.dataLabels.showBubbleSize = False
- 
+
         chart.legend.position = 'b'
- 
+
         chart_anchor = f'A{num_months + 3}'
         ws.add_chart(chart, chart_anchor)
- 
+
     wb.save(filepath)
     return filepath
- 
- 
- 
+
+
+
 @api_view(['POST'])
 def generate_offered_graph(request):
-   
+    
     """
     POST /idploy/generate-offered-graph/
- 
+
     Returns single-month chart data + Excel download URL for the Offered report.
- 
+
     Request:
     {
         "month": "Jun 2026",          ← required; maps to May 26 – Jun 25 bucket
         "layer": "4G"                 ← optional; "4G" | "5G" | "4G+5G" (default: all)
     }
- 
+
     Response:
     {
         "status": true,
@@ -2363,16 +2469,16 @@ def generate_offered_graph(request):
     }
     """
     return _generate_graph_response(request, metric_type='offered')
- 
- 
+
+
 @api_view(['POST'])
 def generate_performance_graph(request):
     """
     POST /idploy/generate-performance-graph/
- 
+
     Same interface as generate-offered-graph but uses
     'Performance AT Status Date' for diff calculation.
- 
+
     Request:
     {
         "month": "Jun 2026",
@@ -2380,12 +2486,12 @@ def generate_performance_graph(request):
     }
     """
     return _generate_graph_response(request, metric_type='performance')
- 
- 
+
+
 def _generate_graph_response(request, metric_type):
     month_input  = request.data.get('month', '')   # can be str or list
     layer_filter = request.data.get('layer', '').strip()
- 
+
     # ── Normalise month input to a list ─────────────────────────
     if isinstance(month_input, str):
         months = [m.strip() for m in month_input.split(',') if m.strip()]
@@ -2393,20 +2499,20 @@ def _generate_graph_response(request, metric_type):
         months = [m.strip() for m in month_input if m.strip()]
     else:
         months = []
- 
+
     if not months:
         return Response(
             {'error': 'Provide {"month": "Mon YYYY"} or {"month": ["Mon YYYY", "Mon YYYY"]}.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
- 
+
     valid_layers = ['4G', '5G', '4G+5G']
     if layer_filter and layer_filter not in valid_layers:
         return Response(
             {'error': f"Invalid layer '{layer_filter}'. Choose from: {valid_layers}"},
             status=status.HTTP_400_BAD_REQUEST,
         )
- 
+
     # ── Parse all months → buckets ───────────────────────────────
     buckets = []
     for m in months:
@@ -2414,12 +2520,12 @@ def _generate_graph_response(request, metric_type):
             buckets.append(_month_to_bucket(m))
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
- 
+
     # ── Load data once ───────────────────────────────────────────
     df, error = _get_input_df()
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
- 
+
     df_full = None
     if metric_type == 'performance':
         if 'Performance AT Status' not in df.columns:
@@ -2429,13 +2535,13 @@ def _generate_graph_response(request, metric_type):
             )
         df['Performance AT Status'] = df['Performance AT Status'].astype(str).str.strip()
         df_full = df.copy()
- 
+
     date_col = (
         'Performance AT Offered Date' if metric_type == 'offered'
         else 'Performance AT Status Date'
     )
     layers_to_run = [layer_filter] if layer_filter else valid_layers
- 
+
     # ── Process each bucket separately ──────────────────────────
     monthly_results = []
     for bucket in buckets:
@@ -2461,7 +2567,7 @@ def _generate_graph_response(request, metric_type):
                     'grand_total': {m: 0.0 for m in GRAPH_METRICS}
                 }
         monthly_results.append(bucket_data)
- 
+
     # ── Build graph payload ──────────────────────────────────────
     if layer_filter:
         graph_data = _build_graph_series(monthly_results, layer_filter)
@@ -2470,7 +2576,7 @@ def _generate_graph_response(request, metric_type):
             layer: _build_graph_series(monthly_results, layer)
             for layer in valid_layers
         }
- 
+
     # ── Generate Excel ───────────────────────────────────────────
     try:
         filepath     = _build_graph_excel(monthly_results, layers_to_run, metric_type)
@@ -2483,7 +2589,7 @@ def _generate_graph_response(request, metric_type):
         import traceback
         traceback.print_exc()
         download_url = None
- 
+
     return Response({
         'status':       True,
         'metric_type':  metric_type,
@@ -2491,14 +2597,14 @@ def _generate_graph_response(request, metric_type):
         'graph_data':   graph_data,
         'download_url': download_url,
     }, status=status.HTTP_200_OK)
- 
- 
+
+
 #________________________________________________________
 #SCFT Aging Graph
 #________________________________________________________
- 
+
 SCFT_GRAPH_METRICS = ['0-3days%', '3-5days%', '5-7days%', '>7days%', 'Pending%']
- 
+
 def _build_scft_graph_series(monthly_results, layer_case):
     series = []
     for res in monthly_results:
@@ -2513,14 +2619,14 @@ def _build_scft_graph_series(monthly_results, layer_case):
         'categories': SCFT_GRAPH_METRICS,
         'series':     series,
     }
- 
+
 def _generate_scft_graph_response(request, metric_type):
     """
     metric_type: 'offered' | 'performance'
     """
     month_input  = request.data.get('month', '')
     layer_filter = request.data.get('layer', '').strip()
- 
+
     # ── Normalise month input to list ────────────────────────────
     if isinstance(month_input, str):
         months = [m.strip() for m in month_input.split(',') if m.strip()]
@@ -2528,20 +2634,20 @@ def _generate_scft_graph_response(request, metric_type):
         months = [m.strip() for m in month_input if m.strip()]
     else:
         months = []
- 
+
     if not months:
         return Response(
             {'error': 'Provide {"month": "Mon YYYY"} or {"month": ["Mon YYYY", "Mon YYYY"]}.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
- 
+
     valid_layers = ['4G', '5G', '4G+5G']
     if layer_filter and layer_filter not in valid_layers:
         return Response(
             {'error': f"Invalid layer '{layer_filter}'. Choose from: {valid_layers}"},
             status=status.HTTP_400_BAD_REQUEST,
         )
- 
+
     # ── Parse months → buckets ───────────────────────────────────
     buckets = []
     for m in months:
@@ -2549,31 +2655,31 @@ def _generate_scft_graph_response(request, metric_type):
             buckets.append(_month_to_bucket(m))
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
- 
+
     # ── Load data ────────────────────────────────────────────────
     df, error = _get_input_df()
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
- 
+
     if 'SCFT AT Status' not in df.columns:
         return Response(
             {'error': "Column 'SCFT AT Status' not found in uploaded file."},
             status=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
- 
+
     # ── Set date_col and prepare df based on metric_type ─────────
     if metric_type == 'offered':
         date_col = 'SCFT AT Offerred Date'
     else:
         date_col = 'SCFT AT Status Date'
- 
+
     df, col_error = _validate_scft_tat_col(df, date_col)
     if col_error:
         return Response({'error': col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
- 
+
     df['SCFT AT Status'] = df['SCFT AT Status'].astype(str).str.strip()
     df_full = df.copy()
- 
+
     if metric_type == 'offered':
         RANGE_STATUSES = {'Accepted', 'Acceptance Pending'}
         df_range = df[df['SCFT AT Status'].isin(RANGE_STATUSES)].copy()
@@ -2581,9 +2687,9 @@ def _generate_scft_graph_response(request, metric_type):
     else:
         df_range         = df[df['SCFT AT Status'] == 'Accepted'].copy()
         pending_statuses = None   # status mode: anything != Accepted is pending
- 
+
     layers_to_run = [layer_filter] if layer_filter else valid_layers
- 
+
     # ── Process each bucket separately ───────────────────────────
     monthly_results = []
     for bucket in buckets:
@@ -2609,7 +2715,7 @@ def _generate_scft_graph_response(request, metric_type):
                     'grand_total': {m: 0.0 for m in SCFT_GRAPH_METRICS}
                 }
         monthly_results.append(bucket_data)
- 
+
     # ── Build graph payload ───────────────────────────────────────
     if layer_filter:
         graph_data = _build_scft_graph_series(monthly_results, layer_filter)
@@ -2618,20 +2724,20 @@ def _generate_scft_graph_response(request, metric_type):
             layer: _build_scft_graph_series(monthly_results, layer)
             for layer in valid_layers
         }
- 
+
     return Response({
         'status':      True,
         'metric_type': metric_type,
         'layer':       layer_filter or 'all',
         'graph_data':  graph_data,
     }, status=status.HTTP_200_OK)
- 
- 
+
+
 @api_view(['POST'])
 def generate_scft_offered_graph(request):
     """
     POST /idploy/generate-scft-offered-graph/
- 
+
     Request:
     {
         "month": ["Apr 2026", "May 2026"],
@@ -2639,13 +2745,13 @@ def generate_scft_offered_graph(request):
     }
     """
     return _generate_scft_graph_response(request, metric_type='offered')
- 
- 
+
+
 @api_view(['POST'])
 def generate_scft_performance_graph(request):
     """
     POST /idploy/generate-scft-performance-graph/
- 
+
     Request:
     {
         "month": ["Apr 2026", "May 2026"],
@@ -2653,8 +2759,6 @@ def generate_scft_performance_graph(request):
     }
     """
     return _generate_scft_graph_response(request, metric_type='performance')
- 
-
 
 @api_view(['DELETE'])
 def cleanup(request):

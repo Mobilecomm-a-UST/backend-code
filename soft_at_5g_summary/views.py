@@ -748,6 +748,62 @@ def soft_at_5G_Summary_Ericsson(request):
                               SA_5G_df.loc[0, "OSS Name"] = "NA"
                               template_df["OSS/ENM Name"] = template_df["OSS/ENM Name"].astype(object)
                               template_df.loc[0, "OSS/ENM Name"] = "NA"
+                              
+                  if sheet_name == "hget field prod":
+                        print("Processing hget field prod")
+
+                        df = xls.parse(sheet_name)
+                        df.columns = df.columns.astype(str).str.strip()
+
+                        print("Columns:", df.columns.tolist())
+                        print(df.head())
+
+                        if "productName" in df.columns and not df.empty:
+
+                              air_products = df[
+                                    df["productName"].astype(str).str.contains("AIR", case=False, na=False)
+                              ]["productName"]
+
+                              print("AIR Products:")
+                              print(air_products)
+
+                              if not air_products.empty:
+                                    first_air = air_products.iloc[0]
+                                    count = (df["productName"] == first_air).sum()
+
+                                    product_display = f"{first_air}*{count}"
+                              else:
+                                    product_display = "NA"
+
+                              print("Result:", product_display)
+
+                              template_df.loc[
+                                    0,
+                                    "Other Hardware Related Additional Information"
+                              ] = product_display
+
+                        else:
+                              print("productName column not found")
+                              template_df.loc[
+                                    0,
+                                    "Other Hardware Related Additional Information"
+                              ] = "NA"
+                  
+                  if sheet_name == "hget amf add":
+                        df = xls.parse(sheet_name)
+                        df.columns = df.columns.astype(str).str.strip()
+
+                        amf_ip = " , ".join(
+                              pd.concat([
+                                    df.get("ipv6Address1", pd.Series()),
+                                    df.get("ipv6Address2", pd.Series())
+                              ])
+                              .dropna()
+                              .astype(str)
+                              .tolist()
+                        )
+
+                        SA_5G_df.loc[0, "AMF IP"] = amf_ip if amf_ip else "NA"
 
                   if "get 0" in xls.sheet_names:
                         df_0 = xls.parse("get 0", header=None)
@@ -793,35 +849,21 @@ def soft_at_5G_Summary_Ericsson(request):
                         SA_5G_df.loc[0, "5G Site Id"] = "NA"
                         template_df.loc[0, "SW Version"] = "NA"
 
-            if sheet_name == "hget field prod":
-                  df = xls.parse(sheet_name)
-                  df.columns = df.columns.astype(str).str.strip()  # Clean column names
+            # if sheet_name == "hget field prod":
+            #       df = xls.parse(sheet_name)
+            #       df.columns = df.columns.astype(str).str.strip()  # Clean column names
 
-                  if "productName" in df.columns and not df.empty:
-                        first_product = df["productName"].dropna().iloc[0] if not df["productName"].dropna().empty else "NA"
-                        count = (df["productName"] == first_product).sum()
-                        product_display = f"{first_product}*{count}"
-                        print("Result:", product_display)
-                        template_df.loc[0, "Other Hardware Related Additional Information"] = product_display
-                  else:
-                        print(f"'productName' column missing or sheet is empty in file: {file}")
-                        template_df.loc[0, "Other Hardware Related Additional Information"] = "NA"
+            #       if "productName" in df.columns and not df.empty:
+            #             first_product = df["productName"].dropna().iloc[0] if not df["productName"].dropna().empty else "NA"
+            #             count = (df["productName"] == first_product).sum()
+            #             product_display = f"{first_product}*{count}"
+            #             print("Result:", product_display)
+            #             template_df.loc[0, "Other Hardware Related Additional Information"] = product_display
+            #       else:
+            #             print(f"'productName' column missing or sheet is empty in file: {file}")
+            #             template_df.loc[0, "Other Hardware Related Additional Information"] = "NA"
 
-            if sheet_name == "hget amf add":
-                  df = xls.parse(sheet_name)
-                  df.columns = df.columns.astype(str).str.strip()
-
-                  amf_ip = " , ".join(
-                        pd.concat([
-                              df.get("ipv6Address1", pd.Series()),
-                              df.get("ipv6Address2", pd.Series())
-                        ])
-                        .dropna()
-                        .astype(str)
-                        .tolist()
-                  )
-
-                  SA_5G_df.loc[0, "AMF IP"] = amf_ip if amf_ip else "NA"
+            
 
 
 
@@ -847,7 +889,7 @@ def soft_at_5G_Summary_Ericsson(request):
                   SA_5G_df.loc[0,"On-Air Date"] = datetime.date.today().strftime("%d-%m-%Y")
                   SA_5G_df.loc[0,"Offer Date"] = datetime.date.today().strftime("%d-%m-%Y")
                   SA_5G_df.loc[0,"5G cell name nomenclature compliance"] = "YES"
-                  SA_5G_df.loc[0,"QIA Alarms : No active alarm ( except external alarm)/No false alarm in  iOMS or OSS Monitor"] = "NO"
+                  SA_5G_df.loc[0,"QIA Alarms : No active alarm ( except external alarm)/No false alarm in iOMS or OSS Monitor"] = "NO"
                   SA_5G_df.loc[0,"Xn interface Configuration check "] = "YES"
                   SA_5G_df.loc[0, "Site should be on Latest Software release"] = "YES"
                   SA_5G_df.loc[0, "5G should be properly configured and  should be enabled and unlocked in core nodes"] = "YES"
@@ -980,8 +1022,7 @@ def soft_at_5G_Summary_Ericsson(request):
                               file_path = os.path.join(root, file)
                               arcname = os.path.relpath(file_path, base_media_url)
                               zipf.write(file_path, arcname)
-
-      zip_filename = f"soft_at_5G_Summary_Ericsson/5gSUMMARY_OUTPUT_{timestamp}.zip"
+      
       download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
       print(f"Output file created: {output_path}")
       print(f"Zip file created: {zip_filename}")
@@ -1603,7 +1644,6 @@ def soft_at_5G_checkpoint(request):
                               arcname = os.path.relpath(file_path, base_media_url)
                               zipf.write(file_path, arcname)
       
-      zip_filename = f"soft_at_5G_Summary_Ericsson/5gChecklist_OUTPUT_{timestamp}.zip"
       download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
       print(f"Output file created: {output_path}")
       print(f"Zip file created: {zip_filename}")

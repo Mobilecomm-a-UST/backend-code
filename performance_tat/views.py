@@ -49,6 +49,14 @@ TAT_BUCKETS = [
     (">21",   21, None),
 ]
 
+CIRCLE_COMBINE = {
+    'TNCH':    ['CN', 'TN'],
+    'NESA':    ['AS', 'NE'],
+    'HPHP':    ['HR', 'PB'],
+    'WB/KOL':  ['WB', 'KO'],
+}
+
+
 HEADER_BG      = "1F4E79"
 HEADER_FG      = "FFFFFF"
 SUBHEADER_BG   = "2E75B6"
@@ -69,22 +77,6 @@ def _get_input_file():
     return os.path.join(input_path, files[0]) if files else None
 
 
-# def _clear_old_files():
-#     """Delete all existing files in input and output folders."""
-#     for folder in [input_path, output_path]:
-#         for f in os.listdir(folder):
-#             os.remove(os.path.join(folder, f))
-
-
-# def _delete_all_files():
-#     """Delete all files and return list of deleted filenames."""
-#     deleted = []
-#     for folder in [input_path, output_path]:
-#         if os.path.exists(folder):
-#             for f in os.listdir(folder):
-#                 os.remove(os.path.join(folder, f))
-#                 deleted.append(f)
-#     return deleted
 
 def _clear_files(return_deleted=False):
     deleted = []
@@ -188,11 +180,90 @@ def _style_header_cell(cell, value, font_size, bg_color, fg_color=HEADER_FG):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# DATE HELPER
+# ══════════════════════════════════════════════════════════════════════════════
+
+def get_date_range_for_month(year: int, month: int):
+    """
+    26th of previous month to 25th of current month.
+    Example: Jan 2026 → 2025-12-26 to 2026-01-25
+    """
+    end_date = date(year, month, 25)
+    if month == 1:
+        prev_month, prev_year = 12, year - 1
+    else:
+        prev_month, prev_year = month - 1, year
+    start_date = date(prev_year, prev_month, 26)
+    return start_date, end_date
+
+
+def _resolve_dates(request):
+    """
+    Shared date resolver for all generate APIs.
+    Accepts either (year + month) or (start_date + end_date).
+    Returns (start_date, end_date, error_response).
+    If error_response is not None, return it immediately.
+    """
+    year_str  = request.data.get("year")
+    month_str = request.data.get("month")
+    start_str = request.data.get("start_date")
+    end_str   = request.data.get("end_date")
+
+    if year_str and month_str:
+        try:
+            year  = int(year_str)
+            month = int(month_str)
+            if not (1 <= month <= 12):
+                raise ValueError
+        except ValueError:
+            return None, None, Response(
+                {'status': False, 'message': 'Invalid year or month.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        start_date, end_date = get_date_range_for_month(year, month)
+        return start_date, end_date, None
+
+    elif start_str and end_str:
+        try:
+            start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
+            end_date   = datetime.strptime(end_str,   "%Y-%m-%d").date()
+        except ValueError:
+            return None, None, Response(
+                {'status': False, 'message': 'Invalid date format. Use YYYY-MM-DD.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if start_date > end_date:
+            return None, None, Response(
+                {'status': False, 'message': 'start_date must be before or equal to end_date.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return start_date, end_date, None
+
+    else:
+        return None, None, Response(
+            {'status': False, 'message': 'Provide either (year + month) or (start_date + end_date).'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+#_________________________________________________
+
+def _apply_circle_combine(df):
+    """
+    Replace individual circle codes with combined labels.
+    e.g. CN and TN both become TNCH.
+    """
+    reverse_map = {}
+    for combined, members in CIRCLE_COMBINE.items():
+        for member in members:
+            reverse_map[member] = combined
+    df["Circle"] = df["Circle"].map(lambda x: reverse_map.get(str(x).strip(), x))
+    return df
+
+# ══════════════════════════════════════════════════════════════════════════════
 # TAT LOGIC FUNCTIONS
 # ══════════════════════════════════════════════════════════════════════════════
 
 def assign_tat_bucket(tat_days):
-    """Map number of days to TAT bucket label. Returns None if tat_days < 3."""
+    """Map number of days to a TAT bucket label."""
     
     for label, low, high in TAT_BUCKETS:
         if high is None:
@@ -209,10 +280,10 @@ def build_pivot_table(df, today):
     Compute TAT days, assign buckets, return pivot:
         Rows    → circles sorted A to Z + Grand Total
         Columns → 3-5 | 5-7 | 7-12 | 12-21 | >21 | Total
-    Records with TAT < 3 days are excluded.
+   
     """
     df = df.copy()
-    df["On Air Date"] = pd.to_datetime(df["On Air Date"]).dt.date
+    #df["On Air Date"] = pd.to_datetime(df["On Air Date"]).dt.date
     df["tat_days"]    = df["On Air Date"].apply(lambda d: (today - d).days)
     df["bucket"]      = df["tat_days"].apply(assign_tat_bucket)
     df = df.dropna(subset=["bucket"])
@@ -356,6 +427,7 @@ def build_excel_workbook(pivot_data, start_date, end_date):
     return out_filename
 
 
+
 # ══════════════════════════════════════════════════════════════════════════════
 # APIs
 # ══════════════════════════════════════════════════════════════════════════════
@@ -454,30 +526,10 @@ def generate_tat_report(request):
     builds TAT pivot for 4G / 5G / 4G+5G, saves Excel, returns download URL.
     """
     try:
-        # ── Validate dates ─────────────────────────────────────────────────
-        start_str = request.data.get("start_date")
-        end_str   = request.data.get("end_date")
-
-        if not start_str or not end_str:
-            return Response(
-                {'status': False, 'message': 'start_date and end_date are required.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
-            end_date   = datetime.strptime(end_str,   "%Y-%m-%d").date()
-        except ValueError:
-            return Response(
-                {'status': False, 'message': 'Invalid date format. Use YYYY-MM-DD.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if start_date > end_date:
-            return Response(
-                {'status': False, 'message': 'start_date must be before or equal to end_date.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+         # ── Resolve dates ──────────────────────────────────────────────────
+        start_date, end_date, err = _resolve_dates(request)
+        if err:
+            return err
 
         # ── Check input file exists ────────────────────────────────────────
         input_file = _get_input_file()
@@ -490,6 +542,7 @@ def generate_tat_report(request):
         # ── Read, process, export ──────────────────────────────────────────
         today        = date.today()
         df           = _read_input_file(input_file)
+        df = _apply_circle_combine(df)
         pivot_data   = build_all_pivots(df, today, start_date, end_date)
         out_filename = build_excel_workbook(pivot_data, start_date, end_date)
 
@@ -512,3 +565,241 @@ def generate_tat_report(request):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+#________________________________________________________________________________________________________________________________
+    
+@api_view(['POST'])
+def generate_aging_softat_report(request):
+    """
+    POST /api/performance/scft/generate/
+
+    Body:
+        { "start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD" }
+
+    Filters:
+        - Offered Layer     → only 3500, L3500, N3500  (5G)
+        - On Air Date       → between start_date and end_date
+        - Soft AT Status    → only 'Accepted'
+        - TAT               → Performance AT Status Date - Soft AT Status Date
+
+    TAT Buckets:
+        <=12 days | 13-21 days | 22-30 days | >30 days | Total | <=12% | 13-21% | 22-30% | >30% | Total %
+    """
+    # ── Validate dates ─────────────────────────────────────────────────
+    try:
+        # ── Resolve dates ──────────────────────────────────────────────────
+        start_date, end_date, err = _resolve_dates(request)
+        if err:
+            return err
+
+        # ── Check input file ───────────────────────────────────────────────
+        input_file = _get_input_file()
+        if not input_file:
+            return Response(
+                {'status': False, 'message': 'No input file found. Please upload a file first.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ── Read file ──────────────────────────────────────────────────────
+        df = _read_input_file(input_file)
+        df = _apply_circle_combine(df)
+        
+        # ── Apply filters ──────────────────────────────────────────────────
+        df = df[df["Offered Layer"].isin(LAYERS_5G_INCLUDE)]
+        df = df[
+            (df["On Air Date"] >= start_date) &
+            (df["On Air Date"] <= end_date)
+        ]
+        df = df[df["Soft AT Status"].str.strip().str.lower() == "accepted"]
+        
+
+        if df.empty:
+            return Response(
+                {'status': False, 'message': 'No data found for the selected filters and date range.'},
+                status=status.HTTP_200_OK
+            )
+
+        df["Performance AT Status Date"] = pd.to_datetime(
+        df["Performance AT Status Date"], format="%d-%b-%Y", errors="coerce")
+        df["Soft AT Status Date"] = pd.to_datetime(df["Soft AT Status Date"], format="%d-%b-%Y", errors="coerce")
+        df["is_pending"] = df["Performance AT Status Date"].isna()
+
+        df["TAT"] = (df["Performance AT Status Date"] - df["Soft AT Status Date"]).map(lambda x: x.days if pd.notna(x) else 0).astype(int)
+       
+        
+        
+
+        # ── Assign bucket ──────────────────────────────────────────────────
+        def assign_bucket(tat):
+            if tat <= 12:
+                return "<=12 days"
+            elif tat <= 21:
+                return "13-21 days"
+            elif tat <= 30:
+                return "22-30 days"
+            else:
+                return ">30 days"
+
+        df["bucket"] = df["TAT"].apply(assign_bucket)
+       
+        
+
+        # ── Build combined pivot ───────────────────────────────────────────
+        bucket_order = ["<=12 days", "13-21 days", "22-30 days", ">30 days"]
+        pct_order    = ["<=12%", "13-21%", "22-30%", ">30%"]
+        all_pct_cols = pct_order + ["Pending%"]
+
+        pending = (
+            df[df["is_pending"]]
+            .groupby("Circle")
+            .size()
+            .reset_index(name="Pending")
+            )
+
+        pivot = (
+            df[~df["is_pending"]]
+            .groupby(["Circle", "bucket"])
+            .size()
+            .unstack(fill_value=0)
+            .reindex(columns=bucket_order, fill_value=0)
+            .reset_index()
+            .reset_index(drop=True)
+            )
+
+        pivot = pivot.merge(pending, on="Circle", how="outer")
+        pivot["Pending"] = pivot["Pending"].fillna(0).astype(int)
+        for col in bucket_order:
+            pivot[col] = pivot[col].fillna(0).astype(int)
+
+        pivot["TAT_Total"] = pivot[bucket_order].sum(axis=1)
+        pivot["Total"] = pivot["TAT_Total"] + pivot["Pending"]
+        pivot = pivot.sort_values("Circle").reset_index(drop=True)
+
+        
+        # Cumulative % based on Total (includes Pending)
+        for i, (bucket, pct_col) in enumerate(zip(bucket_order, pct_order)):
+            cumulative_buckets = bucket_order[:i+1]
+            pivot[pct_col] = pivot.apply(
+                lambda row, cols=cumulative_buckets: round(
+                    (sum(row[b] for b in cols) / row["Total"]) * 100, 1
+                    ) if row["Total"] > 0 else 0.0,
+                    axis=1
+                    )
+
+        # Pending% = Pending / Total * 100
+        pivot["Pending%"] = pivot.apply(
+            lambda row: round((row["Pending"] / row["Total"]) * 100, 1) if row["Total"] > 0 else 0.0,
+            axis=1
+        )
+
+        grand = {col: pivot[col].sum() for col in bucket_order + ["Pending", "Total"]}
+        for i, (bucket, pct_col) in enumerate(zip(bucket_order, pct_order)):
+            cumulative_buckets = bucket_order[:i+1]
+            grand[pct_col] = round(
+                (sum(grand[b] for b in cumulative_buckets) / grand["Total"]) * 100, 1
+            ) if grand["Total"] > 0 else 0.0
+        grand["Pending%"] = round((grand["Pending"] / grand["Total"]) * 100, 1) if grand["Total"] > 0 else 0.0
+        grand["Circle"] = "Grand Total"
+        pivot = pd.concat([pivot, pd.DataFrame([grand])], ignore_index=True)
+
+        # ── Build Excel ────────────────────────────────────────────────────
+        wb          = Workbook()
+        ws          = wb.active
+        ws.title    = "5G Aging from Soft AT Report"
+        thin_border = _get_thin_border()
+
+        headers    = ["Circle"] + bucket_order + ["Pending"] + ["Total"] + pct_order + ["Pending%"]
+        total_cols = len(headers)
+
+        # Row 1 — main heading
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_cols)
+        _style_header_cell(ws.cell(row=1, column=1), "5G Aging from Soft AT Report", 14, HEADER_BG)
+        ws.row_dimensions[1].height = 28
+
+        # Row 2 — date range
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=total_cols)
+        _style_header_cell(ws.cell(row=2, column=1), f"5G  |  {start_date} to {end_date}", 11, SUBHEADER_BG)
+        ws.row_dimensions[2].height = 20
+
+        # Row 3 — column headers
+        for col_idx, hdr in enumerate(headers, start=1):
+            c = ws.cell(row=3, column=col_idx, value=hdr)
+            c.font      = Font(name="Arial", bold=True, size=10, color=SUBHEADER_FG)
+            c.fill      = PatternFill("solid", fgColor=SUBHEADER_BG)
+            c.alignment = Alignment(horizontal="center", vertical="center")
+            c.border    = thin_border
+            ws.row_dimensions[3].height = 18
+
+        # Data rows
+        current_row = 4
+        for row_offset, (_, row) in enumerate(pivot.iterrows()):
+            is_grand = str(row.get("Circle", "")).strip() == "Grand Total"
+            is_alt   = (row_offset % 2 == 1) and not is_grand
+            row_bg   = GRAND_TOTAL_BG if is_grand else (ALT_ROW_BG if is_alt else "FFFFFF")
+            row_fg   = GRAND_TOTAL_FG if is_grand else "000000"
+
+            for col_idx, col_name in enumerate(headers, start=1):
+                raw_val = row.get(col_name, "")
+
+                
+                if col_name == "Circle":
+                    val = str(raw_val)
+                    
+                elif col_name in all_pct_cols:
+                    try:
+                        val = round(float(raw_val), 1) if raw_val != '' and pd.notna(raw_val) else 0.0
+                    except (ValueError, TypeError):
+                        val = 0.0
+                else:
+                    try:
+                        val = int(float(raw_val)) if raw_val != '' and pd.notna(raw_val) else 0
+                    except (ValueError, TypeError):
+                        val = 0
+
+                c = ws.cell(row=current_row, column=col_idx, value=val)
+                c.font      = Font(name="Arial", bold=is_grand, size=10, color=row_fg)
+                c.alignment = Alignment(
+                    horizontal="left" if col_name == "Circle" else "center",
+                    vertical="center"
+                )
+                c.border = thin_border
+                c.fill   = PatternFill(
+                    "solid",
+                    fgColor=TOTAL_COL_BG if (col_name in ("Total", "Total %") and not is_grand) else row_bg
+                )
+                if col_name in all_pct_cols :
+                    c.number_format = '0.0'
+
+            ws.row_dimensions[current_row].height = 16
+            current_row += 1
+
+        # ── Column widths + freeze ─────────────────────────────────────────
+        ws.column_dimensions["A"].width = 22
+        for col_idx in range(2, total_cols + 1):
+            ws.column_dimensions[get_column_letter(col_idx)].width = 12
+        ws.freeze_panes = "B4"
+
+        # ── Save Excel ─────────────────────────────────────────────────────
+        main_folder = os.path.join(settings.MEDIA_ROOT, "performance_tat")
+        output_path = os.path.join(main_folder, "output")
+        os.makedirs(output_path, exist_ok=True)
+
+        out_filename = f"output_Aging_Soft_AT_{start_date}_to_{end_date}.xlsx"
+        wb.save(os.path.join(output_path, out_filename))
+
+        pivot_response = pivot.drop(columns=["TAT_Total", "bucket"] if "TAT_Total" in pivot.columns else [], errors="ignore")
+        pivot_response = pivot_response.fillna(0)
+
+        download_url = request.build_absolute_uri(
+            f"{settings.MEDIA_URL.rstrip('/')}/performance_tat/output/{out_filename}"
+        )
+
+        return Response({
+            'status':       True,
+            'message':      '5G Aging from Soft AT report generated successfully.',
+            'date_range':   f"{start_date} to {end_date}",
+            'data':         pivot_response.to_dict(orient='records'),
+            'download_url': download_url,
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
