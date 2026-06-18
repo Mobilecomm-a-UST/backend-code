@@ -10,7 +10,6 @@ from openpyxl.styles import (
 from openpyxl.utils import get_column_letter
 import re
 
-
 def create_config_report(ws, data):
 
     # Header
@@ -242,15 +241,18 @@ def check_status(actual, expected):
 
         else:
             expected_values.add(val)
-    
-    # Normal matching for all other parameters
+
     if expected_values in ({"0db"}, {"3db"}):
         if actual_values == expected_values:
             return "OK"
         else:
-            return "NOT OK"        
-    # Normal matching for all other parameters
+            return "NOT OK"   
 
+    if len(actual_values) > 1 and len(expected_values) == 1:
+        if actual_values != expected_values:
+            return "NOT OK"    
+             
+    # Normal matching for all other parameters
     if actual_values.intersection(expected_values):
         return "OK"
     return "NOT OK"
@@ -299,8 +301,8 @@ parameter_map = {
     "actMicroDtx":"1",
     "actAutoPucchAlloc":"FDD:1,TDD:0",
     "allowTrafficConcentration":"1",
-    "alVoltHighThreshold":"580/107",
-    "alVoltLowThreshold":"405/-100",
+    "alVoltHighThreshold":"58/107",
+    "alVoltLowThreshold":"40.5/-100",
     "alVoltUnstableThreshold":"5",
     "ttibSinrThresholdIn":"3",
     "scellFastSchedulingSelect":"fast",
