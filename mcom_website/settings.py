@@ -123,6 +123,7 @@ INSTALLED_APPS = [
     "DailyTaskReview",
     "performance_tat",
     "VI_checklist_tool",
+    "microwave_Ceragon_tool",
 ]
 
 MIDDLEWARE = [

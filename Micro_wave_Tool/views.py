@@ -1,4 +1,3 @@
-
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
@@ -320,6 +319,14 @@ def microwave_upload(request):
 
 
 # make Logic and get requried cloumn in MW budget file--------
+    link_budget_df = link_budget_df[
+        link_budget_df["Equipment Make"].astype(str).str.upper() == "AVIAT"
+    ]
+
+    link_budget_df = link_budget_df[
+        link_budget_df["Plan Stage"].astype(str).str.upper() != "CANCELLED"
+    ]
+
 
     circle_map = {
         "DEL": "DL",
@@ -571,7 +578,7 @@ def microwave_upload(request):
 
     final_df.loc[mask, reverse_matched.columns] = reverse_matched.values
     final_df.drop(columns=["Link Name","reverse_key"], errors="ignore", inplace=True) 
-    final_df.to_excel("abhinav.xlsx")
+    # final_df.to_excel("abhinav.xlsx")
 
 
     # all condtion to make remark -----------------------------------------
@@ -584,8 +591,19 @@ def microwave_upload(request):
     final_df["FREQ TX"] = num(get_col(final_df,"FREQ TX")).round().astype("Int64")
     final_df["FREQ RX"] = num(get_col(final_df,"FREQ RX")).round().astype("Int64")
 
-    final_df["feq_RX"] = final_df["FREQ RX"] == final_df["Rx Frequency (MHz)"]
-    final_df["feq_TX"] = final_df["FREQ TX"] == final_df["Tx Frequency (MHz)"]
+    tx_lb = final_df["Tx Frequency (MHz)"]
+    rx_lb = final_df["Rx Frequency (MHz)"]
+
+    tx_dump = final_df["FREQ TX"]
+    rx_dump = final_df["FREQ RX"]
+
+    freq_status = (
+        ((tx_dump == tx_lb) & (rx_dump == rx_lb)) |
+        ((tx_dump == rx_lb) & (rx_dump == tx_lb))
+    )
+
+    final_df["feq_TX"] = freq_status
+    final_df["feq_RX"] = freq_status
 
 
    
@@ -630,12 +648,17 @@ def microwave_upload(request):
     ]
 
     def mod_status(row):
-        acm = re.sub(r"\D","",str(row.get("ACM Max QAM","")))
+        acm = re.sub(r"\D", "", str(row.get("ACM Max QAM", "")))
+
         for c in mod_cols:
-            v=row.get(c,None)
-            if isinstance(v,pd.Series): v=v.iloc[0]
-            if acm and acm==re.sub(r"\D","",str(v)): return True
-        return False
+            v = row.get(c, None)
+            if isinstance(v, pd.Series):
+                v = v.iloc[0]
+
+            if acm != re.sub(r"\D", "", str(v)):
+                return False
+
+        return True
 
     final_df["Modulation_status"] = final_df.apply(mod_status,axis=1)
 
@@ -654,7 +677,6 @@ def microwave_upload(request):
 
 
     mod_mode_cols=["Site A Modulation Mode","Site Z Modulation Mode"]
-
     def mod_mode(row):
         atpc=str(row.get("ATPC Status","")).lower()
         for c in mod_mode_cols:
@@ -694,15 +716,19 @@ def microwave_upload(request):
         return ", ".join(vals) if vals else "Ready to offer"
 
     final_df["Remark"]=final_df[["BAR_Remark","FAR_Remark","oem_remark"]].apply(join_remark,axis=1)
-    
-#-------------------------------------------------------------------------------------------------------------
+
+    final_df["Soft-AT-Output"] = np.where(
+    final_df[["BAR_Remark", "FAR_Remark", "oem_remark"]].isna().all(axis=1),
+    "Ready to offer",
+    "Action Required"
+)
             
     
-    
+    final_df.to_excel("Avait.xlsx",index=False)
     final_df.drop(columns=["feq_RX", "feq_TX", "RSL_Status", "curret_rsl_status_A",
     "curret_rsl_status_Z", "Xpd_satus", "Tx_power_status", "SNR_Status",
     "polarization_status", "Modulation_status", "Modulation_config_status",
-    "Modulation_moud_status", "FAR_Remark", "BAR_Remark", "oem_remark"], inplace=True, errors="ignore")
+    "Modulation_moud_status", "FAR_Remark", "BAR_Remark", "oem_remark","Remark"], inplace=True, errors="ignore")
 
     final_df.drop_duplicates(inplace=True)
     print(final_df.head())
@@ -928,7 +954,7 @@ def add_to_db(df):
                 "site_a_max_configured_mod": row.get("Site A Max Configured Modulation"),
                 "site_z_max_configured_mod": row.get("Site Z Max Configured Modulation"),
                 "atpc_status_link": row.get("ATPC Status (Link)"),
-                "remark":row.get("Remark")
+                "remark":row.get("Soft-AT-Output")
             }
         )  
 
@@ -997,41 +1023,93 @@ def final_excel_indb(request):
 
 
 #---------
+
 @api_view(["GET", "DELETE"])
 def get_delete_file(request):
     folder_path = os.path.join(main_folder, "MW_Final_Output")
-    files = [f for f in os.listdir(folder_path) if f.endswith(".xlsx")]
 
+    files = [f for f in os.listdir(folder_path) if f.endswith(".xlsx")]
     if not files:
         return Response(
-            {"error": "No file found in folder"},
-            status=404
+            {
+                "status": False,
+                "error": "No file found in folder"
+            },
+            status=status.HTTP_404_NOT_FOUND
         )
 
     file_name = files[0]
     file_path = os.path.join(folder_path, file_name)
-
     if request.method == "GET":
         relative_path = os.path.relpath(file_path, MEDIA_ROOT).replace("\\", "/")
-        file = request.build_absolute_uri(MEDIA_URL + relative_path)
-        return Response({
-            "file_url":file
-        })
+        download_file = request.build_absolute_uri(MEDIA_URL + relative_path)
+
+        return Response(
+            {
+                "status": True,
+                "file_url": download_file
+            },
+            status=status.HTTP_200_OK
+        )
 
     elif request.method == "DELETE":
+        username = request.user.username
+        print("user:", username)
+
+        allowed_users = ["Abhinav", "Abhinav.Verma@ust.com","289581@ust.com"]
+
+        if username not in allowed_users:
+            return Response(
+                {
+                    "status": False,
+                    "error": "You are not authorized for this action"
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         with transaction.atomic():
-            # Delete Excel file..
             if os.path.exists(file_path):
                 os.remove(file_path)
-#            Delete DB records..
+
             deleted_count, _ = MicrowaveAviat.objects.all().delete()
 
-        return Response({
-            "status": True,
-            "message": "file and database records deleted successfully",
-            "excel_deleted": file_name,
-            "db_rows_deleted": deleted_count
-        }, status=200)
-
- 
+        return Response(
+            {
+                "status": True,
+                "message": "File and database records deleted successfully",
+                "excel_deleted": file_name,
+                "db_rows_deleted": deleted_count
+            },
+            status=status.HTTP_200_OK
+        )
     
+
+#auto-----------------------------
+@api_view(["POST"])
+def auto_delete_reports(request):
+
+    folder_path = os.path.join(main_folder, "MW_Final_Output")
+
+    files = []
+    if os.path.exists(folder_path):
+        files = [f for f in os.listdir(folder_path) if f.endswith(".xlsx")]
+
+    with transaction.atomic():
+
+        for file_name in files:
+            file_path = os.path.join(folder_path, file_name)
+
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
+        deleted_count, _ = MicrowaveAviat.objects.all().delete()
+
+    return Response(
+        {
+            "status": True,
+            "excel_files_deleted": len(files),
+            "db_rows_deleted": deleted_count,
+            "message": "Reports deleted successfully"
+        },
+        status=status.HTTP_200_OK
+    )    
