@@ -783,6 +783,7 @@ def upload_cergon_dump(request):
     download_url = request.build_absolute_uri(MEDIA_URL + relative_path)
 
     return Response({
+        "status":True,
         "message": "Report generated successfully",
         "download_url": download_url
     })
