@@ -6851,8 +6851,22 @@ ipv6Address1 ::
 ipv6Address2 ::
 mmeSupportLegacyLte true
 mmeSupportNbIoT false
-
 end
+
+crn ENodeBFunction=1,TermPointToMme=APVIJEMME02
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.1.98.89
+ipAddress2 10.1.98.93
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+pwsRestartHandling 1
+end
+
 gs-
 
 
