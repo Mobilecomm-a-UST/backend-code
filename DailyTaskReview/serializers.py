@@ -2,9 +2,9 @@ from rest_framework import serializers
 from .models import *
 
 
-class DailyreviewTaskSerializer(serializers.ModelSerializer):
+class AddTaskTableSerializer(serializers.ModelSerializer):
     class Meta:
-        model = DailyreviewTask
+        model = AddTaskTable
         fields = '__all__'
 
 

@@ -889,7 +889,7 @@ def soft_at_5G_Summary_Ericsson(request):
                   SA_5G_df.loc[0,"On-Air Date"] = datetime.date.today().strftime("%d-%m-%Y")
                   SA_5G_df.loc[0,"Offer Date"] = datetime.date.today().strftime("%d-%m-%Y")
                   SA_5G_df.loc[0,"5G cell name nomenclature compliance"] = "YES"
-                  SA_5G_df.loc[0,"QIA Alarms : No active alarm ( except external alarm)/No false alarm in iOMS or OSS Monitor"] = "NO"
+                  SA_5G_df.loc[0,"QIA Alarms : No active alarm ( except external alarm)/No false alarm in  iOMS or OSS Monitor"] = "NO"
                   SA_5G_df.loc[0,"Xn interface Configuration check "] = "YES"
                   SA_5G_df.loc[0, "Site should be on Latest Software release"] = "YES"
                   SA_5G_df.loc[0, "5G should be properly configured and  should be enabled and unlocked in core nodes"] = "YES"
@@ -1022,7 +1022,8 @@ def soft_at_5G_Summary_Ericsson(request):
                               file_path = os.path.join(root, file)
                               arcname = os.path.relpath(file_path, base_media_url)
                               zipf.write(file_path, arcname)
-      
+                              
+      zip_filename = f"soft_at_5G_Summary_Ericsson/5gSUMMARY_OUTPUT_{timestamp}.zip"
       download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
       print(f"Output file created: {output_path}")
       print(f"Zip file created: {zip_filename}")
@@ -1644,6 +1645,7 @@ def soft_at_5G_checkpoint(request):
                               arcname = os.path.relpath(file_path, base_media_url)
                               zipf.write(file_path, arcname)
       
+      zip_filename = f"soft_at_5G_Summary_Ericsson/5gChecklist_OUTPUT_{timestamp}.zip"
       download_link = request.build_absolute_uri(MEDIA_URL + zip_filename)
       print(f"Output file created: {output_path}")
       print(f"Zip file created: {zip_filename}")

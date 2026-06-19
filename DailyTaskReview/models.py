@@ -1,9 +1,12 @@
 from django.db import models
+from django.utils import timezone
+import random
 
 
 # Task model
-class DailyreviewTask(models.Model):
+class AddTaskTable(models.Model):
     task = models.CharField(max_length=255,blank=True,null=True)
+    userID = models.CharField(max_length=255,blank=True,null=True)
 
     def __str__(self):
         return self.task
@@ -35,13 +38,29 @@ class Dailytaskreviewmodel(models.Model):
     assigned_at = models.DateTimeField(blank=True,null=True)
     assigned_by = models.CharField(max_length=255,blank=True,null=True)
     frequency = models.CharField(max_length=50,blank=True,null=True)
-    deadline = models.DateField(blank=True,null=True)
+    deadline = models.DateTimeField(blank=True,null=True)
     remarks = models.TextField(blank=True,null=True,max_length=250)
-    startdatetime = models.DateTimeField(blank=True,null=True)
-    enddatetime = models.DateTimeField(blank=True,null=True)
     priority = models.CharField(max_length=50,default='Medium')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.CharField(max_length=255,blank=True,null=True)
+    task_id = models.CharField(max_length=255,blank=True,null=True, unique=True)
+    task_type = models.CharField(max_length=50,blank=True,null=True)
+
+    def save(self, *args, **kwargs):
+
+        # First save object to generate id
+        if not self.pk:
+            super().save(*args, **kwargs)
+
+            date_str = timezone.now().strftime("%d%m%Y")
+
+            self.task_id = f"DTR{date_str}/{self.id:08d}"
+
+            super().save(update_fields=['task_id'])
+
+        else:
+            super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.oem} - {self.task}"

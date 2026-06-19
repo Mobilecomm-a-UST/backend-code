@@ -1,22 +1,30 @@
 from django.urls import path
 from .views import *
 
+
+
+
+
+
 urlpatterns = [
 
-    # Daily task review
-    path('create/', create_daily_task_review),
-    path('reviews/', get_daily_task_reviews),
-    path('get_users/',get_users),
-    path('search_users/',search_users),
-    path('fatch_username/',fatch_username),
-    
-     # Task CRUD
-    path('tasks/create/', create_task),
-    path('tasks/', get_tasks),
-    # path('tasks/<int:pk>/', get_task),
-    path('tasks/update/<int:pk>/', update_task),
-    path('tasks/delete/<int:pk>/', delete_task),
+    # add task in task table
+    path('add-task/', add_task_to_table),
+    path('get-task/', get_tasks_from_table),
+    path('update-task/<int:pk>/', update_task_in_table),
+    path('delete-task/<int:pk>/', delete_task_from_table),
 
-    # Overall data
-    path('all-data/', get_all_data),
+    
+#   ======= Assign Task API =======
+    path('assign_task/create/', create_task),
+    path('assign_task/get/', get_all_tasks),
+    path('assign_task/update-task/<int:pk>/', update_task),
+    path('assign_task/delete-task/<int:pk>/', delete_task),
+
+
+#  ==========   My Task API  ==========
+    path('mytask/get/', get_my_tasks),
+    path('mytask/update/<int:pk>/', update_my_task),
+    
+
 ]
