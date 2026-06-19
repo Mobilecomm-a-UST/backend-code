@@ -78,6 +78,11 @@ def create_config_report(ws, data):
         if col_letter not in ["A", "B"]:
             ws.column_dimensions[col_letter].width = max_len + 3
 
+    for cell in ws[1]:
+        if cell.value == "SL NO":
+            col_letter = get_column_letter(cell.column)
+            ws.column_dimensions[col_letter].width = 7
+            break
 
 import re
 
@@ -244,7 +249,6 @@ master_parameters = [
 
 check_in_manual = [
     "HOP visible in NMS (Y/N)",
-    "QoS configured (Y/N)",
     "Performance error in last 24 hour end",
     "Critical Alarm at New Node",
     "XPI Value",
@@ -276,9 +280,41 @@ fix_values = {
     "SNMP": "ENABLE",
     "HTTPS": "ENABLE",
     "Undervoltage clear threshold (V)":"48",
-    "Undervoltage raise threshold (V)":"46"
+    "Undervoltage raise threshold (V)":"46",
+    "QoS configured (Y/N)":"all cos value match"
 
 }
+
+dscp_cos_mapping = [
+    {"DSCP": "46", "CoS": "7"},
+    {"DSCP": "20", "CoS": "7"},
+    {"DSCP": "34", "CoS": "6"},
+    {"DSCP": "18", "CoS": "6"},
+    {"DSCP": "42", "CoS": "6"},
+    {"DSCP": "44", "CoS": "6"},
+    {"DSCP": "16", "CoS": "6"},
+    {"DSCP": "28", "CoS": "5"},
+    {"DSCP": "4",  "CoS": "5"},
+    {"DSCP": "40", "CoS": "4"},
+    {"DSCP": "14", "CoS": "4"},
+    {"DSCP": "12", "CoS": "4"},
+    {"DSCP": "32", "CoS": "3"},
+    {"DSCP": "30", "CoS": "3"},
+    {"DSCP": "10", "CoS": "3"},
+    {"DSCP": "8",  "CoS": "3"},
+    {"DSCP": "6",  "CoS": "3"},
+    {"DSCP": "26", "CoS": "2"},
+    {"DSCP": "24", "CoS": "2"},
+    {"DSCP": "22", "CoS": "2"},
+    {"DSCP": "56", "CoS": "1"},
+    {"DSCP": "54", "CoS": "1"},
+    {"DSCP": "52", "CoS": "1"},
+    {"DSCP": "51", "CoS": "1"},
+    {"DSCP": "48", "CoS": "1"},
+    {"DSCP": "38", "CoS": "1"},
+    {"DSCP": "36", "CoS": "1"},
+    {"DSCP": "0",  "CoS": "1"}
+]
 
 
 
