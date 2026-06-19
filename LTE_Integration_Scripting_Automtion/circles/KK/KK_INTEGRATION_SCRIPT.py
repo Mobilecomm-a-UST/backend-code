@@ -3314,6 +3314,21 @@ mmeSupportNbIoT false
 end
 gs-
 
+#################mme9#################
+
+crn ENodeBFunction=1,TermPointToMme=KKHSRRHCK05ERPCCMM09
+additionalCnRef
+administrativeState 1
+dcnType 0
+domainName
+ipAddress1 10.103.249.125
+ipAddress2 10.103.249.127
+ipv6Address1 ::
+ipv6Address2 ::
+mmeSupportLegacyLte true
+mmeSupportNbIoT false
+end
+
 
 
 Set 0 userlabel {Phy_SiteID_Userlabel}
