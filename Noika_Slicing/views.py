@@ -71,20 +71,24 @@ def format_excel(file_path, sheet_name="Slicing"):
 #for remark--
 def extract_last_mo(val):
     if pd.isna(val):
-        return None
+        return []
 
     val = str(val).lower().strip()
-    val = val.replace("toattach", "").strip()
+    parts = re.split(r'[;,]', val)
 
-    parts = [p.strip() for p in val.split(";") if p.strip()]
     cleaned = []
 
     for p in parts:
-        if "/" in p:
-            p = p.split("/")[-1]  
-        cleaned.append(p)
+        p = p.strip()
+        if not p:
+            continue
 
-    return sorted(cleaned)
+        if "/" in p:
+            cleaned.extend(x.strip() for x in p.split("/") if x.strip())
+        else:
+            cleaned.append(p)
+
+    return sorted(set(cleaned))
 
 
 def remark(internal, external):
@@ -112,7 +116,7 @@ def remark(internal, external):
     i_parts = extract_last_mo(internal)
     e_parts = extract_last_mo(external)
 
-    if i_parts == e_parts:
+    if set(i_parts) & set(e_parts):
         return "No Changes in value"
 
     return "Changes in value"
@@ -224,21 +228,93 @@ def nokia_slicing_dump(request):
 
         if mo_class == "com.nokia.srbts.nrbts:NRBTS":
 
-            required_in_nrbts = {
-                "actSliceAwareScheduler",
-                "actHighSliceWeightFactor",
-                "actSliceAwareSchedulerUlAndEnh",
-                "actSliceSwitchToDefault",
-                "actAdditionalSliceSupport",
+            required_in_nrbts = { 
+                "actSliceAwareScheduler", 
+                "actHighSliceWeightFactor", 
+                "actSliceAwareSchedulerUlAndEnh", 
+                "actSliceSwitchToDefault", 
+                "actAdditionalSliceSupport", 
                 "actSliceNumExt",
-                "actExtSchedWeightAndPrefWrrAlg",
-                "actDDDSPeriodOptimization"
-            }
+                "actExtSchedWeightAndPrefWrrAlg", 
+                "actDDDSPeriodOptimization",
+                "actBeamControlImprovement1",
+                "actBeamControlImprovement2", 
+                "actCellTraceReport", 
+                "n310","n311","t310","t311",
+                "actConflictConfiguration", 
+                "actCoordinated4g5gPowerSaving", 
+                "actEnhanceIntraNrIntraFreqAnr", 
+                "actEnhancedLinkAdaptation", 
+                "actEnhancedX2LinkSupervision", 
+                "actFdmEnhancedScheduling", 
+                "actFdmScheduling", 
+                "actInactDetNSAUe", 
+                "actIpThpt", 
+                "actMacUserThpt", 
+                "actMobilityRetryToSecondBestCell", 
+                "actMultiDrbNSA", 
+                "actNgcFlexSaMode", 
+                "actNonGbrServiceDiff", 
+                "actNrLBPowerSaving", 
+                "actNsaUeBasedAnrNr",
+                "actOverheatingAssistance", 
+                "actPaging", 
+                "actPdcpRlcBufCongestionMechsm", 
+                "actPerCellMacUserThpt", 
+                "actRtwpMeasurement", 
+                "actSACallProcessingDU", 
+                "actSaHoDeltaMvInterOp", 
+                "actSaIntraFreqAnrDrxProf", 
+                "actSaUeBasedAnrNr", 
+                "actSecDataUsageRep", 
+                "actThpDist", 
+                "actTimeAlignExtension", 
+                "actUeInitRlf", 
+                "actX2ConfigTransfer", 
+                "actXnSecCapNewMode", 
+                "actDataDuplicationForMobility", 
+                "activityNotificationLevelSA", 
+                "actnrpmqapprofiles",
+                "drxdefaultpaging",
+                "gNbCuType", 
+                "maxNumOfNgSetupRequestRetries", 
+                "maxNumX2Links", 
+                "maxNumXnLinks", 
+                "maxnumnranrmoiallowed", 
+                "nsaActivityNotificationLevel", 
+                "nsaInactivityTimer", 
+                "pduSessionEndMarkerTimer", 
+                "periodicalDataUsageReportTimer", 
+                "rrcReestabTypeSA", 
+                "sgnbRelForNoHandoverEnabled", 
+                "srb3SupportEnabled", 
+                "tDCoverall", 
+                "tRLFindForDUSA", 
+                "tWaitingRlRecover", 
+                "tWaitingRlRecoverSA", 
+                "thpHistDownlinkMaxRange", 
+                "thpHistDownlinkMinRange", 
+                "thpHistScale", 
+                "thpHistUplinkMaxRange", 
+                "thpHistUplinkMinRange", 
+                "thpTimeCalc", 
+                "timerHOGuard", 
+                "timerOverheatIndProhibit", 
+                "timerPostOverheating", 
+                "timerRRCGuard", 
+                "timerX2UeProcGuard", 
+                "x2EndMarkerTimer", 
+                "x2linkSupervisionTmr",
+                "xnLinkReestabTmr" 
+                }
+            required_in_nrbts_lower = {
+                    x.lower() for x in required_in_nrbts
+                }
 
             # -------- simple <p> params --------
             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
                 name = p.attrib.get("name")
-                if name in required_in_nrbts:
+                if name.strip().lower() in required_in_nrbts_lower:
                     dumy_data.append({
                         "MO": "NRBTS",
                         "DistName": dist_name,
@@ -246,27 +322,214 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
 
-            # -------- list param: dddsPeriodXx --------
+            # -------- list param: --------
             for item in mo.findall(".//ns:list[@name='cbtsFlowControlProf']/ns:item", ns) \
-                    if ns else mo.findall(".//list[@name='cbtsFlowControlProf']/item"):
+                  if ns else mo.findall(".//list[@name='cbtsFlowControlProf']/item"): 
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"): 
+                    if p.attrib.get("name") == "dddsPeriod": 
+                        dumy_data.append({ 
+                            "MO": "NRBTS", 
+                            "DistName": dist_name, 
+                            "Parameter": "NRBTS.cbtsFlowControlProf.dddsPeriod", 
+                            "value": tf_to_01(p.text) 
+                            })
+                        
+            # -------- powerSavingBwpSwitching --------
+            for item in mo.findall(".//ns:list[@name='powerSavingBwpSwitching']/ns:item", ns) \
+                    if ns else mo.findall(".//list[@name='powerSavingBwpSwitching']/item"):
+
+                required_params = [
+                    "dlBufferEmptyRatioFromPsBwp",
+                    "dlBufferEmptyRatioToPsBwp",
+                    "dlRateThresholdFromPsBwp",
+                    "dlRateThresholdToPsBwp",
+                    "measurementDurationFromPsBwp",
+                    "measurementDurationToPsBwp",
+                    "ulBufferEmptyRatioFromPsBwp",
+                    "ulBufferEmptyRatioToPsBwp"
+                ]
 
                 for p in item.findall("ns:p", ns) if ns else item.findall("p"):
-                    if p.attrib.get("name") == "dddsPeriod":
+                    param_name = p.attrib.get("name")
+                    if param_name in required_params:
                         dumy_data.append({
                             "MO": "NRBTS",
                             "DistName": dist_name,
-                            "Parameter": "NRBTS.cbtsFlowControlProf.dddsPeriod",
+                            "Parameter": f"powerSavingBwpSwitching@{param_name}",
                             "value": tf_to_01(p.text)
-                        })        
+                        })
 
-            # print("NRBTS FOUND ------------------")
-            # print("Class:", mo_class)
-            # print("DistName:", dist_name)
-            # print("Params_NRBTS:", params_nrbts)
+
+            # -------- xxFlowControlProfForCu --------
+            for item in mo.findall(".//ns:list[@name='xxFlowControlProfForCu']/ns:item", ns) \
+                    if ns else mo.findall(".//list[@name='xxFlowControlProfForCu']/item"):
+
+                required_params = [
+                    "dddsPeriodXx",
+                    "maxTransferDelayXx",
+                    "minThFlowCtrlXx"
+                ]
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    param_name = p.attrib.get("name")
+                    if param_name in required_params:
+                        dumy_data.append({
+                            "MO": "NRBTS",
+                            "DistName": dist_name,
+                            "Parameter": f"xxFlowControlProfForCu@{param_name}",
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # -------- single parameters --------
+            single_params = [
+                "thpHistDownlinkMaxRange",
+                "thpHistDownlinkMinRange",
+                "thpHistScale",
+                "thpHistUplinkMaxRange",
+                "thpHistUplinkMinRange",
+                "x2linkSupervisionTmr"
+            ]
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                param_name = p.attrib.get("name")
+
+                if param_name in single_params:
+                    dumy_data.append({
+                        "MO": "NRBTS",
+                        "DistName": dist_name,
+                        "Parameter": param_name,
+                        "value": tf_to_01(p.text)
+                    })
+
+
+            print("NRBTS FOUND ------------------")
+
+        elif mo_class == "com.nokia.srbts.nrbts:NRCELLGRP":
+            required_in_nrcellgrp = {
+                "numberOfTransmittedSsBlocks",
+                "maxNumOfUsers",
+                "maxNumOfNonGBRBearers",
+                "addNumOfHoUsers",
+                "addNumOfNonGBRBearersHo"
+            }
+
+            required_in_nrcellgrp_lower = {
+                x.lower() for x in required_in_nrcellgrp
+            }
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.strip().lower() in required_in_nrcellgrp_lower:
+                    dumy_data.append({
+                        "MO": "NRCELLGRP",
+                        "DistName": dist_name,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
+
+            print("NRCELLGR FOUND ------------------")
+        
+        elif mo_class == "com.nokia.srbts.nrbts:NRANR":
+            required_in_nranrgrp = {
+                "actautonrnbremoval",
+                "consecHoFailThres"
+
+            }
+
+            required_in_nranrgrp_lower = {
+                x.lower() for x in required_in_nranrgrp
+            }
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.strip().lower() in required_in_nranrgrp_lower:
+                    dumy_data.append({
+                        "MO": "NRANR",
+                        "DistName": dist_name,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
+
+            print("NRANR FOUND ------------------")
+
+        elif mo_class == "com.nokia.srbts.nrbts:NRANRPR":
+            required_in_nranrPRgrp = {
+                "consecRecheckForNrNbRemoval",
+                "anrThresRsrpNbCell",
+                "cellDepMode",
+                "nrarfcn",
+                "maxNumAnrNrrelAllowed",
+                "idletimefornrnbremoval",
+
+            }
+
+            required_in_nranrPRgrp_lower = {
+                x.lower() for x in required_in_nranrPRgrp
+            }
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.strip().lower() in required_in_nranrPRgrp_lower:
+                    dumy_data.append({
+                        "MO": "NRANRPR",
+                        "DistName": dist_name,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
+
+            print("NRANRPR FOUND ------------------")  
+
+        elif mo_class == "com.nokia.srbts.nrbts:NRMTRACEDU":
+            required_in_NRMTRACEDU = {
+               'actRIReporting',
+                'riReportInterval',
+
+            }
+
+            required_in_NRMTRACEDU_lower = {
+                x.lower() for x in required_in_NRMTRACEDU
+            }
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.strip().lower() in required_in_NRMTRACEDU_lower:
+                    dumy_data.append({
+                        "MO": "NRMTRACEDU",
+                        "DistName": dist_name,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    }) 
+
+
+
+        elif mo_class == "com.nokia.srbts.nrbts:NRDU":
+            required_in_NRDU = {
+              'maxNumOfRrcConUEsPerDU',
+
+            }
+
+            required_in_NRDU_lower = {
+                x.lower() for x in required_in_NRDU
+            }
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.strip().lower() in required_in_NRDU_lower:
+                    dumy_data.append({
+                        "MO": "NRDU",
+                        "DistName": dist_name,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
 
         # for NRCELL Class-----------
         elif mo_class == "com.nokia.srbts.nrbts:NRCELL":
-
             required_in_nrcell = {
                 "actUlTxSkip",
                 "srPeriodicityMin",
@@ -284,28 +547,560 @@ def nokia_slicing_dump(request):
                 "nbrPdcchCongHandlingUl",
                 "nbrPdschCongHandling",
                 "nbrPuschCongHandling",
-                "nrResourceGroupProfileDN"
+                "nrResourceGroupProfileDN",
+                "actadaptiveretxresmcs",
+                "actadaptvoiptbs",
+                "actapercsi",
+                "actbeamforming",
+                "actccesplit",
+                "actcdrx",
+                "actcdrxvonr",
+                "actcsirsmultiplexing",
+                "actdataforwardingforvonr",
+                "actdl256qam",
+                "actdldatadmrsfdm",
+                "actdlmumimo",
+                "actdlmumimoenh",
+                "actdlptrs",
+                "actdlrbgrandomization",
+                "actdlsrsbm",
+                "actdynpdcchtdmode",
+                "actdynulresalloc",
+                "actemergencycall",
+                "actenhancedvonr",
+                "actfullpwrmode",
+                "actgbradmissioncontrol",
+                "actgbrractdenhresourcepriority",
+                "actincreasedfdmusersperslot",
+                "actlongpucchphase2",
+                "actmcsprbreductionfdmul",
+                "actnbrfornongbrbearers",
+                "actnrrim",
+                "actpdschatssbslots",
+                "actpdschrmcsirsfortracking",
+                "actpercsireportbundlingtddfr1",
+                "actpowersavingbwp",
+                "actprachmultiplexing",
+                "actproactulscheduling",
+                "actsib1fornsacell",
+                "acttcpboostpug",
+                "actuecsirscoexistcellcsirs",
+                "actul256qam",
+                "actulclosedlooppwrctrl",
+                "actuldatadmrsfdm",
+                "actuldftsofdm",
+                "actulptrs",
+                "actulsrsbm",
+                "actultxskip",
+                "actvoippacketaggr",
+                "actvonr",
+                "actvonrmobilitythresholds",
+                "adaptivesrblockingminimization",
+                "adaptivesrloadthresholddown",
+                "adaptivesrloadthresholdup",
+                "adjustprachthresholdoffset",
+                "cbrapreamblesperssb",
+                "cellbarred",
+                "celldeptype",
+                "cellreservedforoperatoruse",
+                "cellreservedforotheruse",
+                "congdetectperiod",
+                "congweightalg",
+                "dedicatedsib1",
+                "dldmrsadditionalposition",
+                "dllablertarget",
+                "dlladeltacqimax",
+                "dlladeltacqimin",
+                "dlladeltacqistepdown",
+                "dllainimcs",
+                "dlmimomode",
+                "dlmulowsinrthreshold",
+                "dlmumaxnumpairedues",
+                "dlmuneighborthreshold",
+                "dlmupairingthreshold",
+                "dmrstypeaposition",
+                "drxwactdlenabled",
+                "expectedcellsize",
+                "freqbandindicatornr",
+                "initialpreamblereceivedtargetpower",
+                "maxnbrtrafficlimit",
+                "maxnumberuespowersaving",
+                "maxnumofgbrbearerssa",
+                "maxnumofnbrbearers",
+                "maxnumofrrcsa",
+                "maxnumofuserspercell",
+                "maxnumofuserspernrcell",
+                "maxnumpdschallocationperslot",
+                "maxnumpuschallocationperslot",
+                "maxprbspernbrue",
+                "minpctresourcereservedmcsdl",
+                "minpctresourcereservedmcsul",
+                "mmimoantarraymode",
+                "msg1frequencystart",
+                "msg3deltapreamble",
+                "n310",
+                "n310vonr",
+                "n311",
+                "nbrpdcchconghandlingdl",
+                "nbrpdcchconghandlingul",
+                "nbrpdschconghandling",
+                "nbrpuschconghandling",
+                "nrcelltype",
+                "nrresourcegroupprofiledn",
+                "numberofrxbeamforming",
+                "numofpagingframes",
+                "numpagingoccsnpagingframe",
+                "pagingoffset",
+                "pmax",
+                "pmaxnrowncell",
+                "powerrampingstep",
+                "prachconfigurationindex",
+                "preambletransmax",
+                "preferredvonrsrperiod",
+                "pucchf3maxcoderate",
+                "pucchf3modulationscheme",
+                "pucchmodeselect",
+                "puschmappingtype",
+                "racontentionresolutiontmr",
+                "raresponsewindow",
+                "reqminnumpuschprb",
+                "rlpdetcsibsithreshold",
+                "rlpdetdlharqthreshold",
+                "rlpreccsibsithreshold",
+                "rlprecdlharqthreshold",
+                "rsrpthresholdssb",
+                "srperiodicity",
+                "srperiodicitymin",
+                "srstypeallocfordlbm",
+                "sspbchblockpower",
+                "t300",
+                "t301",
+                "t310",
+                "t310vonr",
+                "t311",
+                "targetpctresourcereservedmcsdl",
+                "targetpctresourcereservedmcsul",
+                "totalnumberofrapreambles",
+                "type0coresetconfigurationindex",
+                "type0searchspaceconfigurationindex",
+                "ueconnectionestablishmentmode",
+                "uldmrsadditionalposition",
+                "ullablertarget",
+                "ulladeltasinrmax",
+                "ulladeltasinrmin",
+                "ulladeltasinrstepdown",
+                "ullainimcs",
+                "ullimitedmcsstepupsizebler",
+                "ulmcsdowngrademaxreduction",
+                "ulptrssampledensitythresnrb0",
+                "ulptrssampledensitythresnrb1",
+                "ulptrssampledensitythresnrb2",
+                "ulptrssampledensitythresnrb3",
+                "ulptrssampledensitythresnrb4",
+                "ulschedtimeinterval",
+                "ultransprecodeoffsinrthresh",
+                "ultransprecodeonsinrthresh",
+                "ultransprecodepi2bpsk",
+                "ultransprepi2bpskpwrboost",
+                "zerocorrelationzoneconfig"
+
+
             }
 
+            required_in_nrcell_lower = {x.lower() for x in required_in_nrcell}
             params_nrcell = {}
 
             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
                 name = p.attrib.get("name")
-                if name in required_in_nrcell:
-                    params_nrcell[name] = p.text
-                    dumy_data.append({
-                    "MO": "NRCELL",
-                    "DistName": dist_name,
-                    "Parameter": name,
-                    "value": tf_to_01(p.text)
-                })
 
-            # print("NRCELL FOUND ----------------")
+                if name and name.lower() in required_in_nrcell_lower:
+                    params_nrcell[name.lower()] = p.text
+
+                    dumy_data.append({
+                        "MO": "NRCELL",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })
+            # beamSet
+            for item in mo.findall(".//ns:list[@name='beamSet']/ns:item", ns) if ns else mo.findall(".//list[@name='beamSet']/item"):
+
+                param_map = {
+                    "basicBeamSet": "beamset@basicbeamset",
+                    "leftEdgeAngle": "beamset@leftedgeangle",
+                    "lowerEdgeAngle": "beamset@loweredgeangle",
+                    "nrBtsBeamRefinementP2": "beamset@nrbtsbeamrefinementp2",
+                    "rightEdgeAngle": "beamset@rightedgeangle",
+                    "upperEdgeAngle": "beamset@upperedgeangle"
+                }
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    param_name = p.attrib.get("name")
+                    if param_name in param_map:
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": param_map[param_name],
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # cellBwpList
+            for item in mo.findall(".//ns:list[@name='cellBwpList']/ns:item", ns) if ns else mo.findall(".//list[@name='cellBwpList']/item"):
+
+                param_map = {
+                    "pdcchBlockingThresholdDL": "cellbwplist@pdcchblockingthresholddl",
+                    "pdcchBlockingThresholdUL": "cellbwplist@pdcchblockingthresholdul",
+                    "pdcchFreeThresholdDL": "cellbwplist@pdcchfreethresholddl",
+                    "pdcchFreeThresholdUL": "cellbwplist@pdcchfreethresholdul"
+                }
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    param_name = p.attrib.get("name")
+                    if param_name in param_map:
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": param_map[param_name],
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # csirsBeamMgmt
+            for item in mo.findall(".//ns:list[@name='csirsBeamMgmt']/ns:item", ns) if ns else mo.findall(".//list[@name='csirsBeamMgmt']/item"):
+
+                param_map = {
+                    "csirsBmMgmtDensity": "csirsbeammgmt@csirsbmmgmtdensity",
+                    "csirsBmMgmtReIndex": "csirsbeammgmt@csirsbmmgmtreindex",
+                    "csirsBmMgmtSubband": "csirsbeammgmt@csirsbmmgmtsubband"
+                }
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    param_name = p.attrib.get("name")
+                    if param_name in param_map:
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": param_map[param_name],
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # csirsForTracking
+            for item in mo.findall(".//ns:list[@name='csirsForTracking']/ns:item", ns) if ns else mo.findall(".//list[@name='csirsForTracking']/item"):
+
+                param_map = {
+                    "csirsTrackingPeriod": "csirsfortracking@csirstrackingperiod",
+                    "firstRE": "csirsfortracking@firstre",
+                    "rbAllocation": "csirsfortracking@rballocation",
+                    "startRB": "csirsfortracking@startrb"
+                }
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    param_name = p.attrib.get("name")
+                    if param_name in param_map:
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": param_map[param_name],
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # periodicCsiAcquisition
+            for item in mo.findall(".//ns:list[@name='periodicCsiAcquisition']/ns:item", ns) if ns else mo.findall(".//list[@name='periodicCsiAcquisition']/item"):
+
+                param_map = {
+                    "csiReportPeriodicity": "periodiccsiacquisition@csireportperiodicity",
+                    "csirsNumberWithinReportPeriod_Set1": "periodiccsiacquisition@csirsnumberwithinreportperiod_set1",
+                    "csirsPower": "periodiccsiacquisition@csirspower",
+                    "maxCsirsNumber": "periodiccsiacquisition@maxcsirsnumber"
+                }
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    param_name = p.attrib.get("name")
+                    if param_name in param_map:
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": param_map[param_name],
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # srsForBeamMgmt
+            for item in mo.findall(".//ns:list[@name='srsForBeamMgmt']/ns:item", ns) if ns else mo.findall(".//list[@name='srsForBeamMgmt']/item"):
+
+                param_map = {
+                    "srsUePeriodicity": "srsforbeammgmt.srsueperiodicity",
+                    "bSRS": "srsforbeammgmt@bsrs",
+                    "cSRS": "srsforbeammgmt@csrs",
+                    "srsPowerThresholdForDlBm": "srsforbeammgmt@srspowerthresholdfordlbm",
+                    "srsTypeAllocForDlBm": "srstypeallocfordlbm"
+                }
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    param_name = p.attrib.get("name")
+                    if param_name in param_map:
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": param_map[param_name],
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # tddFrameStructure
+            for item in mo.findall(".//ns:list[@name='tddFrameStructure']/ns:item", ns) if ns else mo.findall(".//list[@name='tddFrameStructure']/item"):
+
+                param_map = {
+                    "frameStructureType": "tddframestructure@framestructuretype",
+                    "guardPeriodLength": "tddframestructure@guardperiodlength",
+                    "lteToNrFrameShift": "tddframestructure@ltetonrframeshift",
+                    "tdLteUlDlConfig": "tddframestructure@tdlteuldlconfig",
+                    "ulDlDataSlotRatio": "tddframestructure@uldldataslotratio"
+                }
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    param_name = p.attrib.get("name")
+                    if param_name in param_map:
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": param_map[param_name],
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # ulPowerControlCommon
+            for item in mo.findall(".//ns:list[@name='ulPowerControlCommon']/ns:item", ns) if ns else mo.findall(".//list[@name='ulPowerControlCommon']/item"):
+
+                param_map = {
+                    "actUlOpenLoopPwrCtrl": "ulpowercontrolcommon@actulopenlooppwrctrl",
+                    "alpha": "ulpowercontrolcommon@alpha",
+                    "alphaSrs": "ulpowercontrolcommon@alphasrs",
+                    "p0NominalPucch": "ulpowercontrolcommon@p0nominalpucch",
+                    "p0NominalPucchF1F3": "ulpowercontrolcommon@p0nominalpucchf1f3",
+                    "p0NominalPusch": "ulpowercontrolcommon@p0nominalpusch",
+                    "p0NominalSrs": "ulpowercontrolcommon@p0nominalsrs",
+                    "pucchF1DeltaF": "ulpowercontrolcommon@pucchf1deltaf",
+                    "pucchF3DeltaF": "ulpowercontrolcommon@pucchf3deltaf"
+                }
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    param_name = p.attrib.get("name")
+                    if param_name in param_map:
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": param_map[param_name],
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # ulPtrsForTransPrecoding
+            for item in mo.findall(".//ns:list[@name='ulPtrsForTransPrecoding']/ns:item", ns) if ns else mo.findall(".//list[@name='ulPtrsForTransPrecoding']/item"):
+
+                param_map = {
+                    "ulPtrsSampleDensityThresNrb0": "ulptrssampledensitythresnrb0",
+                    "ulPtrsSampleDensityThresNrb1": "ulptrssampledensitythresnrb1",
+                    "ulPtrsSampleDensityThresNrb2": "ulptrssampledensitythresnrb2",
+                    "ulPtrsSampleDensityThresNrb3": "ulptrssampledensitythresnrb3",
+                    "ulPtrsSampleDensityThresNrb4": "ulptrssampledensitythresnrb4"
+                }
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    param_name = p.attrib.get("name")
+                    if param_name in param_map:
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": param_map[param_name],
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # ulTransPrecodeCtl
+            for item in mo.findall(".//ns:list[@name='ulTransPrecodeCtl']/ns:item", ns) if ns else mo.findall(".//list[@name='ulTransPrecodeCtl']/item"):
+
+                param_map = {
+                    "ulTransPrecodeOffSinrThresh": "ultransprecodeoffsinrthresh",
+                    "ulTransPrecodeOnSinrThresh": "ultransprecodeonsinrthresh",
+                    "ulTransPrecodePi2Bpsk": "ultransprecodepi2bpsk",
+                    "ulTransPrePi2BpskPwrBoost": "ultransprepi2bpskpwrboost"
+                }
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    param_name = p.attrib.get("name")
+                    if param_name in param_map:
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": param_map[param_name],
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # dlDataDmrsFdm
+            for item in mo.findall(".//ns:list[@name='dlDataDmrsFdm']/ns:item", ns) if ns else mo.findall(".//list[@name='dlDataDmrsFdm']/item"):
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    if p.attrib.get("name") == "actDlDataDmrsFdm":
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": "actdldatadmrsfdm",
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # dlPtrs
+            for item in mo.findall(".//ns:list[@name='dlPtrs']/ns:item", ns) if ns else mo.findall(".//list[@name='dlPtrs']/item"):
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    if p.attrib.get("name") == "actDlPtrs":
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": "actdlptrs",
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # ulDataDmrsFdm
+            for item in mo.findall(".//ns:list[@name='ulDataDmrsFdm']/ns:item", ns) if ns else mo.findall(".//list[@name='ulDataDmrsFdm']/item"):
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    if p.attrib.get("name") == "actUlDataDmrsFdm":
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": "actuldatadmrsfdm",
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            # ulPtrs
+            for item in mo.findall(".//ns:list[@name='ulPtrs']/ns:item", ns) if ns else mo.findall(".//list[@name='ulPtrs']/item"):
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    if p.attrib.get("name") == "actUlPtrs":
+                        dumy_data.append({
+                            "MO": "NRCELL",
+                            "DistName": dist_name,
+                            "Parameter": "actulptrs",
+                            "value": tf_to_01(p.text)
+                        })        
+
+            print("NRCELL FOUND ----------------")
             # print("Class:", mo_class)
             # print("DistName:", dist_name)
             # print("Params_NRCELL:", params_nrcell)
 
-      
+
+
+        elif mo_class == "com.nokia.srbts.nrbts:NRPGRP":
+            dist_name = mo.attrib.get("distName", "")
+
+            # ---------- Simple parameters ----------
+            required_params = {
+                "lbpsMaxLoad",
+                "lbpsMinLoad",
+                "lbpsLastCellMinLoad",
+                "lbpsLastCellSOEnabled",
+                "lbpsPdcchLoadOffset",
+                "lbpsCSONCtlEnabled"
+            }
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name in required_params:
+                    dumy_data.append({
+                        "MO": "NRPGRP",
+                        "DistName": dist_name,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
+
+            # ---------- lbpsCellList ----------
+            for item in (
+                mo.findall(".//ns:list[@name='lbpsCellList']/ns:item", ns)
+                if ns else
+                mo.findall(".//list[@name='lbpsCellList']/item")
+            ):
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+
+                    if p.attrib.get("name") == "lbpsCellSOOrder":
+                        dumy_data.append({
+                            "MO": "NRPGRP",
+                            "DistName": dist_name,
+                            "Parameter": "lbpsCellSOOrder",
+                            "value": tf_to_01(p.text)
+                        })
+
+            # ---------- lbpsPeriodList ----------
+            required_period_params = {
+                "lbpsDayOfWeek",
+                "lbpsStartTimeHour",
+                "lbpsStartTimeMinute",
+                "lbpsDuration",
+                "lbpsSuspended"
+            }
+
+            period_values = {param: [] for param in required_period_params}
+
+            for item in (
+                mo.findall(".//ns:list[@name='lbpsPeriodList']/ns:item", ns)
+                if ns else
+                mo.findall(".//list[@name='lbpsPeriodList']/item")
+            ):
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+
+                    name = p.attrib.get("name")
+
+                    if name in required_period_params and p.text is not None:
+                        period_values[name].append(tf_to_01(p.text))
+
+            for param, values in period_values.items():
+
+                if values:
+                    dumy_data.append({
+                        "MO": "NRPGRP",
+                        "DistName": dist_name,
+                        "Parameter": f"lbpsPeriodList@{param}",
+                        "value": ",".join(map(str, values))
+                    })
+
+
+        elif mo_class == "com.nokia.srbts.nrbts:NRDLMUMIMO":
+            required_in_NRDLMUMIMO = {
+                "dlMuMaxNumLayerPerMuRbg",                                                                                                          
+                "dlMuMimoCorrThd",
+                "dlMuMimoCqiThd",
+                "dlMuMimoRankAdaption",
+                "dlMuMimoSpectralEffThd",
+                "dlMuMimoTaperingH",
+                "dlMuMimoTaperingV",
+                "nrDlMuMimoId",
+
+            }
+
+            required_in_NRDLMUMIMO_lower = {
+                x.lower() for x in required_in_NRDLMUMIMO
+            }
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.strip().lower() in required_in_NRDLMUMIMO_lower:
+                    dumy_data.append({
+                        "MO": "NRDLMUMIMO",
+                        "DistName": dist_name,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
+
+            print("NRDLMUMIMO found")
+
          # For NRDRB class------------------
         elif mo_class == "com.nokia.srbts.nrbts:NRDRB":
             dist_name = mo.attrib.get("distName", "")
@@ -314,16 +1109,16 @@ def nokia_slicing_dump(request):
             except:
                 continue
 
-            group_1_ids = {5, 6, 11, 12, 21, 22, 25, 26,47}
-            group_2_ids = {21, 22, 25, 26,47}
+            group_1_ids = {5, 6, 11, 12, 21, 22, 25, 26, 47}
+            group_2_ids = {21, 22, 25, 26, 47}
             group_3_ids = {6}
-            group_4_ids = {5, 6, 7, 8, 9, 11, 12, 21, 22, 25,47}
+            group_4_ids = {5, 6, 7, 8, 9, 11, 12, 21, 22, 25, 47}
             group_5_ids = {26}
             group_6_ids = {11, 21}
             group_7_ids = {12, 22}
             group_8_ids = {5, 25}
             group_9_ids = {6, 26}
-            group_10_ids = {7,47}
+            group_10_ids = {7, 47}
             group_11_ids = {8, 9}
             group_12_ids = {47}
 
@@ -359,9 +1154,21 @@ def nokia_slicing_dump(request):
             group_9_params = {"priorityLevel"}
             group_10_params = {"priorityLevel"}
             group_11_params = {"priorityLevel"}
-            group_12_params = { "nrDrbMacDN" }
+            group_12_params = {"nrDrbMacDN"}
 
-            #FIX IS HERE (deep search for <p>)
+            # -------- All NRDRB parameters --------
+            common_nrdrb_params = {
+                "queuingDelayDiscarding",
+                "volThresDiscardDl",
+                "volThresDiscardUl",
+                "durationThresDiscardDl",
+                "durationThresDiscardUl",
+                "durationThresDiscardDlMacSdu",
+                "volThresDiscardDlMacSdu",
+                "nrDrbTcpBoostDN"
+            }
+
+            # deep search for all <p>
             for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
                 name = p.attrib.get("name")
 
@@ -446,25 +1253,6 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
 
-                param_values = {}
-
-                if nrdrb_id in group_10_ids:
-                    for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
-                        name = p.attrib.get("name")
-
-                        if name in group_10_params:
-                            param_values[name] = p.text
-
-               
-                for param, val in param_values.items():
-                    dumy_data.append({
-                        "MO": "NRDRB",
-                        "DistName": dist_name,
-                        "ID": ",".join(map(str, sorted(group_10_ids))),  # 👈 merged IDs
-                        "Parameter": param,
-                        "value": val
-                    })
-
                 if nrdrb_id in group_11_ids and name in group_11_params:
                     dumy_data.append({
                         "MO": "NRDRB",
@@ -474,19 +1262,48 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
 
-                if nrdrb_id in group_12_ids:
-                    for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
-                        name = p.attrib.get("name")
+                # -------- Common parameters for all NRDRB IDs --------
+                if name in common_nrdrb_params:
+                    dumy_data.append({
+                        "MO": "NRDRB",
+                        "DistName": dist_name,
+                        "ID": nrdrb_id,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
 
-                        if name in group_12_params:
-                            dumy_data.append({
-                                "MO": "NRDRB",
-                                "DistName": dist_name,
-                                "ID": nrdrb_id,
-                                "Parameter": name,
-                                "value": tf_to_01(p.text)
-                            })
+            # Group-10 merged IDs
+            param_values = {}
 
+            if nrdrb_id in group_10_ids:
+                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+                    name = p.attrib.get("name")
+
+                    if name in group_10_params:
+                        param_values[name] = p.text
+
+            for param, val in param_values.items():
+                dumy_data.append({
+                    "MO": "NRDRB",
+                    "DistName": dist_name,
+                    "ID": ",".join(map(str, sorted(group_10_ids))),
+                    "Parameter": param,
+                    "value": tf_to_01(val)
+                })
+
+            # Group-12
+            if nrdrb_id in group_12_ids:
+                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+                    name = p.attrib.get("name")
+
+                    if name in group_12_params:
+                        dumy_data.append({
+                            "MO": "NRDRB",
+                            "DistName": dist_name,
+                            "ID": nrdrb_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
 
         # for RDRB_5QI class---            
         elif mo_class == "com.nokia.srbts.nrbts:NRDRB_5QI":
@@ -502,20 +1319,20 @@ def nokia_slicing_dump(request):
                 25: {"snssaiDN"},
                 26: {"snssaiDN"},
                 47: {"snssaiDN"},
-                5:  {"snssaiDN"},
-                6:  {"snssaiDN"},
-                7:  {"snssaiDN"},
-                8:  {"snssaiDN"},
-                9:  {"snssaiDN"},
-                1:  {"snssaiDN"},
-                2:  {"snssaiDN"},
+                5: {"snssaiDN"},
+                6: {"snssaiDN"},
+                7: {"snssaiDN"},
+                8: {"snssaiDN"},
+                9: {"snssaiDN"},
+                1: {"snssaiDN"},
+                2: {"snssaiDN"},
             }
 
             allowed_params = nrdrb_5qi_param_map.get(nrdrb_5qi_id)
             if not allowed_params:
                 continue
 
-            # snssaiDN is inside list/item/p
+            # -------- snssaiDN --------
             for item in (
                 mo.findall(".//ns:list[@name='snssaiList']/ns:item", ns)
                 if ns else
@@ -531,9 +1348,29 @@ def nokia_slicing_dump(request):
                         "MO": "NRDRB_5QI",
                         "DistName": dist_name,
                         "ID": nrdrb_5qi_id,
-                        "Parameter":'Item-snssaiList-snssaiDN',        
-                        "value": p.text             
-                    })  
+                        "Parameter": "Item-snssaiList-snssaiDN",
+                        "value": p.text
+                    })
+
+            # -------- fiveqiValueList --------
+            fiveqi_values = []
+
+            for p in (
+                mo.findall(".//ns:list[@name='fiveqiValueList']/ns:p", ns)
+                if ns else
+                mo.findall(".//list[@name='fiveqiValueList']/p")
+            ):
+                if p.text:
+                    fiveqi_values.append(tf_to_01(p.text))
+
+            if fiveqi_values:
+                dumy_data.append({
+                    "MO": "NRDRB_5QI",
+                    "DistName": dist_name,
+                    "ID": nrdrb_5qi_id,
+                    "Parameter": "fiveqiValueList",
+                    "value": ",".join(map(str, fiveqi_values))
+                })  
         #
         # for NRDRB_MAC classs---
         elif mo_class == "com.nokia.srbts.nrbts:NRDRB_MAC":
@@ -648,7 +1485,8 @@ def nokia_slicing_dump(request):
 
             nrdrb_rlc_param_map = {
                 1:{'dlMaxRetxThreshold','dlPollByte',
-                    'ulMaxRetxThreshold','ulPollByte'}
+                    'ulMaxRetxThreshold','ulPollByte',
+                     'dlTPollRetr','ulTPollRetr'}
                     }
 
             allowed_params = nrdrb_rlc_param_map.get(nrdrb_rlc_id)
@@ -704,7 +1542,16 @@ def nokia_slicing_dump(request):
 
 
             nrdrb_tcp_param_map = {
-                1:{'tcpBoostPugMinSrPeriodicity'}
+                1:{'tcpBoostPugMinSrPeriodicity',
+                    'tcpBoostPugDuration',
+                    'tcpBoostPugInactiveTime',
+                    'tcpBoostPugMinDataSize',
+                    'tcpBoostPugRampUpDuration',
+                    'tcpBoostPugRampUpInterval',
+                    'tcpBoostPugStableInterval',
+                    'tcpBoostPugTbs',
+                    'tcpBoostPugUlMinSinrThresh',
+}
                     }
 
             allowed_params = nrdrb_tcp_param_map.get(nrdrb_tcp_id)
@@ -722,35 +1569,134 @@ def nokia_slicing_dump(request):
                     }) 
 
 
-        # for NRPMRNL class---
+        # for NRPMRNL class---           
         elif mo_class == "com.nokia.srbts.nrbts:NRPMRNL":
 
             required_in_nrpmrl = {
-               'miNrCellUtilPerNrg',
-               'miNrInterRATMobilitySaPmqap',
-               'miNrSaCuNrpmqap',
-               'miNrNgInterfaceNrpmqap',
-                'miNrPdcpCellNrpmqap',
-                'miNrCellUtilization',
-                'miNrHighRlcCellNrpmqap',
-                'miNrUeStatNrpmqap',
-                'miNrPdcpLatNrpmqap'
+                    "miNrCellUtilPerNrg",
+                    "miNrInterRATMobilitySaPmqap",
+                    "miNrSaCuNrpmqap",
+                    "miNrNgInterfaceNrpmqap",
+                    "miNrPdcpCellNrpmqap",
+                    "miNrCellUtilization",
+                    "miNrHighRlcCellNrpmqap",
+                    "miNrUeStatNrpmqap",
+                    "miNrPdcpLatNrpmqap",
+                    "miNrHighRlcCell",
+                    "miNrPDCPCell",
+                    "minrpdcpcellnrpmqap",
+                    "minrsacunrpmqap",
+                    "minrx2ccnrpmqap",
+                    "minrhighrlccellnrpmqap",
+                    "minrnsaaccunrpmqap",
+                    "minrnginterfacenrpmqap",
+                    "miNrPRBthroughputpmqap",
+                    "miNrHighRlcLatNrpmqap",
+                    "miNrLowRlcReport",
+                    "miNrMacSduReport",
+                    "miNrRim",
+                    "miNrNeighborLteNrCuNsa",
+                    "miNrNeighborNrNrCuNsa",
+                    "miNrRtwp",
+                    "miNrPaging"
+                }
 
+            required_in_nrpmrl_lower = {
+                x.lower() for x in required_in_nrpmrl
             }
 
             params_nrpmrl = {}
 
             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
                 name = p.attrib.get("name")
-                if name in required_in_nrpmrl :
-                    params_nrpmrl[name] = p.text
+
+                if name and name.strip().lower() in required_in_nrpmrl_lower:
+                    params_nrpmrl[name.lower()] = p.text
+
                     dumy_data.append({
-                    "MO": "NRPMRNL",
-                    "DistName": dist_name,
-                    "Parameter": name,
-                    "value": tf_to_01(p.text)
-                })
+                        "MO": "NRPMRNL",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })  
                     
+        elif mo_class == "com.nokia.srbts.nrbts:NRRIM_PROFILE":
+            required_in_NRRIM_PROFILE = {
+                "nrRiThresBase",
+                "nrRiMonitorDownhillStartSymbol",
+                "nrRiMonitorDownhillEndSymbol",
+                "nrRiThresDropHeight",
+                "nrRiThresDurationRatio",
+                "nrRiMonitorWindow",
+                "nrRimPowerRampingStep",
+                "nrRimRarTpcCommand",
+                "nrRimMitigationScheme",
+                "rsTransTrigger",
+                "rsNearFarConfig",
+                "numRbForRs",
+                "numRsType1SetId",
+                "startRbForRs",
+                "rsType1NScId",
+                "repetitionRsType1",
+                "rsPattern1Period",
+                "rsSetId",
+                "factorRsSequence",
+                "rsPowerOffset",
+                "offsetRsSequence",
+                "rimDlMutingMaxRange",
+            }
+
+            required_in_NRRIM_PROFILE_lower = {
+                x.lower() for x in required_in_NRRIM_PROFILE
+            }
+
+            # -------- normal p tags --------
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.lower() in required_in_NRRIM_PROFILE_lower:
+                    dumy_data.append({
+                        "MO": "NRRIM_PROFILE",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })
+
+            # -------- rsType1NScId list --------
+            rs_values = []
+
+            for p in (
+                mo.findall(".//ns:list[@name='rsType1NScId']/ns:p", ns)
+                if ns else
+                mo.findall(".//list[@name='rsType1NScId']/p")
+            ):
+                rs_values.append(tf_to_01(p.text))
+
+            if rs_values:
+                dumy_data.append({
+                    "MO": "NRRIM_PROFILE",
+                    "DistName": dist_name,
+                    "Parameter": "rstype1nscid",
+                    "value": ";".join(map(str, rs_values))
+                })
+
+            # -------- startFreqOffsetForRs list (startRbForRs) --------
+            start_rb_values = []
+
+            for p in (
+                mo.findall(".//ns:list[@name='startFreqOffsetForRs']/ns:p", ns)
+                if ns else
+                mo.findall(".//list[@name='startFreqOffsetForRs']/p")
+            ):
+                start_rb_values.append(tf_to_01(p.text))
+
+            if start_rb_values:
+                dumy_data.append({
+                    "MO": "NRRIM_PROFILE",
+                    "DistName": dist_name,
+                    "Parameter": "startrbforrs",
+                    "value": ";".join(map(str, start_rb_values))
+                })
 
         # for SNSSAI class---
         elif mo_class == "com.nokia.srbts.nrbts:SNSSAI":
@@ -806,9 +1752,20 @@ def nokia_slicing_dump(request):
 
 
         # for TRACKINGAREA class---
-        elif  mo_class == "com.nokia.srbts.nrbts:TRACKINGAREA":
+        elif mo_class == "com.nokia.srbts.nrbts:TRACKINGAREA":
             dist_name = mo.attrib.get("distName", "")
 
+            # fiveGsTac
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                if p.attrib.get("name") == "fiveGsTac":
+                    dumy_data.append({
+                        "MO": "TRACKINGAREA",
+                        "DistName": dist_name,
+                        "Parameter": "fiveGsTac",
+                        "value": tf_to_01(p.text)
+                    })
+
+            # snssaiList
             snssai_values = []
 
             for item in (
@@ -817,9 +1774,9 @@ def nokia_slicing_dump(request):
                 mo.findall(".//list[@name='snssaiList']/item")
             ):
                 p = item.find("ns:p", ns) if ns else item.find("p")
+
                 if p is not None and p.attrib.get("name") == "snssaiDN":
                     snssai_values.append(p.text)
-                    print(snssai_values)
 
             if snssai_values:
                 dumy_data.append({
@@ -829,6 +1786,7 @@ def nokia_slicing_dump(request):
                     "value": ";".join(snssai_values)
                 })
             
+
         #for NRPMQAP class-----------------------------
         elif mo_class == "com.nokia.srbts.nrbts:NRPMQAP":
 
@@ -843,6 +1801,9 @@ def nokia_slicing_dump(request):
             group_3_ids = {11,12,15,16,17,18,19,21,22,25,26,47}
             group_4_ids={47}
             group_5_ids = {21, 22, 25, 26,47}
+            group_6_ids = {6, 7, 8, 9}
+            group_7_ids = {6, 7, 8, 9, 11, 12, 15, 16, 17, 18, 19}
+            group_8_ids = {11, 12, 15, 16, 17, 18, 19}
 
             if nrpmqap_id not in (group_1_ids | group_2_ids | group_3_ids | group_4_ids | group_5_ids):
                 continue
@@ -1034,8 +1995,89 @@ def nokia_slicing_dump(request):
                             "Parameter": name,
                             "value": tf_to_01(p.text)   
                         })                  
+         
+            if nrpmqap_id in group_6_ids:
 
+                for item in (
+                    mo.findall(".//ns:list[@name='cfgPlmnId']/ns:item", ns)
+                    if ns else
+                    mo.findall(".//list[@name='cfgPlmnId']/item")
+                ):
+
+                    for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+
+                        name = p.attrib.get("name")
+
+                        if name in {"mcc", "mnc", "mncLength"}:
+
+                            dumy_data.append({
+                                "MO": "NRPMQAP",
+                                "ID": nrpmqap_id,
+                                "Parameter": f"cfgPlmnId@{name}",
+                                "value": tf_to_01(p.text)
+                            })
+
+            if nrpmqap_id in group_7_ids:
+
+                simple_params = {
+                    "cfgProfType",
+                    "thpHistDownlinkMaxRange",
+                    "thpHistDownlinkMinRange",
+                    "thpHistScale",
+                    "thpHistUplinkMaxRange",
+                    "thpHistUplinkMinRange"
+                }
+
+                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+
+                    name = p.attrib.get("name")
+
+                    if name in simple_params:
+
+                        dumy_data.append({
+                            "MO": "NRPMQAP",
+                            "ID": nrpmqap_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
+                        
+            if nrpmqap_id in group_8_ids:
+
+                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+
+                    if p.attrib.get("name") == "cfg5qiRange":
+
+                        dumy_data.append({
+                            "MO": "NRPMQAP",
+                            "ID": nrpmqap_id,
+                            "Parameter": "cfg5qiRange",
+                            "value": tf_to_01(p.text)
+                        })
+
+
+            group_nrbts_ids = {6, 7, 8, 9, 11, 12, 15, 16, 17, 18, 19}
+            if nrpmqap_id in group_nrbts_ids:
+
+                simple_params = {
+                    "thpHistDownlinkMaxRange",
+                    "thpHistDownlinkMinRange",
+                    "thpHistScale",
+                    "thpHistUplinkMaxRange",
+                    "thpHistUplinkMinRange"
+                }
+
+                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+
+                    name = p.attrib.get("name")
+                    if name in simple_params:
+                        dumy_data.append({
+                            "MO": "NRBTS",
+                            "DistName": dist_name,
+                            "Parameter": name.lower(),
+                            "value": tf_to_01(p.text)
+                        })
             
+                
 
 
         #for ---------- NRRESOURCEGROUP ----------
@@ -1112,7 +2154,35 @@ def nokia_slicing_dump(request):
                         "value": p.text
                     })
 
+#---------
+        elif mo_class == "com.nokia.srbts.nrbts:NRDRX":
 
+            dist_name = mo.attrib.get("distName", "")
+
+            try:
+                nrdrx_id = int(dist_name.rsplit("NRDRX-", 1)[-1])
+            except:
+                continue
+
+            required_params = {
+                "drxInactivityTimer",
+                "drxLongCycle",
+                "drxOnDurationTimer",
+                "drxRetransTimerDl",
+                "drxRetransTimerUl"
+            }
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name in required_params:
+                    dumy_data.append({
+                        "MO": "NRDRX",
+                        "DistName": dist_name,
+                        "ID": nrdrx_id,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
 
         # -------- NRRESOURCEGROUP_PROFILE --------
         elif mo_class == "com.nokia.srbts.nrbts:NRRESOURCEGROUP_PROFILE":
@@ -1181,8 +2251,531 @@ def nokia_slicing_dump(request):
                             "ID": profile_id,
                             "Parameter": f"Item-defaultRgSaList-{p.attrib.get('name')}",
                             "value": p.text
+        
                         })
-         
+
+        elif mo_class == "com.nokia.srbts.nrbts:NRSYSINFO_PROFILE":
+            required_in_nrsysinfo_profile = {
+                "sibPeriodicity",
+                "sibType",
+            }
+
+            # sibSchedulingList
+            for item in (
+                mo.findall(".//ns:list[@name='sibSchedulingList']/ns:item", ns)
+                if ns else
+                mo.findall(".//list[@name='sibSchedulingList']/item")
+            ):
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+
+                    name = p.attrib.get("name")
+
+                    if name in required_in_nrsysinfo_profile:
+                        dumy_data.append({
+                            "MO": "NRSYSINFO_PROFILE",
+                            "DistName": dist_name,
+                            "Parameter": f"sibSchedulingList@{name}".lower(),
+                            "value": tf_to_01(p.text)
+                        }) 
+        
+        elif mo_class == "com.nokia.srbts.nrbts:NRSYSINFO_PROFILE_NSA":
+            dist_name = mo.attrib.get("distName", "")
+
+            required_NRSYSINFO_PROFILE_NSA = {
+                "systemInformationTargetRate"
+            }
+
+            required_in_NRSYSINFO_PROFILE_NSA_lower = {
+                x.lower() for x in required_NRSYSINFO_PROFILE_NSA
+            }
+
+            params_NRSYSINFO_PROFILE_NSA = {}
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.strip().lower() in required_in_NRSYSINFO_PROFILE_NSA_lower:
+                    params_NRSYSINFO_PROFILE_NSA[name.lower()] = p.text
+
+                    dumy_data.append({
+                        "MO": "NRSYSINFO_PROFILE_NSA",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })
+        
+        elif mo_class == "com.nokia.srbts.nrbts:PDCCH":
+            dist_name = mo.attrib.get("distName", "")
+            required_pdcch = {
+                "alSelection"
+            }
+            required_dynamic_agg = {
+                "aggregationLevelListHR": "dynamicAggregationLevelSet@aggregationLevelList",
+                "cqiDciCssAl1HR": "dynamicAggregationLevelSet@cqiDciCssAl1",
+                "cqiDciCssAl2HR": "dynamicAggregationLevelSet@cqiDciCssAl2",
+                "cqiDciCssAl4HR": "dynamicAggregationLevelSet@cqiDciCssAl4",
+                "cqiDciCssAl8HR": "dynamicAggregationLevelSet@cqiDciCssAl8",
+                "cqiDciCssAl16HR": "dynamicAggregationLevelSet@cqiDciCssAl16"
+            }
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name in required_pdcch:
+                    dumy_data.append({
+                        "MO": "PDCCH",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })
+
+            # dynamicAggregationLevelHRSet parameters
+            for item in (
+                mo.findall(".//ns:list[@name='dynamicAggregationLevelHRSet']/ns:item", ns)
+                if ns else
+                mo.findall(".//list[@name='dynamicAggregationLevelHRSet']/item")
+            ):
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    name = p.attrib.get("name")
+
+                    if name in required_dynamic_agg:
+                        dumy_data.append({
+                            "MO": "PDCCH",
+                            "DistName": dist_name,
+                            "Parameter": required_dynamic_agg[name].lower(),
+                            "value": tf_to_01(p.text)
+                        })
+        
+        elif mo_class == "com.nokia.srbts.mnl:PMMNL":
+            dist_name = mo.attrib.get("distName", "")
+
+            required_in_pmmnl = {
+                "mtBtsEnergyMonitoring",
+                "mtSBTSRfmEnergyMonitoring",
+                "mtSBTSSmEnergyMonitoring",
+
+            }
+
+            required_in_pmmnl_lower = {
+                x.lower() for x in required_in_pmmnl
+            }
+
+            params_pmmnl = {}
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.lower() in required_in_pmmnl_lower:
+                    params_pmmnl[name.lower()] = p.text
+
+                    dumy_data.append({
+                        "MO": "PMMNL",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })
+        
+
+        elif mo_class == "com.nokia.srbts.eqm:RMOD":
+            dist_name = mo.attrib.get("distName", "")
+
+            required_in_rmod = {
+                "energySavingMode"
+            }
+
+            required_in_rmod_lower = {
+                x.lower() for x in required_in_rmod
+            }
+
+            params_rmod = {}
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.lower() in required_in_rmod_lower:
+                    params_rmod[name.lower()] = p.text
+
+                    dumy_data.append({
+                        "MO": "RMOD",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })
+
+        elif mo_class == "com.nokia.srbts.mnl:SLCELLDRCONF":
+            dist_name = mo.attrib.get("distName", "")
+
+            required_in_SLCELLDRCONF = {
+                   "mtSBTSSmEnergyMonitoring",
+                    "nrDegAdmCtrlSlCellDetHChFrq",
+                    "nrDegAdmCtrlSlCellDetMinPrcThr",
+                    "nrDegAdmCtrlSlCellDetThr",
+                    "nrDegAdmCtrlSlCellRecPh1Tmr",
+                    "nrDegAdmCtrlSlCellRecPh3Tmr",
+                    "nrDegAdmCtrlSlCellRecPhAct",
+                    "nrUeCtxStpRtSlCellDetHChFrq",
+                    "nrUeCtxStpRtSlCellDetMinReqThr",
+                    "nrUeCtxStpRtSlCellDetThr",
+                    "nrUeCtxStpRtSlCellRecPh1Tmr",
+                    "nrUeCtxStpRtSlCellRecPh2Tmr",
+                    "nrUeCtxStpRtSlCellRecPh3Tmr",
+                    "nrUeCtxStpRtSlCellRecPhAct",
+                    "nrSgnbAddCplSlCellDetHChFrq",
+                    "nrSgnbAddCplSlCellDetMinResThr",
+                    "nrSgnbAddCplSlCellDetThr",
+                    "nrSgnbAddCplSlCellRecPh1Tmr",
+                    "nrSgnbAddCplSlCellRecPh2Tmr",
+                    "nrSgnbAddCplSlCellRecPh3Tmr",
+                    "nrSgnbAddCplSlCellRecPhAct",
+                    "nrRxPwrSlCellDetHChFrq",
+                    "nrRxPwrSlCellDetHighPwrThr",
+                    "nrRxPwrSlCellDetLowPwrThr",
+                    "nrRxPwrSlCellRecPh1Tmr",
+                    "nrRxPwrSlCellRecPh2Tmr",
+                    "nrRxPwrSlCellRecPh3Tmr",
+                    "nrRxPwrSlCellRecPhAct",
+                    "nrCntRachStpSlCellDetHChFrq",
+                    "nrCntRachStpSlCellDetMsg3Thr",
+                    "nrCntRachStpSlCellDetThr",
+                    "nrCntRachStpSlCellRecPh1Tmr",
+                    "nrCntRachStpSlCellRecPh2Tmr",
+                    "nrCntRachStpSlCellRecPh3Tmr",
+                    "nrCntRachStpSlCellRecPhAct",
+                    "nrTxPwrSlCellDetHChFrq",
+                    "nrTxPwrSlCellDetThr",
+                    "nrTxPwrSlCellRecPh1Tmr",
+                    "nrTxPwrSlCellRecPh2Tmr",
+                    "nrTxPwrSlCellRecPh3Tmr",
+                    "nrTxPwrSlCellRecPhAct"
+
+            }
+
+            required_in_SLCELLDRCONF_lower = {
+                x.lower() for x in required_in_SLCELLDRCONF
+            }
+
+            params_SLCELLDRCONF = {}
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.lower() in required_in_SLCELLDRCONF_lower:
+                    params_SLCELLDRCONF[name.lower()] = p.text
+
+                    dumy_data.append({
+                        "MO": "SLCELLDRCONF",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })            
+        
+
+        elif mo_class == "com.nokia.srbts.nrbts:BWP_PROFILE":
+            dist_name = mo.attrib.get("distName", "")
+
+            try:
+                bwp_profile_id = int(dist_name.split("BWP_PROFILE-")[-1])
+            except:
+                continue
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                if p.attrib.get("name") == "bwpType":
+                    dumy_data.append({
+                        "MO": "BWP_PROFILE",
+                        "DistName": dist_name,
+                        "ID": bwp_profile_id,
+                        "Parameter": "bwpType",
+                        "value": tf_to_01(p.text)
+                    })
+            for item in (
+                mo.findall(".//ns:list[@name='locationAndBandwidthDl']/ns:item", ns)
+                if ns else
+                mo.findall(".//list[@name='locationAndBandwidthDl']/item")
+            ):
+
+                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+
+                    if p.attrib.get("name") in {"cRbSizeDl", "cRbStartDl"}:
+                        dumy_data.append({
+                            "MO": "BWP_PROFILE",
+                            "DistName": dist_name,
+                            "ID": bwp_profile_id,
+                            "Parameter": p.attrib.get("name"),
+                            "value": tf_to_01(p.text)
+                        })
+        
+
+        elif mo_class == "com.nokia.srbts.tnl:DSCP2PCPMAP":
+            dist_name = mo.attrib.get("distName", "")
+
+            required_in_DSCP2PCPMAP = {
+                "vLanPrioForDscp00",
+                "vLanPrioForDscp01",
+                "vLanPrioForDscp02",
+                "vLanPrioForDscp03",
+                "vLanPrioForDscp04",
+                "vLanPrioForDscp05",
+                "vLanPrioForDscp06",
+                "vLanPrioForDscp07",
+                "vLanPrioForDscp08",
+                "vLanPrioForDscp09",
+                "vLanPrioForDscp10",
+                "vLanPrioForDscp11",
+                "vLanPrioForDscp12",
+                "vLanPrioForDscp13",
+                "vLanPrioForDscp14",
+                "vLanPrioForDscp15",
+                "vLanPrioForDscp16",
+                "vLanPrioForDscp17",
+                "vLanPrioForDscp18",
+                "vLanPrioForDscp19",
+                "vLanPrioForDscp20",
+                "vLanPrioForDscp21",
+                "vLanPrioForDscp22",
+                "vLanPrioForDscp23",
+                "vLanPrioForDscp24",
+                "vLanPrioForDscp25",
+                "vLanPrioForDscp26",
+                "vLanPrioForDscp27",
+                "vLanPrioForDscp28",
+                "vLanPrioForDscp29",
+                "vLanPrioForDscp30",
+                "vLanPrioForDscp31",
+                "vLanPrioForDscp32",
+                "vLanPrioForDscp33",
+                "vLanPrioForDscp34",
+                "vLanPrioForDscp35",
+                "vLanPrioForDscp36",
+                "vLanPrioForDscp37",
+                "vLanPrioForDscp38",
+                "vLanPrioForDscp39",
+                "vLanPrioForDscp40",
+                "vLanPrioForDscp41",
+                "vLanPrioForDscp42",
+                "vLanPrioForDscp43",
+                "vLanPrioForDscp44",
+                "vLanPrioForDscp45",
+                "vLanPrioForDscp46",
+                "vLanPrioForDscp47",
+                "vLanPrioForDscp48",
+                "vLanPrioForDscp49",
+                "vLanPrioForDscp50",
+                "vLanPrioForDscp51",
+                "vLanPrioForDscp52",
+                "vLanPrioForDscp53",
+                "vLanPrioForDscp54",
+                "vLanPrioForDscp55",
+                "vLanPrioForDscp56",
+                "vLanPrioForDscp57",
+                "vLanPrioForDscp58",
+                "vLanPrioForDscp59",
+                "vLanPrioForDscp60",
+                "vLanPrioForDscp61",
+                "vLanPrioForDscp62",
+                "vLanPrioForDscp63",
+
+                  
+
+            }
+
+            required_in_DSCP2PCPMAP_lower = {
+                x.lower() for x in required_in_DSCP2PCPMAP
+            }
+
+            params_DSCP2PCPMAP = {}
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.lower() in required_in_DSCP2PCPMAP_lower:
+                    params_DSCP2PCPMAP[name.lower()] = p.text
+
+                    dumy_data.append({
+                        "MO": "DSCP2PCPMAP",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })            
+        
+
+        elif mo_class == "com.nokia.srbts.tnl:DSCP2QMAP":
+            dist_name = mo.attrib.get("distName", "")
+
+            required_in_DSCP2QMAP = {
+                    "queueForDscp00",
+                    "queueForDscp01",
+                    "queueForDscp02",
+                    "queueForDscp03",
+                    "queueForDscp04",
+                    "queueForDscp05",
+                    "queueForDscp06",
+                    "queueForDscp07",
+                    "queueForDscp08",
+                    "queueForDscp09",
+                    "queueForDscp10",
+                    "queueForDscp11",
+                    "queueForDscp12",
+                    "queueForDscp13",
+                    "queueForDscp14",
+                    "queueForDscp15",
+                    "queueForDscp16",
+                    "queueForDscp17",
+                    "queueForDscp18",
+                    "queueForDscp19",
+                    "queueForDscp20",
+                    "queueForDscp21",
+                    "queueForDscp22",
+                    "queueForDscp23",
+                    "queueForDscp24",
+                    "queueForDscp25",
+                    "queueForDscp26",
+                    "queueForDscp27",
+                    "queueForDscp28",
+                    "queueForDscp29",
+                    "queueForDscp30",
+                    "queueForDscp31",
+                    "queueForDscp32",
+                    "queueForDscp33",
+                    "queueForDscp34",
+                    "queueForDscp35",
+                    "queueForDscp36",
+                    "queueForDscp37",
+                    "queueForDscp38",
+                    "queueForDscp39",
+                    "queueForDscp40",
+                    "queueForDscp41",
+                    "queueForDscp42",
+                    "queueForDscp43",
+                    "queueForDscp44",
+                    "queueForDscp45",
+                    "queueForDscp46",
+                    "queueForDscp47",
+                    "queueForDscp48",
+                    "queueForDscp49",
+                    "queueForDscp50",
+                    "queueForDscp51",
+                    "queueForDscp52",
+                    "queueForDscp53",
+                    "queueForDscp54",
+                    "queueForDscp55",
+                    "queueForDscp56",
+                    "queueForDscp57",
+                    "queueForDscp58",
+                    "queueForDscp59",
+                    "queueForDscp60",
+                    "queueForDscp61",
+                    "queueForDscp62",
+                    "queueForDscp63",
+                }
+
+            required_in_DSCP2QMAP_lower = {
+                x.lower() for x in required_in_DSCP2QMAP
+            }
+
+            params_DSCP2QMAP = {}
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.lower() in required_in_DSCP2QMAP_lower:
+                    params_DSCP2QMAP[name.lower()] = p.text
+
+                    dumy_data.append({
+                        "MO": "DSCP2QMAP",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })
+
+        elif mo_class == "com.nokia.srbts.nrbts:NRPMQAP":
+            dist_name = mo.attrib.get("distName", "")
+
+            required_in_NRPMQAP = {
+                "thpHistDownlinkMaxRange",
+                "thpHistDownlinkMinRange",
+                "thpHistScale",
+                "thpHistUplinkMaxRange",
+                "thpHistUplinkMinRange"
+            }
+
+            required_in_NRPMQAP_lower = {
+                x.lower() for x in required_in_NRPMQAP
+            }
+
+            params_NRPMQAP = {}
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+
+                name = p.attrib.get("name", "")
+
+                if name.lower() in required_in_NRPMQAP_lower:
+
+                    params_NRPMQAP[name.lower()] = p.text
+
+                    dumy_data.append({
+                        "MO": "NRPMQAP",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    }) 
+
+        
+        elif mo_class == "com.nokia.srbts.mnl:FEATCADM":
+            dist_name = mo.attrib.get("distName", "")
+
+            required_in_FEATCADM = {
+                    "actPowerMeter",
+                    "actNrAutDegAdmCtrlSlCellDetRec",
+                    "actNrAutUeCtxStpRtSlCellDetRec",
+                    "actNrAutSgnbAddCplSlCellDetRec",
+                    "actNrAutRxPwrSlCellDetRec",
+                    "actNrAutCntRachStpSlCellDetRec",
+                    "actNrAutTxPwrSlCellDetRec",
+
+                  
+                }
+
+            required_in_FEATCADM_lower = {
+                x.lower() for x in required_in_FEATCADM
+            }
+
+            params_FEATCADM = {}
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.lower() in required_in_FEATCADM_lower:
+                    params_FEATCADM[name.lower()] = p.text
+
+                    dumy_data.append({
+                        "MO": "FEATCADM",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })
+        
+        elif mo_class == "NOKLTE:LNCEL":
+            dist_name = mo.attrib.get("distName", "")
+
+            required_in_lncel = {
+                "actmicrodtx"
+            }
+
+            required_in_lncel_lower = {
+                x.lower() for x in required_in_lncel
+            }
+
+            params_lncel = {}
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name", "")
+
+                if name and name.lower() in required_in_lncel_lower:
+                    params_lncel[name.lower()] = p.text
+
+                    dumy_data.append({
+                        "MO": "MRBTS",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })
+        
+
 #---------------data read in fix paratmeter---------      
         df = pd.DataFrame(dumy_data)
         for c in ["MO", "ID", "Parameter", "value"]:
@@ -1242,6 +2835,14 @@ def nokia_slicing_dump(request):
         file_name_1 = "Nokia_Slicing_dump_data.xlsx"
         dump_output_path=os.path.join(dump_data_path, file_name_1)
         data_df.to_excel(dump_output_path, index=False, engine="openpyxl")
+       
+        data_df["Parameter"] = (
+            data_df["Parameter"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+        )
+        data_df["MO"] = data_df["MO"].astype(str).str.strip().str.upper()
 
     #matincting-----
     fixpara_folder = os.path.join(main_folder, 'Nokia_Slicing_Fixpara')
@@ -1268,6 +2869,13 @@ def nokia_slicing_dump(request):
 
 
     excel_df["ID"] = excel_df["ID"].apply(normalize_id)
+    excel_df["MO"] = excel_df["MO"].astype(str).str.strip().str.upper()
+    excel_df["Parameter"] = (
+            excel_df["Parameter"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+        )
     data_df["ID"] = data_df["ID"].apply(normalize_id)
 
 
@@ -1317,7 +2925,7 @@ def nokia_slicing_dump(request):
 )
     
 
-    file_name = "Nokia_Slicing_Final_output.xlsx"
+    file_name = "5G_GPL/Slicing_output.xlsx"
     final_output_path=os.path.join(output_path, file_name)
     finaldf.drop_duplicates(inplace=True)
     finaldf.to_excel(final_output_path, index=False, engine="openpyxl",sheet_name="Slicing")
@@ -1337,4 +2945,12 @@ def nokia_slicing_dump(request):
 
      
     }, status=HTTP_200_OK)
+
+
+
+
+
+
+
+
 

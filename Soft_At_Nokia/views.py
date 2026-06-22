@@ -1225,8 +1225,16 @@ def upload_and_compare_xml_files(request):
     df_vswr = pd.DataFrame(VSWR)
     df_vswr = df_vswr[df_vswr["MRBTS"].notna()]
 
+    # df_ret = pd.DataFrame(ret_counter).drop_duplicates()
+    # df_ret = df_ret[df_ret["MRBTS"].notna()]
     df_ret = pd.DataFrame(ret_counter).drop_duplicates()
-    df_ret = df_ret[df_ret["MRBTS"].notna()]
+ 
+    if df_ret.empty:
+        print("df_ret is empty")
+    elif "MRBTS" not in df_ret.columns:
+        print("MRBTS column missing:", df_ret.columns)
+    else:
+        df_ret = df_ret[df_ret["MRBTS"].notna()]
 
     # ---------------------------------------
     # SAVE EXCEL REPORT
