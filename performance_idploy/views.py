@@ -1420,10 +1420,367 @@ def generate_scft(request):
 # AT REPORT CONSTANTS
 # ─────────────────────────────────────────────
 
+# AT_REPORT_FILENAME  = "Performance_AT_SR-WISE_Report.xlsx"
+# # Remove N2600 from offered layers
+# # LAYERS_OFFERED_EXCLUDE = ["N2600"]  # add to your existing exclude list wherever N2600 was included
+
+# AT_HEADER_FILL      = PatternFill("solid", start_color="1F4E79")
+# AT_HEADER_FONT      = Font(name="Arial", bold=True, color="FFFFFF", size=10)
+# AT_DATA_FONT        = Font(name="Arial", size=10)
+# AT_TOTAL_FONT       = Font(name="Arial", bold=True, size=10)
+# AT_PENDING_FILL     = PatternFill("solid", start_color="FFF2CC")   # light yellow for Pending rows
+# AT_ALT_FILL         = PatternFill("solid", start_color="F2F2F2")
+# AT_BORDER_SIDE      = Side(style="thin", color="BFBFBF")
+# AT_BORDER           = Border(
+#     left=AT_BORDER_SIDE, right=AT_BORDER_SIDE,
+#     top=AT_BORDER_SIDE,  bottom=AT_BORDER_SIDE
+# )
+# AT_CENTER           = Alignment(horizontal="center", vertical="center", wrap_text=True)
+# AT_LEFT             = Alignment(horizontal="left",   vertical="center")
+
+# AT_COL_WIDTHS = {
+#     "SR_Site ID": 26,
+#     "Site ID":    14,
+#     "Circle":     14,
+#     "PAT":        18,
+#     "PAT Date":   14,
+#     "SAT":        18,
+#     "SAT Date":   14,
+#     "KAT":        18,
+#     "KAT Date":   14,
+#     "SCFT":       18,
+#     "SCFT Date":  14,
+# }
+
+# # Maps output column names to input source columns
+# AT_STATUS_MAP = {
+#     "PAT":  "Physical AT Status",
+#     "SAT":  "Soft AT Status",
+#     "KAT":  "Performance AT Status",
+#     "SCFT": "SCFT AT Status",
+# }
+# AT_DATE_MAP = {
+#     "PAT Date":  "Physical AT Status Date",
+#     "SAT Date":  "Soft AT Status Date",
+#     "KAT Date":  "Performance AT Status Date",
+#     "SCFT Date": "SCFT AT Status Date",
+# }
+
+# AT_OUTPUT_COLS = [
+#     "SR_Site ID", "Site ID","Circle",
+#     "PAT", "PAT Date",
+#     "SAT", "SAT Date",
+#     "KAT", "KAT Date",
+#     "SCFT", "SCFT Date",
+# ]
+
+
+# # ─────────────────────────────────────────────
+# # AT REPORT HELPERS
+# # ─────────────────────────────────────────────
+
+# def _validate_at_columns(df):
+#     """
+#     Check that all AT-report-specific columns are present.
+#     Normalises column names by stripping whitespace.
+#     Returns (df, error_message).
+#     """
+#     df.rename(columns={c: c.strip() for c in df.columns}, inplace=True)
+
+#     required = [
+#         "SR. No.", "Site ID", "Circle", "On Air Date",
+#         "Physical AT Status",   "Physical AT Status Date",
+#         "Soft AT Status",       "Soft AT Status Date",
+#         "Performance AT Status","Performance AT Status Date",
+#         "SCFT AT Status",       "SCFT AT Status Date",
+        
+#     ]
+#     missing = [c for c in required if c not in df.columns]
+#     if missing:
+#         return None, f"Missing columns for AT report: {missing}"
+
+#     # parse all date columns
+#     for col in (
+#         "On Air Date",
+#         "Physical AT Status Date", "Soft AT Status Date",
+#         "Performance AT Status Date", "SCFT AT Status Date",
+#     ):
+#         df[col] = pd.to_datetime(df[col], errors="coerce")
+
+#     # normalise status columns to stripped strings
+#     for col in (
+#         "Physical AT Status", "Soft AT Status",
+#         "Performance AT Status", "SCFT AT Status",
+#     ):
+#         df[col] = df[col].astype(str).str.strip()
+
+#     # SR. No. as string for concatenation
+#     df["SR. No."] = df["SR. No."].astype(str).str.strip()
+#     df["Circle"]  = df["Circle"].astype(str).str.strip()
+
+#     return df, None
+
+
+# def _resolve_status(group_col):
+#     """
+#     Priority rule across all rows in the group:
+#       1. ANY row == 'Pending'            → 'Pending'
+#       2. ANY row == 'Rejected'           → 'Pending'
+#       3. ANY row == 'Acceptance Pending' → 'Offered'
+#       4. All rows == 'Accepted'          → 'Accepted'
+
+#     Case-insensitive comparison. Ignores blank / NaN values.
+#     """
+#     # clean: drop nulls, strip whitespace, lowercase for comparison
+#     values = (
+#         group_col
+#         .dropna()
+#         .astype(str)
+#         .str.strip()
+#     )
+#     # remove empty strings and literal "nan" from unclean data
+#     values = values[~values.str.lower().isin(["", "nan", "none"])]
+
+#     if values.empty:
+#         return None
+
+#     lower_vals = values.str.lower()
+
+#     if (lower_vals == "pending").any():
+#         return "Pending"
+
+#     if (lower_vals == "rejected").any():
+#         return "Pending"
+
+#     if (lower_vals == "acceptance pending").any():
+#         return "Offered"
+
+#     return "Accepted"
+
+
+# def _resolve_date(date_col):
+#     """
+#     Return the most recent (max) date from the group.
+#     Returns None if all values are NaT.
+#     """
+#     valid = date_col.dropna()
+#     if valid.empty:
+#         return None
+#     return valid.max()
+
+
+# def _build_at_summary(df, start_dt, end_dt):
+#     """
+#     Build the AT report rows.
+
+#     Steps:
+#     1. Filter On Air Date within [start_dt, end_dt].
+#     2. Group by (SR. No., Site ID).
+#     3. For each group:
+#        - SR_Site ID  = SR_No + "_" + Site_ID
+#        - Status cols = pending-priority rule
+#        - Date cols   = most recent date
+#     4. Sort output by SR. No. ascending (numeric where possible).
+
+#     Returns a list of dicts, one per unique (SR. No., Site ID).
+#     """
+#     # ── Step 1: date filter on On Air Date ──────────────────────
+#     start_ts = pd.Timestamp(start_dt)
+#     end_ts   = pd.Timestamp(end_dt)
+#     mask     = (df["On Air Date"] >= start_ts) & (df["On Air Date"] <= end_ts)
+#     df_range = df[mask].copy()
+
+#     if df_range.empty:
+#         return []
+
+#     # ── Step 2: sort by date desc so first row = most recent ────
+#     # We sort on all four date cols; any one being recent is enough.
+#     # Primary sort key: On Air Date desc (secondary keys don't matter
+#     # for status resolution because _resolve_status scans all rows).
+#     df_range = df_range.sort_values("On Air Date", ascending=False)
+
+#     # ── Step 3: group and resolve ────────────────────────────────
+#     rows = []
+#     grouped = df_range.groupby(["SR. No.", "Site ID", "Circle"], sort=False)
+
+#     for (sr_no, site_id, circle), grp in grouped:
+#         row = {
+#             "SR_Site ID": f"{sr_no}_{site_id}",
+#             "Site ID":    site_id,
+#             "Circle": circle,
+#         }
+
+#         for out_col, src_col in AT_STATUS_MAP.items():
+#             row[out_col] = _resolve_status(grp[src_col])
+
+#         for out_col, src_col in AT_DATE_MAP.items():
+#             dt = _resolve_date(grp[src_col])
+#             row[out_col] = dt.strftime("%d-%b-%Y") if dt is not None else None
+
+#         rows.append(( circle,sr_no, row))
+
+#     # ── Step 4: sort by SR. No. numerically where possible ───────
+#     def _sort_key(item):
+#         circle,sr, = item[0]
+#         try:
+#             return (circle, 0, int(sr))
+#         except (ValueError, TypeError):
+#             return (circle, 1, str(sr))
+
+#     rows.sort(key=_sort_key)
+#     return [r for _, _, r in rows]
+
+
+# def _write_at_sheet(ws, rows, period_label):
+#     """
+#     Write AT report rows into a worksheet.
+#     Highlights rows where any status column is 'Pending'.
+#     """
+#     # ── Row 1: title bar ─────────────────────────────────────────
+#     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(AT_OUTPUT_COLS))
+#     title_cell           = ws.cell(row=1, column=1,
+#                                    value=f"AT Report  |  {period_label}")
+#     title_cell.font      = Font(name="Arial", bold=True, size=11, color="FFFFFF")
+#     title_cell.fill      = AT_HEADER_FILL
+#     title_cell.alignment = AT_CENTER
+
+#     # ── Row 2: column headers ────────────────────────────────────
+#     for col_idx, col_name in enumerate(AT_OUTPUT_COLS, start=1):
+#         cell            = ws.cell(row=2, column=col_idx, value=col_name)
+#         cell.font       = AT_HEADER_FONT
+#         cell.fill       = PatternFill("solid", start_color="2E75B6")
+#         cell.alignment  = AT_CENTER
+#         cell.border     = AT_BORDER
+
+#     if not rows:
+#         ws.cell(row=3, column=1, value="No data found for the selected date range.")
+#         return
+
+#     # ── Data rows ────────────────────────────────────────────────
+#     status_cols = list(AT_STATUS_MAP.keys())   # PAT, SAT, KAT, SCFT
+
+#     for row_idx, row_data in enumerate(rows, start=3):
+#         has_pending = any(
+#             str(row_data.get(sc, "")).strip() == "Pending"
+#             for sc in status_cols
+#         )
+#         row_fill = AT_PENDING_FILL if has_pending else (
+#             AT_ALT_FILL if row_idx % 2 == 0 else PatternFill("solid", start_color="FFFFFF")
+#         )
+
+#         for col_idx, col_name in enumerate(AT_OUTPUT_COLS, start=1):
+#             value        = row_data.get(col_name)
+#             cell         = ws.cell(row=row_idx, column=col_idx, value=value)
+#             cell.font    = AT_DATA_FONT
+#             cell.border  = AT_BORDER
+#             cell.fill    = row_fill
+#             cell.alignment = AT_LEFT if col_idx in (1, 2) else AT_CENTER
+
+#     # ── Column widths and row heights ────────────────────────────
+#     for col_idx, col_name in enumerate(AT_OUTPUT_COLS, start=1):
+#         ws.column_dimensions[get_column_letter(col_idx)].width = AT_COL_WIDTHS.get(col_name, 16)
+
+#     ws.row_dimensions[1].height = 22
+#     ws.row_dimensions[2].height = 28
+#     ws.freeze_panes = "A3"
+
+
+# def _write_at_excel(rows, period_label, out_filepath):
+#     """
+#     Write a single-sheet Excel file for the AT report.
+#     One sheet named 'AT Report'.
+#     """
+#     wb = Workbook()
+#     ws = wb.active
+#     ws.title = "AT Report"
+
+#     _write_at_sheet(ws, rows, period_label)
+#     wb.save(out_filepath)
+
+
+# # ─────────────────────────────────────────────
+# # API — GENERATE AT REPORT
+# # ─────────────────────────────────────────────
+
+# @api_view(["POST"])
+# def performance_at_sr_wise_tracking(request):
+#     """
+#     POST /idploy/generate-at-report/
+
+#     Body:
+#     {
+#         "start_date": "2025-12-26",
+#         "end_date":   "2026-01-25"
+#     }
+
+#     Filters rows by On Air Date within [start_date, end_date].
+#     Groups by (SR. No., Site ID), applies pending-priority rule on
+#     status columns, picks most-recent date for date columns.
+
+#     Returns JSON data + download URL for the Excel file.
+#     """
+#     start_str = request.data.get("start_date", "").strip()
+#     end_str   = request.data.get("end_date",   "").strip()
+
+#     # ── validate date range ──────────────────────────────────────
+#     start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+#     if err:
+#         return err
+
+#     # ── load input file ──────────────────────────────────────────
+#     df, error = _get_input_df()
+#     if error:
+#         return Response({"error": error}, status=status.HTTP_404_NOT_FOUND)
+
+#     # ── validate required columns ────────────────────────────────
+#     df, col_error = _validate_at_columns(df)
+#     if col_error:
+#         return Response({"error": col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+#     period_label = (
+#         f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+#     )
+#     out_filename = AT_REPORT_FILENAME
+#     out_file     = os.path.join(output_path, out_filename)
+
+#     # ── process and write ────────────────────────────────────────
+#     try:
+#         rows = _build_at_summary(df, start_dt, end_dt)
+
+#         if not rows:
+#             return Response(
+#                 {"error": f"No data found for On Air Date range: {period_label}"},
+#                 status=status.HTTP_404_NOT_FOUND,
+#             )
+
+#         _write_at_excel(rows, period_label, out_file)
+
+#     except Exception as exc:
+#         return Response({"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#     download_url = request.build_absolute_uri(
+#         f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
+#     )
+
+#     return Response({
+#         "status":       True,
+#         "message":      "AT report generated successfully.",
+#         "date_range":   period_label,
+#         "total_sites":  len(rows),
+#         "data":         rows,
+#         "download_url": download_url,
+#     }, status=status.HTTP_200_OK)
+
+# New report at report
+ 
+# ─────────────────────────────────────────────
+# AT REPORT CONSTANTS
+# ─────────────────────────────────────────────
+ 
 AT_REPORT_FILENAME  = "Performance_AT_SR-WISE_Report.xlsx"
 # Remove N2600 from offered layers
 # LAYERS_OFFERED_EXCLUDE = ["N2600"]  # add to your existing exclude list wherever N2600 was included
-
+ 
 AT_HEADER_FILL      = PatternFill("solid", start_color="1F4E79")
 AT_HEADER_FONT      = Font(name="Arial", bold=True, color="FFFFFF", size=10)
 AT_DATA_FONT        = Font(name="Arial", size=10)
@@ -1437,7 +1794,7 @@ AT_BORDER           = Border(
 )
 AT_CENTER           = Alignment(horizontal="center", vertical="center", wrap_text=True)
 AT_LEFT             = Alignment(horizontal="left",   vertical="center")
-
+ 
 AT_COL_WIDTHS = {
     "SR_Site ID": 26,
     "Site ID":    14,
@@ -1451,7 +1808,7 @@ AT_COL_WIDTHS = {
     "SCFT":       18,
     "SCFT Date":  14,
 }
-
+ 
 # Maps output column names to input source columns
 AT_STATUS_MAP = {
     "PAT":  "Physical AT Status",
@@ -1465,7 +1822,7 @@ AT_DATE_MAP = {
     "KAT Date":  "Performance AT Status Date",
     "SCFT Date": "SCFT AT Status Date",
 }
-
+ 
 AT_OUTPUT_COLS = [
     "SR_Site ID", "Site ID","Circle",
     "PAT", "PAT Date",
@@ -1473,12 +1830,12 @@ AT_OUTPUT_COLS = [
     "KAT", "KAT Date",
     "SCFT", "SCFT Date",
 ]
-
-
+ 
+ 
 # ─────────────────────────────────────────────
 # AT REPORT HELPERS
 # ─────────────────────────────────────────────
-
+ 
 def _validate_at_columns(df):
     """
     Check that all AT-report-specific columns are present.
@@ -1486,19 +1843,18 @@ def _validate_at_columns(df):
     Returns (df, error_message).
     """
     df.rename(columns={c: c.strip() for c in df.columns}, inplace=True)
-
+ 
     required = [
         "SR. No.", "Site ID", "Circle", "On Air Date",
         "Physical AT Status",   "Physical AT Status Date",
         "Soft AT Status",       "Soft AT Status Date",
         "Performance AT Status","Performance AT Status Date",
         "SCFT AT Status",       "SCFT AT Status Date",
-        
     ]
     missing = [c for c in required if c not in df.columns]
     if missing:
         return None, f"Missing columns for AT report: {missing}"
-
+ 
     # parse all date columns
     for col in (
         "On Air Date",
@@ -1506,21 +1862,21 @@ def _validate_at_columns(df):
         "Performance AT Status Date", "SCFT AT Status Date",
     ):
         df[col] = pd.to_datetime(df[col], errors="coerce")
-
+ 
     # normalise status columns to stripped strings
     for col in (
         "Physical AT Status", "Soft AT Status",
         "Performance AT Status", "SCFT AT Status",
     ):
         df[col] = df[col].astype(str).str.strip()
-
+ 
     # SR. No. as string for concatenation
     df["SR. No."] = df["SR. No."].astype(str).str.strip()
     df["Circle"]  = df["Circle"].astype(str).str.strip()
-
+ 
     return df, None
-
-
+ 
+ 
 def _resolve_status(group_col):
     """
     Priority rule across all rows in the group:
@@ -1528,7 +1884,7 @@ def _resolve_status(group_col):
       2. ANY row == 'Rejected'           → 'Pending'
       3. ANY row == 'Acceptance Pending' → 'Offered'
       4. All rows == 'Accepted'          → 'Accepted'
-
+ 
     Case-insensitive comparison. Ignores blank / NaN values.
     """
     # clean: drop nulls, strip whitespace, lowercase for comparison
@@ -1540,24 +1896,24 @@ def _resolve_status(group_col):
     )
     # remove empty strings and literal "nan" from unclean data
     values = values[~values.str.lower().isin(["", "nan", "none"])]
-
+ 
     if values.empty:
         return None
-
+ 
     lower_vals = values.str.lower()
-
+ 
     if (lower_vals == "pending").any():
         return "Pending"
-
+ 
     if (lower_vals == "rejected").any():
         return "Pending"
-
+ 
     if (lower_vals == "acceptance pending").any():
         return "Offered"
-
+ 
     return "Accepted"
-
-
+ 
+ 
 def _resolve_date(date_col):
     """
     Return the most recent (max) date from the group.
@@ -1567,12 +1923,12 @@ def _resolve_date(date_col):
     if valid.empty:
         return None
     return valid.max()
-
-
+ 
+ 
 def _build_at_summary(df, start_dt, end_dt):
     """
     Build the AT report rows.
-
+ 
     Steps:
     1. Filter On Air Date within [start_dt, end_dt].
     2. Group by (SR. No., Site ID).
@@ -1581,7 +1937,7 @@ def _build_at_summary(df, start_dt, end_dt):
        - Status cols = pending-priority rule
        - Date cols   = most recent date
     4. Sort output by SR. No. ascending (numeric where possible).
-
+ 
     Returns a list of dicts, one per unique (SR. No., Site ID).
     """
     # ── Step 1: date filter on On Air Date ──────────────────────
@@ -1589,48 +1945,47 @@ def _build_at_summary(df, start_dt, end_dt):
     end_ts   = pd.Timestamp(end_dt)
     mask     = (df["On Air Date"] >= start_ts) & (df["On Air Date"] <= end_ts)
     df_range = df[mask].copy()
-
+ 
     if df_range.empty:
         return []
-
-    # ── Step 2: sort by date desc so first row = most recent ────
-    # We sort on all four date cols; any one being recent is enough.
-    # Primary sort key: On Air Date desc (secondary keys don't matter
-    # for status resolution because _resolve_status scans all rows).
+ 
+    
+    df_range = _apply_circle_combine(df_range)
     df_range = df_range.sort_values("On Air Date", ascending=False)
-
+ 
     # ── Step 3: group and resolve ────────────────────────────────
     rows = []
     grouped = df_range.groupby(["SR. No.", "Site ID", "Circle"], sort=False)
-
+ 
     for (sr_no, site_id, circle), grp in grouped:
         row = {
             "SR_Site ID": f"{sr_no}_{site_id}",
             "Site ID":    site_id,
             "Circle": circle,
         }
-
+ 
         for out_col, src_col in AT_STATUS_MAP.items():
             row[out_col] = _resolve_status(grp[src_col])
-
+ 
         for out_col, src_col in AT_DATE_MAP.items():
             dt = _resolve_date(grp[src_col])
             row[out_col] = dt.strftime("%d-%b-%Y") if dt is not None else None
-
+ 
         rows.append(( circle,sr_no, row))
-
+ 
     # ── Step 4: sort by SR. No. numerically where possible ───────
+    # ── Step 4: sort by Circle, then SR. No. numerically where possible ───
     def _sort_key(item):
-        circle,sr, = item[0]
+        circle, sr = item[0], item[1]
         try:
             return (circle, 0, int(sr))
         except (ValueError, TypeError):
             return (circle, 1, str(sr))
-
+ 
     rows.sort(key=_sort_key)
     return [r for _, _, r in rows]
-
-
+ 
+ 
 def _write_at_sheet(ws, rows, period_label):
     """
     Write AT report rows into a worksheet.
@@ -1643,7 +1998,7 @@ def _write_at_sheet(ws, rows, period_label):
     title_cell.font      = Font(name="Arial", bold=True, size=11, color="FFFFFF")
     title_cell.fill      = AT_HEADER_FILL
     title_cell.alignment = AT_CENTER
-
+ 
     # ── Row 2: column headers ────────────────────────────────────
     for col_idx, col_name in enumerate(AT_OUTPUT_COLS, start=1):
         cell            = ws.cell(row=2, column=col_idx, value=col_name)
@@ -1651,14 +2006,14 @@ def _write_at_sheet(ws, rows, period_label):
         cell.fill       = PatternFill("solid", start_color="2E75B6")
         cell.alignment  = AT_CENTER
         cell.border     = AT_BORDER
-
+ 
     if not rows:
         ws.cell(row=3, column=1, value="No data found for the selected date range.")
         return
-
+ 
     # ── Data rows ────────────────────────────────────────────────
     status_cols = list(AT_STATUS_MAP.keys())   # PAT, SAT, KAT, SCFT
-
+ 
     for row_idx, row_data in enumerate(rows, start=3):
         has_pending = any(
             str(row_data.get(sc, "")).strip() == "Pending"
@@ -1667,7 +2022,7 @@ def _write_at_sheet(ws, rows, period_label):
         row_fill = AT_PENDING_FILL if has_pending else (
             AT_ALT_FILL if row_idx % 2 == 0 else PatternFill("solid", start_color="FFFFFF")
         )
-
+ 
         for col_idx, col_name in enumerate(AT_OUTPUT_COLS, start=1):
             value        = row_data.get(col_name)
             cell         = ws.cell(row=row_idx, column=col_idx, value=value)
@@ -1675,16 +2030,16 @@ def _write_at_sheet(ws, rows, period_label):
             cell.border  = AT_BORDER
             cell.fill    = row_fill
             cell.alignment = AT_LEFT if col_idx in (1, 2) else AT_CENTER
-
+ 
     # ── Column widths and row heights ────────────────────────────
     for col_idx, col_name in enumerate(AT_OUTPUT_COLS, start=1):
         ws.column_dimensions[get_column_letter(col_idx)].width = AT_COL_WIDTHS.get(col_name, 16)
-
+ 
     ws.row_dimensions[1].height = 22
     ws.row_dimensions[2].height = 28
     ws.freeze_panes = "A3"
-
-
+ 
+ 
 def _write_at_excel(rows, period_label, out_filepath):
     """
     Write a single-sheet Excel file for the AT report.
@@ -1693,75 +2048,191 @@ def _write_at_excel(rows, period_label, out_filepath):
     wb = Workbook()
     ws = wb.active
     ws.title = "AT Report"
-
+ 
     _write_at_sheet(ws, rows, period_label)
     wb.save(out_filepath)
-
-
+ 
+ 
+ 
+#__________________
+#Added new
 # ─────────────────────────────────────────────
-# API — GENERATE AT REPORT
+# AT SUMMARY (Circle × Status Pending Counts)
 # ─────────────────────────────────────────────
-
+ 
 @api_view(["POST"])
-def performance_at_sr_wise_tracking(request):
+def performance_at_srwise_summary(request):
     """
-    POST /idploy/generate-at-report/
-
+    POST /idploy/at-summary/
+ 
     Body:
     {
         "start_date": "2025-12-26",
         "end_date":   "2026-01-25"
     }
-
-    Filters rows by On Air Date within [start_date, end_date].
-    Groups by (SR. No., Site ID), applies pending-priority rule on
-    status columns, picks most-recent date for date columns.
-
-    Returns JSON data + download URL for the Excel file.
+ 
+    Returns a circle-wise pivot of Pending counts per status column.
+    Each cell = count of rows where that status == 'Pending' for that circle.
     """
+    month_label = request.data.get("month", "").strip()
     start_str = request.data.get("start_date", "").strip()
     end_str   = request.data.get("end_date",   "").strip()
 
-    # ── validate date range ──────────────────────────────────────
-    start_dt, end_dt, err = _validate_date_range(start_str, end_str)
-    if err:
-        return err
-
-    # ── load input file ──────────────────────────────────────────
+ 
+    if not month_label and not (start_str or end_str):
+        return Response(
+            {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+ 
+ 
     df, error = _get_input_df()
     if error:
         return Response({"error": error}, status=status.HTTP_404_NOT_FOUND)
-
-    # ── validate required columns ────────────────────────────────
+ 
+    df, col_error = _validate_at_columns(df)
+    if col_error:
+        return Response({"error": col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    if month_label:
+        start_dt = _bucket_start(month_label)
+        end_dt   = _bucket_end(month_label)
+    else:
+        start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+        if err:
+            return err
+ 
+    
+ 
+    # ── resolve status per (SR. No., Site ID, Circle) group ─────
+    rows = _build_at_summary(df, start_dt, end_dt)
+ 
+    if not rows:
+        period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+        return Response({"error": f"No data found for range: {period_label}"},
+                        status=status.HTTP_404_NOT_FOUND)
+ 
+    # ── build circle × status pending pivot ─────────────────────
+    status_cols = list(AT_STATUS_MAP.keys())   # PAT, SAT, KAT, SCFT
+ 
+    # group resolved rows by circle
+    from collections import defaultdict
+    circle_map = defaultdict(list)
+    for row in rows:
+        circle_map[row["Circle"]].append(row)
+ 
+    summary = []
+    for circle in sorted(circle_map.keys()):
+        circle_rows = circle_map[circle]
+        entry = {"Circle": circle}
+        for sc in status_cols:
+            entry[sc] = sum(
+                1 for r in circle_rows
+                if str(r.get(sc, "")).strip() == "Pending"
+            )
+        summary.append(entry)
+ 
+    period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+ 
+    return Response({
+        "status":     True,
+        "date_range": period_label,
+        "columns":    ["Circle"] + status_cols,
+        "summary":    summary,
+    }, status=status.HTTP_200_OK)
+ 
+@api_view(["POST"])
+def performance_at_sr_wise_tracking(request):
+    """
+    POST /idploy/generate-at-report/
+ 
+    Body:
+    {
+        "start_date":    "2025-12-26",
+        "end_date":      "2026-01-25",
+        "circle":        "UP East",        # optional — filter by circle
+        "status_filter": "PAT"             # optional — only rows where PAT == 'Pending'
+    }
+    """
+    month_label    = request.data.get("month", "").strip()
+    start_str     = request.data.get("start_date", "").strip()
+    end_str       = request.data.get("end_date",   "").strip()
+    circle_filter = request.data.get("circle",        "").strip()
+    status_filter = request.data.get("status_filter", "").strip()  # PAT / SAT / KAT / SCFT
+    site_id_filter = request.data.get("site_id",       "").strip()
+    #print(f"DEBUG: site_id_filter = '{site_id_filter}'")
+ 
+    if not month_label and not (start_str or end_str):
+        return Response(
+            {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+ 
+    df, error = _get_input_df()
+    if error:
+        return Response({"error": error}, status=status.HTTP_404_NOT_FOUND)
+ 
     df, col_error = _validate_at_columns(df)
     if col_error:
         return Response({"error": col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-    period_label = (
-        f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
-    )
-    out_filename = AT_REPORT_FILENAME
+ 
+    if month_label:
+        start_dt     = _bucket_start(month_label)
+        end_dt       = _bucket_end(month_label)
+        safe_label   = month_label.replace(' ', '_')
+        out_filename = f"output_AT_Report_{safe_label}.xlsx"
+    else:
+        start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+        if err:
+            return err
+        out_filename = f"output_AT_Report_{start_str}_to_{end_str}.xlsx"
+ 
+ 
+    period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
     out_file     = os.path.join(output_path, out_filename)
-
-    # ── process and write ────────────────────────────────────────
+ 
     try:
         rows = _build_at_summary(df, start_dt, end_dt)
-
+        #print(f"DEBUG: sample Site ID values = {[r.get('Site ID') for r in rows[:5]]}")  # TEMP DEBUG
+ 
         if not rows:
             return Response(
                 {"error": f"No data found for On Air Date range: {period_label}"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-
+ 
+        # ── optional circle filter ───────────────────────────────
+        if circle_filter:
+            rows = [r for r in rows if r.get("Circle", "").strip() == circle_filter]
+ 
+        # ── optional status drill-down filter ────────────────────
+        if status_filter and status_filter in AT_STATUS_MAP:
+            rows = [r for r in rows if str(r.get(status_filter, "")).strip() == "Pending"]
+ 
+         # ── optional site id filter (case-insensitive, partial match) ──
+        if site_id_filter:
+            site_id_lower = site_id_filter.lower()
+            rows = [
+                r for r in rows
+                if site_id_lower in str(r.get("Site ID", "")).lower()
+                or site_id_lower in str(r.get("SR_Site ID", "")).lower()
+            ]
+ 
+        if not rows:
+            return Response(
+                {"error": "No Pending rows found for the given filter."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+ 
         _write_at_excel(rows, period_label, out_file)
-
+ 
     except Exception as exc:
         return Response({"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+ 
     download_url = request.build_absolute_uri(
         f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
     )
-
+ 
     return Response({
         "status":       True,
         "message":      "AT report generated successfully.",
@@ -1770,7 +2241,6 @@ def performance_at_sr_wise_tracking(request):
         "data":         rows,
         "download_url": download_url,
     }, status=status.HTTP_200_OK)
-
 
 #_________________________________________
 # SCFT AGING

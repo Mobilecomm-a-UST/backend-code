@@ -2925,7 +2925,7 @@ def nokia_slicing_dump(request):
 )
     
 
-    file_name = "5G_GPL/Slicing_output.xlsx"
+    file_name = "5G_GPL_Slicing_output.xlsx"
     final_output_path=os.path.join(output_path, file_name)
     finaldf.drop_duplicates(inplace=True)
     finaldf.to_excel(final_output_path, index=False, engine="openpyxl",sheet_name="Slicing")
@@ -2940,7 +2940,7 @@ def nokia_slicing_dump(request):
     print('Excel saved, end of process' )
     return Response({
         "status": True,
-        "message": "All Data Successfully Parsed",
+        "message": "SCF Data Successfully Parsed",
         "download_url": download_url,
 
      

@@ -9,6 +9,7 @@ urlpatterns = [
     path('generate-offered/', generate_offered),
     path('generate-performance/', generate_performance),
     path('generate-performance-at-srwise-report/', performance_at_sr_wise_tracking),
+    path("generate-atsrwise-summary/", performance_at_srwise_summary),
     path('generate-ftr/', generate_ftr),
     path('generate-scft/', generate_scft),
     path('generate-scft-offered/',generate_scft_offered),
