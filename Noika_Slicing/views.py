@@ -2762,7 +2762,6 @@ def nokia_slicing_dump(request):
 
             required_in_lncel = {
                 "actmicrodtx",
-                "tProhibitPhr",
             }
 
             required_in_lncel_lower = {
