@@ -2762,6 +2762,7 @@ def nokia_slicing_dump(request):
 
             required_in_lncel = {
                 "actmicrodtx",
+                "tProhibitPhr",
             }
 
             required_in_lncel_lower = {
@@ -2953,11 +2954,23 @@ def nokia_slicing_dump(request):
 
 
     finaldf = excel_df.merge(
-        data_df[["MO", "ID", "Parameter", "value(External)"]],
+        data_df[["MO", "ID", "Parameter","value(External)"]],
         on=["MO", "ID", "Parameter"],
         how="left"
     )
-   
+
+    if "5G/LTE" in finaldf.columns:
+        col = finaldf.pop("5G/LTE")
+        finaldf.insert(finaldf.columns.get_loc("ID") + 1, "5G/LTE", col)
+        
+    
+    if "Audit if CellDepType =" in finaldf.columns:
+        col = finaldf.pop("Audit if CellDepType =")
+        finaldf.insert(
+            finaldf.columns.get_loc("5G/LTE") + 1,
+            "Audit if CellDepType =",
+            col
+        )
 
     fallback_map = (
         data_df
@@ -3018,9 +3031,6 @@ def nokia_slicing_dump(request):
 
      
     }, status=HTTP_200_OK)
-
-
-
 
 
 
