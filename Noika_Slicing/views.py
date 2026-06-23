@@ -2485,6 +2485,7 @@ def nokia_slicing_dump(request):
                         "Parameter": "bwpType",
                         "value": tf_to_01(p.text)
                     })
+
             for item in (
                 mo.findall(".//ns:list[@name='locationAndBandwidthDl']/ns:item", ns)
                 if ns else
@@ -2502,6 +2503,7 @@ def nokia_slicing_dump(request):
                             "value": tf_to_01(p.text)
                         })
         
+
 
         elif mo_class == "com.nokia.srbts.tnl:DSCP2PCPMAP":
             dist_name = mo.attrib.get("distName", "")
@@ -2753,7 +2755,8 @@ def nokia_slicing_dump(request):
             dist_name = mo.attrib.get("distName", "")
 
             required_in_lncel = {
-                "actmicrodtx"
+                "actmicrodtx",
+                "tProhibitPhr",
             }
 
             required_in_lncel_lower = {
@@ -2797,22 +2800,53 @@ def nokia_slicing_dump(request):
         df["ID"] = df["ID"].apply(clean_id).astype(str)
 
         
+
         df_47 = df[df["ID"] == "47"].copy()
         df_rest = df[df["ID"] != "47"].copy()
 
-     
+
+        separate_params = ["bwpType", "cRbSizeDl", "cRbStartDl"]
+
+
+      
         normal_df = (
-            df_rest[df_rest["Parameter"] != "cfg5qiRange"]
+            df_rest[
+                (df_rest["Parameter"] != "cfg5qiRange")
+                &
+                ~(
+                    (df_rest["MO"] == "BWP_PROFILE")
+                    &
+                    (df_rest["Parameter"].isin(separate_params))
+                )
+            ]
             .groupby(["MO", "Parameter", "value"], as_index=False)
             .agg({
                 "ID": lambda x: ",".join(sorted(set(i for i in x if i)))
             })
         )
 
-      
+
+        # BWP_PROFILE parameters → keep ID-wise
+        bwp_df = (
+            df_rest[
+                (df_rest["MO"] == "BWP_PROFILE")
+                &
+                (df_rest["Parameter"].isin(separate_params))
+            ]
+            .groupby(["MO", "ID", "Parameter"], as_index=False)
+            .agg({
+                "value": "first"
+            })
+        )
+
+
+        # cfg5qiRange special logic
         cfg_df = df_rest[df_rest["Parameter"] == "cfg5qiRange"].copy()
 
-        cfg_df["pair"] = cfg_df.apply(lambda r: f"{r['ID']}-{r['value']}", axis=1)
+        cfg_df["pair"] = cfg_df.apply(
+            lambda r: f"{r['ID']}-{r['value']}",
+            axis=1
+        )
 
         cfg_df = (
             cfg_df.groupby(["MO", "Parameter"], as_index=False)
@@ -2823,11 +2857,19 @@ def nokia_slicing_dump(request):
             .rename(columns={"pair": "value"})
         )
 
-      
-        grouped_df = pd.concat([normal_df, cfg_df], ignore_index=True)
 
-       
-        data_df = pd.concat([grouped_df, df_47], ignore_index=True)
+        # Combine everything
+        grouped_df = pd.concat(
+            [normal_df, bwp_df, cfg_df],
+            ignore_index=True
+        )
+
+
+        # Add ID=47 records back
+        data_df = pd.concat(
+            [grouped_df, df_47],
+            ignore_index=True
+        )
 
         # Final formatting
         data_df = data_df[["MO", "ID", "Parameter", "value"]]
@@ -2940,14 +2982,11 @@ def nokia_slicing_dump(request):
     print('Excel saved, end of process' )
     return Response({
         "status": True,
-        "message": "SCF Data Successfully Parsed",
+        "message": "All Data Successfully Parsed",
         "download_url": download_url,
 
      
     }, status=HTTP_200_OK)
-
-
-
 
 
 
