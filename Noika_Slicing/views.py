@@ -2156,7 +2156,6 @@ def nokia_slicing_dump(request):
 
 #---------
         elif mo_class == "com.nokia.srbts.nrbts:NRDRX":
-
             dist_name = mo.attrib.get("distName", "")
 
             try:
@@ -2164,25 +2163,32 @@ def nokia_slicing_dump(request):
             except:
                 continue
 
-            required_params = {
-                "drxInactivityTimer",
-                "drxLongCycle",
-                "drxOnDurationTimer",
-                "drxRetransTimerDl",
-                "drxRetransTimerUl"
-            }
+            group_1_ids = {3, 4}
 
-            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
-                name = p.attrib.get("name")
+            if nrdrx_id not in group_1_ids:
+                continue
 
-                if name in required_params:
-                    dumy_data.append({
-                        "MO": "NRDRX",
-                        "DistName": dist_name,
-                        "ID": nrdrx_id,
-                        "Parameter": name,
-                        "value": tf_to_01(p.text)
-                    })
+            if nrdrx_id in group_1_ids:
+
+                required_params = {
+                    "drxInactivityTimer",
+                    "drxLongCycle",
+                    "drxOnDurationTimer",
+                    "drxRetransTimerDl",
+                    "drxRetransTimerUl"
+                }
+
+                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                    name = p.attrib.get("name")
+
+                    if name in required_params:
+                        dumy_data.append({
+                            "MO": "NRDRX",
+                            "DistName": dist_name,
+                            "ID": nrdrx_id,
+                            "Parameter": name,
+                            "value": tf_to_01(p.text)
+                        })
 
         # -------- NRRESOURCEGROUP_PROFILE --------
         elif mo_class == "com.nokia.srbts.nrbts:NRRESOURCEGROUP_PROFILE":
@@ -2756,7 +2762,6 @@ def nokia_slicing_dump(request):
 
             required_in_lncel = {
                 "actmicrodtx",
-                "tProhibitPhr",
             }
 
             required_in_lncel_lower = {
@@ -2778,6 +2783,32 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
         
+
+        elif mo_class == "NOKLTE:NRDCDPR":
+            dist_name = mo.attrib.get("distName", "")
+
+            required_in = {
+                "tProhibitPhr",
+            }
+
+            required_in_lower = {
+                x.lower() for x in required_in
+            }
+
+            params = {}
+
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name", "")
+
+                if name and name.lower() in required_in_lower:
+                    params[name.lower()] = p.text
+
+                    dumy_data.append({
+                        "MO": "MRBTS",
+                        "DistName": dist_name,
+                        "Parameter": name.lower(),
+                        "value": tf_to_01(p.text)
+                    })
 
 #---------------data read in fix paratmeter---------      
         df = pd.DataFrame(dumy_data)
@@ -2987,6 +3018,8 @@ def nokia_slicing_dump(request):
 
      
     }, status=HTTP_200_OK)
+
+
 
 
 
