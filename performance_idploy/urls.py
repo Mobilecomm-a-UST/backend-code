@@ -18,6 +18,10 @@ urlpatterns = [
     path('generate-performance-graph/',generate_performance_graph),
     path('generate-scft-offered-graph/', generate_scft_offered_graph),
     path('generate-scft-performance-graph/', generate_scft_performance_graph),
+    path('generate-offered-circle-graph/', generate_offered_circle_graph),
+    path('generate-performance-circle-graph/', generate_performance_circle_graph),
+    path('generate-scft-offered-circle-graph/', generate_scft_offered_circle_graph),
+    path('generate-scft-performance-circle-graph/', generate_scft_performance_circle_graph),
     path('cleanup/',  cleanup),
 
 ]

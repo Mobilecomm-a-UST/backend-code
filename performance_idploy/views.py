@@ -3229,6 +3229,467 @@ def generate_scft_performance_graph(request):
     }
     """
     return _generate_scft_graph_response(request, metric_type='performance')
+#--------------------------------------------------------------------------------------------------------------
+# Graph circle wise filter
+#--------------------------------------------------------------------------------------------------------------
+
+# ─────────────────────────────────────────────
+# CIRCLE-WISE GRAPH — Offered & Performance
+# ─────────────────────────────────────────────
+
+CIRCLE_GRAPH_METRICS = ['<12%', '<13-21%', '<22-30%', '>30days%', 'Pending%']
+
+
+def _build_circle_graph_series(monthly_results, layer_case, circles):
+    """
+    Convert monthly results into circle-wise chart-ready series.
+    Each circle has data = [<12%, <13-21%, <22-30%, >30days%, Pending%]
+    """
+    series = []
+    for res in monthly_results:
+        layer_result = res[layer_case]
+        circle_data  = {}
+        for circle in circles:
+            c_counts = layer_result['circles'].get(circle, {})
+            circle_data[circle] = [c_counts.get(m, 0.0) for m in CIRCLE_GRAPH_METRICS]
+
+        series.append({
+            'name':    res['label'],
+            'start':   res['start'],
+            'end':     res['end'],
+            'circles': circle_data,
+        })
+
+    return {
+        'categories': CIRCLE_GRAPH_METRICS,
+        'series':     series,
+    }
+
+
+def _generate_circle_graph_response(request, metric_type):
+    """
+    Shared handler for circle-wise offered / performance graph endpoints.
+
+    Request body:
+    {
+        "month":   "Jun 2026"           ← str or list of month labels
+        "layer":   "4G"                 ← optional; default = all
+        "circles": ["MH", "GJ", "AP"]  ← optional; default = all circles in data
+    }
+    """
+    month_input   = request.data.get('month', '')
+    layer_filter  = request.data.get('layer', '').strip()
+    circle_filter = request.data.get('circles', [])
+
+    # ── Normalise month input ────────────────────────────────────
+    if isinstance(month_input, str):
+        months = [m.strip() for m in month_input.split(',') if m.strip()]
+    elif isinstance(month_input, list):
+        months = [m.strip() for m in month_input if m.strip()]
+    else:
+        months = []
+
+    if not months:
+        return Response(
+            {'error': 'Provide {"month": "Mon YYYY"} or {"month": ["Mon YYYY", ...]}.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    valid_layers = ['4G', '5G', '4G+5G']
+    if layer_filter and layer_filter not in valid_layers:
+        return Response(
+            {'error': f"Invalid layer '{layer_filter}'. Choose from: {valid_layers}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ── Parse months → buckets ───────────────────────────────────
+    buckets = []
+    for m in months:
+        try:
+            buckets.append(_month_to_bucket(m))
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    # ── Load data ────────────────────────────────────────────────
+    df, error = _get_input_df()
+    if error:
+        return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
+
+    df_full = None
+    if metric_type == 'performance':
+        if 'Performance AT Status' not in df.columns:
+            return Response(
+                {'error': "Column 'Performance AT Status' not found."},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        df['Performance AT Status'] = df['Performance AT Status'].astype(str).str.strip()
+        df_full = df.copy()
+
+    date_col = (
+        'Performance AT Offered Date'
+        if metric_type == 'offered'
+        else 'Performance AT Status Date'
+    )
+    layers_to_run = [layer_filter] if layer_filter else valid_layers
+
+    # ── Process each bucket ──────────────────────────────────────
+    monthly_results  = []
+    all_circles_seen = set()
+
+    for bucket in buckets:
+        bucket_data = {
+            'label': bucket['label'],
+            'start': bucket['start'].strftime('%d-%b-%Y'),
+            'end':   bucket['end'].strftime('%d-%b-%Y'),
+        }
+        for layer in layers_to_run:
+            try:
+                result = _process_data_by_date_range(
+                    df,
+                    bucket['start'],
+                    bucket['end'],
+                    layer,
+                    date_col,
+                    label=bucket['label'],
+                    df_full=df_full,
+                )
+                bucket_data[layer] = result
+                all_circles_seen.update(result['circles'].keys())
+            except ValueError:
+                bucket_data[layer] = {'circles': {}, 'grand_total': {}}
+        monthly_results.append(bucket_data)
+
+    # ── Resolve circle list ──────────────────────────────────────
+    if circle_filter:
+        invalid = [c for c in circle_filter if c not in all_circles_seen]
+        if invalid:
+            return Response(
+                {
+                    'error':             f"Circles not found in data: {invalid}",
+                    'available_circles': sorted(all_circles_seen),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        circles = circle_filter
+    else:
+        circles = sorted(all_circles_seen)
+
+    # ── Build graph payload ──────────────────────────────────────
+    if layer_filter:
+        graph_data = _build_circle_graph_series(monthly_results, layer_filter, circles)
+    else:
+        graph_data = {
+            layer: _build_circle_graph_series(monthly_results, layer, circles)
+            for layer in valid_layers
+        }
+
+    return Response({
+        'status':      True,
+        'metric_type': metric_type,
+        'layer':       layer_filter or 'all',
+        'circles':     circles,
+        'graph_data':  graph_data,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def generate_offered_circle_graph(request):
+    """
+    POST /idploy/generate-offered-circle-graph/
+
+    Request:
+    {
+        "month":   "Jun 2026",
+        "layer":   "4G",                ← optional
+        "circles": ["MH", "GJ", "AP"]  ← optional; omit for all circles
+    }
+
+    Response:
+    {
+        "status": true,
+        "metric_type": "offered",
+        "layer": "4G",
+        "circles": ["AP", "GJ", "MH"],
+        "graph_data": {
+            "categories": ["<12%", "<13-21%", "<22-30%", ">30days%", "Pending%"],
+            "series": [
+                {
+                    "name": "Jun 2026",
+                    "start": "26-May-2026",
+                    "end": "25-Jun-2026",
+                    "circles": {
+                        "AP": [45.0, 60.0, 70.0, 80.0, 20.0],
+                        "GJ": [30.0, 50.0, 65.0, 75.0, 35.0],
+                        "MH": [55.0, 68.0, 72.0, 82.0, 18.0]
+                    }
+                }
+            ]
+        }
+    }
+    """
+    return _generate_circle_graph_response(request, metric_type='offered')
+
+
+@api_view(['POST'])
+def generate_performance_circle_graph(request):
+    """
+    POST /idploy/generate-performance-circle-graph/
+
+    Same interface as generate-offered-circle-graph
+    but uses 'Performance AT Status Date' for diff calculation.
+
+    Request:
+    {
+        "month":   "Jun 2026",
+        "layer":   "5G",               ← optional
+        "circles": ["MH", "GJ"]        ← optional
+    }
+    """
+    return _generate_circle_graph_response(request, metric_type='performance')
+
+
+# ─────────────────────────────────────────────
+# SCFT CIRCLE-WISE GRAPH — Offered & Performance
+# ─────────────────────────────────────────────
+
+SCFT_CIRCLE_GRAPH_METRICS = ['0-3days%', '3-5days%', '5-7days%', '>7days%', 'Pending%']
+
+
+def _build_scft_circle_graph_series(monthly_results, layer_case, circles):
+    """
+    Convert monthly SCFT results into circle-wise chart-ready series.
+
+    Returns:
+    {
+        "categories": ["0-3days%", "3-5days%", "5-7days%", ">7days%", "Pending%"],
+        "series": [
+            {
+                "name": "Jun 2026",
+                "start": "26-May-2026",
+                "end": "25-Jun-2026",
+                "circles": {
+                    "MH": [45.0, 60.0, 70.0, 80.0, 20.0],
+                    "GJ": [30.0, 50.0, 65.0, 75.0, 35.0]
+                }
+            }
+        ]
+    }
+    """
+    series = []
+    for res in monthly_results:
+        layer_result = res[layer_case]
+        circle_data  = {}
+        for circle in circles:
+            c_counts = layer_result['circles'].get(circle, {})
+            circle_data[circle] = [c_counts.get(m, 0.0) for m in SCFT_CIRCLE_GRAPH_METRICS]
+
+        series.append({
+            'name':    res['label'],
+            'start':   res['start'],
+            'end':     res['end'],
+            'circles': circle_data,
+        })
+
+    return {
+        'categories': SCFT_CIRCLE_GRAPH_METRICS,
+        'series':     series,
+    }
+
+
+def _generate_scft_circle_graph_response(request, metric_type):
+    """
+    Shared handler for SCFT circle-wise offered / performance graph endpoints.
+
+    Request body:
+    {
+        "month":   "Jun 2026"           ← str or list of month labels
+        "layer":   "4G"                 ← optional; default = all
+        "circles": ["MH", "GJ", "AP"]  ← optional; default = all circles in data
+    }
+    """
+    month_input   = request.data.get('month', '')
+    layer_filter  = request.data.get('layer', '').strip()
+    circle_filter = request.data.get('circles', [])
+
+    # ── Normalise month input ────────────────────────────────────
+    if isinstance(month_input, str):
+        months = [m.strip() for m in month_input.split(',') if m.strip()]
+    elif isinstance(month_input, list):
+        months = [m.strip() for m in month_input if m.strip()]
+    else:
+        months = []
+
+    if not months:
+        return Response(
+            {'error': 'Provide {"month": "Mon YYYY"} or {"month": ["Mon YYYY", ...]}.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    valid_layers = ['4G', '5G', '4G+5G']
+    if layer_filter and layer_filter not in valid_layers:
+        return Response(
+            {'error': f"Invalid layer '{layer_filter}'. Choose from: {valid_layers}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ── Parse months → buckets ───────────────────────────────────
+    buckets = []
+    for m in months:
+        try:
+            buckets.append(_month_to_bucket(m))
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    # ── Load data ────────────────────────────────────────────────
+    df, error = _get_input_df()
+    if error:
+        return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
+
+    if 'SCFT AT Status' not in df.columns:
+        return Response(
+            {'error': "Column 'SCFT AT Status' not found in uploaded file."},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
+    # ── Set date_col + prepare df based on metric_type ───────────
+    if metric_type == 'offered':
+        date_col = 'SCFT AT Offerred Date'
+    else:
+        date_col = 'SCFT AT Status Date'
+
+    df, col_error = _validate_scft_tat_col(df, date_col)
+    if col_error:
+        return Response({'error': col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    df['SCFT AT Status'] = df['SCFT AT Status'].astype(str).str.strip()
+    df_full = df.copy()
+
+    if metric_type == 'offered':
+        RANGE_STATUSES   = {'Accepted', 'Acceptance Pending'}
+        df_range         = df[df['SCFT AT Status'].isin(RANGE_STATUSES)].copy()
+        pending_statuses = {'Pending', 'Rejected'}
+    else:
+        df_range         = df[df['SCFT AT Status'] == 'Accepted'].copy()
+        pending_statuses = None   # anything != Accepted is pending
+
+    layers_to_run = [layer_filter] if layer_filter else valid_layers
+
+    # ── Process each bucket ──────────────────────────────────────
+    monthly_results  = []
+    all_circles_seen = set()
+
+    for bucket in buckets:
+        bucket_data = {
+            'label': bucket['label'],
+            'start': bucket['start'].strftime('%d-%b-%Y'),
+            'end':   bucket['end'].strftime('%d-%b-%Y'),
+        }
+        for layer in layers_to_run:
+            try:
+                result = _process_scft_tat_by_date_range(
+                    df_range,
+                    bucket['start'],
+                    bucket['end'],
+                    layer,
+                    date_col,
+                    df_full=df_full,
+                    pending_statuses=pending_statuses,
+                )
+                bucket_data[layer] = result
+                all_circles_seen.update(result['circles'].keys())
+            except ValueError:
+                bucket_data[layer] = {'circles': {}, 'grand_total': {}}
+        monthly_results.append(bucket_data)
+
+    # ── Resolve circle list ──────────────────────────────────────
+    if circle_filter:
+        invalid = [c for c in circle_filter if c not in all_circles_seen]
+        if invalid:
+            return Response(
+                {
+                    'error':             f"Circles not found in data: {invalid}",
+                    'available_circles': sorted(all_circles_seen),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        circles = circle_filter
+    else:
+        circles = sorted(all_circles_seen)
+
+    # ── Build graph payload ──────────────────────────────────────
+    if layer_filter:
+        graph_data = _build_scft_circle_graph_series(monthly_results, layer_filter, circles)
+    else:
+        graph_data = {
+            layer: _build_scft_circle_graph_series(monthly_results, layer, circles)
+            for layer in valid_layers
+        }
+
+    return Response({
+        'status':      True,
+        'metric_type': metric_type,
+        'layer':       layer_filter or 'all',
+        'circles':     circles,
+        'graph_data':  graph_data,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def generate_scft_offered_circle_graph(request):
+    """
+    POST /idploy/generate-scft-offered-circle-graph/
+
+    Request:
+    {
+        "month":   "Jun 2026",
+        "layer":   "4G",                ← optional
+        "circles": ["MH", "GJ", "AP"]  ← optional; omit for all circles
+    }
+
+    Response:
+    {
+        "status": true,
+        "metric_type": "offered",
+        "layer": "4G",
+        "circles": ["AP", "GJ", "MH"],
+        "graph_data": {
+            "categories": ["0-3days%", "3-5days%", "5-7days%", ">7days%", "Pending%"],
+            "series": [
+                {
+                    "name": "Jun 2026",
+                    "start": "26-May-2026",
+                    "end": "25-Jun-2026",
+                    "circles": {
+                        "AP": [80.0, 85.0, 90.0, 95.0, 5.0],
+                        "GJ": [70.0, 78.0, 83.0, 88.0, 12.0],
+                        "MH": [75.0, 82.0, 87.0, 92.0, 8.0]
+                    }
+                }
+            ]
+        }
+    }
+    """
+    return _generate_scft_circle_graph_response(request, metric_type='offered')
+
+
+@api_view(['POST'])
+def generate_scft_performance_circle_graph(request):
+    """
+    POST /idploy/generate-scft-performance-circle-graph/
+
+    Same interface as generate-scft-offered-circle-graph
+    but uses 'SCFT AT Status Date' for diff calculation
+    and only Accepted rows for TAT ranges.
+
+    Request:
+    {
+        "month":   "Jun 2026",
+        "layer":   "5G",               ← optional
+        "circles": ["MH", "GJ"]        ← optional
+    }
+    """
+    return _generate_scft_circle_graph_response(request, metric_type='performance')
+
 
 @api_view(['DELETE'])
 def cleanup(request):
