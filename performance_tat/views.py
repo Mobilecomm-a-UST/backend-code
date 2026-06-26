@@ -15,8 +15,8 @@ from django.http import FileResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-#from project_pat.settings import MEDIA_ROOT, MEDIA_URL
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
+#from project_pat.settings import MEDIA_ROOT, MEDIA_URL
 from django.shortcuts import render
 
 
@@ -40,6 +40,7 @@ os.makedirs(output_path, exist_ok=True)
 LAYERS_4G_EXCLUDE   = {"3500", "L3500", "N3500", "N2600"}
 LAYERS_5G_INCLUDE   = {"3500", "L3500", "N3500"}
 LAYERS_4G5G_EXCLUDE = {"N2600"}
+
 
 TAT_BUCKETS = [
     ("<7",   0,  7),
@@ -75,6 +76,7 @@ def _get_input_file():
     """Return full path of input file, or None if not found."""
     files = os.listdir(input_path) if os.path.exists(input_path) else []
     return os.path.join(input_path, files[0]) if files else None
+
 
 
 
@@ -120,6 +122,7 @@ def _validate_file(filepath):
         'offered layer':         'Offered Layer',
         'on air date':           'On Air Date',
         'performance at status': 'Performance AT Status',
+        # 'scft at status': 'SCFT AT Status',
     }
 
     rename = {}
@@ -160,6 +163,7 @@ def _read_input_file(filepath):
     df['On Air Date'] = pd.to_datetime(df['On Air Date'], errors='coerce').dt.date
     df.dropna(subset=['On Air Date'], inplace=True)
     return df
+
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -307,7 +311,7 @@ def build_pivot_table(df, today):
 
     grand = pivot[bucket_order + ["Total"]].sum().to_dict()
     grand["Circle"] = "Grand Total"
-    pivot = pd.concat([pivot, pd.DataFrame([grand])], ignore_index=True)
+    #pivot = pd.concat([pivot, pd.DataFrame([grand])], ignore_index=True)
 
     return pivot
 
@@ -411,6 +415,7 @@ def write_excel_sheet(ws, pivot, sheet_title, start_date, end_date):
     for col_idx in range(2, total_cols + 1):
         ws.column_dimensions[get_column_letter(col_idx)].width = 10
     ws.freeze_panes = "B4"
+    ws.column_dimensions[get_column_letter(total_cols)].width = 20
 
 
 def build_excel_workbook(pivot_data, start_date, end_date):
@@ -602,14 +607,19 @@ def generate_aging_softat_report(request):
         # ── Read file ──────────────────────────────────────────────────────
         df = _read_input_file(input_file)
         df = _apply_circle_combine(df)
-        
-        # ── Apply filters ──────────────────────────────────────────────────
+        # ── Apply layer + date filters first (before status filter) ───────
         df = df[df["Offered Layer"].isin(LAYERS_5G_INCLUDE)]
-        df = df[
-            (df["On Air Date"] >= start_date) &
-            (df["On Air Date"] <= end_date)
-        ]
+        df = df[(df["On Air Date"] >= start_date) &
+                (df["On Air Date"] <= end_date)]
+        
+        # ── Capture non-Accepted counts BEFORE status filter ──────────────
+        df_non_accepted = df[df["Soft AT Status"].str.strip().str.lower() != "accepted"]
+        non_accepted_counts = (df_non_accepted.groupby("Circle").size().reset_index(name="Soft AT Pending"))
+
+        # ── Now apply Accepted filter for TAT logic ───────────────────────
         df = df[df["Soft AT Status"].str.strip().str.lower() == "accepted"]
+
+        
         
 
         if df.empty:
@@ -652,7 +662,7 @@ def generate_aging_softat_report(request):
             df[df["is_pending"]]
             .groupby("Circle")
             .size()
-            .reset_index(name="Pending")
+            .reset_index(name="Performance Pending")
             )
 
         pivot = (
@@ -665,13 +675,19 @@ def generate_aging_softat_report(request):
             .reset_index(drop=True)
             )
 
+        
+
         pivot = pivot.merge(pending, on="Circle", how="outer")
-        pivot["Pending"] = pivot["Pending"].fillna(0).astype(int)
+        pivot = pivot.merge(non_accepted_counts, on="Circle", how="left")  # ← add here
+
+        pivot["Performance Pending"] = pivot["Performance Pending"].fillna(0).astype(int)
+        pivot["Soft AT Pending"] = pivot["Soft AT Pending"].fillna(0).astype(int)  # ← add here
         for col in bucket_order:
             pivot[col] = pivot[col].fillna(0).astype(int)
 
         pivot["TAT_Total"] = pivot[bucket_order].sum(axis=1)
-        pivot["Total"] = pivot["TAT_Total"] + pivot["Pending"]
+        pivot["Total"] = pivot["TAT_Total"] + pivot["Performance Pending"] + pivot["Soft AT Pending"]  # ← include in Total
+
         pivot = pivot.sort_values("Circle").reset_index(drop=True)
 
         
@@ -686,20 +702,24 @@ def generate_aging_softat_report(request):
                     )
 
         # Pending% = Pending / Total * 100
-        pivot["Pending%"] = pivot.apply(
-            lambda row: round((row["Pending"] / row["Total"]) * 100, 1) if row["Total"] > 0 else 0.0,
+        pivot["Performance Pending%"] = pivot.apply(
+            lambda row: round((row["Performance Pending"] / row["Total"]) * 100, 1) if row["Total"] > 0 else 0.0,
             axis=1
         )
 
-        grand = {col: pivot[col].sum() for col in bucket_order + ["Pending", "Total"]}
+        grand = {col: pivot[col].sum() for col in bucket_order + ["Performance Pending","Soft AT Pending", "Total"]}
+        
         for i, (bucket, pct_col) in enumerate(zip(bucket_order, pct_order)):
             cumulative_buckets = bucket_order[:i+1]
             grand[pct_col] = round(
                 (sum(grand[b] for b in cumulative_buckets) / grand["Total"]) * 100, 1
             ) if grand["Total"] > 0 else 0.0
-        grand["Pending%"] = round((grand["Pending"] / grand["Total"]) * 100, 1) if grand["Total"] > 0 else 0.0
+        grand["Performance Pending%"] = round((grand["Performance Pending"] / grand["Total"]) * 100, 1) if grand["Total"] > 0 else 0.0
         grand["Circle"] = "Grand Total"
+        # grand["Soft AT Performance"] = 0
         pivot = pd.concat([pivot, pd.DataFrame([grand])], ignore_index=True)
+        
+       
 
         # ── Build Excel ────────────────────────────────────────────────────
         wb          = Workbook()
@@ -707,7 +727,7 @@ def generate_aging_softat_report(request):
         ws.title    = "5G Aging from Soft AT Report"
         thin_border = _get_thin_border()
 
-        headers    = ["Circle"] + bucket_order + ["Pending"] + ["Total"] + pct_order + ["Pending%"]
+        headers    = ["Circle"] + bucket_order + ["Performance Pending"] + ["Soft AT Pending"] + ["Total"] + pct_order + ["Performance Pending%"]
         total_cols = len(headers)
 
         # Row 1 — main heading
@@ -740,7 +760,7 @@ def generate_aging_softat_report(request):
             for col_idx, col_name in enumerate(headers, start=1):
                 raw_val = row.get(col_name, "")
 
-                
+               
                 if col_name == "Circle":
                     val = str(raw_val)
                     
@@ -798,6 +818,257 @@ def generate_aging_softat_report(request):
             'message':      '5G Aging from Soft AT report generated successfully.',
             'date_range':   f"{start_date} to {end_date}",
             'data':         pivot_response.to_dict(orient='records'),
+            'download_url': download_url,
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+#-------------------------------------------------------------------------------------------------
+# FOR SCFT Pending Aging (Today - on-air-date)
+#-------------------------------------------------------------------------------------------------
+    
+
+
+# ── Add this to your TAT_BUCKETS / constants section (or define inline) ──
+SCFT_TAT_BUCKETS = [
+    ("0-3",  0,  3),
+    ("3-5",  3,  5),   # note: 3 appears in both; handled by strict < vs <=
+    ("5-7",  5,  7),
+    (">7",   7, None),
+]
+
+
+def assign_scft_tat_bucket(tat_days):
+    """Map number of days to SCFT TAT bucket label."""
+    if tat_days <= 3:
+        return "0-3"
+    elif tat_days <= 5:
+        return "3-5"
+    elif tat_days <= 7:
+        return "5-7"
+    else:
+        return ">7"
+
+
+def build_scft_pivot_table(df, today):
+    """
+    Compute TAT days from On Air Date to today, assign SCFT buckets.
+    Returns pivot:
+        Rows    → circles sorted A to Z + Grand Total
+        Columns → 0-3 | 3-5 | 5-7 | >7 | Total
+    Excludes rows where SCFT AT Status == 'Accepted'.
+    """
+    df = df.copy()
+    df["tat_days"] = df["On Air Date"].apply(lambda d: (today - d).days)
+    df["bucket"]   = df["tat_days"].apply(assign_scft_tat_bucket)
+
+    bucket_order = [b[0] for b in SCFT_TAT_BUCKETS]
+
+    if df.empty:
+        return pd.DataFrame(columns=["Circle"] + bucket_order + ["Total"])
+
+    pivot = (
+        df.groupby(["Circle", "bucket"])
+        .size()
+        .unstack(fill_value=0)
+        .reindex(columns=bucket_order, fill_value=0)
+        .reset_index()
+        .sort_values("Circle")
+        .reset_index(drop=True)
+    )
+    pivot["Total"] = pivot[bucket_order].sum(axis=1)
+
+    grand = pivot[bucket_order + ["Total"]].sum().to_dict()
+    grand["Circle"] = "Grand Total"
+    pivot = pd.concat([pivot, pd.DataFrame([grand])], ignore_index=True)
+
+    return pivot
+
+
+def build_all_scft_pivots(df, today, start_date, end_date):
+    """
+    Filter by date range + exclude Accepted SCFT AT Status.
+    Apply layer filters and return 3 pivot tables (4G / 5G / 4G+5G).
+    """
+    df = df.copy()
+    df["On Air Date"] = pd.to_datetime(df["On Air Date"]).dt.date
+
+    df = df[
+        (df["On Air Date"] >= start_date) &
+        (df["On Air Date"] <= end_date)
+    ]
+    df = df[df["SCFT AT Status"].str.strip().str.lower() != "accepted"]
+
+    empty = pd.DataFrame(columns=["Circle", "Offered Layer", "On Air Date"])
+
+    if df.empty:
+        return {
+            "4G":    build_scft_pivot_table(empty, today),
+            "5G":    build_scft_pivot_table(empty, today),
+            "4G+5G": build_scft_pivot_table(empty, today),
+        }
+
+    return {
+        "4G":    build_scft_pivot_table(df[~df["Offered Layer"].isin(LAYERS_4G_EXCLUDE)],   today),
+        "5G":    build_scft_pivot_table(df[df["Offered Layer"].isin(LAYERS_5G_INCLUDE)],    today),
+        "4G+5G": build_scft_pivot_table(df[~df["Offered Layer"].isin(LAYERS_4G5G_EXCLUDE)], today),
+    }
+
+
+def write_scft_excel_sheet(ws, pivot, sheet_title, start_date, end_date):
+    """Write one fully styled SCFT TAT sheet into an openpyxl worksheet."""
+    bucket_cols   = [b[0] for b in SCFT_TAT_BUCKETS]
+    all_data_cols = bucket_cols + ["Total"]
+    total_cols    = 1 + len(all_data_cols)
+    headers       = ["Circle"] + all_data_cols
+    thin_border   = _get_thin_border()
+
+    # Row 1 — main heading
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_cols)
+    _style_header_cell(ws.cell(row=1, column=1), "Count of SCFT TAT", 14, HEADER_BG)
+    ws.row_dimensions[1].height = 28
+
+    # Row 2 — sheet title + date range
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=total_cols)
+    _style_header_cell(
+        ws.cell(row=2, column=1),
+        f"{sheet_title}  |  {start_date} to {end_date}",
+        11, SUBHEADER_BG
+    )
+    ws.row_dimensions[2].height = 20
+
+    # Row 3 — column headers
+    for col_idx, hdr in enumerate(headers, start=1):
+        c = ws.cell(row=3, column=col_idx, value=hdr)
+        c.font      = Font(name="Arial", bold=True, size=10, color=SUBHEADER_FG)
+        c.fill      = PatternFill("solid", fgColor=SUBHEADER_BG)
+        c.alignment = Alignment(horizontal="center", vertical="center")
+        c.border    = thin_border
+    ws.row_dimensions[3].height = 18
+
+    if pivot.empty:
+        ws.cell(row=4, column=1, value="No data for the selected date range.")
+        return
+
+    # Data rows
+    for row_offset, (_, row) in enumerate(pivot.iterrows()):
+        excel_row = row_offset + 4
+        is_grand  = str(row.get("Circle", "")).strip() == "Grand Total"
+        is_alt    = (row_offset % 2 == 1) and not is_grand
+
+        row_bg = GRAND_TOTAL_BG if is_grand else (ALT_ROW_BG if is_alt else "FFFFFF")
+        row_fg = GRAND_TOTAL_FG if is_grand else "000000"
+
+        for col_idx, col_name in enumerate(headers, start=1):
+            raw_val = row.get(col_name, "")
+            try:
+                val = int(raw_val) if col_name != "Circle" else str(raw_val)
+            except (ValueError, TypeError):
+                val = raw_val
+
+            c = ws.cell(row=excel_row, column=col_idx, value=val)
+            c.font      = Font(name="Arial", bold=is_grand, size=10, color=row_fg)
+            c.alignment = Alignment(
+                horizontal="left" if col_name == "Circle" else "center",
+                vertical="center"
+            )
+            c.border = thin_border
+            c.fill   = PatternFill(
+                "solid",
+                fgColor=TOTAL_COL_BG if (col_name == "Total" and not is_grand) else row_bg
+            )
+        ws.row_dimensions[excel_row].height = 16
+
+    ws.column_dimensions["A"].width = 22
+    for col_idx in range(2, total_cols + 1):
+        ws.column_dimensions[get_column_letter(col_idx)].width = 10
+    ws.freeze_panes = "B4"
+
+
+def build_scft_excel_workbook(pivot_data, start_date, end_date):
+    """Build 3-sheet SCFT workbook, save to output folder, return filename."""
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    for sheet_name in ["4G", "5G", "4G+5G"]:
+        ws = wb.create_sheet(title=sheet_name)
+        write_scft_excel_sheet(ws, pivot_data[sheet_name], sheet_name, start_date, end_date)
+
+    out_filename = f"output_SCFT_TAT_Report_{start_date}_to_{end_date}.xlsx"
+    wb.save(os.path.join(output_path, out_filename))
+    return out_filename
+
+
+@api_view(['POST'])
+def generate_scft_tat_report(request):
+    """
+    POST /api/performance_tat/generate-scft/
+
+    Body (either form):
+        { "year": 2026, "month": 1 }
+        { "start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD" }
+
+    Reads the already-uploaded input file, filters by SCFT AT Status != Accepted,
+    builds TAT pivot (0-3 / 3-5 / 5-7 / >7) for 4G / 5G / 4G+5G,
+    saves Excel, returns download URL + inline data.
+
+    Required column in input file: 'SCFT AT Status'
+    TAT = today - On Air Date (same as Performance AT TAT report)
+    """
+    try:
+        # ── Resolve dates ──────────────────────────────────────────────────
+        start_date, end_date, err = _resolve_dates(request)
+        if err:
+            return err
+
+        # ── Check input file ───────────────────────────────────────────────
+        input_file = _get_input_file()
+        if not input_file:
+            return Response(
+                {'status': False, 'message': 'No input file found. Please upload a file first.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ── Read + validate SCFT AT Status column exists ───────────────────
+        df = _read_input_file(input_file)
+
+        if "SCFT AT Status" not in df.columns:
+            # try case-insensitive fallback
+            col_map = {c.lower(): c for c in df.columns}
+            if "scft at status" in col_map:
+                df.rename(columns={col_map["scft at status"]: "SCFT AT Status"}, inplace=True)
+            else:
+                return Response(
+                    {
+                        'status':  False,
+                        'message': "'SCFT AT Status' column not found in uploaded file.",
+                        'columns': df.columns.tolist(),
+                    },
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY
+                )
+
+        df = _apply_circle_combine(df)
+
+        # ── Build pivots + Excel ───────────────────────────────────────────
+        today        = date.today()
+        pivot_data   = build_all_scft_pivots(df, today, start_date, end_date)
+        out_filename = build_scft_excel_workbook(pivot_data, start_date, end_date)
+
+        download_url = request.build_absolute_uri(
+            f"{settings.MEDIA_URL.rstrip('/')}/performance_tat/output/{out_filename}"
+        )
+
+        return Response({
+            'status':       True,
+            'message':      'SCFT TAT report generated successfully.',
+            'date_range':   f"{start_date} to {end_date}",
+            'data': {
+                '4G':    pivot_data['4G'].to_dict(orient='records'),
+                '5G':    pivot_data['5G'].to_dict(orient='records'),
+                '4G+5G': pivot_data['4G+5G'].to_dict(orient='records'),
+            },
             'download_url': download_url,
         }, status=status.HTTP_200_OK)
 

@@ -17,6 +17,12 @@ urlpatterns = [
     path('ms_mf_site_mapping/', views.ms_mf_site_mapping),
     path('site_sn/', views.mobinet_sitecircle_match), #new api site+sn
 
+
+
+    path("dismental_dash/",views.dismental_desh),
+    path("temp_dash/",views.dismental_template),
+
+
 ]
 
 

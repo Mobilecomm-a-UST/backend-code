@@ -1892,3 +1892,616 @@ def mobinet_sitecircle_match(request):
         "message": "All Files processed successfully",
         "download_url": download_url
     })
+
+
+
+
+
+
+
+
+@api_view(["GET", "POST", "DELETE"])
+def dismental_template(request):
+    print("Start Process_________")
+    folder = os.path.join(main_folder, "dismental_tem")
+    os.makedirs(folder, exist_ok=True)
+
+    if request.method == 'POST':
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+        path = os.path.join(folder, file.name)
+
+        with open(path, 'wb+') as f:
+            for chunk in file.chunks():
+                f.write(chunk)
+
+        return Response({'status': True, 'file': file.name})
+
+    if request.method == 'GET':
+        return Response({'files': os.listdir(folder)})
+
+    if request.method == 'DELETE':
+        for f in os.listdir(folder):
+            os.remove(os.path.join(folder, f))
+        return Response({'status': True, 'message': 'All files deleted'})
+
+
+# new api for degrow dismental deshboard-------------------------------
+from .utils import *
+@api_view(['POST'])
+def dismental_desh(request):
+    print("Start Process_________")
+ 
+    #read_template----
+    temp_folder=os.path.join(main_folder, "dismental_tem")
+    if not os.path.exists(temp_folder):
+        return Response({"error": "temp folder not found"}, status=400)
+ 
+    tem_df = None
+    for file in os.listdir(temp_folder):
+        file_path = os.path.join(temp_folder, file)
+        if not os.path.isfile(file_path):
+            continue
+        if file_path.endswith(".csv"):
+            tem_df = pd.read_csv(file_path)
+        elif file_path.endswith((".xls", ".xlsx")):
+            tem_df = pd.read_excel(file_path, engine="openpyxl")
+        break
+    # print(tem_df.columns)
+ 
+ 
+    mobinet_log_folder = os.path.join(main_folder, "mobinet_dump_data")
+    if not os.path.exists(mobinet_log_folder):
+        return Response({"error": "mobinet_dump_data folder not found"}, status=400)
+ 
+    log_df_list = []
+    for file in os.listdir(mobinet_log_folder):
+        file_path = os.path.join(mobinet_log_folder, file)
+        if not os.path.isfile(file_path):
+            continue
+        if file_path.endswith(".csv"):
+            df = pd.read_csv(file_path)
+        elif file_path.endswith((".xls", ".xlsx")):
+            df = pd.read_excel(file_path, engine="openpyxl")
+        else:
+            continue
+        log_df_list.append(df)
+ 
+    if not log_df_list:
+        return Response({"error": "No valid log files found"}, status=400)
+ 
+    mob_df = pd.concat(log_df_list, ignore_index=True)
+    print("Concatenated all mobinates:")
+    # print(mob_df.columns)
+ 
+ 
+    #Read site list file
+    site_list_file = request.FILES.get("site_list")
+    if not site_list_file:
+        return Response({"error": "site_list file not provided"}, status=400)
+    site_df = read_file(site_list_file)
+    site_df.columns = site_df.columns.str.strip()
+    # print(site_df)
+   
+#rfs-----
+    rfs_files = request.FILES.getlist("rfs_file")  
+    rfs_file_list = []
+    for file in rfs_files:
+        if file.name.endswith(".xlsx"):
+            rfs_df = pd.read_excel(file)
+        elif file.name.endswith(".csv"):
+            rfs_df = pd.read_csv(file)
+        elif file.name.endswith(".xlsb"):
+            rfs_df = pd.read_excel(file, engine="pyxlsb")
+        else:
+            continue
+        rfs_df.columns = rfs_df.columns.str.strip()
+        rfs_file_list.append(rfs_df)
+ 
+    rfs_df = (pd.concat(rfs_file_list, ignore_index=True)
+        if rfs_file_list
+        else pd.DataFrame()
+    )
+ 
+#msmf-----
+    msmf_files = request.FILES.getlist("msmf_file")  
+    msmf_file_list = []
+    for file in msmf_files:
+        if file.name.endswith(".xlsx"):
+            msmf_df = pd.read_excel(file)
+        elif file.name.endswith(".csv"):
+            msmf_df = pd.read_csv(file)
+        elif file.name.endswith(".xlsb"):
+            msmf_df = pd.read_excel(file, engine="pyxlsb")
+        else:
+            continue
+        msmf_df.columns = msmf_df.columns.str.strip()
+        msmf_file_list.append(msmf_df)
+ 
+    msmf_df = (pd.concat(msmf_file_list, ignore_index=True)
+        if msmf_file_list
+        else pd.DataFrame())
+   
+ 
+#upload by hardware file-----
+    hardware_file = request.FILES.getlist("hw_file")
+    if not hardware_file:
+        return Response(
+            {"status": "ERROR", "message": "hardware_file not uploaded"},
+            status=HTTP_400_BAD_REQUEST
+        )
+    hardware_file_list = []
+    for file in hardware_file:
+        if file.name.endswith('.xlsx'):
+            hardware_df = pd.read_excel(file)
+        elif file.name.endswith('.csv'):
+            hardware_df = pd.read_csv(file)
+        elif file.name.endswith('.xlsb'):
+            hardware_df = pd.read_excel(file, engine="pyxlsb")
+        else:
+            return Response(
+                {"status": "ERROR", "message": "Unsupported file type in hardware_file"},
+                status=HTTP_400_BAD_REQUEST
+            )
+        hardware_df.columns = hardware_df.columns.str.strip()
+        hardware_file_list.append(hardware_df)
+    hardware_df = pd.concat(hardware_file_list, ignore_index=True)  
+ 
+   
+ 
+ 
+    #start concept-----
+    # phase 1 -> work with mobinate file
+    mob_df["Parent Site"] = mob_df["Parent Site"].astype(str).str.strip()
+    site_df["Unique ID"] = site_df["Unique ID"].astype(str).str.strip()
+    # Merge logs with site list
+    matched_df = pd.merge(
+        mob_df,
+        site_df,
+        how="inner",
+        left_on="Parent Site",
+        right_on="Unique ID"
+    )
+    matched_df = matched_df.drop_duplicates(
+        subset=["Board Serial Number"],
+        keep="first"
+    )
+    # print(matched_df.columns)
+   
+    # fill mobinate data in template---
+    tem_df['Circle']=matched_df['Zone']
+    tem_df['Degrow type']=matched_df['Degrow type']
+    tem_df['Plan Released-DD/MM/YY']=matched_df['Plan Released-DD/MM/YY']
+    tem_df['Cir_Site']=matched_df['Parent Site']
+    tem_df['Site ID']=matched_df['Parent Site'].str.split('_').str[0]
+    tem_df['Module Qty']=1
+    tem_df['Modules Name As per Mobinet']=matched_df['Board Model']
+    tem_df['Module-Serial No']=matched_df['Board Serial Number']
+    tem_df['Survey Date-DD/MM/YY']=matched_df['Survey Date-DD/MM/YY']
+    tem_df['Dismantling Date-DD/MM/YY']=matched_df['Dismantled date']
+   
+    tem_df["matched_by_sn"] =(tem_df['Cir_Site'].astype(str).str.strip()+ "_"+tem_df['Module-Serial No'].astype(str).str.strip())
+    tem_df["matched_by_module"] =(tem_df['Cir_Site'].astype(str).str.strip()+ "_"+tem_df['Modules Name As per Mobinet'].astype(str).str.strip())
+ 
+    print("Phase 1-> mobinate part run----")
+ 
+    #work with rfs file-----
+    print(rfs_df.columns)
+    rfs_df = rfs_df[~rfs_df["Srncamreqstatus"].astype(str).str.strip().str.upper()
+    .isin(["SHORT RECEIVED", "CANCELLED", "FAILED"])]
+    rfs_df["Partners"] = "Other TSP"
+    mobile_mask = rfs_df["Partner Name"].astype(str).str.contains(
+        "Mobilecom|Mobilecomm|MCOM",
+        case=False,
+        na=False
+    )
+    creator_mask = (
+        rfs_df["Partner Name"].isna()
+        |
+        (rfs_df["Partner Name"].astype(str).str.strip() == "")
+    ) & (
+        rfs_df["Creatordepartment"].astype(str).str.contains(
+            "Mobilecom|Mobilecomm|MCOM",
+            case=False,
+            na=False
+        )
+    )
+    rfs_df.loc[
+        mobile_mask | creator_mask,
+        "Partners"
+    ] = "Mobilecomm"
+ 
+ 
+    final_rfs = pd.merge(
+        rfs_df,
+        hardware_df,
+        how="left",
+        left_on="Itemcode",
+        right_on="ITEMCODE"
+    )
+ 
+    final_rfs["matched_by_sn"] =(final_rfs["Site ID"].astype(str).str.strip()+ "_"+ final_rfs["Circle"].astype(str).str.strip()+ "_"+ final_rfs["Serialnumber"].astype(str).str.strip())
+    final_rfs["matched_by_module"] =( final_rfs["Site ID"].astype(str).str.strip()+ "_"+ final_rfs["Circle"].astype(str).str.strip()+ "_"+ final_rfs["Module Name"].astype(str).str.strip())
+    # Match by SN
+    merged_exact = pd.merge(
+        tem_df,
+        final_rfs,
+        how="left",
+        on="matched_by_sn",
+        suffixes=("", "_rfs"),
+        indicator=True
+    )
+ 
+    merged_exact["Remark"] = np.where(
+        merged_exact["_merge"] == "both",
+        "Matched by SN Number",
+        ""
+    )
+ 
+    matched_mask = merged_exact["_merge"] == "both"
+ 
+    # Not matched by SN
+    unmatched_temp = merged_exact[
+        ~matched_mask
+    ][tem_df.columns].copy()
+ 
+    # Match by Module
+    merged_module = pd.merge(
+        unmatched_temp,
+        final_rfs,
+        how="left",
+        on="matched_by_module",
+        suffixes=("", "_rfs"),
+        indicator=True
+    )
+ 
+    merged_module["Remark"] = np.where(
+        merged_module["_merge"] == "both",
+        "Matched by Module",
+        "Not found In RFS"
+    )
+
+    final_output_rfs = pd.concat(
+    [
+        merged_exact[matched_mask].drop(columns=["_merge"]),
+        merged_module.drop(columns=["_merge"])
+    ],
+    ignore_index=True
+
+)    
+    
+    final_output_rfs['Locator ID'] = final_output_rfs['Fromlocation']
+    final_output_rfs['Partner Name'] = final_output_rfs['Partners']
+    final_output_rfs['Module Name as per Dictionary'] = final_output_rfs['Module Name']
+    final_output_rfs['Survey-Modules Name'] = final_output_rfs['Module Name']
+    final_output_rfs['Survey-Module Qty'] = final_output_rfs['Rfs Qty']
+    final_output_rfs['Survey-Module Serial No'] = final_output_rfs['Serialnumber']
+    final_output_rfs['SREQ Number'] = final_output_rfs['Order ID']
+    final_output_rfs['SREQ Date-DD/MM/YY'] = final_output_rfs['Rfs Created Date']
+    final_output_rfs['Dismantled-Modules Name'] = final_output_rfs['Module Name']
+    final_output_rfs['Dismantled-Module Qty'] = final_output_rfs['Rfs Qty']
+    final_output_rfs['Dismantled-Module-Serial No'] = final_output_rfs['Serialnumber']
+    final_output_rfs['DC NUMBER'] = final_output_rfs['Oracle Dc No']
+    final_output_rfs['DC Request Date'] = final_output_rfs['Oracle Dc Date']
+    final_output_rfs['Need By Date-DD/MM/YY'] = final_output_rfs['Needbydate']
+ 
+    final_output_rfs["Pick Date"] = final_output_rfs['Picked Date']
+    final_output_rfs["Pick/Ship Qty QTY"] = final_output_rfs['Picked Qty']
+ 
+    final_output_rfs["PICK/SHIP Status"] = np.where(
+        final_output_rfs["Pick/Ship Qty QTY"].isna(),
+        "",
+        np.where(final_output_rfs["Pick/Ship Qty QTY"] == 0, "Pending", "Done")
+    )
+ 
+    final_output_rfs["WH Submission Date-DD/MM/YY"] = final_output_rfs['Receipt Date']
+    final_output_rfs["WH Submission Qty"] = final_output_rfs['Received Qty']
+    final_output_rfs["OCI Date-DD/MM/YY"] = final_output_rfs['Receipt Date']
+    final_output_rfs["OCI QTY"] = final_output_rfs['Received Qty']
+ 
+    final_output_rfs["Usable/Non Usable"] = ""
+    final_output_rfs["Final Status (Completed/Pending/WIP)"] = ""
+    final_output_rfs["All SREQ Status"] = final_output_rfs['Srncamreqstatus']
+    final_output_rfs["Module Type"] = final_output_rfs['Module type']
+    final_output_rfs["SRN Lot Number"] = final_output_rfs['Oracle Lot No']
+    final_output_rfs["Technology"] = final_output_rfs['Tech']
+    final_output_rfs["Item Code"] = final_output_rfs['ITEMCODE']
+    final_output_rfs["Item Description"] = final_output_rfs['ITEM_DESCRIPTION']
+    final_output_rfs['Condtion Applied'] = final_output_rfs['Remark']
+    # final_output_rfs['Remarks'] = final_output_rfs['Status_remark']
+ 
+
+ 
+    # ==================================================
+    # EXTRA SN LOGIC START
+    # ==================================================
+ 
+    valid_sites = tem_df["Site ID"].unique()
+ 
+    final_same_site = final_rfs[
+        final_rfs["Site ID"].isin(valid_sites)
+    ].copy()
+ 
+    matched_serials = set(
+        final_output_rfs["Serialnumber"]
+        .dropna()
+        .astype(str)
+        .str.strip()
+    )
+ 
+    extra_final = final_same_site[
+        (~final_same_site["Serialnumber"]
+            .astype(str)
+            .str.strip()
+            .isin(matched_serials))
+    ].copy()
+ 
+    extra_final["Remark"] = "Extra SN in RFS"
+    extra_final_df = pd.DataFrame(columns=final_output_rfs.columns)
+    extra_final_df["Site ID"]=extra_final["Site ID"]
+    extra_final_df["Circle"]=extra_final["Circle"]
+    extra_final_df["Locator ID"] = extra_final["Fromlocation"]
+    extra_final_df["Partner Name"] = extra_final["Partners"]
+    extra_final_df["Module Name as per Dictionary"] = extra_final["Module Name"]
+    extra_final_df["Survey-Modules Name"] = extra_final["Module Name"]
+    extra_final_df["Survey-Module Qty"] = extra_final["Rfs Qty"]
+    extra_final_df["Survey-Module Serial No"] = extra_final["Serialnumber"]
+    extra_final_df["SREQ Number"] = extra_final["Order ID"]
+    extra_final_df["SREQ Date-DD/MM/YY"] = extra_final["Rfs Created Date"]
+    extra_final_df["Dismantled-Modules Name"] = extra_final["Module Name"]
+    extra_final_df["Dismantled-Module Qty"] = extra_final["Rfs Qty"]
+    extra_final_df["Dismantled-Module-Serial No"] = extra_final["Serialnumber"]
+    extra_final_df["DC NUMBER"] = extra_final["Oracle Dc No"]
+    extra_final_df["DC Request Date"] = extra_final["Oracle Dc Date"]
+    extra_final_df["Need By Date-DD/MM/YY"] = extra_final["Needbydate"]
+    extra_final_df["Pick Date"] = extra_final["Picked Date"]
+    extra_final_df["Pick/Ship Qty QTY"] = extra_final["Picked Qty"]
+    extra_final_df["Ship Date"] = extra_final["Shipped Date"]
+    extra_final_df["WH Submission Date-DD/MM/YY"] = extra_final["Receipt Date"]
+    extra_final_df["WH Submission Qty"] = extra_final["Received Qty"]
+    extra_final_df["OCI Date-DD/MM/YY"] = extra_final["Receipt Date"]
+    extra_final_df["OCI QTY"] = extra_final["Received Qty"]
+    extra_final_df["Usable/Non Usable"] = ""
+    extra_final_df["Final Status (Completed/Pending/WIP)"] = ""
+    extra_final_df["All SREQ Status"] = extra_final["Srncamreqstatus"]
+    extra_final_df["Module Type"] = extra_final["Module type"]
+    extra_final_df["SRN Lot Number"] = extra_final["Oracle Lot No"]
+    extra_final_df["Technology"] = extra_final["Tech"]
+    extra_final_df["Item Code"] = extra_final["ITEMCODE"]
+    extra_final_df["Item Description"] = extra_final["ITEM_DESCRIPTION"]
+    extra_final_df["Condtion Applied"] = "Extra SN in RFS"
+    extra_final_df["Remarks"] = "Found in RFS"
+    extra_final_df["Remark"] = "Extra SN in RFS"
+
+
+    #wwork with msmf----
+    rfs_found = final_output_rfs[
+    final_output_rfs["Remark"] != "Not found In RFS"
+    ].copy()
+
+    rfs_not_found = final_output_rfs[
+        final_output_rfs["Remark"] == "Not found In RFS"
+    ].copy()
+
+
+    msmf_df["Partners"] = "Other TSP"
+    msmf_df.loc[
+        msmf_df["Partner"].astype(str).str.contains(
+            "Mobilecom|Mobilecomm",
+            case=False,
+            na=False
+        ),
+        "Partners"
+    ] = "Mobliecomm"
+    
+
+    msmf_final = pd.merge(
+        msmf_df,
+        hardware_df,
+        how="left",
+        left_on="Partcode",
+        right_on="ITEMCODE"
+    )
+
+    msmf_final["Circle"] = msmf_final["Circle Name"]
+    msmf_final["Site ID"] = msmf_final["Ms Siteid"]
+
+    msmf_final["matched_by_sn"] =(msmf_final["Site ID"].astype(str).str.strip()+ "_" + msmf_final["Circle"].astype(str).str.strip() + "_"+ msmf_final["Serial Number"].astype(str).str.strip())
+    msmf_final["matched_by_module"] =(msmf_final["Site ID"].astype(str).str.strip()+ "_"+ msmf_final["Circle"].astype(str).str.strip()+ "_"+ msmf_final["Module Name"].astype(str).str.strip())
+    msmf_final = msmf_final[
+        [   "Partners",
+            "matched_by_sn",
+            "matched_by_module",
+            "Ms Fromlocation",
+            "Partner",
+            "Module Name",
+            "Module type",
+            "Tech",
+            "ITEMCODE",
+            "ITEM_DESCRIPTION",
+            "Serial Number",
+            "Qty",
+            "Dc Number",
+            "Move Start Date",
+            "Received Date",
+            "Received Qty",
+            "Site ID",
+            "Circle"
+        ]
+    ].copy()
+    merged_exact_msmf = pd.merge(
+        rfs_not_found,
+        msmf_final,
+        how="left",
+        on="matched_by_sn",
+        suffixes=("", "_msmf"),
+        indicator=True
+    )
+
+    matched_mask_msmf = merged_exact_msmf["_merge"] == "both"
+    merged_exact_msmf["Remark"] = np.where(
+        matched_mask_msmf,
+        "Matched by SN in MSMF",
+        ""
+    )
+
+    unmatched_msmf = merged_exact_msmf[
+        ~matched_mask_msmf
+    ].drop(columns=["_merge"], errors="ignore").copy()
+    
+    merged_module_msmf = pd.merge(
+        unmatched_msmf,
+        msmf_final,
+        how="left",
+        on="matched_by_module",
+        indicator=True,
+        suffixes=("", "_msmf")
+    )
+    merged_module_msmf["Remark"] = np.where(
+        merged_module_msmf["_merge"] == "both",
+        "Matched by Module in MSMF",
+        "Not Found in MSMF"
+    )
+    merged_exact_msmf = merged_exact_msmf.loc[:, ~merged_exact_msmf.columns.duplicated()]
+    merged_module_msmf = merged_module_msmf.loc[:, ~merged_module_msmf.columns.duplicated()]
+    final_output_msmf = pd.concat(
+    [
+        merged_exact_msmf[matched_mask_msmf].drop(columns=["_merge"]),
+        merged_module_msmf.drop(columns=["_merge"])
+    ],
+    ignore_index=True
+    )
+    print(final_output_msmf.columns)
+
+        
+    final_output_msmf['Locator ID'] = final_output_msmf['Ms Fromlocation']
+    final_output_msmf['Partner Name'] = final_output_msmf['Partners']
+    final_output_msmf['Module Name as per Dictionary'] = final_output_msmf['Module Name']
+    final_output_msmf['Survey-Modules Name'] = final_output_msmf['Module Name']
+    final_output_msmf['Survey-Module Qty'] = final_output_msmf['Qty']
+    final_output_msmf['Survey-Module Serial No'] = final_output_msmf['Serial Number']
+    final_output_msmf['SREQ Number'] = final_output_msmf['Dc Number']
+    final_output_msmf['SREQ Date-DD/MM/YY'] = final_output_msmf['Move Start Date']
+    final_output_msmf['Dismantled-Modules Name'] = final_output_msmf['Module Name']
+    final_output_msmf['Dismantled-Module Qty'] = final_output_msmf['Qty']
+    final_output_msmf['Dismantled-Module-Serial No'] = final_output_msmf['Serial Number']
+    final_output_msmf['DC NUMBER'] = final_output_msmf['Dc Number']
+    final_output_msmf['DC Request Date'] = ""
+    final_output_msmf['Need By Date-DD/MM/YY'] = ""
+ 
+    final_output_msmf["Pick Date"] =""
+    final_output_msmf["Pick/Ship Qty QTY"] =""
+ 
+    final_output_msmf["PICK/SHIP Status"] =""
+
+    final_output_msmf["WH Submission Date-DD/MM/YY"] = final_output_msmf['Received Date']
+    final_output_msmf["WH Submission Qty"] = final_output_msmf['Received Qty']
+    final_output_msmf["OCI Date-DD/MM/YY"] = final_output_msmf['Received Date']
+    final_output_msmf["OCI QTY"] = final_output_msmf['Received Qty']
+ 
+    final_output_msmf["Usable/Non Usable"] = ""
+    final_output_msmf["Final Status (Completed/Pending/WIP)"] = ""
+    final_output_msmf["All SREQ Status"] =""
+    final_output_msmf["Module Type"] = final_output_msmf['Module type']
+    final_output_msmf["SRN Lot Number"] = ""
+    final_output_msmf["Technology"] = final_output_msmf['Tech']
+    final_output_msmf["Item Code"] = final_output_msmf['ITEMCODE']
+    final_output_msmf["Item Description"] = final_output_msmf['ITEM_DESCRIPTION']
+    final_output_msmf['Condtion Applied'] = final_output_msmf['Remark']
+
+
+    valid_sites = tem_df["Site ID"].unique()
+ 
+    final_same_site = msmf_final[
+        msmf_final["Site ID"].isin(valid_sites)
+    ].copy()
+    
+    matched_serials = set(
+        final_output_msmf["Serial Number"]
+        .dropna()
+        .astype(str)
+        .str.strip()
+    )
+ 
+    extra_final = final_same_site[
+        (~final_same_site["Serial Number"]
+            .astype(str)
+            .str.strip()
+            .isin(matched_serials))
+    ].copy()
+ 
+    extra_final["Remark"] = "Extra SN Msmf"
+    extra_final_df_msmf = pd.DataFrame(columns=final_output_msmf.columns)
+    extra_final_df_msmf["Site ID"]=extra_final["Site ID"]
+    extra_final_df_msmf["Circle"]=extra_final["Circle"]
+    extra_final_df_msmf["Locator ID"] = extra_final["Ms Fromlocation"]
+    extra_final_df_msmf["Partner Name"] = extra_final["Partners"]
+    extra_final_df_msmf["Module Name as per Dictionary"] = extra_final["Module Name"]
+    extra_final_df_msmf["Survey-Modules Name"] = extra_final["Module Name"]
+    extra_final_df_msmf["Survey-Module Qty"] = extra_final["Qty"]
+    extra_final_df_msmf["Survey-Module Serial No"] = extra_final['Serial Number']
+    extra_final_df_msmf["SREQ Number"] =""
+    extra_final_df_msmf["SREQ Date-DD/MM/YY"] = extra_final["Move Start Date"]
+    extra_final_df_msmf["Dismantled-Modules Name"] = extra_final["Module Name"]
+    extra_final_df_msmf["Dismantled-Module Qty"] = extra_final["Qty"]
+    extra_final_df_msmf["Dismantled-Module-Serial No"] = extra_final['Serial Number']
+    extra_final_df_msmf["DC NUMBER"] = extra_final['Dc Number']
+    extra_final_df_msmf["DC Request Date"] = ""
+    extra_final_df_msmf["Need By Date-DD/MM/YY"] = ""
+    extra_final_df_msmf["Pick Date"] = ""
+    extra_final_df_msmf["Pick/Ship Qty QTY"] = ""
+    extra_final_df_msmf["Ship Date"] = ""
+    extra_final_df_msmf["WH Submission Date-DD/MM/YY"] = extra_final["Received Date"]
+    extra_final_df_msmf["WH Submission Qty"] = extra_final["Received Qty"]
+    extra_final_df_msmf["OCI Date-DD/MM/YY"] = extra_final["Received Date"]
+    extra_final_df_msmf["OCI QTY"] = extra_final["Received Qty"]
+    extra_final_df_msmf["Usable/Non Usable"] = ""
+    extra_final_df_msmf["Final Status (Completed/Pending/WIP)"] = ""
+    extra_final_df_msmf["All SREQ Status"] = ""
+    extra_final_df_msmf["Module Type"] = extra_final["Module type"]
+    extra_final_df_msmf["SRN Lot Number"] = ""
+    extra_final_df_msmf["Technology"] = extra_final["Tech"]
+    extra_final_df_msmf["Item Code"] = extra_final["ITEMCODE"]
+    extra_final_df_msmf["Item Description"] = extra_final["ITEM_DESCRIPTION"]
+    extra_final_df_msmf["Condtion Applied"] = "Extra SN in Msmf"
+    extra_final_df_msmf["Remarks"] = "Found in Msmf"
+    extra_final_df_msmf["Remark"] = "Extra SN in Msmf"
+    
+
+
+    # Final Output
+    tem_df = pd.concat(
+    [
+        final_output_rfs,
+        final_output_msmf,
+        extra_final_df,
+        extra_final_df_msmf
+    ],
+    ignore_index=True,
+    sort=False
+    )
+    
+
+ 
+    print(tem_df.columns)
+    tem_df = tem_df.drop(columns=columns_list_rfs, errors="ignore")
+    output_path = os.path.join(main_folder, "Dismtental_Deshboard")
+    os.makedirs(output_path, exist_ok=True)
+ 
+    output_file = os.path.join(output_path, "recodata.xlsx")
+ 
+    tem_df.to_excel(output_file, index=False)
+    format_excel(output_file)
+    relative_path = os.path.relpath(output_file,MEDIA_ROOT)
+    download_url=request.build_absolute_uri(
+            MEDIA_URL + relative_path.replace("\\", "/"))
+      
+
+    return Response({
+        "status": True,
+        "message": "Report generated successfully",
+        "download_url":download_url
+    })
+     
