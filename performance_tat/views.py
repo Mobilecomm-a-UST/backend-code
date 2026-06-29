@@ -311,7 +311,7 @@ def build_pivot_table(df, today):
 
     grand = pivot[bucket_order + ["Total"]].sum().to_dict()
     grand["Circle"] = "Grand Total"
-    #pivot = pd.concat([pivot, pd.DataFrame([grand])], ignore_index=True)
+    pivot = pd.concat([pivot, pd.DataFrame([grand])], ignore_index=True)
 
     return pivot
 
