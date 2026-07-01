@@ -7,6 +7,13 @@ class AddTaskTableSerializer(serializers.ModelSerializer):
         model = AddTaskTable
         fields = '__all__'
 
+class ReportingEmailHierarchySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReportingEmailHierarchy
+        fields = '__all__'
+
+        
+
 
 
 class DailytaskreviewmodelSerializer(serializers.ModelSerializer):

@@ -5,6 +5,7 @@ import time
 from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 from mailapp.tasks import send_email
 from celery import shared_task
+
 @shared_task
 def print_message():
     print("Hello, Celery!")

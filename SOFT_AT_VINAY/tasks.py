@@ -14,7 +14,7 @@ def update_key_with_current_date(key):
     updated_key = f"{key_parts[0]}__{current_date}"
     return updated_key
 
-@shared_task
+# @shared_task
 def create_next_day_records():
     current_date=datetime.datetime.now()
     previous_date=current_date-datetime.timedelta(days=1)

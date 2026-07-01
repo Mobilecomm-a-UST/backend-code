@@ -1,0 +1,140 @@
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import MonthlyReport
+from .serializers import MonthlyReportSerializer
+
+class MonthlyReportUpsertView(APIView):
+
+    # ── GET ──────────────────────────────────────────────────────
+    def get(self, request):
+        # circle   = request.query_params.get('circle')
+        # category = request.query_params.get('category')
+        # customer = request.query_params.get('customer')
+        month    = request.query_params.get('month')
+        costCenter = request.query_params.get('costCenter')
+
+        # Validation — charon hone chahiye
+        if not all([month, costCenter]):
+            return Response(
+                {'error': 'Month And Cost Center Required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # DB se fetch karo
+        try:
+            report = MonthlyReport.objects.get(month=month,costCenter = costCenter)
+        except MonthlyReport.DoesNotExist:
+            return Response(
+                {'error': 'Record Not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Response banao
+        return Response({
+            'id':              report.id,
+            'circle':          report.circle,
+            'category':        report.category,
+            'customer':        report.customer,
+            'month':           report.month,
+            'year':            report.year,
+            "costCenter":      report.costCenter,
+            'costs':           report.costs,
+            'resources':       report.resources,
+            'other_resources': report.other_resources,
+            'month_wise_data':  report.month_wise_data,
+            'created_at':      report.created_at,
+            'updated_at':      report.updated_at,
+        }, status=status.HTTP_200_OK)
+
+    # ── POST (Upsert) ─────────────────────────────────────────────
+    def post(self, request):
+        serializer = MonthlyReportSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                {'error': serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        data = serializer.validated_data
+
+        report, created = MonthlyReport.objects.update_or_create(
+            circle   = data['circle'],
+            category = data['category'],
+            customer = data['customer'],
+            month    = data['month'],
+            costCenter = data['costCenter'],
+            defaults = {
+                'year':            data['year'],
+                'costs':           data['costs'],
+                'resources':       data['resources'],
+                'other_resources': data.get('other_resources', {}),
+                'month_wise_data':  data.get('month_wise_data', {}),
+            }
+        )
+
+        return Response({
+            'message':  'Created' if created else 'Updated',
+            'id':       report.id,
+            'month':    report.month,
+            'costCenter':report.costCenter,
+            'created_at':      report.created_at,
+            'updated_at':      report.updated_at,
+        }, status=status.HTTP_200_OK)
+
+
+class MonthlyReportBulkUpsertView(APIView):
+
+    def post(self, request):
+        # Array expect karta hai
+        if not isinstance(request.data, list):
+            return Response(
+                {'error': 'Array bhejo — [ {...}, {...} ]'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        results = []
+        errors  = []
+
+        for index, item in enumerate(request.data):
+            serializer = MonthlyReportSerializer(data=item)
+
+            if not serializer.is_valid():
+                errors.append({ 'index': index, 'error': serializer.errors })
+                continue
+
+            data = serializer.validated_data
+
+            report, created = MonthlyReport.objects.update_or_create(
+                circle     = data['circle'],
+                category   = data['category'],
+                customer   = data['customer'],
+                month      = data['month'],
+                costCenter = data['costCenter'],
+                defaults   = {
+                    'year':            data['year'],
+                    'costs':           data['costs'],
+                    'resources':       data['resources'],
+                    'other_resources': data.get('other_resources', {}),
+                    'month_wise_data': data.get('month_wise_data', {}),
+                }
+            )
+
+            results.append({
+                'index':      index,
+                'message':    'Created' if created else 'Updated',
+                'id':         report.id,
+                'month':      report.month,
+                'costCenter': report.costCenter,
+                'created_at': report.created_at,
+                'updated_at': report.updated_at,
+            })
+
+        return Response({
+            'total':    len(request.data),
+            'success':  len(results),
+            'failed':   len(errors),
+            'results':  results,
+            'errors':   errors,
+        }, status=status.HTTP_200_OK)

@@ -36,7 +36,7 @@ This is a system-generated email. For assistance, please contact the support tea
 Best regards,
 RCA Genie """
 
-@shared_task
+# @shared_task
 def alarmdump_check_data_and_notify():
     nMinus1_date = datetime.now().date() - timedelta(days=1)
     data_exists = AlarmNotification.objects.filter(Upload_date=nMinus1_date).exists()
@@ -46,7 +46,7 @@ def alarmdump_check_data_and_notify():
         # alarmdump_schedule_reminder_email()
 
 
-@shared_task
+# @shared_task
 def alarmdump_reminder_email_task():
     nMinus1_date = datetime.now().date() - timedelta(days=1)
     data_exists = AlarmNotification.objects.filter(Upload_date=nMinus1_date).exists()
@@ -98,7 +98,7 @@ RCA Genie
  """
 
 
-@shared_task
+# @shared_task
 def KPI_4G_check_data_and_notify():
     nMinus1_date = datetime.now().date() - timedelta(days=1)
     data_exists = Daily_4G_KPI.objects.filter(Date=nMinus1_date).exists()
@@ -108,7 +108,7 @@ def KPI_4G_check_data_and_notify():
         # KPI_4G_schedule_reminder_email()
 
 
-@shared_task
+# @shared_task
 def KPI_4G_reminder_email_task():
     nMinus1_date = datetime.now().date() - timedelta(days=1)
     data_exists = Daily_4G_KPI.objects.filter(Date=nMinus1_date).exists()
@@ -159,7 +159,7 @@ RCA Genie
 """
 
 
-@shared_task
+# @shared_task
 def TantitiveCounter_check_data_and_notify():
     nMinus1_date = datetime.now() - timedelta(days=1)
     data_exists = Tantitive_Counters_24_Hours.objects.filter(DateTime=nMinus1_date).exists()
@@ -169,7 +169,7 @@ def TantitiveCounter_check_data_and_notify():
         # TentitiveCounter_schedule_reminder_email()
 
 
-@shared_task
+# @shared_task
 def TentitiveCounter_reminder_email_task():
     nMinus1_date = datetime.now()  - timedelta(days=1)
     data_exists = Tantitive_Counters_24_Hours.objects.filter(DateTime=nMinus1_date).exists()

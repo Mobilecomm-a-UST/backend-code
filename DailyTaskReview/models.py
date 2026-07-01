@@ -11,6 +11,13 @@ class AddTaskTable(models.Model):
     def __str__(self):
         return self.task
 
+class ReportingEmailHierarchy(models.Model):
+    userID = models.CharField(max_length=255,blank=True,null=True)
+    assigned_to = models.CharField(max_length=255,blank=True,null=True)
+
+    def __str__(self):
+        return self.assigned_to
+
 
 
 # Main Daily Task Review Model
@@ -55,7 +62,7 @@ class Dailytaskreviewmodel(models.Model):
 
             date_str = timezone.now().strftime("%d%m%Y")
 
-            self.task_id = f"DTR{date_str}/{self.id:08d}"
+            self.task_id = f"DTR{date_str}/{self.id:06d}"
 
             super().save(update_fields=['task_id'])
 

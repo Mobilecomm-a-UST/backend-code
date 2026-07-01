@@ -389,6 +389,7 @@ def get_traffic(request):
     return Response({
         'status': True,
         'message': 'Traffic calculation successfully!',
+        'data': result,
         'download_url': download_url,
        
     })

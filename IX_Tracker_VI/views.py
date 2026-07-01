@@ -29,6 +29,7 @@ from rest_framework.response import Response
 from django.db.models import Count
 from .models import IntegrationDataVI
 from datetime import datetime, timedelta
+from .parser import process_log
 
 from .models import *
 
@@ -1576,5 +1577,140 @@ def overall_integration_for_perticular_oem(request):
 
 
 
+ 
+ 
+@api_view(["POST"])
+def upload_log(request):
 
+    uploaded_file = request.FILES.get("log_file")
 
+    if not uploaded_file:
+        return Response(
+            {"error": "Please upload a file."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Create logs directory inside MEDIA_ROOT
+    logs_dir = os.path.join(settings.MEDIA_ROOT, "logs")
+    os.makedirs(logs_dir, exist_ok=True)
+
+    # Full file path
+    temp_path = os.path.join(logs_dir, uploaded_file.name)
+
+    # Save uploaded file
+    with open(temp_path, "wb+") as destination:
+        for chunk in uploaded_file.chunks():
+            destination.write(chunk)
+
+    try:
+        report_path = process_log(temp_path)
+
+        # Remove uploaded log file after processing
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+        # Convert absolute path to relative path
+        relative_path = os.path.relpath(report_path, settings.MEDIA_ROOT)
+
+        return Response({
+            "status": True,
+            "message": "Report generated successfully",
+            "download_url": request.build_absolute_uri(
+                settings.MEDIA_URL + relative_path.replace("\\", "/")
+            )
+        })
+
+    except Exception as e:
+        return Response(
+            {
+                "status": False,
+                "error": str(e)
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+import os
+from django.conf import settings
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from openpyxl import load_workbook
+from .models import IntegrationDataVI
+
+VI_FIELDS = [
+    "unique_key", "OEM", "Integration_Date", "CIRCLE", "Activity_Name", "Site_ID",
+    "MO_NAME", "LNBTS_ID", "Technology_SIWA", "OSS_Details", "Cell_ID", "CELL_COUNT",
+    "BSC_NAME", "BCF", "TRX_Count", "PRE_ALARM", "GPS_IP_CLK", "RET", "POST_VSWR",
+    "POST_Alarms", "Activity_Mode", "Activity_Type_SIWA", "Band_SIWA", "CELL_STATUS",
+    "CTR_STATUS", "Integration_Remark", "T2T4R", "BBU_TYPE", "BB_CARD", "RRU_Type",
+    "Media_Status", "Mplane_IP", "SCF_PREPARED_BY", "SITE_INTEGRATE_BY", "Site_Status",
+    "External_Alarm_Confirmation", "SOFT_AT_STATUS", "LICENCE_Status", "ESN_NO",
+    "Responsibility_for_alarm_clearance", "TAC", "PCI_TDD_20", "PCI_TDD_10_20",
+    "PCI_FDD_2100", "PCI_FDD_1800", "PCI_L900", "PCI_5G", "RSI_TDD_20", "RSI_TDD_10_20",
+    "RSI_FDD_2100", "RSI_FDD_1800", "RSI_L900", "RSI_5G", "GPL", "Pre_Post_Check",
+    "CRQ", "Customer_Approval", "FR_Date", "HOTO_Offered_Date_4g", "HOTO_Accepted_Date_4g",
+    "HOTO_Offered_Date_2g","HOTO_Accepted_Date_2g",
+    None, None, None, None, None,  # Overall HOTO Status, Pending Bucket, Pending Remarks, Responsibility, TAT
+]
+
+# Header occupies row 1 (version/category) + row 2 (column names) -> data starts row 3
+HEADER_ROWS = 2
+DATA_START_ROW = HEADER_ROWS + 1  # = 3
+@api_view(['GET'])
+def get_vi_temp_link(request):
+    template_name = 'VI_Tracker_HOTO_Template_V1.1.1.xlsm'
+    sub_dir = 'IntegrationTrackerVI'
+    template_path = os.path.join(settings.MEDIA_ROOT, sub_dir, template_name)
+
+    if not os.path.exists(template_path):
+        return Response({'error': 'Excel template not found'}, status=404)
+
+    wb = load_workbook(template_path, keep_vba=True)
+    ws = wb.active
+
+    # --- Clear any leftover/sample data rows below header before writing fresh data ---
+    if ws.max_row >= DATA_START_ROW:
+        for row in ws.iter_rows(min_row=DATA_START_ROW, max_row=ws.max_row, max_col=len(VI_FIELDS)):
+            for cell in row:
+                cell.value = None
+
+    # queryset = IntegrationDataVI.objects.all().order_by('id')
+    queryset = IntegrationDataVI.objects.filter(
+            Activity_Name__in=[
+                "MACRO",
+                "UPGRADE",
+                "ULS_HPSC",
+                "RELOCATION"
+            ]
+        ).order_by('id')
+
+    row_idx = DATA_START_ROW
+    for obj in queryset:
+        for col_idx, field_name in enumerate(VI_FIELDS, start=1):
+            if field_name is None:
+                value = ''
+            else:
+                value = getattr(obj, field_name, '')
+                if value is None:
+                    value = ''
+                elif hasattr(value, 'isoformat'):
+                    value = value.isoformat()
+            ws.cell(row=row_idx, column=col_idx, value=value)
+        row_idx += 1
+
+    output_sub_dir = os.path.join(sub_dir, 'generated')
+    output_dir = os.path.join(settings.MEDIA_ROOT, output_sub_dir)
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_name = 'VI_Tracker_HOTO_Filled.xlsm'
+    output_path = os.path.join(output_dir, output_name)
+    wb.save(output_path)
+
+    file_url = request.build_absolute_uri(
+        f"{settings.MEDIA_URL.rstrip('/')}/{output_sub_dir}/{output_name}".replace('\\', '/')
+    )
+
+    return Response({
+        'file_url': file_url,
+        'template_version': 'v1.8',
+        'total_records': queryset.count(),
+    }, status=200)

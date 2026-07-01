@@ -108,6 +108,7 @@ urlpatterns = [
     path("performance_tat/",include("performance_tat.urls")),
     path("vi/",include("VI_checklist_tool.urls")),
     path("mwCeragon/",include("microwave_Ceragon_tool.urls")),
+    path('', include('Resource_Management.urls')),
 
 ]
 

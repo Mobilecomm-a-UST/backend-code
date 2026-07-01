@@ -124,6 +124,7 @@ INSTALLED_APPS = [
     "performance_tat",
     "VI_checklist_tool",
     "microwave_Ceragon_tool",
+    "Resource_Management",
 ]
 
 MIDDLEWARE = [
@@ -345,25 +346,33 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
 
 from celery.schedules import crontab
 
-CELERY_BEAT_SCHEDULE = {
-    "create-next-day-records-softat": {
-        "task": "SOFT_AT_VINAY.tasks.create_next_day_records",  # Path to your task
-        "schedule": crontab(hour=0, minute=0),  # Run every day at midnight
-    },
-    "alarmdump-check-data-at-10am": {
-        "task": "RCA_TOOL.tasks.alarmdump_check_data_and_notify",
-        "schedule": crontab(hour=10, minute=0),  # Executes daily at 10:00 AM
-    },
-    "KPI-4G-check-data-at-10am": {
-        "task": "RCA_TOOL.tasks.KPI_4G_check_data_and_notify",
-        "schedule": crontab(hour=10, minute=0),  # Executes daily at 10:00 AM
-    },
-    "TantitiveCounter-check-data-at-10am": {
-        "task": "RCA_TOOL.tasks.TantitiveCounter_check_data_and_notify",
-        "schedule": crontab(hour=10, minute=0),  # Executes daily at 10:00 AM
-    },
-    "level-wise-mail-notification": {
-        "task": "Zero_Count_Rna_Payload_Tool.tasks.level_wise_mail_notification",
-        "schedule": crontab(hour=10, minute=0),  # Executes daily at 10:00 AM
-    },
-}
+# CELERY_BEAT_SCHEDULE = {
+#     "create-next-day-records-softat": {
+#         "task": "SOFT_AT_VINAY.tasks.create_next_day_records",  # Path to your task
+#         "schedule": crontab(hour=0, minute=0),  # Run every day at midnight
+#     },
+#     "alarmdump-check-data-at-10am": {
+#         "task": "RCA_TOOL.tasks.alarmdump_check_data_and_notify",
+#         "schedule": crontab(hour=10, minute=0),  # Executes daily at 10:00 AM
+#     },
+#     "KPI-4G-check-data-at-10am": {
+#         "task": "RCA_TOOL.tasks.KPI_4G_check_data_and_notify",
+#         "schedule": crontab(hour=10, minute=0),  # Executes daily at 10:00 AM
+#     },
+#     "TantitiveCounter-check-data-at-10am": {
+#         "task": "RCA_TOOL.tasks.TantitiveCounter_check_data_and_notify",
+#         "schedule": crontab(hour=10, minute=0),  # Executes daily at 10:00 AM
+#     },
+#     "level-wise-mail-notification": {
+#         "task": "Zero_Count_Rna_Payload_Tool.tasks.level_wise_mail_notification",
+#         "schedule": crontab(hour=10, minute=0),  # Executes daily at 10:00 AM
+#     },
+#     #  "daily-task-mail-reader": {
+#     #     "task": "DailyTaskReview.tasks.check_outlook_mail",
+#     #     "schedule": crontab(minute="*"),   # Every minute
+#     # },
+#     # "universal-alarm-daily-task": {
+#     #     "task": "universal_alarm.tasks.check_outlook_mail",
+#     #     "schedule": crontab(minute="*"),#evey time
+#     # },
+# }

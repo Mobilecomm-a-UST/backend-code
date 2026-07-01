@@ -9,7 +9,9 @@ priority_dict = {
         'P2':'Moderate',
         'P3':'Low',    
     }
-@shared_task
+
+# @shared_task
+
 def level_wise_mail_notification():
         threshold_P0=Threshold.objects.get(priority="P0")
         threshold_P1=Threshold.objects.get(priority="P1")
