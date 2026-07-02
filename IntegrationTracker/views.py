@@ -82,6 +82,11 @@ def generate_date_list(start_date):
         start_date += delta
     
     return date_list
+
+
+
+
+    
 @api_view(['GET'])
 def get_excel_temp_link(request):
     #mcom123 temp id.

@@ -27,9 +27,7 @@ from mcom_website.views import home_page
 urlpatterns = [
     path("", home_page, name="backend server is running"),
     path("admin/", admin.site.urls),
-    # path('',views.index,name="main"),
     path("trend/", include("trend.urls")),
-    # path('trend/OriginalTrend/', include("Original_trend.urls")),
     path("accounts/", include("accounts.urls")),
     path("trend/bih/", include("Bihar_trend.urls")),
     path("trend/raj/", include("rajTrendAPP.urls")),

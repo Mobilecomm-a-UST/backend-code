@@ -368,10 +368,10 @@ from celery.schedules import crontab
 #         "task": "Zero_Count_Rna_Payload_Tool.tasks.level_wise_mail_notification",
 #         "schedule": crontab(hour=10, minute=0),  # Executes daily at 10:00 AM
 #     },
-#     #  "daily-task-mail-reader": {
-#     #     "task": "DailyTaskReview.tasks.check_outlook_mail",
-#     #     "schedule": crontab(minute="*"),   # Every minute
-#     # },
+#      "daily-task-mail-reader": {
+#         "task": "DailyTaskReview.tasks.check_outlook_mail",
+#         "schedule": crontab(minute="*"),   # Every minute
+#     },
 #     # "universal-alarm-daily-task": {
 #     #     "task": "universal_alarm.tasks.check_outlook_mail",
 #     #     "schedule": crontab(minute="*"),#evey time

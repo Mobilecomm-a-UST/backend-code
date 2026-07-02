@@ -3,6 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import MonthlyReport
 from .serializers import MonthlyReportSerializer
+from rest_framework.decorators import api_view
+import os
+from django.conf import settings
+from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 
 class MonthlyReportUpsertView(APIView):
 
@@ -138,3 +142,16 @@ class MonthlyReportBulkUpsertView(APIView):
             'results':  results,
             'errors':   errors,
         }, status=status.HTTP_200_OK)
+
+
+
+
+@api_view(['GET'])
+def get_excel_temp_link(request):
+    fileName = request.query_params.get("fileName", "")
+    file_path = os.path.join(settings.MEDIA_ROOT, 'ResourceManagement',fileName)
+    if os.path.exists(file_path):
+        file_url = os.path.join(settings.MEDIA_URL ,'ResourceManagement',fileName)              
+        return Response({'file_url': file_url,'template_version':'v1'}, status=status.HTTP_200_OK)
+    else:
+        return Response({'error': 'Excel file not found'}, status=status.HTTP_404_NOT_FOUND)
