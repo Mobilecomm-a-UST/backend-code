@@ -125,6 +125,7 @@ INSTALLED_APPS = [
     "VI_checklist_tool",
     "microwave_Ceragon_tool",
     "Resource_Management",
+    "VI_Summary_Tool",
 ]
 
 MIDDLEWARE = [
