@@ -1807,6 +1807,7 @@ AT_COL_WIDTHS = {
     "KAT Date":   14,
     "SCFT":       18,
     "SCFT Date":  14,
+    "MS Date" : 14,
 }
  
 # Maps output column names to input source columns
@@ -1824,7 +1825,7 @@ AT_DATE_MAP = {
 }
  
 AT_OUTPUT_COLS = [
-    "SR_Site ID", "Site ID","Circle",
+    "SR_Site ID", "Site ID","Circle","MS Date",
     "PAT", "PAT Date",
     "SAT", "SAT Date",
     "KAT", "KAT Date",
@@ -2059,67 +2060,300 @@ def _write_at_excel(rows, period_label, out_filepath):
 # ─────────────────────────────────────────────
 # AT SUMMARY (Circle × Status Pending Counts)
 # ─────────────────────────────────────────────
+
+
+def _write_at_summary_sheet(ws, summary, status_cols, period_label):
+    """
+    Write the Circle × Status pending-count pivot into a worksheet.
+    Includes a Grand Total row at the bottom.
+    """
+    headers = ["Circle"] + status_cols
+
+    # ── Row 1: title bar ─────────────────────────────────────────
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
+    title_cell           = ws.cell(row=1, column=1,
+                                   value=f"AT Summary Report  |  {period_label}")
+    title_cell.font      = Font(name="Arial", bold=True, size=11, color="FFFFFF")
+    title_cell.fill      = AT_HEADER_FILL
+    title_cell.alignment = AT_CENTER
+
+    # ── Row 2: column headers ────────────────────────────────────
+    for col_idx, col_name in enumerate(headers, start=1):
+        cell           = ws.cell(row=2, column=col_idx, value=col_name)
+        cell.font      = AT_HEADER_FONT
+        cell.fill      = PatternFill("solid", start_color="2E75B6")
+        cell.alignment = AT_CENTER
+        cell.border    = AT_BORDER
+
+    if not summary:
+        ws.cell(row=3, column=1, value="No data found for the selected date range.")
+        return
+
+    # ── Data rows ────────────────────────────────────────────────
+    row_idx = 3
+    for entry in summary:
+        row_fill = AT_ALT_FILL if row_idx % 2 == 0 else PatternFill("solid", start_color="FFFFFF")
+        for col_idx, col_name in enumerate(headers, start=1):
+            value          = entry.get(col_name)
+            cell           = ws.cell(row=row_idx, column=col_idx, value=value)
+            cell.font      = AT_DATA_FONT
+            cell.border    = AT_BORDER
+            cell.fill      = row_fill
+            cell.alignment = AT_LEFT if col_idx == 1 else AT_CENTER
+        row_idx += 1
+
+    # ── Grand Total row ─────────────────────────────────────────
+    total_row = {"Circle": "Grand Total"}
+    for sc in status_cols:
+        total_row[sc] = sum(entry.get(sc, 0) for entry in summary)
+
+    for col_idx, col_name in enumerate(headers, start=1):
+        cell           = ws.cell(row=row_idx, column=col_idx, value=total_row.get(col_name))
+        cell.font      = AT_TOTAL_FONT
+        cell.border    = AT_BORDER
+        cell.fill      = PatternFill("solid", start_color="D9E1F2")
+        cell.alignment = AT_LEFT if col_idx == 1 else AT_CENTER
+
+    # ── Column widths / freeze panes ───────────────────────────
+    ws.column_dimensions["A"].width = 18
+    for col_idx in range(2, len(headers) + 1):
+        ws.column_dimensions[get_column_letter(col_idx)].width = 14
+
+    ws.row_dimensions[1].height = 22
+    ws.row_dimensions[2].height = 24
+    ws.freeze_panes = "A3"
+
+
+def _write_at_summary_excel(summary, status_cols, period_label, out_filepath):
+    """
+    Write a single-sheet Excel file for the AT Summary (Circle × Status) report.
+    """
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "AT Summary"
+
+    _write_at_summary_sheet(ws, summary, status_cols, period_label)
+    wb.save(out_filepath)
+
+
+def _write_pending_status_sheet(ws, rows, status_col, date_col, period_label):
+    """
+    Write one status's pending rows into a worksheet.
+    Columns: SR_Site ID, Site ID, Circle, <status_col>, <date_col>
+    """
+    cols = ["SR_Site ID", "Site ID", "Circle", status_col, date_col]
+
+    # ── Row 1: title bar ─────────────────────────────────────────
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(cols))
+    title_cell           = ws.cell(row=1, column=1,
+                                   value=f"{status_col} Pending Report  |  {period_label}")
+    title_cell.font      = Font(name="Arial", bold=True, size=11, color="FFFFFF")
+    title_cell.fill      = AT_HEADER_FILL
+    title_cell.alignment = AT_CENTER
+
+    # ── Row 2: column headers ────────────────────────────────────
+    for col_idx, col_name in enumerate(cols, start=1):
+        cell           = ws.cell(row=2, column=col_idx, value=col_name)
+        cell.font      = AT_HEADER_FONT
+        cell.fill      = PatternFill("solid", start_color="2E75B6")
+        cell.alignment = AT_CENTER
+        cell.border    = AT_BORDER
+
+    if not rows:
+        ws.cell(row=3, column=1, value="No pending records found for the selected date range.")
+        return
+
+    # ── Data rows ────────────────────────────────────────────────
+    for row_idx, row_data in enumerate(rows, start=3):
+        row_fill = AT_ALT_FILL if row_idx % 2 == 0 else PatternFill("solid", start_color="FFFFFF")
+        for col_idx, col_name in enumerate(cols, start=1):
+            value          = row_data.get(col_name)
+            cell           = ws.cell(row=row_idx, column=col_idx, value=value)
+            cell.font      = AT_DATA_FONT
+            cell.border    = AT_BORDER
+            cell.fill      = row_fill
+            cell.alignment = AT_LEFT if col_idx in (1, 2) else AT_CENTER
+
+    # ── Column widths ─────────────────────────────────────────────
+    widths = {"SR_Site ID": 26, "Site ID": 14, "Circle": 14, status_col: 16, date_col: 14}
+    for col_idx, col_name in enumerate(cols, start=1):
+        ws.column_dimensions[get_column_letter(col_idx)].width = widths.get(col_name, 16)
+
+    ws.row_dimensions[1].height = 22
+    ws.row_dimensions[2].height = 24
+    ws.freeze_panes = "A3"
+
+
+def _write_at_pending_excel(pending_data, period_label, out_filepath):
+    """
+    Write a multi-sheet workbook — one tab per status (PAT, SAT, KAT, SCFT) —
+    each containing only that status's Pending rows.
+    """
+    wb = Workbook()
+    wb.remove(wb.active)  # drop the default blank sheet
+
+    for status_col, rows in pending_data.items():
+        date_col = f"{status_col} Date"
+        ws = wb.create_sheet(title=status_col)
+        _write_pending_status_sheet(ws, rows, status_col, date_col, period_label)
+
+    wb.save(out_filepath)
  
+# @api_view(["POST"])
+# def performance_at_srwise_summary(request):
+#     """
+#     POST /idploy/at-summary/
+ 
+#     Body:
+#     {
+#         "start_date": "2025-12-26",
+#         "end_date":   "2026-01-25"
+#     }
+ 
+#     Returns a circle-wise pivot of Pending counts per status column.
+#     Each cell = count of rows where that status == 'Pending' for that circle.
+#     """
+#     month_label = request.data.get("month", "").strip()
+#     start_str = request.data.get("start_date", "").strip()
+#     end_str   = request.data.get("end_date",   "").strip()
+
+ 
+#     if not month_label and not (start_str or end_str):
+#         return Response(
+#             {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
+#             status=status.HTTP_400_BAD_REQUEST,
+#         )
+ 
+ 
+#     df, error = _get_input_df()
+#     if error:
+#         return Response({"error": error}, status=status.HTTP_404_NOT_FOUND)
+ 
+#     df, col_error = _validate_at_columns(df)
+#     if col_error:
+#         return Response({"error": col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+#     if month_label:
+#         start_dt = _bucket_start(month_label)
+#         end_dt   = _bucket_end(month_label)
+#     else:
+#         start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+#         if err:
+#             return err
+ 
+    
+ 
+#     # ── resolve status per (SR. No., Site ID, Circle) group ─────
+#     rows = _build_at_summary(df, start_dt, end_dt)
+ 
+#     if not rows:
+#         period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+#         return Response({"error": f"No data found for range: {period_label}"},
+#                         status=status.HTTP_404_NOT_FOUND)
+ 
+#     # ── build circle × status pending pivot ─────────────────────
+#     status_cols = list(AT_STATUS_MAP.keys())   # PAT, SAT, KAT, SCFT
+ 
+#     # group resolved rows by circle
+#     from collections import defaultdict
+#     circle_map = defaultdict(list)
+#     for row in rows:
+#         circle_map[row["Circle"]].append(row)
+ 
+#     summary = []
+#     for circle in sorted(circle_map.keys()):
+#         circle_rows = circle_map[circle]
+#         entry = {"Circle": circle}
+#         for sc in status_cols:
+#             entry[sc] = sum(
+#                 1 for r in circle_rows
+#                 if str(r.get(sc, "")).strip() == "Pending"
+#             )
+#         summary.append(entry)
+ 
+#     period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+ 
+#     return Response({
+#         "status":     True,
+#         "date_range": period_label,
+#         "columns":    ["Circle"] + status_cols,
+#         "summary":    summary,
+#     }, status=status.HTTP_200_OK)
+
+
 @api_view(["POST"])
 def performance_at_srwise_summary(request):
     """
     POST /idploy/at-summary/
- 
+
     Body:
     {
         "start_date": "2025-12-26",
         "end_date":   "2026-01-25"
     }
- 
+
     Returns a circle-wise pivot of Pending counts per status column.
     Each cell = count of rows where that status == 'Pending' for that circle.
     """
     month_label = request.data.get("month", "").strip()
     start_str = request.data.get("start_date", "").strip()
     end_str   = request.data.get("end_date",   "").strip()
+    
+    
 
- 
     if not month_label and not (start_str or end_str):
         return Response(
             {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
             status=status.HTTP_400_BAD_REQUEST,
         )
- 
- 
+
+
+
     df, error = _get_input_df()
     if error:
         return Response({"error": error}, status=status.HTTP_404_NOT_FOUND)
- 
+
     df, col_error = _validate_at_columns(df)
     if col_error:
         return Response({"error": col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
     if month_label:
         start_dt = _bucket_start(month_label)
         end_dt   = _bucket_end(month_label)
+        safe_label   = month_label.replace(' ', '_')
+        out_filename = f"output_AT_Summary_Report_{safe_label}.xlsx"
     else:
         start_dt, end_dt, err = _validate_date_range(start_str, end_str)
         if err:
             return err
- 
-    
- 
+        out_filename = f"output_AT_Summary_Report_{start_str}_to_{end_str}.xlsx"
+
+    # # ── date filter ──────────────────────────────────────────────
+    # start_ts = pd.Timestamp(start_dt)
+    # end_ts   = pd.Timestamp(end_dt)
+    # mask     = (df["On Air Date"] >= start_ts) & (df["On Air Date"] <= end_ts)
+    # df_range = df[mask].copy()
+
+    # if df_range.empty:
+    #     period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+    #     return Response({"error": f"No data found for range: {period_label}"},
+    #                     status=status.HTTP_404_NOT_FOUND)
+
     # ── resolve status per (SR. No., Site ID, Circle) group ─────
     rows = _build_at_summary(df, start_dt, end_dt)
- 
+
     if not rows:
         period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
         return Response({"error": f"No data found for range: {period_label}"},
                         status=status.HTTP_404_NOT_FOUND)
- 
+
     # ── build circle × status pending pivot ─────────────────────
     status_cols = list(AT_STATUS_MAP.keys())   # PAT, SAT, KAT, SCFT
- 
+
     # group resolved rows by circle
     from collections import defaultdict
     circle_map = defaultdict(list)
     for row in rows:
         circle_map[row["Circle"]].append(row)
- 
+
     summary = []
     for circle in sorted(circle_map.keys()):
         circle_rows = circle_map[circle]
@@ -2130,14 +2364,26 @@ def performance_at_srwise_summary(request):
                 if str(r.get(sc, "")).strip() == "Pending"
             )
         summary.append(entry)
- 
+
     period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
- 
+
+    out_file = os.path.join(output_path, out_filename)
+    try:
+        _write_at_summary_excel(summary, status_cols, period_label, out_file)
+    except Exception as exc:
+        return Response({"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    download_url = request.build_absolute_uri(
+        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
+    )
+
     return Response({
         "status":     True,
         "date_range": period_label,
         "columns":    ["Circle"] + status_cols,
         "summary":    summary,
+        "download_url": download_url,
+    
     }, status=status.HTTP_200_OK)
  
 @api_view(["POST"])
@@ -2239,6 +2485,111 @@ def performance_at_sr_wise_tracking(request):
         "date_range":   period_label,
         "total_sites":  len(rows),
         "data":         rows,
+        "download_url": download_url,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def performance_at_pending_report(request):
+    """
+    POST /idploy/at-pending-report/
+
+    Body:
+    {
+        "month": "May 2026"
+    }
+    OR
+    {
+        "start_date": "2025-12-26",
+        "end_date":   "2026-01-25"
+    }
+
+    Returns pending-status rows for PAT, SAT, KAT, SCFT — both as JSON
+    and as a multi-sheet Excel workbook (one tab per status).
+    Each row: SR_Site ID, Site ID, Circle, <Status>, <Status> Date.
+    """
+    month_label = request.data.get("month", "").strip()
+    start_str   = request.data.get("start_date", "").strip()
+    end_str     = request.data.get("end_date",   "").strip()
+    circle_filter = request.data.get("circle", "").strip()
+
+    if not month_label and not (start_str or end_str):
+        return Response(
+            {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    df, error = _get_input_df()
+    if error:
+        return Response({"error": error}, status=status.HTTP_404_NOT_FOUND)
+
+    df, col_error = _validate_at_columns(df)
+    if col_error:
+        return Response({"error": col_error}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    if month_label:
+        start_dt     = _bucket_start(month_label)
+        end_dt       = _bucket_end(month_label)
+        safe_label   = month_label.replace(' ', '_')
+        out_filename = f"output_AT_Pending_Report_{safe_label}.xlsx"
+    else:
+        start_dt, end_dt, err = _validate_date_range(start_str, end_str)
+        if err:
+            return err
+        out_filename = f"output_AT_Pending_Report_{start_str}_to_{end_str}.xlsx"
+
+    period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
+
+    try:
+        rows = _build_at_summary(df, start_dt, end_dt)
+    except Exception as exc:
+        return Response({"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    if not rows:
+        return Response({"error": f"No data found for range: {period_label}"},
+                        status=status.HTTP_404_NOT_FOUND)
+
+    if circle_filter:
+        rows = [r for r in rows if r.get("Circle", "").strip() == circle_filter]
+
+    status_cols = list(AT_STATUS_MAP.keys())   # PAT, SAT, KAT, SCFT
+    out_cols    = ["SR_Site ID", "Site ID", "Circle"]
+
+    # ── split rows by status, keeping only that status's pending rows ──
+    pending_data = {}
+    counts = {}
+    for sc in status_cols:
+        date_col = f"{sc} Date"
+        cols = out_cols + [sc, date_col]
+        sc_rows = [
+            {k: r.get(k) for k in cols}
+            for r in rows
+            if str(r.get(sc, "")).strip() == "Pending"
+        ]
+        pending_data[sc] = sc_rows
+        counts[sc] = len(sc_rows)
+
+    total_pending = sum(counts.values())
+    if total_pending == 0:
+        return Response({"error": "No Pending records found for the selected date range."},
+                        status=status.HTTP_404_NOT_FOUND)
+
+    out_file = os.path.join(output_path, out_filename)
+    try:
+        _write_at_pending_excel(pending_data, period_label, out_file)
+    except Exception as exc:
+        return Response({"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    download_url = request.build_absolute_uri(
+        f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
+    )
+
+    return Response({
+        "status":       True,
+        "date_range":   period_label,
+        "counts":       counts,          # e.g. {"PAT": 9, "SAT": 3, "KAT": 5, "SCFT": 2}
+        "total_pending": total_pending,
+        "data":         pending_data,    # {"PAT": [...], "SAT": [...], "KAT": [...], "SCFT": [...]}
         "download_url": download_url,
     }, status=status.HTTP_200_OK)
 
@@ -2805,140 +3156,44 @@ def _build_graph_series(monthly_results, layer_case):
         'series':     series,
     }
 
-def get_thin_border():
-    thin = Side(style='thin')
-    return Border(left=thin, right=thin, top=thin, bottom=thin)
-
-
-
-def _build_graph_excel(monthly_results, layers, metric_type):
-    from openpyxl.chart import LineChart, Reference, Series
-
-    output_dir = os.path.join(settings.MEDIA_ROOT, 'graph_exports')
-    os.makedirs(output_dir, exist_ok=True)
-
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename  = f'graph_{metric_type}_{timestamp}.xlsx'
-    filepath  = os.path.join(output_dir, filename)
-
-    wb = Workbook()
-    wb.remove(wb.active)
-
-    header_fill = PatternFill('solid', fgColor='1F4E79')
-    header_font = Font(bold=True, color='FFFFFF', size=11)
-    thin_border = get_thin_border()
-
-    for layer in layers:
-        ws = wb.create_sheet(title=layer)
-
-        # ── Header row ───────────────────────────────────────────
-        headers = ['Month'] + GRAPH_METRICS
-        for col_idx, h in enumerate(headers, start=1):
-            cell           = ws.cell(row=1, column=col_idx, value=h)
-            cell.fill      = header_fill
-            cell.font      = header_font
-            cell.border    = thin_border
-            cell.alignment = Alignment(horizontal='center', vertical='center')
-
-        # ── Data rows ────────────────────────────────────────────
-        for row_idx, res in enumerate(monthly_results, start=2):
-            grand    = res[layer]['grand_total']
-            row_data = [res['label']] + [grand.get(m, 0.0) for m in GRAPH_METRICS]
-            for col_idx, val in enumerate(row_data, start=1):
-                cell           = ws.cell(row=row_idx, column=col_idx, value=val)
-                cell.border    = thin_border
-                cell.alignment = Alignment(horizontal='center', vertical='center')
-                if col_idx > 1:
-                    cell.number_format = '0.00'
-
-        # ── Column widths + freeze ────────────────────────────────
-        for col in ws.columns:
-            max_len = max((len(str(c.value)) for c in col if c.value), default=8)
-            ws.column_dimensions[col[0].column_letter].width = max_len + 4
-        ws.freeze_panes = 'B2'
-
-        # ── Line chart ────────────────────────────────────────────
-        num_months  = len(monthly_results)
-        num_metrics = len(GRAPH_METRICS)
-
-        chart          = LineChart()
-        chart.title    = f'{layer} — {metric_type.capitalize()} Graph'
-        chart.style    = 10
-        chart.height   = 14
-        chart.width    = 28
-        chart.grouping = 'standard'
-
-        # X-axis: metric category names from header row (cols B–F)
-        cats = Reference(ws, min_col=2, max_col=1 + num_metrics, min_row=1, max_row=1)
-
-        # One series per month row
-        for row_idx in range(2, 2 + num_months):
-            values      = Reference(ws, min_col=2, max_col=1 + num_metrics, min_row=row_idx, max_row=row_idx)
-            month_label = ws.cell(row=row_idx, column=1).value
-
-            ser               = Series(values, title=month_label)
-            ser.smooth        = False
-            ser.marker.symbol = 'circle'
-            ser.marker.size   = 5
-            chart.series.append(ser)
-
-        chart.set_categories(cats)
-
-        # Data labels on all points
-        from openpyxl.chart.label import DataLabelList
-
-        chart.dataLabels                = DataLabelList()
-        chart.dataLabels.showVal        = True
-        chart.dataLabels.showLegendKey  = False
-        chart.dataLabels.showCatName    = False
-        chart.dataLabels.showSerName    = False
-        chart.dataLabels.showPercent    = False
-        chart.dataLabels.showBubbleSize = False
-
-        chart.legend.position = 'b'
-
-        chart_anchor = f'A{num_months + 3}'
-        ws.add_chart(chart, chart_anchor)
-
-    wb.save(filepath)
-    return filepath
 
 
 
 @api_view(['POST'])
 def generate_offered_graph(request):
-    
     """
     POST /idploy/generate-offered-graph/
 
-    Returns single-month chart data + Excel download URL for the Offered report.
+    Option A — single month:
+    { "month": "Dec 2025", "layer": "4G" }
 
-    Request:
-    {
-        "month": "Jun 2026",          ← required; maps to May 26 – Jun 25 bucket
-        "layer": "4G"                 ← optional; "4G" | "5G" | "4G+5G" (default: all)
-    }
+    Option B — multiple months in one go:
+    { "month": ["Dec 2025", "Jan 2026", "Feb 2026"], "layer": "4G" }
+
+    Option C — omit month to get ALL available months:
+    { "layer": "4G" }
 
     Response:
     {
         "status": true,
         "metric_type": "offered",
         "layer": "4G",
+        "available_months": ["Dec 2025", "Jan 2026", "Feb 2026"],
         "graph_data": {
             "categories": ["<12%", "<13-21%", "<22-30%", ">30days%", "Pending%"],
             "series": [
                 {
-                    "name": "Jun 2026",
-                    "start": "26-May-2026",
-                    "end": "25-Jun-2026",
+                    "name": "Dec 2025",
+                    "start": "26-Nov-2025",
+                    "end": "25-Dec-2025",
                     "data": [23.4, 27.9, 28.3, 28.3, 71.7]
-                }
+                },
+                ...
             ]
-        },
-        "download_url": "/media/graph_exports/graph_offered_20260603_141022.xlsx"
+        }
     }
     """
-    return _generate_graph_response(request, metric_type='offered')
+    return _generate_all_months_graph_response(request, metric_type='offered')
 
 
 @api_view(['POST'])
@@ -2948,33 +3203,21 @@ def generate_performance_graph(request):
 
     Same interface as generate-offered-graph but uses
     'Performance AT Status Date' for diff calculation.
-
-    Request:
-    {
-        "month": "Jun 2026",
-        "layer": "5G"        ← optional
-    }
     """
-    return _generate_graph_response(request, metric_type='performance')
+    return _generate_all_months_graph_response(request, metric_type='performance')
 
 
-def _generate_graph_response(request, metric_type):
-    month_input  = request.data.get('month', '')   # can be str or list
+def _generate_all_months_graph_response(request, metric_type):
+    month_input  = request.data.get('month', '')
     layer_filter = request.data.get('layer', '').strip()
 
-    # ── Normalise month input to a list ─────────────────────────
+    # ── Normalise month input ────────────────────────────────────
     if isinstance(month_input, str):
         months = [m.strip() for m in month_input.split(',') if m.strip()]
     elif isinstance(month_input, list):
         months = [m.strip() for m in month_input if m.strip()]
     else:
         months = []
-
-    if not months:
-        return Response(
-            {'error': 'Provide {"month": "Mon YYYY"} or {"month": ["Mon YYYY", "Mon YYYY"]}.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
 
     valid_layers = ['4G', '5G', '4G+5G']
     if layer_filter and layer_filter not in valid_layers:
@@ -2983,20 +3226,19 @@ def _generate_graph_response(request, metric_type):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # ── Parse all months → buckets ───────────────────────────────
-    buckets = []
-    for m in months:
-        try:
-            buckets.append(_month_to_bucket(m))
-        except ValueError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
     # ── Load data once ───────────────────────────────────────────
     df, error = _get_input_df()
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
 
-    df_full = None
+    # ── Prepare df based on metric_type ─────────────────────────
+    df_full  = None
+    date_col = (
+        'Performance AT Offered Date'
+        if metric_type == 'offered'
+        else 'Performance AT Status Date'
+    )
+
     if metric_type == 'performance':
         if 'Performance AT Status' not in df.columns:
             return Response(
@@ -3006,13 +3248,32 @@ def _generate_graph_response(request, metric_type):
         df['Performance AT Status'] = df['Performance AT Status'].astype(str).str.strip()
         df_full = df.copy()
 
-    date_col = (
-        'Performance AT Offered Date' if metric_type == 'offered'
-        else 'Performance AT Status Date'
-    )
+    # ── Resolve which months to process ─────────────────────────
+    # If month provided → use those, else auto-discover all
+    if months:
+        buckets = []
+        for m in months:
+            try:
+                buckets.append(_month_to_bucket(m))
+            except ValueError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        available_months = [b['label'] for b in buckets]
+    else:
+        try:
+            available_months = _get_available_months(df)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not available_months:
+            return Response(
+                {'error': 'No month data found in uploaded file.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        buckets = [_month_to_bucket(m) for m in available_months]
+
     layers_to_run = [layer_filter] if layer_filter else valid_layers
 
-    # ── Process each bucket separately ──────────────────────────
+    # ── Process all buckets in one pass ─────────────────────────
     monthly_results = []
     for bucket in buckets:
         bucket_data = {
@@ -3047,26 +3308,14 @@ def _generate_graph_response(request, metric_type):
             for layer in valid_layers
         }
 
-    # ── Generate Excel ───────────────────────────────────────────
-    try:
-        filepath     = _build_graph_excel(monthly_results, layers_to_run, metric_type)
-        rel_path     = os.path.relpath(filepath, settings.MEDIA_ROOT)
-        download_url = request.build_absolute_uri(
-            os.path.join(settings.MEDIA_URL, rel_path).replace("\\", "/")
-        )
-    except Exception as e:
-        print(f"Excel generation error: {e}")
-        import traceback
-        traceback.print_exc()
-        download_url = None
-
     return Response({
-        'status':       True,
-        'metric_type':  metric_type,
-        'layer':        layer_filter or 'all',
-        'graph_data':   graph_data,
-        'download_url': download_url,
+        'status':           True,
+        'metric_type':      metric_type,
+        'layer':            layer_filter or 'all',
+        'available_months': available_months,
+        'graph_data':       graph_data,
     }, status=status.HTTP_200_OK)
+
 
 
 #________________________________________________________
@@ -3093,23 +3342,26 @@ def _build_scft_graph_series(monthly_results, layer_case):
 def _generate_scft_graph_response(request, metric_type):
     """
     metric_type: 'offered' | 'performance'
+
+    Option A — single month:
+    { "month": "Dec 2025", "layer": "4G" }
+
+    Option B — multiple months in one go:
+    { "month": ["Dec 2025", "Jan 2026", "Feb 2026"], "layer": "4G" }
+
+    Option C — omit month to get ALL available months:
+    { "layer": "4G" }
     """
     month_input  = request.data.get('month', '')
     layer_filter = request.data.get('layer', '').strip()
 
-    # ── Normalise month input to list ────────────────────────────
+    # ── Normalise month input ────────────────────────────────────
     if isinstance(month_input, str):
         months = [m.strip() for m in month_input.split(',') if m.strip()]
     elif isinstance(month_input, list):
         months = [m.strip() for m in month_input if m.strip()]
     else:
         months = []
-
-    if not months:
-        return Response(
-            {'error': 'Provide {"month": "Mon YYYY"} or {"month": ["Mon YYYY", "Mon YYYY"]}.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
 
     valid_layers = ['4G', '5G', '4G+5G']
     if layer_filter and layer_filter not in valid_layers:
@@ -3118,15 +3370,7 @@ def _generate_scft_graph_response(request, metric_type):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # ── Parse months → buckets ───────────────────────────────────
-    buckets = []
-    for m in months:
-        try:
-            buckets.append(_month_to_bucket(m))
-        except ValueError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    # ── Load data ────────────────────────────────────────────────
+    # ── Load data once ───────────────────────────────────────────
     df, error = _get_input_df()
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
@@ -3137,11 +3381,8 @@ def _generate_scft_graph_response(request, metric_type):
             status=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
 
-    # ── Set date_col and prepare df based on metric_type ─────────
-    if metric_type == 'offered':
-        date_col = 'SCFT AT Offerred Date'
-    else:
-        date_col = 'SCFT AT Status Date'
+    # ── Set date_col based on metric_type ────────────────────────
+    date_col = 'SCFT AT Offerred Date' if metric_type == 'offered' else 'SCFT AT Status Date'
 
     df, col_error = _validate_scft_tat_col(df, date_col)
     if col_error:
@@ -3151,16 +3392,39 @@ def _generate_scft_graph_response(request, metric_type):
     df_full = df.copy()
 
     if metric_type == 'offered':
-        RANGE_STATUSES = {'Accepted', 'Acceptance Pending'}
-        df_range = df[df['SCFT AT Status'].isin(RANGE_STATUSES)].copy()
+        RANGE_STATUSES   = {'Accepted', 'Acceptance Pending'}
+        df_range         = df[df['SCFT AT Status'].isin(RANGE_STATUSES)].copy()
         pending_statuses = {'Pending', 'Rejected'}
     else:
         df_range         = df[df['SCFT AT Status'] == 'Accepted'].copy()
-        pending_statuses = None   # status mode: anything != Accepted is pending
+        pending_statuses = None
+
+    # ── Resolve which months to process ─────────────────────────
+    # If month provided → use those, else auto-discover all
+    if months:
+        buckets = []
+        for m in months:
+            try:
+                buckets.append(_month_to_bucket(m))
+            except ValueError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        available_months = [b['label'] for b in buckets]
+    else:
+        try:
+            available_months = _get_available_months(df)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not available_months:
+            return Response(
+                {'error': 'No month data found in uploaded file.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        buckets = [_month_to_bucket(m) for m in available_months]
 
     layers_to_run = [layer_filter] if layer_filter else valid_layers
 
-    # ── Process each bucket separately ───────────────────────────
+    # ── Process all buckets in one pass ─────────────────────────
     monthly_results = []
     for bucket in buckets:
         bucket_data = {
@@ -3186,7 +3450,7 @@ def _generate_scft_graph_response(request, metric_type):
                 }
         monthly_results.append(bucket_data)
 
-    # ── Build graph payload ───────────────────────────────────────
+    # ── Build graph payload ──────────────────────────────────────
     if layer_filter:
         graph_data = _build_scft_graph_series(monthly_results, layer_filter)
     else:
@@ -3196,10 +3460,11 @@ def _generate_scft_graph_response(request, metric_type):
         }
 
     return Response({
-        'status':      True,
-        'metric_type': metric_type,
-        'layer':       layer_filter or 'all',
-        'graph_data':  graph_data,
+        'status':           True,
+        'metric_type':      metric_type,
+        'layer':            layer_filter or 'all',
+        'available_months': available_months,
+        'graph_data':       graph_data,
     }, status=status.HTTP_200_OK)
 
 
@@ -3208,11 +3473,11 @@ def generate_scft_offered_graph(request):
     """
     POST /idploy/generate-scft-offered-graph/
 
-    Request:
-    {
-        "month": ["Apr 2026", "May 2026"],
-        "layer": "4G"     <- optional
-    }
+    Option A — specific months:
+    { "month": ["Dec 2025", "Jan 2026"], "layer": "4G" }
+
+    Option B — all available months (page load):
+    { "layer": "4G" }
     """
     return _generate_scft_graph_response(request, metric_type='offered')
 
@@ -3222,11 +3487,11 @@ def generate_scft_performance_graph(request):
     """
     POST /idploy/generate-scft-performance-graph/
 
-    Request:
-    {
-        "month": ["Apr 2026", "May 2026"],
-        "layer": "5G"     <- optional
-    }
+    Option A — specific months:
+    { "month": ["Dec 2025", "Jan 2026"], "layer": "5G" }
+
+    Option B — all available months (page load):
+    { "layer": "5G" }
     """
     return _generate_scft_graph_response(request, metric_type='performance')
 #--------------------------------------------------------------------------------------------------------------
@@ -3240,11 +3505,8 @@ def generate_scft_performance_graph(request):
 CIRCLE_GRAPH_METRICS = ['<12%', '<13-21%', '<22-30%', '>30days%', 'Pending%']
 
 
+
 def _build_circle_graph_series(monthly_results, layer_case, circles):
-    """
-    Convert monthly results into circle-wise chart-ready series.
-    Each circle has data = [<12%, <13-21%, <22-30%, >30days%, Pending%]
-    """
     series = []
     for res in monthly_results:
         layer_result = res[layer_case]
@@ -3268,14 +3530,16 @@ def _build_circle_graph_series(monthly_results, layer_case, circles):
 
 def _generate_circle_graph_response(request, metric_type):
     """
-    Shared handler for circle-wise offered / performance graph endpoints.
+    metric_type: 'offered' | 'performance'
 
-    Request body:
-    {
-        "month":   "Jun 2026"           ← str or list of month labels
-        "layer":   "4G"                 ← optional; default = all
-        "circles": ["MH", "GJ", "AP"]  ← optional; default = all circles in data
-    }
+    Option A — single month:
+    { "month": "Dec 2025", "layer": "4G", "circles": ["MH", "GJ"] }
+
+    Option B — multiple months in one go:
+    { "month": ["Dec 2025", "Jan 2026", "Feb 2026"], "layer": "4G" }
+
+    Option C — omit month to get ALL available months:
+    { "layer": "4G", "circles": ["MH", "GJ"] }
     """
     month_input   = request.data.get('month', '')
     layer_filter  = request.data.get('layer', '').strip()
@@ -3289,12 +3553,6 @@ def _generate_circle_graph_response(request, metric_type):
     else:
         months = []
 
-    if not months:
-        return Response(
-            {'error': 'Provide {"month": "Mon YYYY"} or {"month": ["Mon YYYY", ...]}.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
     valid_layers = ['4G', '5G', '4G+5G']
     if layer_filter and layer_filter not in valid_layers:
         return Response(
@@ -3302,20 +3560,19 @@ def _generate_circle_graph_response(request, metric_type):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # ── Parse months → buckets ───────────────────────────────────
-    buckets = []
-    for m in months:
-        try:
-            buckets.append(_month_to_bucket(m))
-        except ValueError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    # ── Load data ────────────────────────────────────────────────
+    # ── Load data once ───────────────────────────────────────────
     df, error = _get_input_df()
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
 
-    df_full = None
+    # ── Prepare df based on metric_type ─────────────────────────
+    df_full  = None
+    date_col = (
+        'Performance AT Offered Date'
+        if metric_type == 'offered'
+        else 'Performance AT Status Date'
+    )
+
     if metric_type == 'performance':
         if 'Performance AT Status' not in df.columns:
             return Response(
@@ -3325,14 +3582,31 @@ def _generate_circle_graph_response(request, metric_type):
         df['Performance AT Status'] = df['Performance AT Status'].astype(str).str.strip()
         df_full = df.copy()
 
-    date_col = (
-        'Performance AT Offered Date'
-        if metric_type == 'offered'
-        else 'Performance AT Status Date'
-    )
+    # ── Resolve which months to process ─────────────────────────
+    if months:
+        buckets = []
+        for m in months:
+            try:
+                buckets.append(_month_to_bucket(m))
+            except ValueError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        available_months = [b['label'] for b in buckets]
+    else:
+        try:
+            available_months = _get_available_months(df)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not available_months:
+            return Response(
+                {'error': 'No month data found in uploaded file.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        buckets = [_month_to_bucket(m) for m in available_months]
+
     layers_to_run = [layer_filter] if layer_filter else valid_layers
 
-    # ── Process each bucket ──────────────────────────────────────
+    # ── Process all buckets in one pass ─────────────────────────
     monthly_results  = []
     all_circles_seen = set()
 
@@ -3384,11 +3658,12 @@ def _generate_circle_graph_response(request, metric_type):
         }
 
     return Response({
-        'status':      True,
-        'metric_type': metric_type,
-        'layer':       layer_filter or 'all',
-        'circles':     circles,
-        'graph_data':  graph_data,
+        'status':           True,
+        'metric_type':      metric_type,
+        'layer':            layer_filter or 'all',
+        'available_months': available_months,
+        'circles':          circles,
+        'graph_data':       graph_data,
     }, status=status.HTTP_200_OK)
 
 
@@ -3397,35 +3672,11 @@ def generate_offered_circle_graph(request):
     """
     POST /idploy/generate-offered-circle-graph/
 
-    Request:
-    {
-        "month":   "Jun 2026",
-        "layer":   "4G",                ← optional
-        "circles": ["MH", "GJ", "AP"]  ← optional; omit for all circles
-    }
+    Option A — specific months:
+    { "month": ["Dec 2025", "Jan 2026"], "layer": "4G", "circles": ["MH", "GJ"] }
 
-    Response:
-    {
-        "status": true,
-        "metric_type": "offered",
-        "layer": "4G",
-        "circles": ["AP", "GJ", "MH"],
-        "graph_data": {
-            "categories": ["<12%", "<13-21%", "<22-30%", ">30days%", "Pending%"],
-            "series": [
-                {
-                    "name": "Jun 2026",
-                    "start": "26-May-2026",
-                    "end": "25-Jun-2026",
-                    "circles": {
-                        "AP": [45.0, 60.0, 70.0, 80.0, 20.0],
-                        "GJ": [30.0, 50.0, 65.0, 75.0, 35.0],
-                        "MH": [55.0, 68.0, 72.0, 82.0, 18.0]
-                    }
-                }
-            ]
-        }
-    }
+    Option B — all available months (page load):
+    { "layer": "4G", "circles": ["MH", "GJ"] }
     """
     return _generate_circle_graph_response(request, metric_type='offered')
 
@@ -3435,15 +3686,11 @@ def generate_performance_circle_graph(request):
     """
     POST /idploy/generate-performance-circle-graph/
 
-    Same interface as generate-offered-circle-graph
-    but uses 'Performance AT Status Date' for diff calculation.
+    Option A — specific months:
+    { "month": ["Dec 2025", "Jan 2026"], "layer": "5G", "circles": ["MH", "GJ"] }
 
-    Request:
-    {
-        "month":   "Jun 2026",
-        "layer":   "5G",               ← optional
-        "circles": ["MH", "GJ"]        ← optional
-    }
+    Option B — all available months (page load):
+    { "layer": "5G" }
     """
     return _generate_circle_graph_response(request, metric_type='performance')
 
@@ -3452,29 +3699,13 @@ def generate_performance_circle_graph(request):
 # SCFT CIRCLE-WISE GRAPH — Offered & Performance
 # ─────────────────────────────────────────────
 
+
+
 SCFT_CIRCLE_GRAPH_METRICS = ['0-3days%', '3-5days%', '5-7days%', '>7days%', 'Pending%']
 
 
-def _build_scft_circle_graph_series(monthly_results, layer_case, circles):
-    """
-    Convert monthly SCFT results into circle-wise chart-ready series.
 
-    Returns:
-    {
-        "categories": ["0-3days%", "3-5days%", "5-7days%", ">7days%", "Pending%"],
-        "series": [
-            {
-                "name": "Jun 2026",
-                "start": "26-May-2026",
-                "end": "25-Jun-2026",
-                "circles": {
-                    "MH": [45.0, 60.0, 70.0, 80.0, 20.0],
-                    "GJ": [30.0, 50.0, 65.0, 75.0, 35.0]
-                }
-            }
-        ]
-    }
-    """
+def _build_scft_circle_graph_series(monthly_results, layer_case, circles):
     series = []
     for res in monthly_results:
         layer_result = res[layer_case]
@@ -3498,14 +3729,16 @@ def _build_scft_circle_graph_series(monthly_results, layer_case, circles):
 
 def _generate_scft_circle_graph_response(request, metric_type):
     """
-    Shared handler for SCFT circle-wise offered / performance graph endpoints.
+    metric_type: 'offered' | 'performance'
 
-    Request body:
-    {
-        "month":   "Jun 2026"           ← str or list of month labels
-        "layer":   "4G"                 ← optional; default = all
-        "circles": ["MH", "GJ", "AP"]  ← optional; default = all circles in data
-    }
+    Option A — single month:
+    { "month": "Dec 2025", "layer": "4G", "circles": ["MH", "GJ"] }
+
+    Option B — multiple months in one go:
+    { "month": ["Dec 2025", "Jan 2026", "Feb 2026"], "layer": "4G" }
+
+    Option C — omit month to get ALL available months:
+    { "layer": "4G", "circles": ["MH", "GJ"] }
     """
     month_input   = request.data.get('month', '')
     layer_filter  = request.data.get('layer', '').strip()
@@ -3519,12 +3752,6 @@ def _generate_scft_circle_graph_response(request, metric_type):
     else:
         months = []
 
-    if not months:
-        return Response(
-            {'error': 'Provide {"month": "Mon YYYY"} or {"month": ["Mon YYYY", ...]}.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
     valid_layers = ['4G', '5G', '4G+5G']
     if layer_filter and layer_filter not in valid_layers:
         return Response(
@@ -3532,15 +3759,7 @@ def _generate_scft_circle_graph_response(request, metric_type):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # ── Parse months → buckets ───────────────────────────────────
-    buckets = []
-    for m in months:
-        try:
-            buckets.append(_month_to_bucket(m))
-        except ValueError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    # ── Load data ────────────────────────────────────────────────
+    # ── Load data once ───────────────────────────────────────────
     df, error = _get_input_df()
     if error:
         return Response({'error': error}, status=status.HTTP_404_NOT_FOUND)
@@ -3551,11 +3770,8 @@ def _generate_scft_circle_graph_response(request, metric_type):
             status=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
 
-    # ── Set date_col + prepare df based on metric_type ───────────
-    if metric_type == 'offered':
-        date_col = 'SCFT AT Offerred Date'
-    else:
-        date_col = 'SCFT AT Status Date'
+    # ── Set date_col based on metric_type ────────────────────────
+    date_col = 'SCFT AT Offerred Date' if metric_type == 'offered' else 'SCFT AT Status Date'
 
     df, col_error = _validate_scft_tat_col(df, date_col)
     if col_error:
@@ -3570,11 +3786,33 @@ def _generate_scft_circle_graph_response(request, metric_type):
         pending_statuses = {'Pending', 'Rejected'}
     else:
         df_range         = df[df['SCFT AT Status'] == 'Accepted'].copy()
-        pending_statuses = None   # anything != Accepted is pending
+        pending_statuses = None
+
+    # ── Resolve which months to process ─────────────────────────
+    if months:
+        buckets = []
+        for m in months:
+            try:
+                buckets.append(_month_to_bucket(m))
+            except ValueError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        available_months = [b['label'] for b in buckets]
+    else:
+        try:
+            available_months = _get_available_months(df)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not available_months:
+            return Response(
+                {'error': 'No month data found in uploaded file.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        buckets = [_month_to_bucket(m) for m in available_months]
 
     layers_to_run = [layer_filter] if layer_filter else valid_layers
 
-    # ── Process each bucket ──────────────────────────────────────
+    # ── Process all buckets in one pass ─────────────────────────
     monthly_results  = []
     all_circles_seen = set()
 
@@ -3626,11 +3864,12 @@ def _generate_scft_circle_graph_response(request, metric_type):
         }
 
     return Response({
-        'status':      True,
-        'metric_type': metric_type,
-        'layer':       layer_filter or 'all',
-        'circles':     circles,
-        'graph_data':  graph_data,
+        'status':           True,
+        'metric_type':      metric_type,
+        'layer':            layer_filter or 'all',
+        'available_months': available_months,
+        'circles':          circles,
+        'graph_data':       graph_data,
     }, status=status.HTTP_200_OK)
 
 
@@ -3639,35 +3878,11 @@ def generate_scft_offered_circle_graph(request):
     """
     POST /idploy/generate-scft-offered-circle-graph/
 
-    Request:
-    {
-        "month":   "Jun 2026",
-        "layer":   "4G",                ← optional
-        "circles": ["MH", "GJ", "AP"]  ← optional; omit for all circles
-    }
+    Option A — specific months:
+    { "month": ["Dec 2025", "Jan 2026"], "layer": "4G", "circles": ["MH", "GJ"] }
 
-    Response:
-    {
-        "status": true,
-        "metric_type": "offered",
-        "layer": "4G",
-        "circles": ["AP", "GJ", "MH"],
-        "graph_data": {
-            "categories": ["0-3days%", "3-5days%", "5-7days%", ">7days%", "Pending%"],
-            "series": [
-                {
-                    "name": "Jun 2026",
-                    "start": "26-May-2026",
-                    "end": "25-Jun-2026",
-                    "circles": {
-                        "AP": [80.0, 85.0, 90.0, 95.0, 5.0],
-                        "GJ": [70.0, 78.0, 83.0, 88.0, 12.0],
-                        "MH": [75.0, 82.0, 87.0, 92.0, 8.0]
-                    }
-                }
-            ]
-        }
-    }
+    Option B — all available months (page load):
+    { "layer": "4G", "circles": ["MH", "GJ"] }
     """
     return _generate_scft_circle_graph_response(request, metric_type='offered')
 
@@ -3677,16 +3892,11 @@ def generate_scft_performance_circle_graph(request):
     """
     POST /idploy/generate-scft-performance-circle-graph/
 
-    Same interface as generate-scft-offered-circle-graph
-    but uses 'SCFT AT Status Date' for diff calculation
-    and only Accepted rows for TAT ranges.
+    Option A — specific months:
+    { "month": ["Dec 2025", "Jan 2026"], "layer": "5G", "circles": ["MH", "GJ"] }
 
-    Request:
-    {
-        "month":   "Jun 2026",
-        "layer":   "5G",               ← optional
-        "circles": ["MH", "GJ"]        ← optional
-    }
+    Option B — all available months (page load):
+    { "layer": "5G" }
     """
     return _generate_scft_circle_graph_response(request, metric_type='performance')
 

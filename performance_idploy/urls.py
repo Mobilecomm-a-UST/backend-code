@@ -23,5 +23,5 @@ urlpatterns = [
     path('generate-scft-offered-circle-graph/', generate_scft_offered_circle_graph),
     path('generate-scft-performance-circle-graph/', generate_scft_performance_circle_graph),
     path('cleanup/',  cleanup),
-
+    path("performance-at-pending-report/",performance_at_pending_report),
 ]
