@@ -469,7 +469,35 @@ def nokia_slicing_dump(request):
                     })
 
             print("NRBTS FOUND ------------------")
+            
+            # -------- actVoNRPrioDuringHOPrep --------
+            for lst in (
+                mo.findall(".//ns:list[@name='actVoNRPrioDuringHOPrep']", ns)
+                if ns else
+                mo.findall(".//list[@name='actVoNRPrioDuringHOPrep']")
+            ):
+                for p in lst.findall("ns:p", ns) if ns else lst.findall("p"):
+                    dumy_data.append({
+                        "MO": "NRBTS",
+                        "DistName": dist_name,
+                        "Parameter": "actVoNRPrioDuringHOPrep",
+                        "value": tf_to_01(p.text)
+                    })
 
+
+            # -------- actVoiceFallbackDuringHOPrep --------
+            for lst in (
+                mo.findall(".//ns:list[@name='actVoiceFallbackDuringHOPrep']", ns)
+                if ns else
+                mo.findall(".//list[@name='actVoiceFallbackDuringHOPrep']")
+            ):
+                for p in lst.findall("ns:p", ns) if ns else lst.findall("p"):
+                    dumy_data.append({
+                        "MO": "NRBTS",
+                        "DistName": dist_name,
+                        "Parameter": "actVoiceFallbackDuringHOPrep",
+                        "value": tf_to_01(p.text)
+                    })
         
 
         elif mo_class == "com.nokia.srbts.nrbts:NRCELLGRP":
@@ -1528,7 +1556,7 @@ def nokia_slicing_dump(request):
             group_5_ids={4}
 
             group_1_params={"schedulBSD"}
-            group_2_params={"schedulBSD"}
+            group_2_params={"schedulBSD","maxUlHarqTxDrb"}
             group_3_params={"schedulBSD"}
             group_4_params={"schedulBSD"}
             group_5_params={'lcgid','maxDlHarqTxDrb','prioritisedBitRate','schedulPrio','nbrDl','nbrUl'}
@@ -1604,7 +1632,8 @@ def nokia_slicing_dump(request):
                     "tReorderingDl",
                     "tReorderingUl",
                     "maxDlHarqTxDrb",
-                    "maxUlHarqTxDrb"
+                    "maxUlHarqTxDrb",
+                    "pdcpsnlength"
                 }
             }
 
@@ -1625,43 +1654,66 @@ def nokia_slicing_dump(request):
                     }) 
         
 
-        elif mo_class == "NOKLTE:NRMEASDPR":
+        elif mo_class == "NOKLTE:NRDCDPR":
             dist_name = mo.attrib.get("distName", "")
 
-            # -------- Direct Parameters --------
-            required_params = {
-                "measgapenablednrmeas",
-                "retrytimerb1nr",
-                "supervisiontimerb1nr"
+            required_in_nrdcdpr = {
+                "method",
+                "actB1NrBeamMeas",
+                "allowedBcSelectMethod",
+                "dlPathlossChg",
+                "enDCpMaxEUTRApowerOffset",
+                "enDCpMaxNRpowerOffset",
+                "tPeriodicPhr",
+                "tProhibitPhr",
             }
 
-            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
-                name = p.attrib.get("name", "").strip()
+            required_in_nrdcdpr_lower = {x.lower() for x in required_in_nrdcdpr}
 
-                if name.lower() in required_params:
+            # Direct parameters
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name")
+
+                if name and name.lower() in required_in_nrdcdpr_lower:
                     dumy_data.append({
-                        "MO": "NRMEASDPR",
+                        "MO": "NRDCDPR",
                         "DistName": dist_name,
                         "Parameter": name.lower(),
                         "value": tf_to_01(p.text)
                     })
 
-            # -------- nrQuantityConfig --------
-            for item in (
-                mo.findall(".//ns:list[@name='nrQuantityConfig']/ns:item", ns)
-                if ns else
-                mo.findall(".//list[@name='nrQuantityConfig']/item")
-            ):
-
+            # Parameters inside list/item
+            for item in mo.findall(".//ns:item", ns) if ns else mo.findall(".//item"):
                 for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    name = p.attrib.get("name")
 
-                    if p.attrib.get("name") == "filterCoefficientRsrp":
+                    if name and name.lower() in required_in_nrdcdpr_lower:
                         dumy_data.append({
-                            "MO": "NRMEASDPR",
+                            "MO": "NRDCDPR",
                             "DistName": dist_name,
-                            "Parameter": "filtercoefficientrsrp",
+                            "Parameter": name.lower(),
                             "value": tf_to_01(p.text)
                         })
+
+        elif mo_class == "com.nokia.srbts.nrbts:NRSYSINFO_PROFILE_NSA":
+            dist_name = mo.attrib.get("distName", "")
+
+            required_in = {
+                "systemInformationTargetRate",
+            }
+
+            required_in_lower = {x.lower() for x in required_in}
+
+            for p in (mo.findall("ns:p", ns) if ns else mo.findall("p")):
+                name = p.attrib.get("name", "").lower()
+
+                if name in required_in_lower:
+                    dumy_data.append({
+                        "MO": "NRSYSINFO_PROFILE_NSA",
+                        "DistName": dist_name,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
 
 
         #  for classs NRDRB_RLC_AM-----   
@@ -2606,13 +2658,29 @@ def nokia_slicing_dump(request):
                         })
 
         elif mo_class == "com.nokia.srbts.nrbts:NRSYSINFO_PROFILE":
-            required_in_nrsysinfo_profile = {
-                "sibPeriodicity",
-                "sibType",
+            dist_name = mo.attrib.get("distName", "")
+            # -------- Root level parameters --------
+            required_root = {
                 "systeminformationtargetrate",
             }
 
-            # sibSchedulingList
+            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+                name = p.attrib.get("name", "").lower()
+
+                if name in required_root:
+                    dumy_data.append({
+                        "MO": "NRSYSINFO_PROFILE",
+                        "DistName": dist_name,
+                        "Parameter": name,
+                        "value": tf_to_01(p.text)
+                    })
+
+            # -------- sibSchedulingList parameters --------
+            required_sib = {
+                "sibperiodicity",
+                "sibtype",
+            }
+
             for item in (
                 mo.findall(".//ns:list[@name='sibSchedulingList']/ns:item", ns)
                 if ns else
@@ -2621,16 +2689,15 @@ def nokia_slicing_dump(request):
 
                 for p in item.findall("ns:p", ns) if ns else item.findall("p"):
 
-                    name = p.attrib.get("name")
+                    name = p.attrib.get("name", "").lower()
 
-                    if name in required_in_nrsysinfo_profile:
+                    if name in required_sib:
                         dumy_data.append({
                             "MO": "NRSYSINFO_PROFILE",
                             "DistName": dist_name,
-                            "Parameter": f"sibSchedulingList@{name}".lower(),
+                            "Parameter": f"sibschedulinglist@{name}",
                             "value": tf_to_01(p.text)
-                        }) 
-        
+                        })
 
         elif mo_class == "com.nokia.srbts.nrbts:NRSYSINFO_PROFILE":
             dist_name = mo.attrib.get("distName", "")
@@ -3172,6 +3239,7 @@ def nokia_slicing_dump(request):
                 "actperiodicb1nrmeas",
                 "dlcaminpcellcqiqci1",
                 "ulcaminpcellsinrqci1",
+                "actmicrodtx"
             }
 
             required_in_lncel_lower = {x.lower() for x in required_in_lncel}

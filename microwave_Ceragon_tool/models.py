@@ -7,3 +7,9 @@ class Microwavepara(models.Model):
 
     def __str__(self):
         return f"{self.idu_model} - {self.parameter}"
+    
+
+class CircleServerIP(models.Model):
+    circle = models.CharField(max_length=20)
+    ip = models.GenericIPAddressField()
+    is_active = models.BooleanField(default=True)

@@ -3,18 +3,23 @@ from openpyxl.utils import get_column_letter
 import pandas as pd
 import re
 
+from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+
+
 def create_config_report(ws, data):
 
     # ---------- Styles ----------
-    header_fill = PatternFill("solid", fgColor="1F4E78")
+    header_fill = PatternFill("solid", fgColor="215967")
     header_font = Font(color="FFFFFF", bold=True, name="Calibri", size=10)
 
     ok_fill = PatternFill("solid", fgColor="00B050")
     notok_fill = PatternFill("solid", fgColor="FF0000")
-    na_fill = PatternFill("solid", fgColor="FFD966")
+    manual_fill = PatternFill("solid", fgColor="FFD966")
 
     ok_font = Font(color="FFFFFF", bold=True)
     notok_font = Font(color="FFFFFF", bold=True)
+    manual_font = Font(color="000000", bold=True)
 
     normal_font = Font(name="Calibri", size=10)
 
@@ -23,7 +28,16 @@ def create_config_report(ws, data):
     thin = Side(style="thin", color="D9D9D9")
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
-    num_cols = len(data[0])
+    # ---------- KEY COLUMNS ----------
+    def normalize(text):
+        return " ".join(str(text).strip().upper().split())
+
+    key_cols = [
+        "Parameter",
+        "MW Plan Id",
+        "Link ID (Site ID A - Site ID B and Site ID B - Site ID A)"
+    ]
+    key_cols = [normalize(k) for k in key_cols]
 
     # ---------- HEADER ----------
     for col_idx, header in enumerate(data[0], 1):
@@ -41,32 +55,44 @@ def create_config_report(ws, data):
 
             cell = ws.cell(row=row_idx, column=col_idx, value=value)
 
-            val = str(value).strip().upper() if value is not None else ""
+            val = str(value).strip().upper() if value else ""
 
-            cell.alignment = center
+            header_value = normalize(data[0][col_idx - 1])
+
             cell.border = border
-            cell.font = normal_font
 
-            # ---------- Status column ----------
-            if col_idx == num_cols:
+            # ---------- KEY COLUMN ----------
+            is_key_col = header_value in key_cols
+
+            if is_key_col:
+                cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+                cell.font = Font(name="Calibri", size=10, bold=True, color="000000")
+                cell.fill = PatternFill("solid", fgColor="FFF2CC")
+            else:
+                cell.alignment = center
+                cell.font = normal_font
+
+            # ---------- REMARK COLUMN ----------
+            if str(data[0][col_idx - 1]).strip().upper().startswith("REMARK"):
 
                 if val == "OK":
                     cell.fill = ok_fill
                     cell.font = ok_font
 
-                elif val in ["NOT OK", "NOT FOUND"]:
+                elif val in ["NOT OK", "NOT FOUND", "NOK"]:
                     cell.fill = notok_fill
                     cell.font = notok_font
 
-            # ---------- NA ----------sss
+                # elif val == "MANUAL":
+                #     cell.fill = manual_fill
+                #     cell.font = manual_font
 
         ws.row_dimensions[row_idx].height = 20
 
-    # ---------- FIX COLUMN WIDTH ----------
-    ws.column_dimensions["A"].width = 45  # Parameter
-    ws.column_dimensions["B"].width = 45  # Dump Value
+    # ---------- COLUMN WIDTH ----------
+    ws.column_dimensions["A"].width = 45
+    ws.column_dimensions["B"].width = 45
 
-    # ---------- AUTO WIDTH FOR OTHERS ----------
     for col in ws.columns:
         col_letter = get_column_letter(col[0].column)
         max_len = 0
@@ -84,6 +110,11 @@ def create_config_report(ws, data):
             ws.column_dimensions[col_letter].width = 7
             break
 
+    # ---------- FULL SHEET BORDER FIX ----------
+    for r in range(1, ws.max_row + 1):
+        for c in range(1, ws.max_column + 1):
+            ws.cell(row=r, column=c).border = border
+
 import re
 
 def check_status(parameter, actual, expected, dump_values):
@@ -93,9 +124,8 @@ def check_status(parameter, actual, expected, dump_values):
 
     # Parameters where only presence in dump matters
     present_check_params = [
-        "date and time",
-        "license key",
-        "network ip",
+       
+      
         "password"
     ]
 
@@ -117,7 +147,20 @@ def check_status(parameter, actual, expected, dump_values):
 
     # Manual fields
     if expected == "manual":
-        return ""
+        return "Manual"
+    
+    # DCN Synch Status
+    if parameter.strip().lower() == "dcn synch status":
+
+        actual = str(actual).strip().upper()
+
+        if actual in ["GREEN", "YELLOW"]:
+            return "OK"
+
+        if actual in ["RED", "NOT FOUND"]:
+            return "NOT OK"
+
+        return "NOT OK"
 
     if parameter.strip().lower() == "multicarrier abc":
 
@@ -151,8 +194,8 @@ def check_status(parameter, actual, expected, dump_values):
             if expected == "+/-3":
                 return "OK" if abs(actual_rsl - lb_rsl) <= 3 else "NOT OK"
 
-            elif expected == "+/-4":
-                return "OK" if abs(actual_rsl - lb_rsl) <= 4 else "NOT OK"
+            # elif expected == "+/-3":
+            #     return "OK" if abs(actual_rsl - lb_rsl) <= 3 else "NOT OK"
 
         except:
             return "NOT OK"
@@ -219,7 +262,7 @@ master_parameters = [
         "Current RSL",
         "MRMC Script ID/Bandw",
         "MRMC Profile/Bandw",
-        "Modulation",
+        "Operational Mode",
         "ACM Enabled/Modulation mode",
         "ATPC",
         "High Low Violation (Y/N)",
@@ -243,8 +286,13 @@ master_parameters = [
         "License Key",
         "Management Service",
         "Multicarrier ABC",
-        "Network IP",
-        "Password"
+        "DCN Synch Status",
+        "Password",
+        "AMCC Group",
+        "SNMP Configuration",
+        "Utilization Configuration",
+        "Datetime",
+        "Alarm Not required",
     ]
 
 check_in_manual = [
@@ -270,6 +318,9 @@ check_lb_params = [
     "NodeLONG",
     "Type of Equipment/IDU Model",
     "High Low Violation (Y/N)",
+    "HOP visible in NMS (Y/N)",
+    "AMCC Group"
+   
 ]
 
 
@@ -281,7 +332,12 @@ fix_values = {
     "HTTPS": "ENABLE",
     "Undervoltage clear threshold (V)":"48",
     "Undervoltage raise threshold (V)":"46",
-    "QoS configured (Y/N)":"all cos value match"
+    "QoS configured (Y/N)":"all cos value match",
+    "Utilization Configuration":"threshold1:90, threshold2:80, threshold3:70",
+    "SNMP Configuration":"username:snmpv3user, security_mode:AuthPriv, auth_algorithm:MD5, access_mode:RWUser",
+    "Alarm Not required":"ID-11: Disable, ID-15: Disable, ID-915: Disable",
+    "License Key":"Disable",
+    "Datetime":"offset-hours:5-offset-minutes:30",
 
 }
 
@@ -315,17 +371,4 @@ dscp_cos_mapping = [
     {"DSCP": "36", "CoS": "1"},
     {"DSCP": "0",  "CoS": "1"}
 ]
-
-
-
-
-
-
-
-
-
-
-
-
-
 

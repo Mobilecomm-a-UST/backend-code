@@ -49,6 +49,8 @@ def vi_tracker_dump(request):
     "mdtxPdcchSymb",
     "ttibSinrThresholdIn",
     "scellFastSchedulingSelect",
+    "n310Qci1",
+    "t310Qci1",
 
 
 
@@ -59,6 +61,7 @@ def vi_tracker_dump(request):
 
     #"NOKLTE:SIB"------------
     "qrxlevmin",
+    "t301",
 
     # "NOKLTE:LNCEL_FDD"-------
     "actDlMuMimo",
@@ -135,6 +138,35 @@ def vi_tracker_dump(request):
                             "Parameter": name,
                             "Value": value
                         })
+                required_list_parameters = {
+                    ("qciTab6", "schedulWeight"),
+                    ("qciTab8", "schedulWeight"),
+                    ("qciTab9", "schedulWeight"),
+                }
+
+                lists = mo.findall("ns:list", ns) if ns else mo.findall("list")
+
+                for lst in lists:
+                    list_name = lst.attrib.get("name")
+
+                    items = lst.findall("ns:item", ns) if ns else lst.findall("item")
+                    for item in items:
+                        p_tags = item.findall("ns:p", ns) if ns else item.findall("p")
+
+                        for p in p_tags:
+                            param_name = p.attrib.get("name")
+
+                            if (list_name, param_name) in required_list_parameters:
+                                value = p.text
+
+                                params_lnbts[f"{list_name}{param_name}"] = value
+
+                                dumy_data.append({
+                                    "MO": "NOKLTE:LNBTS",
+                                    "DistName": dist_name,
+                                    "Parameter": f"{list_name}{param_name}",
+                                    "Value": value
+                                })        
 
             elif mo_class == "NOKLTE:LNCEL":
                 params_lncel = {}

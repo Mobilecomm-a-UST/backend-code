@@ -301,8 +301,8 @@ parameter_map = {
     "actMicroDtx":"1",
     "actAutoPucchAlloc":"FDD:1,TDD:0",
     "allowTrafficConcentration":"1",
-    "alVoltHighThreshold":"580/107",
-    "alVoltLowThreshold":"405/-100",
+    "alVoltHighThreshold":"58/107",
+    "alVoltLowThreshold":"40.5/-100",
     "alVoltUnstableThreshold":"5",
     "ttibSinrThresholdIn":"3",
     "scellFastSchedulingSelect":"fast",
@@ -318,6 +318,13 @@ parameter_map = {
    "userLabel(SR)-IPRTV6-2":"LTE_CP",
    "userLabel(SR)-IPRTV6-3":"LTE_OM",
    "userLabel(SR)-IPRTV6-5":"GSM_ABIS",
+    "qciTab6schedulWeight":	"60",
+    "qciTab8schedulWeight":	"20",
+    "qciTab9schedulWeight":	"20",
+    "n310Qci1":	"n6",
+    "t301":	"400ms",
+    "t310Qci1":	"500ms",
+
 
 }
 
@@ -373,6 +380,13 @@ master_parameters = [
     "userLabel(SR)-IPRT-3",
     "userLabel(SR)-IPRT-5",
     "userLabel(SR)-IPRTV6-1",	
-   "userLabel(SR)-IPRTV6-2",	
+   "userLabel(SR)-IPRTV6-2",
+    "qciTab6schedulWeight",
+    "qciTab8schedulWeight",
+    "qciTab9schedulWeight",
+    "n310Qci1",
+    "t301",
+    "t310Qci1",
+	
 
 ]
