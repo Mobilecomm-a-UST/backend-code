@@ -468,7 +468,7 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
 
-            print("NRBTS FOUND ------------------")
+           
             
             # -------- actVoNRPrioDuringHOPrep --------
             for lst in (
@@ -531,7 +531,7 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
 
-            print("NRCELLGR FOUND ------------------")
+           
         
         elif mo_class == "com.nokia.srbts.nrbts:NRANR":
             required_in_nranrgrp = {
@@ -555,7 +555,7 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
 
-            print("NRANR FOUND ------------------")
+            
 
         elif mo_class == "com.nokia.srbts.nrbts:NRANRPR":
             required_in_nranrPRgrp = {
@@ -583,7 +583,7 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
 
-            print("NRANRPR FOUND ------------------")  
+            
 
         elif mo_class == "com.nokia.srbts.nrbts:NRMTRACEDU":
             required_in_NRMTRACEDU = {
@@ -1147,7 +1147,7 @@ def nokia_slicing_dump(request):
                             "value": tf_to_01(p.text)
                         })        
 
-            print("NRCELL FOUND ----------------")
+            
             # print("Class:", mo_class)
             # print("DistName:", dist_name)
             # print("Params_NRCELL:", params_nrcell)
@@ -1258,7 +1258,7 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
 
-            print("NRDLMUMIMO found")
+            
 
          # For NRDRB class------------------
         elif mo_class == "com.nokia.srbts.nrbts:NRDRB":
@@ -4055,10 +4055,10 @@ def nokia_slicing_dump(request):
 
 
 
-    print('Excel saved, end of process' )
+    print('UPE GPL Process is Completed-' )
     return Response({
         "status": True,
-        "message": "All Data Successfully Parsed",
+        "message": "UPE GPL Parsed Successfully",
         "download_url": download_url,
         "xml_dowload":xml_download_url
 
