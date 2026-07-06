@@ -2512,10 +2512,19 @@ def performance_at_pending_report(request):
     start_str   = request.data.get("start_date", "").strip()
     end_str     = request.data.get("end_date",   "").strip()
     circle_filter = request.data.get("circle", "").strip()
+    status_filter = request.data.get("status_filter", "").strip().upper()
 
     if not month_label and not (start_str or end_str):
         return Response(
             {'error': 'Provide either {"month": "Dec 2025"} or {"start_date": "...", "end_date": "..."}'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    status_cols = list(AT_STATUS_MAP.keys())   # PAT, SAT, KAT, SCFT
+
+    if status_filter and status_filter not in status_cols:
+        return Response(
+            {"error": f"Invalid status_filter '{status_filter}'. Must be one of {status_cols}."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -2531,12 +2540,21 @@ def performance_at_pending_report(request):
         start_dt     = _bucket_start(month_label)
         end_dt       = _bucket_end(month_label)
         safe_label   = month_label.replace(' ', '_')
-        out_filename = f"output_AT_Pending_Report_{safe_label}.xlsx"
+        
     else:
         start_dt, end_dt, err = _validate_date_range(start_str, end_str)
         if err:
             return err
-        out_filename = f"output_AT_Pending_Report_{start_str}_to_{end_str}.xlsx"
+        safe_label = f"{start_str}_to_{end_str}"
+        
+
+     # ── build filename reflecting active filters ────────────────
+    filename_parts = ["output_AT_Pending_Report", safe_label]
+    if circle_filter:
+        filename_parts.append(circle_filter.replace(' ', '_'))
+    if status_filter:
+        filename_parts.append(status_filter)
+    out_filename = "_".join(filename_parts) + ".xlsx"
 
     period_label = f"{start_dt.strftime('%d-%b-%Y')} to {end_dt.strftime('%d-%b-%Y')}"
 
@@ -2552,13 +2570,22 @@ def performance_at_pending_report(request):
     if circle_filter:
         rows = [r for r in rows if r.get("Circle", "").strip() == circle_filter]
 
-    status_cols = list(AT_STATUS_MAP.keys())   # PAT, SAT, KAT, SCFT
+        if not rows:
+            return Response(
+                {"error": f"No data found for circle '{circle_filter}' in the selected date range."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+    # status_cols = list(AT_STATUS_MAP.keys())   # PAT, SAT, KAT, SCFT
     out_cols    = ["SR_Site ID", "Site ID", "Circle"]
+
+    # ── only build sheets for the requested status (or all four) ──
+    target_cols = [status_filter] if status_filter else status_cols
 
     # ── split rows by status, keeping only that status's pending rows ──
     pending_data = {}
     counts = {}
-    for sc in status_cols:
+    for sc in target_cols:
         date_col = f"{sc} Date"
         cols = out_cols + [sc, date_col]
         sc_rows = [
@@ -2571,7 +2598,10 @@ def performance_at_pending_report(request):
 
     total_pending = sum(counts.values())
     if total_pending == 0:
-        return Response({"error": "No Pending records found for the selected date range."},
+        
+        msg = f"No Pending records found for status '{status_filter}'" if status_filter \
+              else "No Pending records found"
+        return Response({"error": f"{msg} in the selected date range."},
                         status=status.HTTP_404_NOT_FOUND)
 
     out_file = os.path.join(output_path, out_filename)
@@ -2584,13 +2614,16 @@ def performance_at_pending_report(request):
         f"{settings.MEDIA_URL.rstrip('/')}/performance_idploy/output/{out_filename}"
     )
 
+   
     return Response({
-        "status":       True,
-        "date_range":   period_label,
-        "counts":       counts,          # e.g. {"PAT": 9, "SAT": 3, "KAT": 5, "SCFT": 2}
+        "status":        True,
+        "date_range":    period_label,
+        "circle":        circle_filter or "All",
+        "status_filter": status_filter or "All",
+        "counts":        counts,
         "total_pending": total_pending,
-        "data":         pending_data,    # {"PAT": [...], "SAT": [...], "KAT": [...], "SCFT": [...]}
-        "download_url": download_url,
+        "data":          pending_data,
+        "download_url":  download_url,
     }, status=status.HTTP_200_OK)
 
 #_________________________________________
@@ -3096,6 +3129,70 @@ def generate_scft_performance(request):
 # HELPER — Split a date range into monthly buckets
 # ─────────────────────────────────────────────
 
+def _resolve_month_buckets(month_input, df):
+    """
+    Resolve month input into list of buckets.
+
+    If 2 months provided → treat as range, fill all months in between.
+    If 1 or 3+ months provided → use exactly as given.
+    If empty → auto-discover all months from data.
+
+    Examples:
+    ["Apr 2026", "Jun 2026"] → [Apr 2026, May 2026, Jun 2026]
+    ["Apr 2026", "May 2026", "Jun 2026"] → [Apr 2026, May 2026, Jun 2026] (exact)
+    ["Apr 2026"] → [Apr 2026] (single)
+    [] → all available months from file
+    """
+    # ── Normalise input to list ──────────────────────────────────
+    if isinstance(month_input, str):
+        months = [m.strip() for m in month_input.split(',') if m.strip()]
+    elif isinstance(month_input, list):
+        months = [m.strip() for m in month_input if m.strip()]
+    else:
+        months = []
+
+    # ── No month provided → auto-discover all ───────────────────
+    if not months:
+        available_months = _get_available_months(df)
+        if not available_months:
+            raise ValueError('No month data found in uploaded file.')
+        return [_month_to_bucket(m) for m in available_months], available_months
+
+    # ── Exactly 2 months → treat as range ───────────────────────
+    if len(months) == 2:
+        try:
+            start_anchor = pd.to_datetime(months[0], format='%b %Y')
+            end_anchor   = pd.to_datetime(months[1], format='%b %Y')
+        except ValueError:
+            raise ValueError(
+                f"Invalid month format. Use 'Mon YYYY' e.g. 'Apr 2026'. "
+                f"Got: {months}"
+            )
+
+        if start_anchor > end_anchor:
+            raise ValueError(
+                f"Start month '{months[0]}' must not be after end month '{months[1]}'."
+            )
+
+        # Generate all months from start to end inclusive
+        range_months = []
+        current      = start_anchor
+        while current <= end_anchor:
+            range_months.append(current.strftime('%b %Y'))
+            current += relativedelta(months=1)
+
+        return [_month_to_bucket(m) for m in range_months], range_months
+
+    # ── 1 or 3+ months → use exactly as given ───────────────────
+    buckets = []
+    for m in months:
+        try:
+            buckets.append(_month_to_bucket(m))
+        except ValueError as e:
+            raise ValueError(str(e))
+
+    return buckets, [b['label'] for b in buckets]
+
 
 
 def _month_to_bucket(month_str):
@@ -3248,29 +3345,11 @@ def _generate_all_months_graph_response(request, metric_type):
         df['Performance AT Status'] = df['Performance AT Status'].astype(str).str.strip()
         df_full = df.copy()
 
-    # ── Resolve which months to process ─────────────────────────
-    # If month provided → use those, else auto-discover all
-    if months:
-        buckets = []
-        for m in months:
-            try:
-                buckets.append(_month_to_bucket(m))
-            except ValueError as e:
-                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        available_months = [b['label'] for b in buckets]
-    else:
-        try:
-            available_months = _get_available_months(df)
-        except Exception as exc:
-            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        if not available_months:
-            return Response(
-                {'error': 'No month data found in uploaded file.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        buckets = [_month_to_bucket(m) for m in available_months]
-
+  
+    try:
+        buckets, available_months = _resolve_month_buckets(month_input, df)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     layers_to_run = [layer_filter] if layer_filter else valid_layers
 
     # ── Process all buckets in one pass ─────────────────────────
@@ -3400,27 +3479,11 @@ def _generate_scft_graph_response(request, metric_type):
         pending_statuses = None
 
     # ── Resolve which months to process ─────────────────────────
-    # If month provided → use those, else auto-discover all
-    if months:
-        buckets = []
-        for m in months:
-            try:
-                buckets.append(_month_to_bucket(m))
-            except ValueError as e:
-                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        available_months = [b['label'] for b in buckets]
-    else:
-        try:
-            available_months = _get_available_months(df)
-        except Exception as exc:
-            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        if not available_months:
-            return Response(
-                {'error': 'No month data found in uploaded file.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        buckets = [_month_to_bucket(m) for m in available_months]
+    try:
+        buckets, available_months = _resolve_month_buckets(month_input, df)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+   
 
     layers_to_run = [layer_filter] if layer_filter else valid_layers
 
@@ -3583,26 +3646,10 @@ def _generate_circle_graph_response(request, metric_type):
         df_full = df.copy()
 
     # ── Resolve which months to process ─────────────────────────
-    if months:
-        buckets = []
-        for m in months:
-            try:
-                buckets.append(_month_to_bucket(m))
-            except ValueError as e:
-                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        available_months = [b['label'] for b in buckets]
-    else:
-        try:
-            available_months = _get_available_months(df)
-        except Exception as exc:
-            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        if not available_months:
-            return Response(
-                {'error': 'No month data found in uploaded file.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        buckets = [_month_to_bucket(m) for m in available_months]
+    try:
+        buckets, available_months = _resolve_month_buckets(month_input, df)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     layers_to_run = [layer_filter] if layer_filter else valid_layers
 
@@ -3789,26 +3836,10 @@ def _generate_scft_circle_graph_response(request, metric_type):
         pending_statuses = None
 
     # ── Resolve which months to process ─────────────────────────
-    if months:
-        buckets = []
-        for m in months:
-            try:
-                buckets.append(_month_to_bucket(m))
-            except ValueError as e:
-                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        available_months = [b['label'] for b in buckets]
-    else:
-        try:
-            available_months = _get_available_months(df)
-        except Exception as exc:
-            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        if not available_months:
-            return Response(
-                {'error': 'No month data found in uploaded file.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        buckets = [_month_to_bucket(m) for m in available_months]
+    try:
+        buckets, available_months = _resolve_month_buckets(month_input, df)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     layers_to_run = [layer_filter] if layer_filter else valid_layers
 
