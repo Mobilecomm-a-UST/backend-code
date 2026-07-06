@@ -10,8 +10,10 @@ urlpatterns = [
     path("upload_dump/",views.upload_cergon_dump),
     path("parameter/",views.microwave_para),
     path("parameter/<int:pk>/",views.microwave_para),
+    path("search_planid/",views.search_plan_id),
   
-    path("uoload-server-ip/",views.circle_server_ip),
+    path("upload_serverip/",views.circle_server_ip),
+    path("get_serverip/",views.get_server_ip),
 
    
     

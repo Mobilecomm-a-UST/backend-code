@@ -596,6 +596,38 @@ def get_server_ip(request):
     return Response(result)
 
 
+
+@api_view(['POST'])
+def search_plan_id(request):
+    search_text = request.data.get('plan_id', '').strip()
+    if not search_text:
+        return Response([])
+
+    link_budget_folder = os.path.join(main_folder, "Link_budget_file")
+    files = os.listdir(link_budget_folder)
+    if not files:
+        return Response([])
+
+    file_path = os.path.join(link_budget_folder, files[0])
+    if file_path.endswith(".xlsx"):
+        df = pd.read_excel(file_path)
+    else:
+        df = pd.read_csv(file_path)
+    df.columns = df.columns.str.strip()
+
+    if "Plan Id" not in df.columns:
+        return Response([])
+    
+    result = (
+        df["Plan Id"].astype(str).str.strip().loc[lambda x: x.str.contains(search_text, case=False, na=False)]
+        .drop_duplicates()
+        .head(15)
+        .tolist()
+    )
+
+    return Response(result)
+
+
 import json
 
 @api_view(['POST'])
@@ -701,26 +733,7 @@ def upload_cergon_dump(request):
         ["DCN Site A(HOP 1)", "DCN Site B(HOP 1)"]
     ].to_dict("index")
 
-    def get_dcn_status(site_id, dump_ip):
-        ts = ts_lookup.get(str(site_id).strip())
-
-        if ts is None:
-            return "NOT FOUND"
-
-        site_a_ip = str(ts["DCN Site A(HOP 1)"]).strip()
-        site_b_ip = str(ts["DCN Site B(HOP 1)"]).strip()
-
-        dump_ip = str(dump_ip).strip()
-
-        if dump_ip == site_a_ip:
-            return "GREEN"
-
-        elif dump_ip == site_b_ip:
-            return "YELLOW"
-
-        return "RED"
-
-
+  
 
 #read dump file1 -----------
     dump_groups = [
@@ -1060,10 +1073,6 @@ def upload_cergon_dump(request):
             # convert dump result list -> dict for easy lookup
             dump_values = {item["parameter"]: item["value in dump"] for item in result}
             # print(dump_values)
-            dcn_status = get_dcn_status(
-                dump_values.get("Site Name/System name/Unit Name"),
-                dump_values.get("Network IP")
-            )
 
             dump_values["Type of Equipment/IDU Model"] = (
                 str(dump_values.get("Type of Equipment", "")).strip()
