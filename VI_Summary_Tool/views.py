@@ -776,3 +776,123 @@ def vi_5g_summary(request):
         "download_url": download_url,
     
     })
+
+
+@api_view(["POST"])
+def vi_2g_summary(request):
+    circle = request.POST.get("circle")
+    xml_files = request.FILES.getlist("file")
+    if not xml_files:
+        return Response( {"error": "Please upload XML files"}, status=HTTP_400_BAD_REQUEST)
+    
+
+    temp_folder = os.path.join(main_folder, "template")
+    if not os.path.isdir(temp_folder):
+        return Response({"error": "Template folder not found"}, status=400)
+    file_list = [
+        file for file in os.listdir(temp_folder)
+        if os.path.isfile(os.path.join(temp_folder, file))
+    ]
+
+    print(file_list)
+
+    output_folder = os.path.join(main_folder, "Output")
+    os.makedirs(output_folder, exist_ok=True)
+
+  
+    for file in xml_files:
+        file_name = file.name.lower()
+
+        # Read xml/gz file
+        if file_name.endswith(".gz"):
+            xml_bytes = gzip.decompress(file.read())
+        else:
+            xml_bytes = file.read()
+
+        root = ET.fromstring(xml_bytes)
+
+        # Namespace handling
+        m = re.match(r"\{(.*)\}", root.tag)
+        ns_url = m.group(1) if m else root.attrib.get("xmlns", "")
+        ns = {"ns": ns_url} if ns_url else {}
+
+        managed_objects = (
+            root.findall(".//ns:managedObject", ns)
+            if ns else root.findall(".//managedObject")
+        )
+
+#--------------------------
+        bcf_data = []
+        for mo in managed_objects:
+            mo_class = mo.attrib.get("class", "")
+            if mo_class == "BCF":
+                dist_name = mo.attrib.get("distName", "")
+                version = mo.attrib.get("version", "")
+
+                bsc_id = dist_name.split("/")[1].split("-")[-1]
+                bcf_id = dist_name.split("/")[2].split("-")[-1]
+
+                row = {
+                    "BSC_ID": bsc_id,
+                    "BCF_ID": bcf_id,
+                    "Version": version,
+                }
+
+                p_tags = mo.findall("ns:p", ns) if ns else mo.findall("p")
+
+                for p in p_tags:
+                    name = p.attrib.get("name")
+
+                    if name == "name":
+                        row["BTS_Name"] = p.text
+
+                    elif name == "siteTemplateDescription":
+                        row["Site_Template"] = p.text
+
+                    elif name == "SBTSId":
+                        row["SBTS_ID"] = p.text
+
+                    elif name=="btsMPlaneIpAddress":
+                        row["IP"] = p.text  
+
+                    
+
+                bcf_data.append(row)
+
+    bcf_df = pd.DataFrame(bcf_data)
+    print(bcf_df)
+
+    rf_df = pd.read_excel(os.path.join(temp_folder, "Reference_2g.xlsx"))
+    rf_df.columns = rf_df.columns.str.strip()
+
+    rf_df = pd.concat([rf_df] * len(bcf_df), ignore_index=True)
+
+    # Fill columns
+    rf_df["Circle"] = circle
+    rf_df["Location"] = bcf_df["BTS_Name"].str.extract(r'([A-Z]{4}\d{4})', expand=False)
+    rf_df["Nodename"] = bcf_df["BTS_Name"]
+    rf_df["Node_IP"] = bcf_df["IP"]
+    rf_df["2G Site ID"]= bcf_df["BTS_Name"].str.extract(r'([A-Z]{4}\d{4})', expand=False)
+    rf_df["NSSID"]=bcf_df["Site_Template"]
+    rf_df["BSC Name"]=""
+
+
+    # Save
+    output_file = os.path.join(output_folder, f"Reference_Data_{circle}_2G.xlsx")
+
+    with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
+        rf_df.to_excel(writer, index=False)
+
+    format_excel(output_file)
+
+    relative_path = os.path.relpath(output_file, MEDIA_ROOT)
+    download_url = request.build_absolute_uri(
+        os.path.join(MEDIA_URL, relative_path).replace("\\", "/")
+    )
+
+    return Response({
+        "status": True,
+        "message": "2G Summary generated successfully",
+        "download_url": download_url,
+    })
+
