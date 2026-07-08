@@ -24,4 +24,8 @@ urlpatterns = [
     path('generate-scft-performance-circle-graph/', generate_scft_performance_circle_graph),
     path('cleanup/',  cleanup),
     path("performance-at-pending-report/",performance_at_pending_report),
+    path('generate-ftr-circle-graph/',generate_ftr_circle_graph),
+    path('generate-ftr-grand-graph/',generate_ftr_grand_graph),
+    path('generate-scft-ftr-grand-graph/',  generate_scft_ftr_grand_graph),
+    path('generate-scft-ftr-circle-graph/', generate_scft_ftr_circle_graph),
 ]

@@ -864,10 +864,10 @@ def generate_kpi_monitoring_report(request):
     """
     Reads each uploaded vendor input file, builds the full KPI report, and
     writes one merged Excel output with a two-row colored header:
-      Row 1 — metric block labels (merged, alternating colors) + computed
-              column threshold labels
-      Row 2 — actual column headers (light blue), dates stripped of metric prefix
-      Row 3+ — data
+        Row 1 — metric block labels (merged, alternating colors) + computed
+                column threshold labels
+        Row 2 — actual column headers (light blue), dates stripped of metric prefix
+        Row 3+ — data
     """
     try:
         input_files = _get_input_files()
@@ -883,7 +883,11 @@ def generate_kpi_monitoring_report(request):
             )
 
         combined_frames = []
-        for vendor, filename in input_files.items():
+        for vendor in VENDOR_FIELDS:
+            if vendor not in input_files:
+                continue
+            filename = input_files[vendor]
+        # for vendor, filename in input_files.items():
             file_path = os.path.join(input_path, filename)
             df = _read_file_to_df(file_path)
             try:
