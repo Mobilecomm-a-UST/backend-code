@@ -33,6 +33,7 @@ def vi_tracker_dump(request):
     "actFlexScellSelect",
     "actLBPowerSaving",
     "rrcGuardTimer",
+    "actNwReqUeCapa",
 
     #"NOKLTE:LNCEL":-----------
     "actTtiBundling",
@@ -62,6 +63,7 @@ def vi_tracker_dump(request):
     #"NOKLTE:SIB"------------
     "qrxlevmin",
     "t301",
+    "t311",
 
     # "NOKLTE:LNCEL_FDD"-------
     "actDlMuMimo",
@@ -140,8 +142,15 @@ def vi_tracker_dump(request):
                         })
                 required_list_parameters = {
                     ("qciTab6", "schedulWeight"),
+                    ("qciTab7", "schedulWeight"),
                     ("qciTab8", "schedulWeight"),
                     ("qciTab9", "schedulWeight"),
+
+                    ("qciTab6", "schedulPrio"),
+                    ("qciTab7", "schedulPrio"),
+                    ("qciTab8", "schedulPrio"),
+                    ("qciTab9", "schedulPrio"),
+                
                 }
 
                 lists = mo.findall("ns:list", ns) if ns else mo.findall("list")

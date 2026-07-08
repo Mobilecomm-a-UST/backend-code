@@ -318,17 +318,27 @@ parameter_map = {
    "userLabel(SR)-IPRTV6-2":"LTE_CP",
    "userLabel(SR)-IPRTV6-3":"LTE_OM",
    "userLabel(SR)-IPRTV6-5":"GSM_ABIS",
-    "qciTab6schedulWeight":	"60",
-    "qciTab8schedulWeight":	"20",
-    "qciTab9schedulWeight":	"20",
-    "n310Qci1":	"n6",
+    "qciTab6schedulWeight":"40",
+    "qciTab7schedulWeight":"40",
+    "qciTab8schedulWeight":"40",
+    "qciTab9schedulWeight":"40",
+    "qciTab6schedulPrio":"10",
+    "qciTab7schedulPrio":"10",
+    "qciTab8schedulPrio":"10",
+    "qciTab9schedulPrio":"10",
+
+    "n310Qci1":	"n4",
     "t301":	"400ms",
     "t310Qci1":	"500ms",
+    "t311":	"10000ms",
+    "actNwReqUeCapa":"TRUE"
+
 
 
 }
 
 master_parameters = [
+
     "actAutoPucchAlloc",
     "actCoMp",
     "actDLCAggr",
@@ -380,13 +390,21 @@ master_parameters = [
     "userLabel(SR)-IPRT-3",
     "userLabel(SR)-IPRT-5",
     "userLabel(SR)-IPRTV6-1",	
-   "userLabel(SR)-IPRTV6-2",
+    "userLabel(SR)-IPRTV6-2",
     "qciTab6schedulWeight",
+    "qciTab7schedulWeight",
     "qciTab8schedulWeight",
     "qciTab9schedulWeight",
+    "qciTab6schedulPrio",
+    "qciTab7schedulPrio",
+    "qciTab8schedulPrio",
+    "qciTab9schedulPrio",
     "n310Qci1",
     "t301",
     "t310Qci1",
+    "t311",
+    "actNwReqUeCapa",
+
 	
 
 ]
