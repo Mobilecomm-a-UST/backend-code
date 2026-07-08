@@ -250,8 +250,7 @@ end
 cvms post_chn_mme
 gs-
 
-
-
+set 0 Userlabel {Phy_SiteID_Userlabel}
 
 """
 CHN_s1_FOR_TN_IDLTN_C_AND_TN_E_PORT = """
@@ -464,7 +463,7 @@ end
 cvms post_chn_mme
 gs-
 
-
+set 0 Userlabel {Phy_SiteID_Userlabel}
 
 """
 
@@ -678,6 +677,7 @@ end
 cvms post_chn_mme
 gs-
 
+set 0 Userlabel {Phy_SiteID_Userlabel}
 
 """
 

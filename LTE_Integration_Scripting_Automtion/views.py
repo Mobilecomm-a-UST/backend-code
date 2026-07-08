@@ -839,15 +839,35 @@ def generate_integration_script(request):
                 
                 sitebasic_df_N = site_basic_df[site_basic_df["eNodeBName"] == node_name].copy()
                 if sitebasic_df_N.empty:
+                    print(f"Warning: No basic data found in site_basic_df for node {node_name}. Skipping.")
                     continue
                 
-                tn_port = str(sitebasic_df_N["tnPortId"].values[0])
-                if "_B" in tn_port:
-                    formatted_text = TN_s1_FOR_TN_IDL_B_PORT.format(eNBId=sitebasic_df_N["eNBId"].values[0])
-                elif "_C" in tn_port:
-                    formatted_text = TN_s1_FOR_TN_C_PORT.format(eNBId=sitebasic_df_N["eNBId"].values[0])
+                # Normalize column formatting and safely extract Phy_SiteID_Userlabel
+                sitebasic_df_N.rename(columns={"Phy SiteID/Userlabel": "Phy_SiteID_Userlabel"}, inplace=True)
+                
+                if "Phy_SiteID_Userlabel" in sitebasic_df_N.columns and len(sitebasic_df_N) > 0:
+                    Phy_SiteID_Userlabel = sitebasic_df_N["Phy_SiteID_Userlabel"].values[0]
                 else:
-                    formatted_text = TN_s1_FOR_TN_IDLTN_C_AND_TN_E_PORT.format(eNBId=sitebasic_df_N["eNBId"].values[0])
+                    Phy_SiteID_Userlabel = "Unknown_Userlabel"
+                
+                tn_port = str(sitebasic_df_N["tnPortId"].values[0])
+                
+                # Dynamic string injections with the extracted template placeholders for TN circle
+                if "_B" in tn_port:
+                    formatted_text = TN_s1_FOR_TN_IDL_B_PORT.format(
+                        eNBId=sitebasic_df_N["eNBId"].values[0],
+                        Phy_SiteID_Userlabel=Phy_SiteID_Userlabel
+                    )
+                elif "_C" in tn_port:
+                    formatted_text = TN_s1_FOR_TN_C_PORT.format(
+                        eNBId=sitebasic_df_N["eNBId"].values[0],
+                        Phy_SiteID_Userlabel=Phy_SiteID_Userlabel
+                    )
+                else:
+                    formatted_text = TN_s1_FOR_TN_IDLTN_C_AND_TN_E_PORT.format(
+                        eNBId=sitebasic_df_N["eNBId"].values[0],
+                        Phy_SiteID_Userlabel=Phy_SiteID_Userlabel
+                    )
                 
                 script_path = os.path.join(node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt")
                 with open(script_path, "w") as file:
@@ -1011,15 +1031,35 @@ def generate_integration_script(request):
                 
                 sitebasic_df_N = site_basic_df[site_basic_df["eNodeBName"] == node_name].copy()
                 if sitebasic_df_N.empty:
+                    print(f"Warning: No basic data found in site_basic_df for node {node_name}. Skipping.")
                     continue
                 
-                tn_port = str(sitebasic_df_N["tnPortId"].values[0])
-                if "_B" in tn_port:
-                    formatted_text = CHN_s1_FOR_TN_IDL_B_PORT.format(eNBId=sitebasic_df_N["eNBId"].values[0])
-                elif "_C" in tn_port:
-                    formatted_text = CHN_s1_FOR_TN_C_PORT.format(eNBId=sitebasic_df_N["eNBId"].values[0])
+                # Normalize column formatting and safely extract Phy_SiteID_Userlabel
+                sitebasic_df_N.rename(columns={"Phy SiteID/Userlabel": "Phy_SiteID_Userlabel"}, inplace=True)
+                
+                if "Phy_SiteID_Userlabel" in sitebasic_df_N.columns and len(sitebasic_df_N) > 0:
+                    Phy_SiteID_Userlabel = sitebasic_df_N["Phy_SiteID_Userlabel"].values[0]
                 else:
-                    formatted_text = CHN_s1_FOR_TN_IDLTN_C_AND_TN_E_PORT.format(eNBId=sitebasic_df_N["eNBId"].values[0])
+                    Phy_SiteID_Userlabel = "Unknown_Userlabel"
+                
+                tn_port = str(sitebasic_df_N["tnPortId"].values[0])
+                
+                # FIX: Passed Phy_SiteID_Userlabel into the template strings to satisfy the placeholders
+                if "_B" in tn_port:
+                    formatted_text = CHN_s1_FOR_TN_IDL_B_PORT.format(
+                        eNBId=sitebasic_df_N["eNBId"].values[0], 
+                        Phy_SiteID_Userlabel=Phy_SiteID_Userlabel
+                    )
+                elif "_C" in tn_port:
+                    formatted_text = CHN_s1_FOR_TN_C_PORT.format(
+                        eNBId=sitebasic_df_N["eNBId"].values[0], 
+                        Phy_SiteID_Userlabel=Phy_SiteID_Userlabel
+                    )
+                else:
+                    formatted_text = CHN_s1_FOR_TN_IDLTN_C_AND_TN_E_PORT.format(
+                        eNBId=sitebasic_df_N["eNBId"].values[0], 
+                        Phy_SiteID_Userlabel=Phy_SiteID_Userlabel
+                    )
                 
                 script_path = os.path.join(node_dir, f"01_{node_name}_TN_RN_GPS_MME_{current_time}.txt")
                 with open(script_path, "w") as file:
@@ -1168,8 +1208,9 @@ def generate_integration_script(request):
                         siteEquipmentFilePath=siteEquipmentFilePath,
                         siteBasicFilePath=siteBasicFilePath
                     ))
+
         #---------------------------------------------------------------- CHN Circle-specific Script Generation ---------------------------------------------------------------------
-        
+ 
         # --------------------------------------------------------------- AP Circle-specific Script Generation ---------------------------------------------------------------------
         elif circle == "AP":
             

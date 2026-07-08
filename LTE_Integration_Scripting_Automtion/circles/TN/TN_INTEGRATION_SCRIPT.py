@@ -296,8 +296,8 @@ end
 gs-
 
 #END ENodeBFunction=1,TermPointToMme --------------------
-		 
-                                           
+
+set 0 Userlabel {Phy_SiteID_Userlabel}                                          
 """
 TN_s1_FOR_TN_IDLTN_C_AND_TN_E_PORT = """
 
@@ -554,6 +554,8 @@ end
 gs-
 
 #END ENodeBFunction=1,TermPointToMme --------------------
+
+set 0 Userlabel {Phy_SiteID_Userlabel}
 
 """
 
@@ -814,6 +816,7 @@ gs-
 
 #END ENodeBFunction=1,TermPointToMme --------------------
 
+set 0 Userlabel {Phy_SiteID_Userlabel}
 
 """
 
