@@ -20,7 +20,11 @@ urlpatterns = [
     path('delete-integration-record/<int:pk>/', delete_integration_record, name='delete_my_model'),
     path('edit-integration-record/<int:id>/',integration_table_update, name='update_my_model'),
     path('oem_wise_integration_data/',overall_integration_for_perticular_oem),
+    
+    # ============= VI HOTO ==============
     path('HOTO_template/',get_vi_temp_link , name='get_vi_temp_link'),
+    path("upload_HOTO/",upload_excel_HOTO),
+    path("HOTO_dashboard/", HOTO_dashboard),
 
     # ====== SA Slicing Audit for Ericsion ======
 

@@ -126,6 +126,8 @@ INSTALLED_APPS = [
     "microwave_Ceragon_tool",
     "Resource_Management",
     "VI_Summary_Tool",
+    "kpi_monitoring",
+    "gpl_audit_tool_V2"
 ]
 
 MIDDLEWARE = [

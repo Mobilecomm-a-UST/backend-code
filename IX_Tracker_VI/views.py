@@ -1714,3 +1714,527 @@ def get_vi_temp_link(request):
         'template_version': 'v1.8',
         'total_records': queryset.count(),
     }, status=200)
+    
+    
+    
+@api_view(['POST'])
+def upload_excel_HOTO(request):
+    print("User:", request.user.username)
+
+    file = request.data.get('file')
+    if not file:
+        return Response(
+            {'error': 'No file uploaded'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # ✅ Validate template version
+    try:
+        value_in_cell = read_excel_cell(
+            file.read(),
+            sheet_name='Sheet2',
+            cell='BE37'
+        )
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    if value_in_cell != "mcom_v1.1.1":
+        return Response(
+            {'error': 'Only tool template can be uploaded. Please check template version'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Reset file pointer
+    file.seek(0)
+
+    # ✅ Read Excel
+    try:
+        df = pd.read_excel(
+            file,
+            sheet_name="Tracker",
+            skiprows=1,
+            keep_default_na=False
+        )
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    # ✅ Clean column names
+    df.columns = [col.strip() for col in df.columns]
+
+    # Ensure string columns
+    df["Cell ID"] = df["Cell ID"].astype(str)
+
+    # ✅ Convert date columns safely
+    date_columns = [
+        'Integration Date',
+        'FR Date',
+        '4G HOTO OFFERED DATE',
+        '4G HOTO ACCEPTED DATE',
+        '2G HOTO OFFERED DATE',
+        '2G HOTO ACCEPTED DATE',
+    ]
+
+    for col in date_columns:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
+
+    # ✅ DB Transaction (ALL or NOTHING)
+    with transaction.atomic():
+
+        for _, row in df.iterrows():
+
+            # --- Safe date extraction ---
+            integration_date = (
+                row['Integration Date'].date()
+                if not pd.isna(row['Integration Date'])
+                else None
+            )
+
+            fr_date = row['FR Date'].date() if not pd.isna(row.get('FR Date')) else None
+            hoto_offered_4g = row['4G HOTO OFFERED DATE'].date() if not pd.isna(row.get('4G HOTO OFFERED DATE')) else None
+            hoto_accepted_4g = row['4G HOTO ACCEPTED DATE'].date() if not pd.isna(row.get('4G HOTO ACCEPTED DATE')) else None
+            hoto_offered_2g = row['2G HOTO OFFERED DATE'].date() if not pd.isna(row.get('2G HOTO OFFERED DATE')) else None
+            hoto_accepted_2g = row['2G HOTO ACCEPTED DATE'].date() if not pd.isna(row.get('2G HOTO ACCEPTED DATE')) else None
+
+            # --- Build UNIQUE KEY (NEW LOGIC) ---
+            circle = str(row['CIRCLE']).strip().upper()
+            site_id = str(row['Site ID']).strip()
+            technology = str(row['Technology (SIWA)']).strip().upper()
+
+            unique_key = f"{circle}_{site_id}_{technology}"
+
+            # --- UPSERT ---
+            HOTOIntegrationDataVI.objects.update_or_create(
+                unique_key=unique_key,  # 🔑 MAIN IDENTIFIER
+                defaults={
+                    'Integration_Date': integration_date,
+                    'Activity_Name': str(row['Activity Name']).upper(),
+                    'Site_ID': site_id,
+                    'Technology_SIWA': technology,
+                    'CIRCLE': circle,
+                    'Cell_ID': row['Cell ID'],
+                    'LNBTS_ID': row['LNBTS ID'],
+                    'OEM': str(row['OEM']).upper(),
+
+                    'MO_NAME': str(row['MO NAME']).upper(),
+                    'OSS_Details': row['OSS Details'],
+                    'CELL_COUNT': row['CELL COUNT'],
+                    'TRX_Count': row['TRX Count'],
+                    'PRE_ALARM': row['PRE-ALARM'],
+                    'GPS_IP_CLK': row['GPS/IP CLK'],
+                    'RET': row['RET'],
+                    'POST_VSWR': row['POST-VSWR'],
+                    'POST_Alarms': row['POST Alarms'],
+                    'CELL_STATUS': row['CELL STATUS'],
+                    'CTR_STATUS': row['CTR STATUS'],
+                    'Integration_Remark': row['Integration Remark'],
+                    'T2T4R': row['2T2R/4T4R'],
+                    'BBU_TYPE': row['BBU TYPE'],
+                    'BB_CARD': row['BB CARD'],
+                    'RRU_Type': row['RRU Type'],
+                    'Media_Status': row['Media Status'],
+                    'Mplane_IP': row['Mplane IP'],
+                    'SCF_PREPARED_BY': row['SCF PREPARED BY'],
+                    'SITE_INTEGRATE_BY': row['SITE INTEGRATE BY(Integrator Name)'],
+                    'Site_Status': row['Site Status'],
+                    'External_Alarm_Confirmation': row['External Alarm Confirmation'],
+                    'SOFT_AT_STATUS': row['SOFT AT STATUS'],
+                    'LICENCE_Status': row['LICENCE Status'],
+                    'ESN_NO': row['ESN NO'],
+                    'Responsibility_for_alarm_clearance': row['Responsibility for alarm clearance'],
+                    'TAC': row['TAC'],
+                    'Activity_Type_SIWA': row['Activity Type (SIWA)'],
+                    'Activity_Mode': row['Activity Mode (SA/NSA)'],
+                    'Band_SIWA': row['Band (SIWA)'],
+                    'FR_Date': fr_date,
+                    'HOTO_Offered_Date_4g': hoto_offered_4g,
+                    'HOTO_Accepted_Date_4g': hoto_accepted_4g,
+                    'HOTO_Offered_Date_2g': hoto_offered_2g,
+                    'HOTO_Accepted_Date_2g': hoto_accepted_2g,
+                    'Overall_HOTO_Status': row['Overall HOTO Status'],
+                    'Pending_Bucket': row['Pending Bucket'],
+                    'Pending_Remarks': row['Pending Remarks'],
+                    'Responsibility': row['Responsibility'],
+                    'TAT': row['TAT'],
+                    'FTR_Status': row['FTR Status'],
+                    'FTR_Remarks': row['FTR Remarks'],
+                    'uploaded_by': request.user.username
+                    
+                }
+            )
+
+        # ✅ Save uploaded document record
+        Document.objects.create(
+            uploaded_file=file,
+            uploaded_by=request.user,
+            uploaded_by_username=request.user.username
+        )
+
+    return Response(
+        {'message': 'Data uploaded successfully'},
+        status=status.HTTP_201_CREATED
+    )
+
+@api_view(["GET"])
+def HOTO_dashboard(request):
+
+    # ================= Dynamic Circle =================
+    circles = list(
+        HOTOIntegrationDataVI.objects.values_list(
+            "CIRCLE", flat=True
+        ).distinct().order_by("CIRCLE")
+    )
+    # ================= Dynamic Circle =================
+    oems = list(
+        HOTOIntegrationDataVI.objects.values_list(
+            "OEM", flat=True
+        ).distinct().order_by("OEM")
+    )
+    
+    # ================= Dynamic FTR Status =================
+    ftr_status = list(
+        HOTOIntegrationDataVI.objects.values_list(
+            "FTR_Status",
+            flat=True
+        )
+        .exclude(FTR_Status="")
+        .exclude(FTR_Status__isnull=True)
+        .distinct()
+        .order_by("FTR_Status")
+    )
+
+    final_ftr = []
+    grand_total = {"FTR Status": "Grand Total"}
+
+    for circle in circles:
+        grand_total[circle] = 0
+
+    grand_total["Grand Total"] = 0
+
+    for status in ftr_status:
+
+        row = {"FTR Status": status}
+        total = 0
+
+        for circle in circles:
+
+            count = HOTOIntegrationDataVI.objects.filter(
+                FTR_Status=status,
+                CIRCLE=circle
+            ).count()
+
+            row[circle] = count
+            total += count
+            grand_total[circle] += count
+
+        row["Grand Total"] = total
+        grand_total["Grand Total"] += total
+
+        final_ftr.append(row)
+
+    final_ftr.append(grand_total)
+
+    # ================= Dynamic Status =================
+    statuses = list(
+        HOTOIntegrationDataVI.objects.values_list(
+            "Overall_HOTO_Status",
+            flat=True
+        )
+        .exclude(Overall_HOTO_Status="")
+        .exclude(Overall_HOTO_Status__isnull=True)
+        .distinct()
+        .order_by("Overall_HOTO_Status")
+    )
+    final = []
+    grand_total = {"Status": "Grand Total"}
+
+    for circle in circles:
+        grand_total[circle] = 0
+
+    grand_total["Grand Total"] = 0
+
+    for status in statuses:
+
+        row = {"Status": status}
+        total = 0
+
+        for circle in circles:
+
+            count = HOTOIntegrationDataVI.objects.filter(
+                Overall_HOTO_Status=status,
+                CIRCLE=circle
+            ).count()
+
+            row[circle] = count
+            total += count
+            grand_total[circle] += count
+
+        row["Grand Total"] = total
+        grand_total["Grand Total"] += total
+
+        final.append(row)
+
+    final.append(grand_total)
+    
+    # ================= Pending Bucket Dashboard =================
+
+    buckets = list(
+        HOTOIntegrationDataVI.objects.filter(
+            Overall_HOTO_Status="Pending"
+        ).values_list(
+            
+            "Pending_Bucket", flat=True
+        ).exclude(
+            Pending_Bucket=""
+        ).exclude(
+            Pending_Bucket__isnull=True
+        ).distinct().order_by("Pending_Bucket")
+    )
+
+    pending_data = []
+    pending_total = {"Pending Bucket": "Grand Total"}
+
+    for circle in circles:
+        pending_total[circle] = 0
+
+    pending_total["Grand Total"] = 0
+
+    for bucket in buckets:
+
+        row = {"Pending Bucket": bucket}
+        total = 0
+
+        for circle in circles:
+
+            count = HOTOIntegrationDataVI.objects.filter(
+                Pending_Bucket=bucket,
+                Overall_HOTO_Status="Pending",
+                CIRCLE=circle
+            ).count()
+
+            row[circle] = count
+            total += count
+            pending_total[circle] += count
+
+        row["Grand Total"] = total
+        pending_total["Grand Total"] += total
+
+        pending_data.append(row)
+
+    pending_data.append(pending_total)
+    # ================= OEM Status Dashboard =================
+    oem_final = []
+    oem_total = {"Status": "Grand Total"}
+
+    for oem in oems:
+        oem_total[oem] = 0
+
+    oem_total["Grand Total"] = 0
+
+    for status in statuses:
+
+        row = {"Status": status}
+        total = 0
+
+        for oem in oems:
+
+            count = HOTOIntegrationDataVI.objects.filter(
+                Overall_HOTO_Status=status,
+                OEM=oem
+            ).count()
+
+            row[oem] = count
+            total += count
+            oem_total[oem] += count
+
+        row["Grand Total"] = total
+        oem_total["Grand Total"] += total
+
+        oem_final.append(row)
+
+    oem_final.append(oem_total)
+
+    # ================= OEM Pending Bucket Dashboard =================
+
+    oem_pending = []
+    oem_pending_total = {"Pending Bucket": "Grand Total"}
+
+    for oem in oems:
+        oem_pending_total[oem] = 0
+
+    oem_pending_total["Grand Total"] = 0
+
+    for bucket in buckets:
+
+        row = {"Pending Bucket": bucket}
+        total = 0
+
+        for oem in oems:
+
+            count = HOTOIntegrationDataVI.objects.filter(
+                Pending_Bucket=bucket,
+                Overall_HOTO_Status="Pending",
+                OEM=oem
+            ).count()
+
+            row[oem] = count
+            total += count
+            oem_pending_total[oem] += count
+
+        row["Grand Total"] = total
+        oem_pending_total["Grand Total"] += total
+
+        oem_pending.append(row)
+
+    oem_pending.append(oem_pending_total)
+
+    # ================= Excel =================
+
+    status_df = pd.DataFrame(final)
+    pending_df = pd.DataFrame(pending_data)
+    oem_status_df = pd.DataFrame(oem_final)
+    oem_pending_df = pd.DataFrame(oem_pending)
+
+    output_folder = os.path.join(
+        settings.MEDIA_ROOT,
+        "IntegrationTrackerVI"
+    )
+
+    os.makedirs(output_folder, exist_ok=True)
+
+    file_name = "HOTO_VI_Dashboard.xlsx"
+    output_path = os.path.join(output_folder, file_name)
+
+    with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
+
+        status_df.to_excel(
+            writer, sheet_name="Dashboard", index=False, startrow=0, startcol=0
+        )
+        pending_df.to_excel(
+            writer, sheet_name="Dashboard", index=False,
+            startrow=len(status_df) + 6, startcol=0
+        )
+        
+        oem_status_df.to_excel(writer,sheet_name="Dashboard",index=False,
+            startrow=len(status_df)+len(pending_df)+12
+        )
+
+        oem_pending_df.to_excel(writer,sheet_name="Dashboard",index=False,
+            startrow=len(status_df)+len(pending_df)+len(oem_status_df)+18
+        )
+        # ================= DB DATA SHEET =================
+
+        db_df = pd.DataFrame(
+            list(
+                HOTOIntegrationDataVI.objects.all()
+                .order_by("id")
+                .values()
+            )
+        )
+
+        if "id" in db_df.columns:
+            db_df.drop(columns=["id"], inplace=True)
+        
+        for col in ["upload_date", "updated_date"]:
+            if col in db_df.columns:
+                db_df[col] = pd.to_datetime(db_df[col]).dt.strftime("%d-%m-%Y %H:%M:%S")
+
+        db_df.to_excel(
+            writer,
+            sheet_name="VI HOTO",
+            index=False
+        )
+        db_ws = writer.sheets["VI HOTO"]
+       
+            
+        ws = writer.sheets["Dashboard"]
+
+        # ---- Colors (match the screenshot) ----
+        header_fill      = PatternFill(fill_type="solid", fgColor="31869B")  
+        total_row_fill    = PatternFill(fill_type="solid", fgColor="F2DCDB")  # (grand total row)
+        total_col_fill    = PatternFill(fill_type="solid", fgColor="F2DCDB")  #  (grand total column)
+        corner_fill       = PatternFill(fill_type="solid", fgColor="DAEEF3")  # corner cell
+
+        status_fill_map = {
+            "Accepted": PatternFill(fill_type="solid", fgColor="C6D9B8"),  # light green
+            "Offered":  PatternFill(fill_type="solid", fgColor="E4C9A8"),  # light peach
+            "Pending":  PatternFill(fill_type="solid", fgColor="C9C2DD"),  # light purple
+            "FR WIP": PatternFill(fill_type="solid", fgColor="C6D9B8"),  # light green
+            "HW Alarms":  PatternFill(fill_type="solid", fgColor="E4C9A8"),  # light peach
+            "Media Issue":  PatternFill(fill_type="solid", fgColor="C9C2DD"),  # light purple
+            "MW Pending":  PatternFill(fill_type="solid", fgColor="E4C9A8"),  # light purple
+        }
+
+        header_font = Font(color="000000", bold=True)
+        bold_font   = Font(bold=True)
+
+        thin = Side(style="thin", color="000000")
+        border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+        center = Alignment(horizontal="center", vertical="center")
+
+        def style_block(df, start_row):
+            """start_row = 1-indexed row number where the header of this table sits"""
+            header_row = start_row
+            total_row  = start_row + len(df)          # last data row = Grand Total row
+            last_col   = len(df.columns)               # e.g. J is last_col if 10 cols
+
+            # ---- Header row ----
+            for cell in ws[header_row][:last_col]:
+                cell.fill = header_fill
+                cell.font = header_font
+                cell.alignment = center
+                cell.border = border
+
+            # ---- Data rows ----
+            for r in range(header_row + 1, total_row + 1):
+                row_cells = ws[r][:last_col]
+                status_val = row_cells[0].value  # column A value: Accepted/Offered/Pending/Grand Total
+
+                for idx, cell in enumerate(row_cells):
+                    cell.alignment = center
+                    cell.border = border
+
+                    if status_val == "Grand Total":
+                        # whole grand total row = blue-grey, except corner cell
+                        if idx == last_col - 1:      # last col = Grand Total column
+                            cell.fill = corner_fill
+                        else:
+                            cell.fill = total_row_fill
+                        cell.font = bold_font
+                    else:
+                        if idx == 0:                 # Status label column
+                            cell.fill = status_fill_map.get(status_val, PatternFill())
+                        elif idx == last_col - 1:     # Grand Total column
+                            cell.fill = total_col_fill
+                            cell.font = bold_font
+
+        # Circle Wise
+        style_block(status_df, 1)
+        style_block(pending_df, len(status_df) + 7)
+
+        # OEM Wise
+        oem_status_start = len(status_df) + len(pending_df) + 13
+        style_block(oem_status_df, oem_status_start)
+
+        oem_pending_start = oem_status_start + len(oem_status_df) + 6
+        style_block(oem_pending_df, oem_pending_start)
+        
+        for cell in db_ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = center
+            cell.border = border
+        # ---- Column widths ----
+        for col_cells in ws.columns:
+            col_letter = col_cells[0].column_letter
+            ws.column_dimensions[col_letter].width = 14
+
+    download_link = request.build_absolute_uri(
+        settings.MEDIA_URL + "IntegrationTrackerVI/" + file_name
+    )
+
+    return Response({
+        "message": "Dashboard Generated Successfully",
+        "download_link": download_link
+    })

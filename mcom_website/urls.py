@@ -107,7 +107,9 @@ urlpatterns = [
     path("vi/",include("VI_checklist_tool.urls")),
     path("mwCeragon/",include("microwave_Ceragon_tool.urls")),
     path('', include('Resource_Management.urls')),
-    path("vi_summary/",include("VI_Summary_Tool.urls"))
+    path("vi_summary/",include("VI_Summary_Tool.urls")),
+    path("kpi_monitoring/",include("kpi_monitoring.urls")),
+    path("gpl_audit_tool_V2/",include("gpl_audit_tool_V2.urls")),
 
 ]
 

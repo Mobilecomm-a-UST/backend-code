@@ -53,6 +53,7 @@ class Dailytaskreviewmodel(models.Model):
     updated_by = models.CharField(max_length=255,blank=True,null=True)
     task_id = models.CharField(max_length=255,blank=True,null=True, unique=True)
     task_type = models.CharField(max_length=50,blank=True,null=True)
+    reassign_count = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
 

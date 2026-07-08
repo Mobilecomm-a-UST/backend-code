@@ -12,7 +12,6 @@ class MonthlyReportSerializer(serializers.Serializer):
     costs           = serializers.DictField()
     resources       = serializers.DictField()
     other_resources = serializers.DictField(required=False, default=dict)
-    month_wise_data = serializers.DictField(required=False, default=dict)
 
     def validate_costs(self, value):
         required = ['c1', 'c2', 'c4']

@@ -164,13 +164,13 @@ def reverse_key(key):
 
 #function for make Polarization column in Radio budget file
 def get_polarization(interface):
+    interface = str(interface)
+
     if "Carrier1/1" in interface:
         return "V"
     elif "Carrier1/2" in interface:
         return "H"
-    else:
-        return "Unknown"
-    
+    return "Unknown"
 
 
 #Define folder to save the data_________________               
@@ -274,46 +274,99 @@ def microwave_upload(request):
 
 # upload Radio-Report files and read data as a dataframe....
 
-    radio_report_file = request.FILES.getlist("radio_report_file")
-    if not radio_report_file:
-        return Response({"status": "ERROR", "message": "radio_report_file not uploaded"}, status=HTTP_400_BAD_REQUEST)
-    
-    radio_report_file_list=[]
-    for file in radio_report_file:
-        if file.name.endswith('.xlsx'):
-            radio_report_df=pd.read_excel(file,header=2)
-        elif file.name.endswith('.csv'):
-            radio_report_df = pd.read_csv(file,header=2)
-        else :
-            return Response({"status": "ERROR", "message": f"Unsupported file type"}, status=HTTP_400_BAD_REQUEST)
+    # ------------------- Upload Radio Report Files -------------------
+    radio_report_files = request.FILES.getlist("radio_report_file")
 
-        radio_report_df.columns=radio_report_df.columns.str.strip()
-        radio_report_file_list.append(radio_report_df)
-        radio_report_df = pd.concat(radio_report_file_list, ignore_index=True)
-        print(radio_report_df.head())
+    if not radio_report_files:
+        return Response(
+            {"status": "ERROR", "message": "radio_report_file not uploaded"},
+            status=HTTP_400_BAD_REQUEST
+        )
 
-    
+    radio_report_file_list = []
+
+    for file in radio_report_files:
+
+        if file.name.endswith(".xlsx"):
+            df = pd.read_excel(file, header=2)
+
+        elif file.name.endswith(".csv"):
+            df = pd.read_csv(file, header=2)
+
+        else:
+            return Response(
+                {"status": "ERROR", "message": f"Unsupported file type : {file.name}"},
+                status=HTTP_400_BAD_REQUEST
+            )
+
+        # Strip column names
+        df.columns = df.columns.astype(str).str.strip()
+
+        # Remove duplicate columns (keep first occurrence)
+        if df.columns.duplicated().any():
+            duplicate_cols = df.columns[df.columns.duplicated()].tolist()
+            print(f"Warning: {file.name} contains duplicate columns: {duplicate_cols}")
+
+            df = df.loc[:, ~df.columns.duplicated()]
+
+        # Reset index
+        df.reset_index(drop=True, inplace=True)
+
+        radio_report_file_list.append(df)
+
+    # Merge all uploaded radio reports
+    radio_report_df = pd.concat(radio_report_file_list, ignore_index=True)
+
+    print("Radio Report Shape :", radio_report_df.shape)
+    print(radio_report_df.head())
 
 
-#upload Link-Report files and read data as a dataframe....
+    # ------------------- Upload Link Report Files -------------------
 
-    link_report_file = request.FILES.getlist("link_report_file")
-    if not link_report_file:
-        return Response({"status": "ERROR", "message": "link_report_file not uploaded"}, status=HTTP_400_BAD_REQUEST)
+    link_report_files = request.FILES.getlist("link_report_file")
 
-    link_report_file_list=[]
-    for file in link_report_file:
-        if file.name.endswith('.xlsx'):
-            link_report_df=pd.read_excel(file,header=2)
-        elif file.name.endswith('.csv'):
-            link_report_df = pd.read_csv(file,header=2)
-        else :
-            return Response({"status": "ERROR", "message": "Unsupported file type"}, status=HTTP_400_BAD_REQUEST)
+    if not link_report_files:
+        return Response(
+            {"status": "ERROR", "message": "link_report_file not uploaded"},
+            status=HTTP_400_BAD_REQUEST
+        )
 
-        link_report_df.columns=link_report_df.columns.str.strip()
-        link_report_file_list.append(link_report_df)
-        link_report_df = pd.concat(link_report_file_list, ignore_index=True) 
-        print(link_report_df.head())
+    link_report_file_list = []
+
+    for file in link_report_files:
+
+        if file.name.endswith(".xlsx"):
+            df = pd.read_excel(file, header=2)
+
+        elif file.name.endswith(".csv"):
+            df = pd.read_csv(file, header=2)
+
+        else:
+            return Response(
+                {"status": "ERROR", "message": f"Unsupported file type : {file.name}"},
+                status=HTTP_400_BAD_REQUEST
+            )
+
+        # Strip column names
+        df.columns = df.columns.astype(str).str.strip()
+
+        # Remove duplicate columns (keep first occurrence)
+        if df.columns.duplicated().any():
+            duplicate_cols = df.columns[df.columns.duplicated()].tolist()
+            print(f"Warning: {file.name} contains duplicate columns: {duplicate_cols}")
+
+            df = df.loc[:, ~df.columns.duplicated()]
+
+        # Reset index
+        df.reset_index(drop=True, inplace=True)
+
+        link_report_file_list.append(df)
+
+    # Merge all uploaded link reports
+    link_report_df = pd.concat(link_report_file_list, ignore_index=True)
+
+    print("Link Report Shape :", link_report_df.shape)
+    print(link_report_df.head())
 
     
 

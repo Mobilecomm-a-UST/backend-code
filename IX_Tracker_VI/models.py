@@ -184,7 +184,11 @@ class HOTOIntegrationDataVI(models.Model):
     Pending_Remarks = models.CharField(max_length=500, blank =True, null = True)
     Responsibility = models.CharField(max_length=500, blank =True, null = True)
     TAT = models.CharField(max_length=500, blank =True, null = True)
+    FTR_Status = models.CharField(max_length=500, blank =True, null = True)
+    FTR_Remarks = models.CharField(max_length=500, blank =True, null = True)
     
     uploaded_by = models.CharField(max_length=500, blank=True) 
     upload_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+    class Meta:
+        db_table = "IX_Tracker_VI_HOTO"

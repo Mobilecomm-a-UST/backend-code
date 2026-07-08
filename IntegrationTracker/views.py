@@ -153,7 +153,7 @@ def upload_excel(request):
         
             allowed_values = {
 
-                'CIRCLE': ['AP', 'BIH', 'CHN', 'ROTN', 'DEL', 'HRY', 'JK', 'JRK', 'KOL', 'MAH', 'MP', 'MUM', 'ORI', 'PUN', 'RAJ', 'UPE', 'UPW', 'WB', 'KK','MAH', 'HP', 'NESA', 'ASM'],
+                'CIRCLE': ['AP', 'BIH', 'CHN', 'ROTN', 'DEL', 'HRY', 'JK', 'JRK', 'KOL', 'MAH', 'MP', 'MUM', 'ORI', 'PUN', 'RAJ', 'UPE', 'UPW', 'WB', 'KK','MAH', 'HP', 'NESA', 'ASM','KER'],
                  'OEM': ['SAMSUNG', 'NOKIA', 'ERICSSON','HUAWEI','ZTE'],
                 'Activity Name': ['ULS_HPSC', 'RELOCATION', 'MACRO', 'DE-GROW', 'RET', 'IBS', 'ODSC', 'IDSC', 'HT INCREMENT', 'FEMTO', 'OTHERS', 'UPGRADE','RECTIFICATION','5G SECTOR ADDITION','OPERATIONS','5G RELOCATION','TRAFFIC SHIFTING', 'RRU UPGRADE', '5G RRU SWAP', '5G BW UPGRADE','RRU SWAP'],
                 'Activity Mode (SA/NSA)':['SA','NSA'],
@@ -193,7 +193,7 @@ def upload_excel(request):
                     if col not in df.columns or pd.isnull(row[col]):
                         invalid_cols.append(col)
                     else:
-                        if col in ['Technology (SIWA)','Cell ID','Band (SIWA)','Activity Type (SIWA)','Old Site Tech','Allocated Tech','Deployed Tech']:
+                        if col in ['Technology (SIWA)','Cell ID','Band (SIWA)','Activity Type (SIWA)','Old Site Tech','Allocated Tech','Deployed Tech','MIDS ID']:
                             if ',' in str(row[col]):  # Check for multiple values
                                 if not check_multiple_values(str(row[col]).upper(), allowed_values[col],','):
                                     invalid_cols.append(col)    
@@ -312,6 +312,7 @@ def upload_excel(request):
                         'Old_Site_Tech':row['Old Site Tech'],
                         'Allocated_Tech':row['Allocated Tech'],
                         'Deployed_Tech':row['Deployed Tech'],
+                        'MIDS_ID':row['MIDS ID'],
 
                         'uploaded_by':request.user.username
                     }

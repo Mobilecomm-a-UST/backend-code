@@ -29,6 +29,8 @@ def format_datetime(dt_string):
     dt = datetime.fromisoformat(dt_string)
     return dt.strftime("%d-%m-%Y (%H:%M)")
 
+
+# ===== this function is used to send email when task is assigned =====
 def send_email_assignTask(task_Data):
 
     body = f"""
@@ -81,12 +83,6 @@ def send_email_assignTask(task_Data):
                         </td>
                     </tr>
 
-                    <tr>
-                        <td style="padding:10px;border:1px solid #ddd;"><b>Slot</b></td>
-                        <td style="padding:10px;border:1px solid #ddd;">
-                            {task_Data['slot']}
-                        </td>
-                    </tr>
 
                     <tr>
                         <td style="padding:10px;border:1px solid #ddd;"><b>Frequency</b></td>
@@ -203,6 +199,8 @@ def send_email_assignTask(task_Data):
         True
     )
 
+
+# ===== this function is used to send email when task is updated by Owner =====
 def send_email_updateTask(task_Data):
 
     status_color = "#28a745" if task_Data["status"] == "Completed" else "#ffc107"
@@ -336,9 +334,68 @@ def send_email_updateTask(task_Data):
         True
     )
 
+# ====== this function is used to send email when task is reassigned by Assiner =====
+def send_email_to_reassign_task(task_Data):
+    body = f"""
+            <html>
+            <body style="font-family:Arial, sans-serif;background-color:#f5f5f5;">
+
+            <div style="max-width:750px;margin:auto;background:white;padding:30px;border-radius:10px;">
+
+                <h2 style="color:#1f4e79;">
+                    🔄 Task Reassignment Notification
+                </h2>
+
+                <p>Hi {SplitFirstNameFromEmail(task_Data['owner'])},</p>
+
+                <p>
+                
+                    The task assigned to you has been reassigned by
+                    <b>{task_Data['assigned_by']}</b>.
+                    Please review the updated task details below.
+                </p>
+
+                <table style="width:100%;border-collapse:collapse;">
+
+                    <tr>
+                        <td style="padding:10px;border:1px solid #ddd;"><b>Ticket No.</b></td>
+                        <td style="padding:10px;border:1px solid #ddd;">{task_Data['task_id']}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:10px;border:1px solid #ddd;"><b>OEM</b></td>
+                        <td style="padding:10px;border:1px solid #ddd;">{task_Data['oem']}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:10px;border:1px solid #ddd;"><b>Task</b></td>
+                        <td style="padding:10px;border:1px solid #ddd;">{task_Data['task']}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:10px;border:1px solid #ddd;"><b>Priority</b></td>
+                        <td style="padding:10px;border:1px solid #ddd;color:red;">
+                            <b>{task_Data['priority']}</b>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:10px;border:1px solid #ddd;"><b>Status</b></td>
+                        <td style="padding:10px;border:1px solid #ddd;">
+                            {task_Data['status']}
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <td style="padding:10px;border:1px solid #ddd;"><b>Frequency</b></td>
+                        <td style="padding:10px;border:1px solid #ddd;">
+                            {task_Data['frequency']}
+                        </td>
+                    </tr>
+                    """
 
 # ======= Add Task Table CRUD =======
-
 
 @api_view(['POST'])
 def add_task_to_table(request):
@@ -486,12 +543,7 @@ def delete_email_hierarchy(request, pk):
     )
 
 
-
-
-
 # ================= Assign Task API function  =================
-
-
 
 @api_view(['POST'])
 def create_task(request):
@@ -503,7 +555,6 @@ def create_task(request):
         send_email_assignTask(serializer.data)
         return Response(serializer.data, status=201)
     return Response(serializer.errors, status=400)
-
 
 @api_view(['POST'])
 def get_all_tasks(request):
@@ -520,7 +571,6 @@ def get_all_tasks(request):
     serializer = DailytaskreviewmodelSerializer(queryset, many=True)
 
     return Response(serializer.data)
-
 
 @api_view(['PUT','POST'])
 def update_task(request, pk):
@@ -556,7 +606,33 @@ def delete_task(request, pk):
         status=200
     )
 
+@api_view(['PUT', 'POST'])
+def reassigned_task(request, pk):
+    try:
+        task = Dailytaskreviewmodel.objects.get(id=pk)
+    except Dailytaskreviewmodel.DoesNotExist:
+        return Response({"error": "Task not found"}, status=404)
 
+    serializer = DailytaskreviewmodelSerializer(
+        task,
+        data=request.data,
+        partial=True
+    )
+
+    if serializer.is_valid():
+
+        # Increase reassign count by 1
+        task.reassign_count = task.reassign_count + 1
+
+        serializer.save(
+            reassign_count=task.reassign_count
+        )
+
+        send_email_to_reassign_task(serializer.data)
+
+        return Response(serializer.data, status=200)
+
+    return Response(serializer.errors, status=400)
 
 #  ==== ================= My Task API function  =================
 

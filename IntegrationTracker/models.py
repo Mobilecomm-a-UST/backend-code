@@ -77,7 +77,8 @@ class IntegrationData(models.Model):
     Old_Site_Tech= models.CharField(max_length=500, blank=True)
     Allocated_Tech= models.CharField(max_length=500, blank=True)
     Deployed_Tech= models.CharField(max_length=500, blank=True)
-
+    MIDS_ID = models.CharField(max_length=500, blank=True)
+    
     uploaded_by = models.CharField(max_length=500, blank=True) 
     upload_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)

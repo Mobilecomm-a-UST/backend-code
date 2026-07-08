@@ -13,6 +13,7 @@ from django.http import FileResponse, Http404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
 
 from gpl_audit_tool_V2.log_parser.config import (
     set_output_file,
@@ -111,22 +112,34 @@ class RunGPLAuditView(APIView):
             excel_path = next(output_dir.rglob("*.xlsx"), None)
             sheets = _excel_summary(excel_path) if excel_path else []
 
-            return Response(
-                {
-                    "job_id": job_id,
-                    "status": "completed",
-                    "sheets": sheets,
-                    "excel_filename": excel_path.name if excel_path else None,
-                    "zip_filename": zip_path.name if zip_path else None,
-                    "download_excel_url": request.build_absolute_uri(
-                        f"/gpl_audit_V2/download-excel/{job_id}/"
-                    ),
-                    "download_zip_url": request.build_absolute_uri(
-                        f"/gpl_audit_V2/download/{job_id}/"
-                    ),
-                },
-                status=status.HTTP_200_OK,
+            # return Response(
+            #     {
+            #         "job_id": job_id,
+            #         "status": "completed",
+            #         "sheets": sheets,
+            #         "excel_filename": excel_path.name if excel_path else None,
+            #         "zip_filename": zip_path.name if zip_path else None,
+            #         "download_excel_url": request.build_absolute_uri(
+            #             f"/gpl_audit_V2/download-excel/{job_id}/"
+            #         ),
+            #         "download_zip_url": request.build_absolute_uri(
+            #             f"/gpl_audit_V2/download/{job_id}/"
+            #         ),
+            #     },
+            #     status=status.HTTP_200_OK,
+            # )
+            zip_path = next((JOBS_ROOT / job_id / "output").glob("*.zip"), None)
+            download_url = request.build_absolute_uri(
+                f"{MEDIA_URL}gpl_audit_jobs/{job_id}/output/{zip_path.name}"
             )
+
+            return Response({
+                "job_id": job_id,
+                "status": True,
+                "message": "All Data Successfully Parsed",
+                "download_url": download_url,
+            })
+
 
         except FileNotFoundError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -461,8 +461,8 @@ def soft_at_5G_Summary_Ericsson(request):
                               layer_value = '_'.join(layer.dropna().unique()) if not layer.dropna().empty else "NA"
                               print("Layer Value:", layer_value)
                               layer_mapping = {
-                                    "T1": "5G",
-                                    "T2": "5G",
+                                    "T1": "5G_Upgrade",
+                                    "T2": "5G_Upgrade",
                               }
                               l_layers = [
                                     layer_mapping.get(l, l) for l in layer_value.split("_")

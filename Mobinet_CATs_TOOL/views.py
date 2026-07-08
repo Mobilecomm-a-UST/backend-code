@@ -159,6 +159,111 @@ def delete_single_mobinet_file(request):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
+# API to upload and manage mobinet baseline-------
+@api_view(['POST','GET','DELEET'])
+def upload_mobinet_baseline(request):
+        try:
+            mobinet_baseline_path = os.path.join(main_folder, 'mobinet_baseline_data')
+            os.makedirs(mobinet_baseline_path, exist_ok=True)
+ 
+            if request.method == 'POST':
+                files = request.FILES.getlist('files')
+                # files = request.FILES.getlist('mobinet_dumps')
+                if not files:
+                    return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+    
+                for f in files:
+                    file_path = os.path.join(mobinet_baseline_path, f.name)
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in f.chunks():
+                            destination.write(chunk)
+    
+                return Response({'status': True, 'message': 'Files uploaded and saved successfully'}, status=status.HTTP_200_OK)
+    
+            elif request.method == 'GET':
+                if not os.path.exists(mobinet_baseline_path):
+                    return Response({'files': []}, status=status.HTTP_200_OK)
+    
+                files = os.listdir(mobinet_baseline_path)
+                return Response({
+                    'status': True,
+                    'message': f'{len(files)} Files found in mobinet_dump_data folder',
+                    'files': files,
+                    }, status=status.HTTP_200_OK)
+            
+            elif request.method == 'DELETE':
+                if not os.path.exists(mobinet_baseline_path):
+                    return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
+    
+                deleted_files = []
+                for filename in os.listdir(mobinet_baseline_path):
+                    file_path = os.path.join(mobinet_baseline_path, filename)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                        deleted_files.append(filename)
+    
+                return Response({
+                    'status': True,
+                    'message': f'{len(deleted_files)} Files deleted successfully',
+                    'deleted_files': deleted_files
+                }, status=status.HTTP_200_OK)
+           
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# API to upload and magage TOD file ---------
+@api_view(['POST','GET','DELEET'])
+def upload_tod_file(request):
+        try:
+            tod_data_path = os.path.join(main_folder, 'TOD_upload_data')
+            os.makedirs(tod_data_path, exist_ok=True)
+ 
+            if request.method == 'POST':
+                files = request.FILES.getlist('files')
+                # files = request.FILES.getlist('mobinet_dumps')
+                if not files:
+                    return Response({'error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+    
+                for f in files:
+                    file_path = os.path.join(tod_data_path, f.name)
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in f.chunks():
+                            destination.write(chunk)
+    
+                return Response({'status': True, 'message': 'Files uploaded and saved successfully'}, status=status.HTTP_200_OK)
+    
+            elif request.method == 'GET':
+                if not os.path.exists(tod_data_path):
+                    return Response({'files': []}, status=status.HTTP_200_OK)
+    
+                files = os.listdir(tod_data_path)
+                return Response({
+                    'status': True,
+                    'message': f'{len(files)} Files found in mobinet_dump_data folder',
+                    'files': files,
+                    }, status=status.HTTP_200_OK)
+            
+            elif request.method == 'DELETE':
+                if not os.path.exists(tod_data_path):
+                    return Response({'error': 'Folder does not exist'}, status=status.HTTP_404_NOT_FOUND)
+    
+                deleted_files = []
+                for filename in os.listdir(tod_data_path):
+                    file_path = os.path.join(tod_data_path, filename)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                        deleted_files.append(filename)
+    
+                return Response({
+                    'status': True,
+                    'message': f'{len(deleted_files)} Files deleted successfully',
+                    'deleted_files': deleted_files
+                }, status=status.HTTP_200_OK)
+           
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # API to upload and manage Mobinet dumps--------
 @api_view(['POST', 'GET' , 'DELETE'])
 def upload_mobinet_dumps(request):
@@ -405,10 +510,513 @@ def upload_stock_report_data(request):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)        
          
- 
- 
- 
+
+
+#  Forword material reconciliation API for mobinet_dump site_match and hw_files-------------
+@api_view(['POST'])
+def forward_material_reconciliation(request):
+    try:
+        # ========= Mobinet Live Data ==========
+        mobinet_live_folder = os.path.join(main_folder, 'mobinet_dump_data')
+        if not os.path.exists(mobinet_live_folder):
+            return Response({"error": "mobinet_live_data folder not found"}, status=400)
+        live_df_list = []
+        for file in os.listdir(mobinet_live_folder):
+            file_path = os.path.join(mobinet_live_folder, file)
+            if not os.path.isfile(file_path):
+                continue  # skip subfolders
+            try:
+                if file_path.endswith('.csv'):
+                   df = pd.read_csv(file_path)
+                elif file_path.endswith(('.xls', '.xlsx')):
+                    df = pd.read_excel(file_path, engine='openpyxl')
+                else:
+                    return Response({"error": f"Unsupported file format: {file}"}, status=400)
+                live_df_list.append(df)
+            except Exception as e:
+                return Response({"error": f"Error in file {file}: {str(e)}"}, status=500)
+        if not live_df_list:
+            return Response({"error": "No valid live files found"}, status=400)
+        live_mobinet_df = pd.concat(live_df_list, ignore_index=True)
+
+        # ========== Mobinet Baseline Data ==========
+
+        mobinet_baseline_folder = os.path.join(main_folder, 'mobinet_baseline_data')
+        if not os.path.exists(mobinet_baseline_folder):
+            return Response({"error": "mobinet_baseline_data folder not found"}, status=400)
+        baseline_df_list = []
+        for file in os.listdir(mobinet_baseline_folder):
+            file_path = os.path.join(mobinet_baseline_folder, file)
+            if not os.path.isfile(file_path):
+                continue  # skip subfolders
+            try:
+                if file_path.endswith('.csv'):
+                   df = pd.read_csv(file_path)
+                elif file_path.endswith(('.xls', '.xlsx')):
+                    df = pd.read_excel(file_path, engine='openpyxl')
+                else:
+                    return Response({"error": f"Unsupported file format: {file}"}, status=400)
+                baseline_df_list.append(df)
+            except Exception as e:
+                return Response({"error": f"Error in file {file}: {str(e)}"}, status=500)
+        if not baseline_df_list:
+            return Response({"error": "No valid baseline files found"}, status=400)
+        baseline_df = pd.concat(baseline_df_list, ignore_index=True)
+
+        #  ======= TOD Data ==========
+        mobinet_tod_folder = os.path.join(main_folder, 'TOD_upload_data')
+        if not os.path.exists(mobinet_tod_folder):
+            return Response({"error": "mobinet_tod_data folder not found"}, status=400)
+        tod_df_list = []
+        for file in os.listdir(mobinet_tod_folder):
+            file_path = os.path.join(mobinet_tod_folder, file)
+            if not os.path.isfile(file_path):
+                continue  # skip subfolders
+            try:
+                if file_path.endswith('.csv'):
+                   df = pd.read_csv(file_path)
+                elif file_path.endswith(('.xls', '.xlsx')):
+                    df = pd.read_excel(file_path, engine='openpyxl')
+                else:
+                    return Response({"error": f"Unsupported file format: {file}"}, status=400)
+                tod_df_list.append(df)
+            except Exception as e:
+                return Response({"error": f"Error in file {file}: {str(e)}"}, status=500)
+        if not tod_df_list:
+            return Response({"error": "No valid TOD files found"}, status=400)
+        tod_df = pd.concat(tod_df_list, ignore_index=True)
+
+        # ======= Locator Data ==========
+        locater_folder = os.path.join(main_folder, 'locator_data')
+        if not os.path.exists(locater_folder):
+            return Response({"error": "locator_data folder not found"}, status=400)
+        locater_df_list = []
+        for file in os.listdir(locater_folder):
+            file_path = os.path.join(locater_folder, file)
+            if not os.path.isfile(file_path):
+                continue  # skip subfolders
+            try:
+                if file_path.endswith('.csv'):
+                   df = pd.read_csv(file_path)
+                elif file_path.endswith(('.xls', '.xlsx')):
+                    df = pd.read_excel(file_path, engine='openpyxl')
+                else:
+                    return Response({"error": f"Unsupported file format: {file}"}, status=400)
+                locater_df_list.append(df)
+            except Exception as e:
+                return Response({"error": f"Error in file {file}: {str(e)}"}, status=500)
+        if not locater_df_list:
+            return Response({"error": "No valid locator files found"}, status=400)
+        locater_df = pd.concat(locater_df_list, ignore_index=True)
+
+        #  =========== HW Data ==========
+        hw_file = request.FILES.get("hw")
+        if not hw_file:
+            return Response({"error": "hw file not provided"}, status=400)
+        if hw_file.name.endswith('.csv'):
+            hw_df = pd.read_csv(hw_file)
+        else:
+            hw_df = pd.read_excel(hw_file)
+
+        tod_df['Orcl Tolocation'] = (tod_df['Orcl Tolocation'].astype(str).str.split('.').str[:3].str.join('-'))
+        locater_df['Location Name'] = locater_df['Location Name'].astype(str).str.strip()
+
+        matched_locater_df = pd.merge(
+            tod_df,
+            locater_df[['Location Name', 'Siteid']],
+            how='left',
+            left_on='Orcl Tolocation',
+            right_on='Location Name'
+        )
+
+        matched_locater_df.drop(columns=['Location Name'], inplace=True)
+
+
+        matched_ItemCode_df = pd.merge(
+            matched_locater_df,
+            hw_df[['ITEMCODE', 'Module Name','Module type']],
+            how='left',
+            left_on='Itemcode',
+            right_on='ITEMCODE'
+        )
+        
+
+        
+        matched_ItemCode_df['Module Name'] = (matched_ItemCode_df['Module Name'].astype(str).str.strip().str.replace(r'\.0$', '', regex=True))
+        matched_ItemCode_df = matched_ItemCode_df[
+            (matched_ItemCode_df['Module Name'] != '') &
+            (matched_ItemCode_df['Module Name'].str.lower() != 'nan') &
+            (matched_ItemCode_df['Module Name'] != '0')
+        ]
        
+
+        matched_ItemCode_df['Siteid+Circle+Module_name'] = matched_ItemCode_df['Siteid'] + '_' + matched_ItemCode_df['Circle'] + '_' + matched_ItemCode_df['Module Name']
+
+        matched_ItemCode_df['Type'] = "TOD"
+
+        # print(matched_ItemCode_df.head())  # Print the first few rows of the modified DataFrame to the console
+
+
+        # ======== baseline_df processing ========
+        baseline_df['Parent Site'] = baseline_df['Parent Site'].astype(str).str.split('.').str[0]
+        baseline_df['Board Type'] = baseline_df['Board Type'].astype(str).str.split('.').str[0]
+
+        baseline_df['Siteid+Circle+Module_name'] = baseline_df['Parent Site'] + '_' + baseline_df['Board Type']
+
+        # print(baseline_df.head())  # Print the first few rows of the modified DataFrame to the console
+
+
+        # ======= match baseline_df with matched_ItemCode_df(Siteid+Circle+Module_name) =======
+
+        baseline_final_df = pd.merge(
+            baseline_df,
+            matched_ItemCode_df[['Siteid+Circle+Module_name']],
+            how='inner',
+            left_on='Siteid+Circle+Module_name',
+            right_on='Siteid+Circle+Module_name'
+        )
+        baseline_final_df = baseline_final_df.drop_duplicates(
+            subset=['Serial Number'],
+            keep='first'
+        )
+
+        # baseline_final_df.drop(columns=['Siteid+Circle+Module_name'], inplace=True)
+        baseline_final_df["Type"] = "Baseline"
+
+        # print(baseline_final_df.head())  # Print the first few rows of the final DataFrame to the console
+
+
+        # concatinate matched_ItemCode_df and baseline_final_df
+        tod_two_columns_df = matched_ItemCode_df[['Type','Siteid+Circle+Module_name','Circle','Module Name']]
+        # baseline_two_columns_df = baseline_final_df[['Type','Siteid+Circle+Module_name','Zone']]
+        baseline_two_columns_df = baseline_final_df[
+                ['Type', 'Siteid+Circle+Module_name', 'Zone','Board Type']
+            ].rename(columns={'Zone': 'Circle', 'Board Type': 'Module Name'})
+
+        tod_plus_baseline_df = pd.concat([tod_two_columns_df, baseline_two_columns_df], ignore_index=True)
+        # tod_plus_baseline_df = tod_plus_baseline_df.drop_duplicates(
+        #     subset=['Type', 'Siteid+Circle+Module_name']
+        # )
+        # print('tod_plus_baseline_df', tod_plus_baseline_df.head())  # Print the first few rows of the final DataFrame to the console
+
+
+        # # compere with live_mobinet_df
+        live_mobinet_df['Parent Site'] = live_mobinet_df['Parent Site'].astype(str).str.split('.').str[0]
+        live_mobinet_df['Board Type'] = live_mobinet_df['Board Type'].astype(str).str.split('.').str[0]
+
+        live_mobinet_df['Siteid+Circle+Module_name'] = live_mobinet_df['Parent Site'] + '_' + live_mobinet_df['Board Type']
+        # Separate rows with valid Serial Numbers
+
+
+        # print('live in mobinet',live_mobinet_df.head())  # Print the first few rows of the modified DataFrame to the console
+
+        compared_live_mobinet_to_TOD_baseline_df = pd.merge(
+            live_mobinet_df,
+            tod_plus_baseline_df[['Siteid+Circle+Module_name']],
+            how='inner',
+            left_on='Siteid+Circle+Module_name',
+            right_on='Siteid+Circle+Module_name',
+        )
+        # print('compared live mobinet to TOD baseline',compared_live_mobinet_to_TOD_baseline_df.head())  # Print the first few rows of the final DataFrame to the console
+        compared_live_mobinet_to_TOD_baseline_df['Serial Number+Siteid+Circle+Module_name'] = compared_live_mobinet_to_TOD_baseline_df['Serial Number'].astype(str) + '_' + compared_live_mobinet_to_TOD_baseline_df['Siteid+Circle+Module_name'].astype(str)
+        compared_live_mobinet_to_TOD_baseline_df = compared_live_mobinet_to_TOD_baseline_df.drop_duplicates(
+            subset=['Serial Number+Siteid+Circle+Module_name'],
+            keep='first'
+        )
+        compared_live_mobinet_to_TOD_baseline_df.drop(columns=['Serial Number+Siteid+Circle+Module_name'], inplace=True)
+
+        #   ======== circle wise summary ========
+        # TOD Count (Circle column)
+        tod_summary = (
+            matched_ItemCode_df
+            .groupby('Circle')
+            .size()
+            .reset_index(name='TOD module count')
+        )
+
+        # Baseline Count (Zone column)
+        baseline_summary = (
+            baseline_final_df
+            .groupby('Zone')
+            .size()
+            .reset_index(name='Baseline module count')
+            .rename(columns={'Zone': 'Circle'})
+        )
+
+        # TOD+Baseline Count (Circle column)
+        tod_baseline_summary = (
+            tod_plus_baseline_df
+            .groupby('Circle')
+            .size()
+            .reset_index(name='Total module count (TOD+Baseline)')
+        )
+
+        # Live Mobinet Count (Zone column)
+        live_summary = (
+            compared_live_mobinet_to_TOD_baseline_df
+            .groupby('Zone')
+            .size()
+            .reset_index(name='Live Mobinet Count')
+            .rename(columns={'Zone': 'Circle'})
+        )
+
+        # Merge all summaries
+        circle_summary_df = pd.merge(
+            tod_summary,
+            baseline_summary,
+            on='Circle',
+            how='outer'
+        )
+
+        circle_summary_df = pd.merge(
+            circle_summary_df,
+            tod_baseline_summary,
+            on='Circle',
+            how='outer'
+        )
+
+        circle_summary_df = pd.merge(
+            circle_summary_df,
+            live_summary,
+            on='Circle',
+            how='outer'
+        )
+
+        # Replace NaN with 0
+        circle_summary_df = circle_summary_df.fillna(0)
+
+        # Convert counts to integer
+        count_cols = [
+            'TOD module count',
+            'Baseline module count',
+            'Total module count (TOD+Baseline)',
+            'Live Mobinet Count'
+        ]
+
+        circle_summary_df[count_cols] = (
+            circle_summary_df[count_cols]
+            .astype(int)
+        )
+
+        # Gap Count
+        circle_summary_df['Gap count'] = (
+            circle_summary_df['Total module count (TOD+Baseline)']
+            - circle_summary_df['Live Mobinet Count']
+        )
+
+
+        # ===== Module Wise Summary =====
+
+        # TOD Count (Module Name)
+        tod_module_summary = (
+            matched_ItemCode_df
+            .groupby('Module Name')
+            .size()
+            .reset_index(name='TOD module count')
+        )
+
+        # Baseline Count (Board Type)
+        baseline_module_summary = (
+            baseline_final_df
+            .groupby('Board Type')
+            .size()
+            .reset_index(name='Baseline module count')
+            .rename(columns={'Board Type': 'Module Name'})
+        )
+
+        # TOD+Baseline Count (Module Name)
+        tod_baseline_module_summary = (
+            tod_plus_baseline_df
+            .groupby('Module Name')
+            .size()
+            .reset_index(name='Total module count (TOD+Baseline)')
+        )
+
+        # Live Mobinet Count (Board Type)
+        live_module_summary = (
+            compared_live_mobinet_to_TOD_baseline_df
+            .groupby('Board Type')
+            .size()
+            .reset_index(name='Live Mobinet Count')
+            .rename(columns={'Board Type': 'Module Name'})
+        )
+
+        # Merge all summaries
+        module_summary_df = pd.merge(
+            tod_module_summary,
+            baseline_module_summary,
+            on='Module Name',
+            how='outer'
+        )
+
+        module_summary_df = pd.merge(
+            module_summary_df,
+            tod_baseline_module_summary,
+            on='Module Name',
+            how='outer'
+        )
+
+        module_summary_df = pd.merge(
+            module_summary_df,
+            live_module_summary,
+            on='Module Name',
+            how='outer'
+        )
+
+        # Replace NaN with 0
+        module_summary_df = module_summary_df.fillna(0)
+
+        # Convert counts to integer
+        count_cols = [
+            'TOD module count',
+            'Baseline module count',
+            'Total module count (TOD+Baseline)',
+            'Live Mobinet Count'
+        ]
+
+        module_summary_df[count_cols] = module_summary_df[count_cols].astype(int)
+
+        # Gap Count
+        module_summary_df['Gap count'] = (
+            module_summary_df['Total module count (TOD+Baseline)']
+            - module_summary_df['Live Mobinet Count']
+        )
+
+        # Optional: Sort alphabetically
+        module_summary_df = module_summary_df.sort_values('Module Name').reset_index(drop=True)
+
+
+
+        # ===== Siteid+Circle+Module_name Wise Summary =====
+
+        # TOD Count
+        tod_site_summary = (
+            matched_ItemCode_df
+            .groupby(['Siteid+Circle+Module_name', 'Circle'])
+            .size()
+            .reset_index(name='TOD module count')
+        )
+
+        # Baseline Count
+        baseline_site_summary = (
+            baseline_final_df
+            .groupby(['Siteid+Circle+Module_name', 'Zone'])
+            .size()
+            .reset_index(name='Baseline module count')
+            .rename(columns={'Zone': 'Circle'})
+        )
+
+        # TOD+Baseline Count
+        tod_baseline_site_summary = (
+            tod_plus_baseline_df
+            .groupby(['Siteid+Circle+Module_name', 'Circle'])
+            .size()
+            .reset_index(name='Total module count (TOD+Baseline)')
+        )
+
+        # Live Mobinet Count
+        live_site_summary = (
+            compared_live_mobinet_to_TOD_baseline_df
+            .groupby(['Siteid+Circle+Module_name', 'Zone'])
+            .size()
+            .reset_index(name='Live Mobinet Count')
+            .rename(columns={'Zone': 'Circle'})
+        )
+
+        # Merge all summaries
+        site_summary_df = pd.merge(
+            tod_site_summary,
+            baseline_site_summary,
+            on=['Siteid+Circle+Module_name', 'Circle'],
+            how='outer'
+        )
+
+        site_summary_df = pd.merge(
+            site_summary_df,
+            tod_baseline_site_summary,
+            on=['Siteid+Circle+Module_name', 'Circle'],
+            how='outer'
+        )
+
+        site_summary_df = pd.merge(
+            site_summary_df,
+            live_site_summary,
+            on=['Siteid+Circle+Module_name', 'Circle'],
+            how='outer'
+        )
+
+        # Replace NaN with 0
+        site_summary_df = site_summary_df.fillna(0)
+
+        # Convert counts to integer
+        count_cols = [
+            'TOD module count',
+            'Baseline module count',
+            'Total module count (TOD+Baseline)',
+            'Live Mobinet Count'
+        ]
+
+        site_summary_df[count_cols] = site_summary_df[count_cols].astype(int)
+
+        # Gap Count
+        site_summary_df['Gap'] = (
+                site_summary_df['Total module count (TOD+Baseline)']
+                - site_summary_df['Live Mobinet Count']
+            )
+
+        # Optional sorting
+        site_summary_df = (
+            site_summary_df
+            .sort_values(['Circle', 'Siteid+Circle+Module_name'])
+            .reset_index(drop=True)
+        )
+
+
+        output_dir = os.path.join(main_folder, 'TOD_Baseline_Output')
+        os.makedirs(output_dir, exist_ok=True)
+        # delete_existing_files(output_dir)
+
+        filename = f"TOD_Baseline_{timestamp}.xlsx"
+        output_path = os.path.join(output_dir, filename)
+
+        with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+            matched_ItemCode_df.to_excel(writer, sheet_name='TOD', index=False)
+            baseline_final_df.to_excel(writer, sheet_name='Baseline', index=False)
+            tod_plus_baseline_df.to_excel(writer, sheet_name='TOD+Baseline', index=False)
+            compared_live_mobinet_to_TOD_baseline_df.to_excel(writer, sheet_name='Live_Mobinet_Comparison', index=False)
+            circle_summary_df.to_excel(writer, sheet_name='Circle Wise Summary', index=False)
+            module_summary_df.to_excel(writer, sheet_name='Module Wise Summary', index=False)
+            site_summary_df.to_excel(writer, sheet_name='Siteid+Circle+Module_name wise summary', index=False)
+
+        # Generate download URL
+        relative_path = os.path.relpath(output_path, MEDIA_ROOT)
+        download_url = request.build_absolute_uri(
+            os.path.join(MEDIA_URL, relative_path).replace("\\", "/")
+        )
+
+        return Response({
+            "status": True,
+            "message": "File generated successfully",
+            "download_url": download_url
+        }, status=status.HTTP_200_OK)
+
+        # return Response('file read successfully', status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    
+
+        
+
+
+
+
+
+
+
+
+
+
 # Frist Api for mobinet_dump site_match and hw_files-------------
 @api_view(['POST'])
 def mobinet_dump(request):
