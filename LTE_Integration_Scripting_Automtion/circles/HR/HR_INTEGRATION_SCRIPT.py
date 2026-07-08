@@ -2390,16 +2390,6 @@ HR_TN_RN_GPS_MME = """
 confb+
 gs+
 
-$script_nodename = {eNodeBName}
-if $nodename != $script_nodename
-   l echo "This node is called $nodename but the command file should be loaded in {eNodeBName}"
-   return
-fi
-
-if $moshell_version ~ ^([7-9]|10)
-   l echo "The moshell version is too old. 11.0a or higher is required for scripts containing the crn command."
-   return
-fi
 
 ###################################### TN SCRIPT ######################################
 
@@ -4918,16 +4908,6 @@ HR_5G_Cell_creation_Sctp_Endpoint_Creation = """
 confb+
 gs+
 
-$script_nodename = {gNodeBName}
-if $nodename != $script_nodename
-   l echo "This node is called $nodename but the command file should be loaded in {gNodeBName}"
-   return
-fi
-
-if $moshell_version ~ ^([7-9]|10)
-   l echo "The moshell version is too old. 11.0a or higher is required for scripts containing the crn command."
-   return
-fi
 
 ###################################### TN SCRIPT ######################################
 
@@ -5200,15 +5180,6 @@ end
 
 
 ######################################################### 5G SCRIPT #########################################################
-
-
-$Correct_swVersion = 24.Q2
-get 0 swVersion > $swVersion
-
-if $swVersion != $Correct_swVersion 
-   l echo "Old software version ($swVersion) found. Please update the software before 5G integration."
-   return
-fi
 
 
 ###################################### GNBCUUPFunction=1 SCRIPT ######################################
