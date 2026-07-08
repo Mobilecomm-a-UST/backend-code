@@ -127,7 +127,8 @@ INSTALLED_APPS = [
     "Resource_Management",
     "VI_Summary_Tool",
     "kpi_monitoring",
-    "gpl_audit_tool_V2"
+    "gpl_audit_tool_V2",
+    "Nokia_gpl_uls",
 ]
 
 MIDDLEWARE = [
