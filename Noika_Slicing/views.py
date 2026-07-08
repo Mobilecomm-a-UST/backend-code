@@ -362,6 +362,7 @@ def nokia_slicing_dump(request):
                 "uespeccsirsslotsratio",
                 "actforcehoinsuffuecap",
                 "actpersistentsyssetmoi",
+                "actPdcpRlcBufCongOvlMech"
 
                 
 
@@ -870,6 +871,7 @@ def nokia_slicing_dump(request):
                 "vonrreservation",
                 "nrsysinfoprofiledn",
                 "arpPrioEmergencyCall",
+                "actProactUlSchedulingEnh"
                 
                
                
@@ -1210,6 +1212,7 @@ def nokia_slicing_dump(request):
 
 
             # ulPtrs
+            # ulPtrs
             for item in mo.findall(".//ns:list[@name='ulPtrs']/ns:item", ns) if ns else mo.findall(".//list[@name='ulPtrs']/item"):
                 for p in item.findall("ns:p", ns) if ns else item.findall("p"):
                     if p.attrib.get("name") == "actUlPtrs":
@@ -1218,7 +1221,28 @@ def nokia_slicing_dump(request):
                             "DistName": dist_name,
                             "Parameter": "actulptrs",
                             "value": tf_to_01(p.text)
-                        })         
+                        })
+
+
+            # fPdcchMonOccsnPo
+            fpdcch_list = (
+                mo.find(".//ns:list[@name='fPdcchMonOccsnPo']", ns)
+                if ns else
+                mo.find(".//list[@name='fPdcchMonOccsnPo']")
+            )
+
+            if fpdcch_list is not None:
+                p = fpdcch_list.find("ns:p", ns) if ns else fpdcch_list.find("p")
+                if p is not None:
+                    dumy_data.append({
+                        "MO": "NRCELL",
+                        "DistName": dist_name,
+                        "Parameter": "fpdcchmonoccsnpo",
+                        "value": tf_to_01(p.text)
+                    })
+
+            
+          
 
             # print("NRCELL FOUND ----------------")
             # print("Class:", mo_class)
@@ -1373,6 +1397,14 @@ def nokia_slicing_dump(request):
                         "Parameter": name,
                         "value": tf_to_01(p.text)
                     })
+            
+            dumy_data.append({
+                        "MO": "NRDLMUMIMO",
+                        "DistName": dist_name,
+                        "Parameter": "nrdlmumimoid",
+                        "value":1
+                    })
+                  
 
             # print("NRDLMUMIMO found")
 
@@ -1913,6 +1945,13 @@ def nokia_slicing_dump(request):
                         "Parameter": name,
                         "value": tf_to_01(p.text)
                     })
+
+            dumy_data.append({
+                "MO": "NRSYSINFO_PROFILE_NSA",
+                "DistName": dist_name,
+                "Parameter": "nrsysinfoprofilensaid",
+                "value":0
+            })        
 
 
         #  for classs NRDRB_RLC_AM-----   
