@@ -68,6 +68,8 @@ def vi_4g_summary(request):
     lnadjgnb_data=[]
     iprtv6_data = []
     nrcell_data=[]
+    nrx2link_data=[]
+    ipaddressv6_data=[]
     for file in xml_files:
         file_name = file.name.lower()
 
@@ -98,6 +100,7 @@ def vi_4g_summary(request):
         ip = ""
         enode=""
         lncel_id=""
+        nrcell_id=""
         mme_ip_0 = ""
         mme_ip_4 = ""
         mme_ip_1=""
@@ -292,6 +295,56 @@ def vi_4g_summary(request):
 
                 nrcell_data.append(row)
             
+
+            elif mo_class == "com.nokia.srbts.nrbts:NRX2LINK_TRUST":
+                dist_name = mo.attrib.get("distName", "")
+                mrbts = dist_name.split("/")[0].split("-")[-1]
+                nrbts = dist_name.split("/")[1].split("-")[-1]
+                nrx2_id = dist_name.split("/")[-1].split("-")[-1]
+
+                row = {
+                    "MRBTS": mrbts,
+                    "NRBTS": nrbts,
+                    "NRX2LINK_TRUST": nrx2_id,
+                    "ipV6Addr": "",
+                    "x2LinkTrustCtrl": ""
+                }
+
+                p_tags = mo.findall("ns:p", ns) if ns else mo.findall("p")
+
+                for p in p_tags:
+                    name = p.attrib.get("name")
+                    if name == "ipV6Addr":
+                        row["ipV6Addr"] = p.text
+                    elif name == "x2LinkTrustCtrl":
+                        row["x2LinkTrustCtrl"] = p.text
+
+                nrx2link_data.append(row)
+
+            elif mo_class == "com.nokia.srbts.tnl:IPADDRESSV6":
+                dist_name = mo.attrib.get("distName", "")
+
+                mrbts = dist_name.split("/")[0].split("-")[-1]
+                ipaddressv6 = dist_name.split("/")[-1].split("-")[-1]
+
+                row = {
+                    "MRBTS": mrbts,
+                    "IPADDRESSV6": ipaddressv6
+                }
+
+                p_tags = mo.findall("ns:p", ns) if ns else mo.findall("p")
+
+                for p in p_tags:
+                    if p.attrib.get("name") == "localIpAddr":
+                        row["localIpAddr"] = p.text
+                    elif p.attrib.get("name") == "localIpPrefixLength":
+                        row["localIpPrefixLength"] = p.text
+                    elif p.attrib.get("name") == "ipAddressAllocationMethod":
+                        row["ipAddressAllocationMethod"] = p.text
+
+                ipaddressv6_data.append(row)    
+            
+
         row = {
             "MRBTS_ID": mrbts_id,
             "BTS_Name": bts_name,
@@ -352,7 +405,29 @@ def vi_4g_summary(request):
             "chBw",
             "nrarfcn"
             
+        ])   
+
+    if nrx2link_data:
+        nrx2_df = pd.DataFrame(nrx2link_data)
+    else:
+        nrx2_df = pd.DataFrame(columns=[
+            "MRBTS",
+            "NRBTS",
+            "NRX2LINK_TRUST",
+            "ipV6Addr",
+            "x2LinkTrustCtrl"
+        ])
+    if ipaddressv6_data:
+        ipaddressv6_df = pd.DataFrame(ipaddressv6_data)
+    else:
+        ipaddressv6_df = pd.DataFrame(columns=[
+            "MRBTS",
+            "localIpAddr",
+            "localIpPrefixLength",
+
         ])    
+
+
 #for Commercial Radiation sheet-----
     cr_df = pd.read_excel(os.path.join(temp_folder, "Reference_Data_4g.xlsx"), sheet_name="Commercial Radiation")
     cr_df.columns = cr_df.columns.str.strip()
@@ -386,18 +461,27 @@ def vi_4g_summary(request):
     lnbts_df["enbName"] = dumy["eNode"].str[2:]
 
 
-    nrcell_df=pd.read_excel(os.path.join(temp_folder, "Reference_Data_4g.xlsx"), sheet_name="NRCELL")
+    nrcell_df = pd.read_excel(
+    os.path.join(temp_folder, "Reference_Data_4g.xlsx"),
+    sheet_name="NRCELL"
+    )
     nrcell_df.columns = nrcell_df.columns.str.strip()
-    if nrcell_df.empty:
-        nrcell_df = pd.concat([nrcell_df] * len(nr_df),ignore_index=True)
+
+    if not nr_df.empty:
+        # Create empty dataframe with same columns and required rows
+        nrcell_df = pd.DataFrame(
+            index=range(len(nr_df)),
+            columns=nrcell_df.columns
+        )
+
         nrcell_df["MRBTS"] = nr_df["MRBTS"].values
         nrcell_df["NRBTS"] = nr_df["NRBTS"].values
         nrcell_df["NRCELL"] = nr_df["NRCELL"].values
-        # nrcell_df["name"] = nr_df["adjGnbId"].values
-        nrcell_df["pMax"] =nr_df["pMax"].values
+        nrcell_df["pMax"] = nr_df["pMax"].values
         nrcell_df["nrarfcn"] = nr_df["nrarfcn"].values
         nrcell_df["chBw"] = nr_df["chBw"].values
 
+        # Map eNode name
         name_map = (
             dumy[["MRBTS_ID", "eNode"]]
             .drop_duplicates(subset="MRBTS_ID", keep="first")
@@ -406,11 +490,13 @@ def vi_4g_summary(request):
 
         nrcell_df["name"] = nrcell_df["MRBTS"].map(name_map)
 
+    else:
+        # Empty dataframe with same columns
+        nrcell_df = nrcell_df.iloc[0:0].copy()
+
     
 
 
-    else:     
-         nrcell_df =  nrcell_df.iloc[0:0].copy()
     
     lncel_df=pd.read_excel(os.path.join(temp_folder, "Reference_Data_4g.xlsx"), sheet_name="LNCEL")
     lncel_df.columns = lncel_df.columns.str.strip()
@@ -471,12 +557,45 @@ def vi_4g_summary(request):
         LNADJGNB_df = LNADJGNB_df.iloc[0:0].copy()
 
 
-    LTEENB_df=pd.read_excel(os.path.join(temp_folder, "Reference_Data_4g.xlsx"), sheet_name="LTEENB")
+    LTEENB_df = pd.read_excel(
+        os.path.join(temp_folder, "Reference_Data_4g.xlsx"),
+        sheet_name="LTEENB"
+    )
     LTEENB_df.columns = LTEENB_df.columns.str.strip()
-    LTEENB_df = pd.concat([LTEENB_df] * len(dumy), ignore_index=True)
-    LTEENB_df["MRBTS"] =  dumy["MRBTS_ID"]
-    LTEENB_df["NRBTS"] =  dumy["nrbts_id"]
-  
+
+    if not nrx2_df.empty:
+
+        if len(LTEENB_df) > 0:
+            template = LTEENB_df.iloc[[0]].copy()
+            LTEENB_df = pd.concat([template] * len(nrx2_df), ignore_index=True)
+        else:
+            LTEENB_df = pd.DataFrame(
+                index=range(len(nrx2_df)),
+                columns=LTEENB_df.columns
+            )
+
+        LTEENB_df["MRBTS"] = nrx2_df["MRBTS"].values
+        LTEENB_df["NRBTS"] = nrx2_df["NRBTS"].values
+        LTEENB_df["LTEENB"] = nrx2_df["NRX2LINK_TRUST"].values
+        LTEENB_df["localCuIpAddr"] = nrx2_df["ipV6Addr"].values
+        ip_map = (
+            iprtv6_df
+            .drop_duplicates(subset="MRBTS", keep="first")
+            .set_index("MRBTS")["gatewayIpv6Addr"]
+        )
+
+        LTEENB_df["ipAddr"] = LTEENB_df["MRBTS"].map(ip_map)
+
+        LTEENB_df["ipAddr"] = LTEENB_df["MRBTS"].map(ip_map)
+        LTEENB_df["x2LinkLock"]=0
+        LTEENB_df["x2LinkStatus"]=1
+        LTEENB_df["x2_LinkLock"]="unlocked"
+        LTEENB_df["x2_LinkStatus"]="available"
+       
+
+    else:
+        LTEENB_df = LTEENB_df.iloc[0:0].copy()
+    
 
 
     IPRTV6_df=pd.read_excel(os.path.join(temp_folder, "Reference_Data_4g.xlsx"), sheet_name="IPRTV6")
@@ -526,7 +645,7 @@ def vi_4g_summary(request):
 )
     
 
-    output_file1 = os.path.join(output_folder, f"Reference_Data_{circle}_4G.xlsx")
+    output_file1 = os.path.join(output_folder, f"Reference_Data_{circle}_4G_5G.xlsx")
 
     with pd.ExcelWriter(output_file1, engine="openpyxl") as writer:
         cr_df.to_excel(writer,sheet_name="Commercial Radiation",index=False)
@@ -537,9 +656,9 @@ def vi_4g_summary(request):
         mmeip_df.to_excel(writer,sheet_name="MME IP",index=False)
         sgw_df.to_excel(writer,sheet_name="SGW IP",index=False)
         ntp_df.to_excel(writer,sheet_name="NTP IP",index=False)
-        # LNADJGNB_df.to_excel(writer,sheet_name="LNADJGNB",index=False)
-        # LTEENB_df.to_excel(writer,sheet_name="LTEENB",index=False)
-        # IPRTV6_df.to_excel(writer,sheet_name="IPRTV6",index=False)
+        LNADJGNB_df.to_excel(writer,sheet_name="LNADJGNB",index=False)
+        LTEENB_df.to_excel(writer,sheet_name="LTEENB",index=False)
+        IPRTV6_df.to_excel(writer,sheet_name="IPRTV6",index=False)
         QOS_df.to_excel(writer,sheet_name="QOS Parameter",index=False)
         Golden_para_df.to_excel(writer,sheet_name="Golden Parameter",index=False)
 
@@ -574,7 +693,7 @@ def vi_4g_summary(request):
 
     return Response({
         "status": True,
-        "message": "Files generated successfully",
+        "message":"4G Summary generated successfully",
         "download_url1": download_url1,
         "download_url2": download_url2,
         "download_url3": download_url3,
@@ -772,10 +891,11 @@ def vi_5g_summary(request):
     )
     return Response({
         "status": True,
-        "message": "Files generated successfully",
+        "message":"5G Summary generated successfully",
         "download_url": download_url,
     
     })
+
 
 
 @api_view(["POST"])
@@ -895,4 +1015,3 @@ def vi_2g_summary(request):
         "message": "2G Summary generated successfully",
         "download_url": download_url,
     })
-
