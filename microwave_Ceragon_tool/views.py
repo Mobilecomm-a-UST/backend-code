@@ -1,287 +1,3 @@
-# # from django.shortcuts import render
-# # import pandas as pd
-# # from rest_framework.decorators import api_view
-# # from rest_framework.response import Response
-# # from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST 
-# # from mcom_website.settings import MEDIA_ROOT, MEDIA_URL
-# # from rest_framework import status
-# # import re
-# # import gzip
-# # import os
-
-
-# # @api_view(['POST'])
-# # def upload_cergon_dump(request):
-# #     dump_file = request.FILES.get("dump_file")
-
-# #     if not dump_file:
-# #         return Response({"message": "dump_file not provided"}, status=400)
-    
-
-# #     file_content = dump_file.read().decode("utf-8")
-# #     lines = file_content.splitlines()
- 
-# #     parameter_patterns = {
-# #         "sw_version": (r'-sw version\s*:\s*(.+)', "Software Version IDU"),
-# #         "unit_name": (r'unit-name=(.*)', "Site Name/System name/Unit Name"),
-# #         "ip_address":(r'-ip address\s*:\s*(.+)', "NETWORK IP"),
-
-# #     }
-
-# #     result = []
-
-# #     for key, (pattern, display_name) in parameter_patterns.items():
-# #         value = ""
-# #         for line in lines:
-# #             match = re.search(pattern, line, re.IGNORECASE)
-# #             if match:
-# #                 value = match.group(1).strip()
-# #                 break
-
-# #         result.append({
-# #             "parameter": display_name,
-# #             "value in dump": value
-# #         })
-
-# #     df = pd.DataFrame(result)
-# #     print(df)
-
-# #     return Response({
-# #         "message": True,
-# #         "total_lines": len(lines),
-# #     })
-
-
-
-# import re
-# import pandas as pd
-# from rest_framework.decorators import api_view
-# from rest_framework.response import Response
-
-
-# @api_view(['POST'])
-# def upload_cergon_dump(request):
-#     dump_file = request.FILES.get("dump_file")
-#     if not dump_file:
-#         return Response({"message": "dump_file not provided"}, status=400)
-    
-#     lb_file = request.FILES.get("lb_file")
-#     if not lb_file:
-#         return Response({"message": "lb_file not provided"}, status=400)
-
-#     file_name = lb_file.name.lower()
-#     if file_name.endswith(".csv"):
-#         df_lb = pd.read_csv(lb_file)
-#     elif file_name.endswith((".xlsx", ".xls")):
-#         df_lb = pd.read_excel(lb_file)
-#     else:
-#         return Response(
-#             {"message": "Only csv/xlsx/xls files are supported"},
-#             status=400
-#         )
-    
-
-
-#     lines = dump_file.read().decode("utf-8").splitlines()
-
-#     result = []
-#     # Simple parameters------------ 1
-
-#     patterns = {
-#         "Software Version IDU": r'-sw version\s*:\s*(.+)',
-#         "Site Name/System name/Unit Name": r'unit-name=(.*)',
-#         "Current RSL": r'sys-rf/hw-patch-rsl-threshold=(.*)',
-#         "SNMP Version": r'snmp-s-version=(.*)',
-#         "License Key": r'-license key\s*:\s*(.+)',
-#         "Network IP": r'-ip address\s*:\s*(.+)',
-#         "System Type": r'-system type\s*:\s*(.+)',
-#         "System ID": r'-system id\s*:\s*(.+)',
-#         "MTU Value ": r'sw-ap-l2-if-global-mru=(.*)',
-#         "TX Mute": r'rf-config-table\.0\.mute-tx=(.*)',
-#         "Server Location": r'unit-location=(.*)',
-#         "Node LAT LONG": r'unit-longitude=(.*)',
-#         "MULTICAREER": r'sys-UNIT-MGR/workaround_manager_config\.0\.interface\(1\)=(.*)',
-#         "HTTP S": r'http-s-admin=(.*)',
-#         "SNMP":r'snmp-s-admin=(.*)',
-#         "Password":r'security-config-log-upload-configuration-table\.0\.Password=(.*)',
-#         "MRMC Script ID":r'mrmc-script-config-table\.0\.mrmc-config-active-script-id=(.*)',
-#         "MRMC Profile": r'mrmc-script-config-table\.0\.mrmc-config-max-profile=(.*)',
-#         "Ethernet port speed":r'radio-ethernet-config-table\.\d+\.threshold-capacity=(.*)',
-#         "Modulation": r'mrmc-script-config-table\.\d+\.mrmc-config-script-operational-mode=(.*)',
-#         "Frequency Tx (MHz)": r'rf-config-table\.\d+\.tx-frequency=(.*)',
-#         "Frequency Rx (MHz)": r'rf-config-table\.\d+\.rx-frequency=(.*)',
-#         "Tx Power (dBm)": r'rf-config-table\.\d+\.tx-level-config=(.*)',
-     
-      
-
-
-
-
-
-#     }
-
-#     for display_name, pattern in patterns.items():
-#         value = ""
-#         for line in lines:
-#             match = re.search(pattern, line, re.IGNORECASE)
-#             if match:
-#                 value = match.group(1).strip()
-#                 break
-
-#         result.append({
-#             "parameter": display_name,
-#             "value in dump": value
-#         })
-#     result.append({
-#     "parameter": "ACM Enabled/Modulation mode",
-#     "value in dump": "adaptive"
-#     })
-
-
-#     result.append({
-#         "parameter": "ATPC",
-#         "value in dump": "disable"
-#     })    
-
-
-#     header = None
-#     values = None
-
-# # Voltage table parameters------ 4
-
-#     for i, line in enumerate(lines):
-#         if line.strip() == "unit-mgr-voltage-config-table":
-#             for j in range(i + 1, len(lines)):
-#                 if lines[j].startswith("row|"):
-#                     header = [x.strip() for x in lines[j].split("|")]
-#                 elif lines[j].startswith("0|"):
-#                     values = [x.strip() for x in lines[j].split("|")]
-#                     break
-#             break
-
-
-#     if header and values:
-#         required_columns = [
-#             "Undervoltage clear threshold (V)",
-#             "Undervoltage raise threshold (V)",
-#         ]
-
-#         for col in required_columns:
-#             if col in header:
-#                 result.append({
-#                     "parameter": col,
-#                     "value in dump": values[header.index(col)]
-#                 })
-
-#     creation_date = ""
-#     timer = ""
-
-#     for line in lines:
-
-#         if line.startswith("unit-info-creation-date="):
-#             creation_date = line.split("=",1)[1].strip()
-
-#         elif line.startswith("software-mgt-s-timer="):
-#             timer = line.split("=",1)[1].strip() 
-
-#     result.append({
-#         "parameter": "Date and Time",
-#         "value in dump": f"{creation_date} {timer}".strip()
-#     })  
-
-#     df = pd.DataFrame(result)
-#     dump_df = df.set_index("parameter").T
-#     print(dump_df)
-#     dump_df.to_excel("dump.xlsx",index=False)
-
-#     df_lb= df_lb[[   
-#         "Circle",
-#         "Plan Id",
-#         "Polarization",
-#         "Equipment Make",
-#         "Site ID-A",
-#         "BER10e6 Tx Power (dBm)",
-#         "Tx Frequency (MHz)",
-#         "BER10e6 Rx Level (dBm)",
-#         "Site ID -B",
-#         "Rx Frequency (MHz)",
-#         "Tx Radio",
-#         "Bandwidth (MHz)",
-#         "ACM Min QAM",
-#         "ACM Max QAM",
-#         "MRMC Script ID",
-#         "Hop Type",
-#         "Fiber POP Id"
-#     ]]
-#     print(df_lb)
-
-#     df_lb["Site ID-A"] = df_lb["Site ID-A"].astype(str).str.strip()
-#     df_lb["Site ID -B"] = df_lb["Site ID -B"].astype(str).str.strip()
-
-#     df_lb["MRMC Script ID"] = pd.to_numeric(
-#     df_lb["MRMC Script ID"], errors="coerce"
-#     )
-
-#     df_lb["Tx Frequency (MHz)"] = pd.to_numeric(
-#     df_lb["Tx Frequency (MHz)"], errors="coerce"
-#     )
-
-#     df_lb["Rx Frequency (MHz)"] = pd.to_numeric(
-#     df_lb["Rx Frequency (MHz)"], errors="coerce"
-#     )
-
-
-#     unit_name = next(
-#         (x["value in dump"] for x in result
-#         if x["parameter"] == "Site Name/System name/Unit Name"),
-#         ""
-#     )
-
-#     mrmc_script_id = pd.to_numeric(
-#         next(
-#             (x["value in dump"] for x in result
-#             if x["parameter"] == "MRMC Script ID"),
-#             None
-#         ),
-#         errors="coerce"
-#     )
-
-#     matched_df = df_lb[
-#     (
-#         (df_lb["Site ID-A"] == unit_name)
-#         |
-#         (df_lb["Site ID -B"] == unit_name)
-#     )
-#     &
-#     (df_lb["MRMC Script ID"] == mrmc_script_id)
-# ]
-
-#     print(matched_df)
-
-#     if not matched_df.empty:
-#         final_row = matched_df.iloc[0].to_dict()
-
-#         for item in result:
-#             final_row[item["parameter"]] = item["value in dump"]
-
-#         final_df = pd.DataFrame([final_row])
-
-#     else:
-#         final_df = pd.DataFrame(result)
-
-
-#     print()    
-
-#     output_file = "final_parameters.xlsx"
-#     final_df.to_excel(output_file, index=False)
-
-#     return Response({
-#         "message": True,
-#         "rows": len(df),
-#         "data": result
-#     })
-
-
 import re
 import pandas as pd
 import numpy as np
@@ -314,16 +30,34 @@ def upload_link_budget(request):
  
         if request.method == 'POST':
             files = request.FILES.getlist('link_buget_file')
+
             if not files:
-                return Response({'error': 'link_buget_file files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
- 
+                return Response(
+                    {'error': 'Please upload link_buget_file'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Delete old files before uploading new ones
+            if os.path.exists(Link_budget_path):
+                for filename in os.listdir(Link_budget_path):
+                    file_path = os.path.join(Link_budget_path, filename)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+
+            # Save new files
+            uploaded_files = []
             for f in files:
                 file_path = os.path.join(Link_budget_path, f.name)
                 with open(file_path, 'wb+') as destination:
                     for chunk in f.chunks():
                         destination.write(chunk)
- 
-            return Response({'status': True, 'message': 'Files uploaded and saved successfully'}, status=status.HTTP_200_OK)
+                uploaded_files.append(f.name)
+
+            return Response({
+                'status': True,
+                'message': 'Old files deleted and new files uploaded successfully.',
+                'uploaded_files': uploaded_files
+            }, status=status.HTTP_200_OK)
  
         elif request.method == 'GET':
             if not os.path.exists(Link_budget_path):
@@ -356,6 +90,8 @@ def upload_link_budget(request):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+
+    
 @api_view(['POST', 'GET', 'DELETE'])
 def upload_traffic_shifting(request):
     try:
@@ -371,20 +107,33 @@ def upload_traffic_shifting(request):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            # Delete old files before uploading new ones
+            for filename in os.listdir(traffic_shifting_path):
+                file_path = os.path.join(traffic_shifting_path, filename)
+
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+
+            # Save new files
+            uploaded_files = []
+
             for f in files:
                 file_path = os.path.join(traffic_shifting_path, f.name)
+
                 with open(file_path, "wb+") as destination:
                     for chunk in f.chunks():
                         destination.write(chunk)
 
+                uploaded_files.append(f.name)
+
             return Response(
                 {
                     "status": True,
-                    "message": "Traffic Shifting files uploaded successfully.",
+                    "message": "Old files deleted and new Traffic Shifting files uploaded successfully.",
+                    "uploaded_files": uploaded_files,
                 },
                 status=status.HTTP_200_OK,
             )
-
         elif request.method == "GET":
             files = os.listdir(traffic_shifting_path)
 
@@ -424,17 +173,33 @@ def upload_traffic_shifting(request):
 
 
 @api_view(["GET", "POST", "PUT", "DELETE"])
-def circle_server_ip(request):
-
+def upload_server_ip(request, id=None):
     if request.method == "GET":
+
+        if id:
+            try:
+                data = CircleServerIP.objects.values("id", "circle", "ip").get(id=id)
+                return Response(data)
+
+            except CircleServerIP.DoesNotExist:
+                return Response(
+                    {"error": "Record not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
         data = list(
             CircleServerIP.objects.all().values(
-                "id", "circle", "ip"
+                "id",
+                "circle",
+                "ip"
             )
         )
+
         return Response(data)
 
+    # ================= POST =================
     elif request.method == "POST":
+
         file = request.FILES.get("file")
 
         if not file:
@@ -443,27 +208,50 @@ def circle_server_ip(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        df = pd.read_excel(file).fillna("")
-        count = 0
+        try:
+            df = pd.read_excel(file).fillna("")
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        inserted = 0
+        skipped = 0
+
         for _, row in df.iterrows():
-            circle = str(row["Circle"]).strip().upper()
-            ip = str(row["IP"]).strip()
+
+            circle = str(row.get("Circle", "")).strip().upper()
+            ip = str(row.get("IP", "")).strip()
 
             if not circle or not ip:
                 continue
 
-            CircleServerIP.objects.update_or_create(
+            if CircleServerIP.objects.filter(circle=circle, ip=ip).exists():
+                skipped += 1
+                continue
+
+            CircleServerIP.objects.create(
                 circle=circle,
-                ip=ip,
+                ip=ip
             )
-            count += 1
+
+            inserted += 1
 
         return Response({
-            "message": f"{count} records uploaded successfully."
+            "message": "Upload completed successfully.",
+            "inserted": inserted,
+            "skipped": skipped
         })
+
+
     elif request.method == "PUT":
 
-        id = request.data.get("id")
+        if not id:
+            return Response(
+                {"error": "Please provide id in URL"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             obj = CircleServerIP.objects.get(id=id)
@@ -473,26 +261,43 @@ def circle_server_ip(request):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        obj.circle = request.data.get("circle", obj.circle).upper()
-        obj.ip = request.data.get("ip", obj.ip)
+        circle = request.data.get("circle")
+        ip = request.data.get("ip")
+
+        if circle is not None:
+            obj.circle = circle.strip().upper()
+
+        if ip is not None:
+            obj.ip = ip.strip()
+
         obj.save()
 
-        return Response({"message": "Updated Successfully"})
+        return Response({
+            "message": "Updated Successfully"
+        })
 
     elif request.method == "DELETE":
 
-        id = request.data.get("id")
+        if not id:
+            return Response(
+                {"error": "Please provide id in URL"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             obj = CircleServerIP.objects.get(id=id)
-            obj.delete()
-            return Response({"message": "Deleted Successfully"})
         except CircleServerIP.DoesNotExist:
             return Response(
                 {"error": "Record not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        obj.delete()
+
+        return Response({
+            "message": "Deleted Successfully"
+        })
+        
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
 def microwave_para(request, pk=None):
     if request.method == "GET":
@@ -562,35 +367,35 @@ def get_server_ip(request):
     plan_id = request.data.get("plan_id")
 
     if not plan_id:
-        return Response({"message":"plan_id required"},status=400)
+        return Response({"message": "plan_id required"}, status=400)
 
-    if isinstance(plan_id,str):
-        plan_ids=[x.strip() for x in plan_id.split(",") if x.strip()]
+    if isinstance(plan_id, str):
+        plan_ids = [x.strip() for x in plan_id.split(",") if x.strip()]
     else:
-        plan_ids=plan_id
+        plan_ids = plan_id
 
-    circles=[]
+    result = []
 
     for pid in plan_ids:
-        circle = pid.split("-")[2].strip().upper()
 
-        if circle not in circles:
-            circles.append(circle)
-
-    result=[]
-
-    for circle in circles:
+        try:
+            circle = pid.split("-")[2].strip().upper()
+        except IndexError:
+            continue
 
         ips = list(
             CircleServerIP.objects.filter(
                 circle=circle,
                 is_active=True
-            ).values_list("ip", flat=True)
+            )
+            .values_list("ip", flat=True)
+            .distinct()
         )
 
         result.append({
-            "circle":circle,
-            "ip_list":ips
+            "plan_id": pid,
+            "circle": circle,
+            "ip_list": ips
         })
 
     return Response(result)
@@ -643,6 +448,10 @@ def upload_cergon_dump(request):
     selected_ips = request.data.get("selected_ips", "{}")
     if isinstance(selected_ips, str):
         selected_ips = json.loads(selected_ips)
+        print(selected_ips)
+
+        print("Keys =", list(selected_ips.keys()))
+     
 
     dump_files1 =  request.FILES.getlist("dump_file1")
     if not dump_files1:
@@ -695,12 +504,22 @@ def upload_cergon_dump(request):
 
     for filename in os.listdir(traffic_shifting_folder):
         file_path = os.path.join(traffic_shifting_folder, filename)
-
         if filename.endswith(".xlsx"):
-            df = pd.read_excel(file_path, header=1, usecols=cols)
+            df = pd.read_excel(
+                file_path,
+                engine="calamine",
+                header=1,
+                usecols=cols,
+                dtype=str
+            )
 
         elif filename.endswith(".csv"):
-            df = pd.read_csv(file_path, header=1, usecols=cols)
+            df = pd.read_csv(
+                file_path,
+                header=1,
+                usecols=cols,
+                dtype=str
+            )
 
         else:
             continue
@@ -709,19 +528,22 @@ def upload_cergon_dump(request):
         traffic_shifting_file_list.append(df)
 
     if traffic_shifting_file_list:
-        traffic_shifting_df = pd.concat(traffic_shifting_file_list, ignore_index=True)
+        traffic_shifting_df = pd.concat(
+            traffic_shifting_file_list,
+            ignore_index=True
+        )
     else:
         return Response({
             "status": False,
             "message": "No valid Traffic Shifting files found"
         }, status=400)
 
-    print(traffic_shifting_df.head())
+    # print(traffic_shifting_df.head())
 
     traffic_shifting_df["Site ID"] = (
         traffic_shifting_df["Site ID"]
-        .astype(str)
         .str.strip()
+        .str.upper()
     )
 
     traffic_shifting_df = traffic_shifting_df.drop_duplicates(
@@ -733,7 +555,10 @@ def upload_cergon_dump(request):
         ["DCN Site A(HOP 1)", "DCN Site B(HOP 1)"]
     ].to_dict("index")
 
-  
+    import time
+    start = time.time()
+    print("Read Time:", time.time() - start)
+
 
 #read dump file1 -----------
     dump_groups = [
@@ -1197,7 +1022,8 @@ def upload_cergon_dump(request):
                     if param == "DCN Synch Status":
                         dump_ip = str(dump_values.get("Network IP", "NA")).strip()
 
-                        ts_row = ts_lookup.get((current_plan_id, site_id))
+                        ts_row = ts_lookup.get(site_id)
+                        # print(ts_row)
 
                         if ts_row:
                             site_a_ip = str(ts_row.get("DCN Site A(HOP 1)", "")).strip()
@@ -1255,7 +1081,7 @@ def upload_cergon_dump(request):
 
                         elif param == "AMCC Group":
                             # print("INSIDE AMCC")
-                            print("Hop =", lb_values.get("Hop Type"))
+                            # print("Hop =", lb_values.get("Hop Type"))
 
                             hop_type = str(lb_values.get("Hop Type", "")).upper()
 
@@ -1375,7 +1201,7 @@ def upload_cergon_dump(request):
 
             row_data = {
                 "SL NO":sl_no,
-                "MW Plan Id": row.get("Plan Id", "NA"),
+                "MW Plan Id": current_plan_id,
                 "Link ID (Site ID A - Site ID B and Site ID B - Site ID A)": link_id,
                 "Site ID":dump_values.get("Site Name/System name/Unit Name", "NA"),
                 "Site Name/System name/Unit Name":dump_values.get("Site Name/System name/Unit Name", "NA"),
@@ -1439,12 +1265,25 @@ def upload_cergon_dump(request):
                 ignore_index=True
             )
 
-            Atcp_df["Circle"] = Atcp_df["MW Plan Id"].str.split("-").str[2].str.upper()
-            Atcp_df["Server/RDP -IP"] = Atcp_df["Circle"].map(selected_ips)
-            Atcp_df.drop(columns=["Circle"], inplace=True)
-                    
+           
+                                
 
         report_sheets[sheet_name] = final_report_df
+        Atcp_df["MW Plan Id"] = Atcp_df["MW Plan Id"].astype(str).str.strip()
+
+        selected_ips = {
+            str(k).strip(): str(v).strip()
+            for k, v in selected_ips.items()
+        }
+
+        Atcp_df["Server/RDP -IP"] = (
+            Atcp_df["MW Plan Id"]
+            .map(selected_ips)
+            .fillna("")
+        )
+        print("MW Plan IDs =", Atcp_df["MW Plan Id"].tolist())
+
+
     wb = Workbook()
     wb.remove(wb.active)
 
