@@ -660,18 +660,22 @@ def microwave_upload(request):
 
 
    
-    rx = num(get_col(final_df, "BER10e6 Rx Level (dBm)"))
-    rsl_min = num(get_col(final_df, "RSL Min (dBm)"))
-    rsl_max = num(get_col(final_df, "RSL Max (dBm)"))
+    rx = num(get_col(final_df,"BER10e6 Rx Level (dBm)"))
 
+    rsl_min = num(get_col(final_df,"RSL Min (dBm)"))
+    rsl_max = num(get_col(final_df,"RSL Max (dBm)"))
+
+    # final_df["RSL_Status"] = (rx >= rsl_min-3) & (rx <= rsl_max+3)
     final_df["RSL_Gap"] = (rx - rsl_min).abs()
     final_df["RSL_Status"] = final_df["RSL_Gap"] <= 4
 
-    siteA = num(get_col(final_df, "Site A Current RSL"))
-    siteZ = num(get_col(final_df, "Site Z Current RSL"))
+
+    siteA = num(get_col(final_df,"Site A Current RSL"))
+    siteZ = num(get_col(final_df,"Site Z Current RSL"))
 
     final_df["curret_rsl_status_A"] = (rx >= siteA-3) & (rx <= siteA+3)
     final_df["curret_rsl_status_Z"] = (rx >= siteZ-3) & (rx <= siteZ+3)
+
 
 
     xpd_min = num(get_col(final_df,"XPD Min (dBm)"))
@@ -780,7 +784,7 @@ def microwave_upload(request):
     final_df.drop(columns=["feq_RX", "feq_TX", "RSL_Status", "curret_rsl_status_A",
     "curret_rsl_status_Z", "Xpd_satus", "Tx_power_status", "SNR_Status",
     "polarization_status", "Modulation_status", "Modulation_config_status",
-    "Modulation_moud_status", "FAR_Remark", "BAR_Remark", "oem_remark","Remark","RSL_Gap"], inplace=True, errors="ignore")
+    "Modulation_moud_status", "FAR_Remark", "BAR_Remark", "oem_remark","Remark"], inplace=True, errors="ignore")
 
     final_df.drop_duplicates(inplace=True)
     print(final_df.head())
@@ -800,7 +804,7 @@ def microwave_upload(request):
     for r in range(2, ws.max_row + 1):
 
         Polarization = (
-            ws.cell(r, cols["Polarization"]).value == ws.cell(r, cols["Polarization(Radio)"]).value)
+        ws.cell(r, cols["Polarization"]).value == ws.cell(r, cols["Polarization(Radio)"]).value)
         apply_color(ws.cell(r, cols["Polarization(Radio)"]),Polarization)
 
         tx = (
@@ -880,12 +884,14 @@ def microwave_upload(request):
         rsl_a = to_float(ws.cell(r, cols["Site A Current RSL"]).value)
         rsl_z = to_float(ws.cell(r, cols["Site Z Current RSL"]).value)
 
+    
         condition = (
             all(x is not None for x in [ber, rsl_min, rsl_max, rsl_a, rsl_z]) and
             (rsl_min - 3) <= ber <= (rsl_max + 3) and
             (rsl_a - 3) <= ber <= (rsl_a + 3) and
             (rsl_z - 3) <= ber <= (rsl_z + 3)
         )
+
 
         for col in ["RSL Max (dBm)", "Site A Current RSL", "Site Z Current RSL"]:
             apply_color(ws.cell(r, cols[col]), condition)
@@ -964,7 +970,7 @@ def microwave_upload(request):
         "message": "Files uploaded successfully",
         "download_url":download_url 
 
-    })  
+    }) 
 
 
 #function for add data in database.......
