@@ -199,50 +199,84 @@ def upload_server_ip(request, id=None):
 
     # ================= POST =================
     elif request.method == "POST":
-
         file = request.FILES.get("file")
+        # ================= Excel Upload =================
+        if file:
 
-        if not file:
+            try:
+                df = pd.read_excel(file).fillna("")
+            except Exception as e:
+                return Response(
+                    {"error": str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            inserted = 0
+            skipped = 0
+
+            for _, row in df.iterrows():
+
+                circle = str(row.get("Circle", "")).strip().upper()
+                ip = str(row.get("IP", "")).strip()
+
+                if not circle or not ip:
+                    continue
+
+                if CircleServerIP.objects.filter(circle=circle, ip=ip).exists():
+                    skipped += 1
+                    continue
+
+                CircleServerIP.objects.create(
+                    circle=circle,
+                    ip=ip
+                )
+
+                inserted += 1
+
+            return Response({
+                "message": "Upload completed successfully.",
+                "inserted": inserted,
+                "skipped": skipped
+            })
+
+        # ================= Single Record =================
+
+        circle = request.data.get("circle")
+        ip = request.data.get("ip")
+
+        if not circle or not ip:
             return Response(
-                {"error": "Please upload Excel file"},
+                {
+                    "error": "Please provide circle and ip or upload Excel file."
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        try:
-            df = pd.read_excel(file).fillna("")
-        except Exception as e:
+        circle = circle.strip().upper()
+        ip = ip.strip()
+
+        if CircleServerIP.objects.filter(circle=circle, ip=ip).exists():
             return Response(
-                {"error": str(e)},
+                {
+                    "error": "Record already exists."
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        inserted = 0
-        skipped = 0
+        obj = CircleServerIP.objects.create(
+            circle=circle,
+            ip=ip
+        )
 
-        for _, row in df.iterrows():
-
-            circle = str(row.get("Circle", "")).strip().upper()
-            ip = str(row.get("IP", "")).strip()
-
-            if not circle or not ip:
-                continue
-
-            if CircleServerIP.objects.filter(circle=circle, ip=ip).exists():
-                skipped += 1
-                continue
-
-            CircleServerIP.objects.create(
-                circle=circle,
-                ip=ip
-            )
-
-            inserted += 1
-
-        return Response({
-            "message": "Upload completed successfully.",
-            "inserted": inserted,
-            "skipped": skipped
-        })
+        return Response(
+            {
+                "message": "Added Successfully",
+                "id": obj.id,
+                "circle": obj.circle,
+                "ip": obj.ip,
+            },
+            status=status.HTTP_201_CREATED
+        )
 
 
     elif request.method == "PUT":

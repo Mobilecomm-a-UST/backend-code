@@ -150,17 +150,17 @@ def check_status(parameter, actual, expected, dump_values):
         return "Manual"
     
     # DCN Synch Status
-    if parameter.strip().lower() == "dcn synch status":
+    # if parameter.strip().lower() == "dcn synch status":
 
-        actual = str(actual).strip().upper()
+    #     actual = str(actual).strip().upper()
 
-        if actual in ["GREEN", "YELLOW"]:
-            return "OK"
+    #     if actual in ["GREEN", "YELLOW"]:
+    #         return "OK"
 
-        if actual in ["RED", "NOT FOUND"]:
-            return "NOT OK"
+    #     if actual in ["RED", "NOT FOUND"]:
+    #         return "NOT OK"
 
-        return "NOT OK"
+    #     return "NOT OK"
 
     if parameter.strip().lower() == "multicarrier abc":
 

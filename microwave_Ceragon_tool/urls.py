@@ -11,7 +11,7 @@ urlpatterns = [
     path("parameter/",views.microwave_para),
     path("parameter/<int:pk>/",views.microwave_para),
     path("search_planid/",views.search_plan_id),
-    path("upload_serverip//", views.upload_server_ip, ),
+    path("upload_serverip/", views.upload_server_ip, ),
     path("upload_serverip/<int:id>/", views.upload_server_ip, ),
     path("get_serverip/",views.get_server_ip),
 

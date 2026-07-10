@@ -1397,7 +1397,8 @@ def nokia_slicing_dump(request):
             group_10_ids = {7, 47}
             group_11_ids = {8, 9}
             group_12_ids = {47}
-
+            group_13_ids = {11}
+            group_14_ids = {12}
             group_1_params = {
                 "pdcpStatRepWaitTimerOffset",
                 "pdcpStatRepWaitTimer"
@@ -1431,6 +1432,19 @@ def nokia_slicing_dump(request):
             group_10_params = {"priorityLevel"}
             group_11_params = {"priorityLevel"}
             group_12_params = {"nrDrbMacDN"}
+            group_13_params = {
+                                "priorityLevel",
+                                "discardTimer",
+                                "discardTimerUl",
+                                "maxDataRateGbrDl",
+                                "maxDataRateGbrUl",
+                                "queuingDelaySduDiscardThreshold",
+                            }
+            group_14_params = {
+                        "nrDrbMacDN",
+                        "maxDataRateGbrDl",
+                        "maxDataRateGbrUl",
+                    }
 
             # -------- All NRDRB parameters --------
             common_nrdrb_params = {
@@ -1584,7 +1598,25 @@ def nokia_slicing_dump(request):
                             "Parameter": name,
                             "value": tf_to_01(p.text)
                         })
-            # -------- nsaDrbParam --------
+
+            if nrdrb_id in group_13_ids and name in group_13_params:
+                dumy_data.append({
+                    "MO": "NRDRB",
+                    "DistName": dist_name,
+                    "ID": nrdrb_id,
+                    "Parameter": name,
+                    "value": tf_to_01(p.text)
+                }) 
+
+            if nrdrb_id in group_14_ids and name in group_14_params:
+                dumy_data.append({
+                    "MO": "NRDRB",
+                    "DistName": dist_name,
+                    "ID": nrdrb_id,
+                    "Parameter": name,
+                    "value": tf_to_01(p.text)
+                })               
+                        # -------- nsaDrbParam --------
             for item in (mo.findall(".//ns:list[@name='nsaDrbParam']/ns:item", ns)
                         if ns else
                         mo.findall(".//list[@name='nsaDrbParam']/item")):
@@ -1702,7 +1734,40 @@ def nokia_slicing_dump(request):
                         "Parameter": "Item-snssaiList-snssaiDN",
                         "value": p.text
                     })
+            # -------- Grouped snssaiDN --------
 
+            group_1 = {1, 2, 5, 6, 7, 8, 9}
+            group_2 = {21, 22, 25, 26}
+            group_3 = {47}
+
+            for item in (
+                mo.findall(".//ns:list[@name='snssaiList']/ns:item", ns)
+                if ns else
+                mo.findall(".//list[@name='snssaiList']/item")
+            ):
+                for p in (item.findall("ns:p", ns) if ns else item.findall("p")):
+                    if p.attrib.get("name") != "snssaiDN":
+                        continue
+
+                    if nrdrb_5qi_id in group_1:
+                        group_id = "1,2,5,6,7,8,9"
+
+                    elif nrdrb_5qi_id in group_2:
+                        group_id = "21,22,25,26"
+
+                    elif nrdrb_5qi_id in group_3:
+                        group_id = "47"
+
+                    else:
+                        continue
+
+                    dumy_data.append({
+                        "MO": "NRDRB_5QI",
+                        "DistName": dist_name,
+                        "ID": group_id,
+                        "Parameter": "snssaidn",
+                        "value": tf_to_01(p.text)
+                    })
             # -------- fiveqiValueList --------
             fiveqi_values = []
 
@@ -1815,7 +1880,7 @@ def nokia_slicing_dump(request):
                     "tReorderingUl",
                     "maxDlHarqTxDrb",
                     "maxUlHarqTxDrb",
-                    "pdcpsnlength"
+                    "pdcpSNLength"
                 }
             }
 
@@ -2279,6 +2344,23 @@ def nokia_slicing_dump(request):
                     "value": ",".join(map(str, start_rb_values))
                 })
                 
+            start_rb_values = []
+
+            for p in (
+                mo.findall(".//ns:list[@name='startFreqOffsetForRs']/ns:p", ns)
+                if ns else
+                mo.findall(".//list[@name='startFreqOffsetForRs']/p")
+            ):
+                start_rb_values.append(tf_to_01(p.text))
+
+            if start_rb_values:
+                dumy_data.append({
+                    "MO": "NRRIM_PROFILE",
+                    "DistName": dist_name,
+                    "Parameter": "startrbforrs",
+                    "value": ",".join(map(str, start_rb_values))
+                })    
+                
         elif mo_class == "NOKLTE:SIB":
             dist_name = mo.attrib.get("distName", "")
 
@@ -2671,7 +2753,37 @@ def nokia_slicing_dump(request):
                             "Parameter": name,
                             "value": tf_to_01(p.text)
                         })
-                        
+            # -------- Grouped cfg5qiRange --------
+
+            cfg5qi_group_map = {
+                "11,21": {11, 21},
+                "12,22": {12, 22},
+                "15,25": {15, 25},
+                "16,26": {16, 26},
+                "17": {17},
+                "18": {18},
+                "19": {19},
+                "47": {47},
+            }
+
+            for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+
+                if p.attrib.get("name") != "cfg5qiRange":
+                    continue
+
+                for group_id, ids in cfg5qi_group_map.items():
+
+                    if nrpmqap_id in ids:
+
+                        dumy_data.append({
+                            "MO": "NRPMQAP",
+                            "ID": group_id,
+                            "Parameter": "cfg5qirange",
+                            "value": tf_to_01(p.text)
+                        })
+
+                        break            
+                                    
             if nrpmqap_id in group_8_ids:
 
                 for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
@@ -2986,12 +3098,12 @@ def nokia_slicing_dump(request):
                 "alSelection"
             }
             required_dynamic_agg = {
-                "aggregationLevelListHR": "dynamicaggregationlevelset@aggregationlevellist",
-                "cqiDciCssAl1HR": "dynamicaggregationlevelset@cqidcicssal1",
-                "cqiDciCssAl2HR": "dynamicaggregationlevelset@cqidcicssal2",
-                "cqiDciCssAl4HR": "dynamicaggregationlevelset@cqidcicssal4",
-                "cqiDciCssAl8HR": "dynamicaggregationlevelset@cqidcicssal8",
-                "cqiDciCssAl16HR": "dynamicaggregationlevelset@cqidcicssal16"
+                "aggregationLevelListHR": "dynamicAggregationLevelSet@aggregationLevelList",
+                "cqiDciCssAl1HR": "dynamicAggregationLevelSet@cqiDciCssAl1",
+                "cqiDciCssAl2HR": "dynamicAggregationLevelSet@cqiDciCssAl2",
+                "cqiDciCssAl4HR": "dynamicAggregationLevelSet@cqiDciCssAl4",
+                "cqiDciCssAl8HR": "dynamicAggregationLevelSet@cqiDciCssAl8",
+                "cqiDciCssAl16HR": "dynamicAggregationLevelSet@cqiDciCssAl16"
             }
             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
                 name = p.attrib.get("name")
@@ -3018,7 +3130,7 @@ def nokia_slicing_dump(request):
                         dumy_data.append({
                             "MO": "PDCCH",
                             "DistName": dist_name,
-                            "Parameter": required_dynamic_agg[name],
+                            "Parameter": required_dynamic_agg[name].lower(),
                             "value": tf_to_01(p.text)
                         })
         
