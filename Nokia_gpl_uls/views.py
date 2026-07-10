@@ -97,12 +97,16 @@ def remark(internal, external):
         return "No Changes in value"
 
     if pd.isna(internal) or pd.isna(external):
-        return "Changes in value"
+        return "No Changes in value"
 
     i = str(internal).strip().lower()
     e = str(external).strip().lower()
 
     if i == e:
+        return "No Changes in value"
+
+    # Handle "-" vs "-"
+    if i == "-" and e == "-":
         return "No Changes in value"
 
     ni_all = re.findall(r'\d+', i)
@@ -111,16 +115,20 @@ def remark(internal, external):
     if ni_all and ne_all:
         if any(n in ne_all for n in ni_all):
             return "No Changes in value"
-  
 
-    i_parts = extract_last_mo(internal)
-    e_parts = extract_last_mo(external)
+    i_parts = extract_last_mo(i)
+    e_parts = extract_last_mo(e)
 
     if set(i_parts) & set(e_parts):
         return "No Changes in value"
 
-    return "Changes in value"
+    int_list = [x.strip() for x in i.replace("\r\n", "\n").split("\n") if x.strip()]
+    gui_list = [x.strip() for x in e.replace("\r\n", "\n").split("\n") if x.strip()]
 
+    if int_list == ["-"] and gui_list == ["-"]:
+        return "No Changes in value"
+
+    return "Changes in value"
 
 # change t/f-> 0,1--
 def tf_to_01(val):
