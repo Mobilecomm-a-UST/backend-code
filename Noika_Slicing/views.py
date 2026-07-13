@@ -91,7 +91,23 @@ def extract_last_mo(val):
     return sorted(set(cleaned))
 
 
-def remark(internal, external):
+ALWAYS_NO_CHANGE_PARAMS = {
+    "actpdcprlcbufcongestionmechsm",
+    "tmpactfeat1",
+    "retxprioritizationtype",
+    "thphistscale",
+    "actl2counters",
+    "actpacketschedulercounters",
+    "cfgproftype",
+    "rimdynamicsrsslotoffsetenabled",
+}
+
+
+def remark(parameter, internal, external):
+
+    # Parameters which should always show No Changes
+    if str(parameter).strip().lower() in ALWAYS_NO_CHANGE_PARAMS:
+        return "No Changes in value"
 
     if pd.isna(internal) and pd.isna(external):
         return "No Changes in value"
@@ -111,7 +127,6 @@ def remark(internal, external):
     if ni_all and ne_all:
         if any(n in ne_all for n in ni_all):
             return "No Changes in value"
-  
 
     i_parts = extract_last_mo(internal)
     e_parts = extract_last_mo(external)
@@ -120,7 +135,6 @@ def remark(internal, external):
         return "No Changes in value"
 
     return "Changes in value"
-
 
 # change t/f-> 0,1--
 def tf_to_01(val):
@@ -4242,9 +4256,13 @@ def nokia_slicing_dump(request):
     finaldf = finaldf.sort_values(["MO", "ID", "Parameter"])
     finaldf.drop(columns=["Final_Value", "Remark","source_file"], inplace=True)
     finaldf["Remarks"] = finaldf.apply(
-    lambda r: remark(r["Value(Internal)"], r["value(External)"]),
+    lambda r: remark(
+        r["Parameter"],
+        r["Value(Internal)"],
+        r["value(External)"]
+    ),
     axis=1
-)  
+)
 
     #for change in xml---- 
     changed_df = finaldf[
@@ -4256,7 +4274,7 @@ def nokia_slicing_dump(request):
     changed_df["ID"] = changed_df["ID"].astype(str)
     
 
-    file_name = "5G_GPL_UPE_output.xlsx"
+    file_name = "5G_GPL_UPE(MACRO)_output.xlsx"
     final_output_path=os.path.join(output_path, file_name)
     finaldf.drop_duplicates(inplace=True)
     finaldf.to_excel(final_output_path, index=False, engine="openpyxl",sheet_name="Slicing")
@@ -4349,15 +4367,8 @@ def nokia_slicing_dump(request):
 
 
 
-from django.contrib.auth.models import User
 
 
-@api_view(['GET'])
-def get_users(request):
-    users = User.objects.all().values()
-    
-
-    return Response(list(users))
 
 
 
