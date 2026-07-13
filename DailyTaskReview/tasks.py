@@ -766,6 +766,7 @@ def auto_task_generation():
                                 "deadline": task.deadline,
 
                                 "remarks": task.remarks,
+                                "assigned_at": task.assigned_at,
 
                             }
 
