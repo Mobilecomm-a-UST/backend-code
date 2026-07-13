@@ -26,7 +26,18 @@ import smtplib
 from email.mime.text import MIMEText
 from email.header import decode_header
 from email.utils import parseaddr
-from DailyTaskReview.models import Dailytaskreviewmodel
+from DailyTaskReview.models import (
+    TaskTemplate,
+    Dailytaskreviewmodel,
+    TaskGenerationLog
+)
+from DailyTaskReview.scheduler_utils import (
+    should_generate_template,
+    calculate_deadline,
+    create_task_from_template,
+    create_generation_log
+)
+from DailyTaskReview.views import send_email_assignTask
 from datetime import datetime
 
 
@@ -372,6 +383,423 @@ def check_outlook_mail():
     except Exception as e:
 
         print("Mail Reader Error :", e)
+
+
+# @shared_task
+# def auto_task_generation():
+
+#     print("\n========================================")
+#     print("Automatic Task Generation Started")
+#     print("========================================\n")
+
+#     try:
+
+#         now = timezone.localtime()
+
+#         today = now.date()
+
+#         current_time = now.time().replace(
+#             second=0,
+#             microsecond=0
+#         )
+
+#         templates = TaskTemplate.objects.filter(
+#             is_active=True
+#         )
+
+#         print(f"Active Templates : {templates.count()}")
+
+#         if not templates.exists():
+
+#             print("No Active Templates Found")
+
+#             return
+
+#         # ------------------------------------------
+#         # Loop All Templates
+#         # ------------------------------------------
+
+#         for template in templates:
+
+#             try:
+
+#                 print("\n-------------------------------------")
+#                 print("Template :", template.task)
+#                 print("-------------------------------------")
+
+#                 # --------------------------------------
+#                 # Template Valid?
+#                 # --------------------------------------
+
+#                 if not should_generate_template(
+#                     template,
+#                     today,
+#                     current_time
+#                 ):
+
+#                     print("Skipped")
+
+#                     continue
+
+#                 print("Template Matched")
+
+#                 # --------------------------------------
+#                 # Create task for every owner
+#                 # --------------------------------------
+
+#                 for owner in template.owners:
+
+#                     try:
+
+#                         print("\nOwner :", owner)
+
+#                         # Duplicate Check
+
+#                         already_generated = TaskGenerationLog.objects.filter(
+
+#                             template=template,
+
+#                             owner=owner,
+
+#                             scheduled_datetime=assigned_at
+
+#                         ).exists()
+
+#                         if already_generated:
+
+#                             print("Already Generated")
+
+#                             continue
+
+#                         # Deadline
+
+#                         assigned_at, deadline = calculate_deadline(
+#                             template,
+#                             today
+#                         )
+
+#                         # Create Task
+
+#                         task = create_task_from_template(
+
+#                             template=template,
+
+#                             owner=owner,
+
+#                             assigned_at=assigned_at,
+
+#                             deadline=deadline
+
+#                         )
+
+#                         print(
+#                             f"Task Created : {task.task_id}"
+#                         )
+
+#                         # Save Log
+
+#                         create_generation_log(
+
+#                             template=template,
+
+#                             owner=owner,
+
+#                             task=task,
+
+#                             scheduled_datetime=assigned_at
+
+#                         )
+
+#                         print("Generation Log Saved")
+
+#                         # Mail
+
+#                         task_data = {
+
+#                             "task_id": task.task_id,
+
+#                             "oem": task.oem,
+
+#                             "task": task.task,
+
+#                             "owner": task.owner,
+
+#                             "assigned_by": task.assigned_by,
+
+#                             "status": task.status,
+
+#                             "priority": task.priority,
+
+#                             "frequency": task.frequency,
+
+#                             "deadline": task.deadline,
+
+#                             "remarks": task.remarks,
+
+#                         }
+
+#                         send_email_assignTask(task_data)
+
+#                         print("Mail Sent")
+
+#                     except Exception as ex:
+
+#                         print(
+#                             f"Owner Error ({owner}) : {ex}"
+#                         )
+
+#                         continue
+
+#             except Exception as ex:
+
+#                 print(
+#                     f"Template Error ({template.id}) : {ex}"
+#                 )
+
+#                 continue
+
+#         print("\n========================================")
+#         print("Automatic Task Generation Completed")
+#         print("========================================")
+
+#     except Exception as ex:
+
+#         print("\n========================================")
+#         print("AUTO TASK GENERATION FAILED")
+#         print(ex)
+#         print("========================================")
+
+@shared_task
+def auto_task_generation():
+
+    print("\n========================================")
+    print("Automatic Task Generation Started")
+    print("========================================\n")
+
+    try:
+
+        now = timezone.localtime()
+
+        today = now.date()
+
+        current_time = now.time().replace(
+            second=0,
+            microsecond=0
+        )
+
+        templates = TaskTemplate.objects.filter(
+            is_active=True
+        )
+
+        print(f"Active Templates : {templates.count()}")
+
+        if not templates.exists():
+
+            print("No Active Templates Found")
+
+            return
+
+        # ------------------------------------------
+        # Loop All Templates
+        # ------------------------------------------
+
+        for template in templates:
+
+            try:
+
+                print("\n-------------------------------------")
+                print("Template :", template.task)
+                print("-------------------------------------")
+
+                # --------------------------------------
+                # Recurrence Validation
+                # --------------------------------------
+
+                if not should_generate_template(
+                    template,
+                    today,
+                    # current_time
+                ):
+
+                    print("Skipped")
+
+                    continue
+
+                print("Template Matched")
+
+                # --------------------------------------
+                # Calculate Assigned Time & Deadline
+                # (Do only once for this schedule)
+                # --------------------------------------
+
+                rule = template.recurrence_rule or {}
+
+                times = rule.get("times", [])
+
+                for time_str in times:
+
+                    schedule_time = datetime.strptime(
+                        time_str,
+                        "%H:%M"
+                    ).time()
+
+                    assigned_at = timezone.make_aware(
+                        datetime.combine(
+                            today,
+                            schedule_time
+                        )
+                    )
+
+                    # -----------------------------
+                    # Grace Window (5 Minutes)
+                    # -----------------------------
+
+                    diff = (
+                        timezone.localtime() - assigned_at
+                    ).total_seconds()
+
+                    # Future Schedule
+                    if diff < 0:
+                        continue
+
+                    # Older than 5 minutes
+                    if diff > 300:
+                        continue
+
+                    print(f"Matched Schedule : {time_str}")
+
+                    deadline = calculate_deadline(
+                        template,
+                        assigned_at
+                    )
+
+                    # --------------------------------------
+                    # Create task for every owner
+                    # --------------------------------------
+
+                    for owner in template.owners:
+
+                        try:
+
+                            print("\nOwner :", owner)
+
+                            # --------------------------------------
+                            # Duplicate Check
+                            # --------------------------------------
+
+                            already_generated = TaskGenerationLog.objects.filter(
+
+                                template=template,
+
+                                owner=owner,
+
+                                scheduled_datetime=assigned_at
+
+                            ).exists()
+
+                            if already_generated:
+
+                                print(f"{owner} : Already Generated")
+
+                                continue
+
+                            # --------------------------------------
+                            # Create Task
+                            # --------------------------------------
+
+                            task = create_task_from_template(
+
+                                template=template,
+
+                                owner=owner,
+
+                                assigned_at=assigned_at,
+
+                                deadline=deadline
+
+                            )
+
+                            print(
+                                f"Task Created : {task.task_id}"
+                            )
+
+                            # --------------------------------------
+                            # Save Log
+                            # --------------------------------------
+
+                            create_generation_log(
+
+                                template=template,
+
+                                owner=owner,
+
+                                task=task,
+
+                                scheduled_datetime=assigned_at
+
+                            )
+
+                            print("Generation Log Saved")
+
+                            # --------------------------------------
+                            # Send Mail
+                            # --------------------------------------
+
+                            task_data = {
+
+                                "task_id": task.task_id,
+
+                                "oem": task.oem,
+
+                                "task": task.task,
+
+                                "owner": task.owner,
+
+                                "assigned_by": task.assigned_by,
+
+                                "status": task.status,
+
+                                "priority": task.priority,
+
+                                "frequency": task.frequency,
+
+                                "deadline": task.deadline,
+
+                                "remarks": task.remarks,
+
+                            }
+
+                            send_email_assignTask(task_data)
+
+                            print(f"Mail Sent : {owner}")
+
+                        except Exception as ex:
+
+                            print(
+                                f"Owner Error ({owner}) : {ex}"
+                            )
+
+                            continue
+
+            except Exception as ex:
+
+                print(
+                    f"Template Error ({template.id}) : {ex}"
+                )
+
+                continue
+
+        print("\n========================================")
+        print("Automatic Task Generation Completed")
+        print("========================================")
+
+    except Exception as ex:
+
+        print("\n========================================")
+        print("AUTO TASK GENERATION FAILED")
+        print(ex)
+        print("========================================")
+
 
 # @shared_task
 # def check_outlook_mail():

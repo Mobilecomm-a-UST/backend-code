@@ -530,29 +530,30 @@ def upload_cergon_dump(request):
         )
 
     traffic_shifting_file_list = []
-    cols = [
-        "Site ID",
+    required_cols = {
+        "Hop ID to be Deployed",
         "DCN Site A(HOP 1)",
         "DCN Site B(HOP 1)"
-    ]
+    }
 
     for filename in os.listdir(traffic_shifting_folder):
         file_path = os.path.join(traffic_shifting_folder, filename)
+
         if filename.endswith(".xlsx"):
             df = pd.read_excel(
                 file_path,
                 engine="calamine",
                 header=1,
-                usecols=cols,
-                dtype=str
+                dtype=str,
+                usecols=lambda c: str(c).strip() in required_cols
             )
 
         elif filename.endswith(".csv"):
             df = pd.read_csv(
                 file_path,
                 header=1,
-                usecols=cols,
-                dtype=str
+                dtype=str,
+                usecols=lambda c: str(c).strip() in required_cols
             )
 
         else:
@@ -561,37 +562,43 @@ def upload_cergon_dump(request):
         df.columns = df.columns.str.strip()
         traffic_shifting_file_list.append(df)
 
-    if traffic_shifting_file_list:
-        traffic_shifting_df = pd.concat(
-            traffic_shifting_file_list,
-            ignore_index=True
+    if not traffic_shifting_file_list:
+        return Response(
+            {
+                "status": False,
+                "message": "No valid Traffic Shifting files found"
+            },
+            status=400
         )
-    else:
-        return Response({
-            "status": False,
-            "message": "No valid Traffic Shifting files found"
-        }, status=400)
 
-    # print(traffic_shifting_df.head())
+    traffic_shifting_df = pd.concat(
+        traffic_shifting_file_list,
+        ignore_index=True,
+        copy=False
+    )
 
-    traffic_shifting_df["Site ID"] = (
-        traffic_shifting_df["Site ID"]
+    traffic_shifting_df["Hop ID to be Deployed"] = (
+        traffic_shifting_df["Hop ID to be Deployed"]
         .str.strip()
         .str.upper()
     )
 
     traffic_shifting_df = traffic_shifting_df.drop_duplicates(
-        subset="Site ID",
+        subset="Hop ID to be Deployed",
         keep="first"
     )
 
-    ts_lookup = traffic_shifting_df.set_index("Site ID")[
-        ["DCN Site A(HOP 1)", "DCN Site B(HOP 1)"]
-    ].to_dict("index")
+    ts_lookup = (
+        traffic_shifting_df
+        .set_index("Hop ID to be Deployed")[
+            ["DCN Site A(HOP 1)", "DCN Site B(HOP 1)"]
+        ]
+        .to_dict("index")
+    )
 
     import time
     start = time.time()
-    print("Read Time:", time.time() - start)
+    print("Traffic Shifting Read Time:", time.time() - start)
 
 
 #read dump file1 -----------
@@ -684,7 +691,7 @@ def upload_cergon_dump(request):
                 "Password": r'security-config-log-upload-configuration-table\.0\.Password=(.*)',
                 "MRMC Script ID/Bandw": r'mrmc-script-config-table\.0\.mrmc-config-active-script-id=(.*)',
                 "MRMC Profile/Bandw": r'mrmc-script-config-table\.0\.mrmc-config-max-profile=(.*)',
-                "Ethernet Port Speed": r'radio-ethernet-config-table\.\d+\.threshold-capacity=(.*)',
+                # "Ethernet Port Speed": r'radio-ethernet-config-table\.\d+\.threshold-capacity=(.*)',
                 "Operational Mode": r'mrmc-script-config-table\.\d+\.mrmc-config-script-operational-mode=(.*)',
                 "Frequency Tx (MHz)": r'rf-config-table\.\d+\.tx-frequency=(.*)',
                 "Frequency Rx (MHz)": r'rf-config-table\.\d+\.rx-frequency=(.*)',
@@ -775,31 +782,54 @@ def upload_cergon_dump(request):
             })
 
             utilization = {
-                "threshold1": "",
-                "threshold2": "",
-                "threshold3": ""
+                "threshold1": "NA",
+                "threshold2": "NA",
+                "threshold3": "NA"
             }
 
             for line in lines:
                 line = line.strip()
 
-                if line.startswith("radio-ethernet-config-table.1.threshold-utilization="):
-                    utilization["threshold1"] = line.split("=", 1)[1].strip()
+                m = re.search(r"radio-ethernet-config-table\.1\.threshold-utilization=(.*)", line)
+                if m:
+                    utilization["threshold1"] = m.group(1).strip()
 
-                elif line.startswith("radio-ethernet-config-table.1.threshold2-utilization="):
-                    utilization["threshold2"] = line.split("=", 1)[1].strip()
+                m = re.search(r"radio-ethernet-config-table\.1\.threshold2-utilization=(.*)", line)
+                if m:
+                    utilization["threshold2"] = m.group(1).strip()
 
-                elif line.startswith("radio-ethernet-config-table.1.threshold3-utilization="):
-                    utilization["threshold3"] = line.split("=", 1)[1].strip()
+                m = re.search(r"radio-ethernet-config-table\.1\.threshold3-utilization=(.*)", line)
+                if m:
+                    utilization["threshold3"] = m.group(1).strip()
 
-            utilization_config = ", ".join(
-                                [f"threshold{i+1}:{utilization[f'threshold{i+1}']}" for i in range(3)]
-                            )
+            utilization_config = (
+                f"threshold1:{utilization['threshold1']}, "
+                f"threshold2:{utilization['threshold2']}, "
+                f"threshold3:{utilization['threshold3']}"
+            )
 
             result.append({
                 "parameter": "Utilization Configuration",
                 "value in dump": utilization_config
             })
+
+            speed_matches = re.findall(
+                r"sw-ap-l2-if-phy-config-table\.(2|3|6)\.speed_value=(\d+)",
+                "\n".join(lines),
+                re.IGNORECASE
+            )
+
+            if speed_matches:
+                ethernet_speed = ",".join(
+                    sorted({speed for _, speed in speed_matches}, key=int)
+                )
+            else:
+                ethernet_speed = "NA"
+
+            result.append({
+                "parameter": "Ethernet Port Speed",
+                "value in dump": ethernet_speed
+            })    
 
             for display_name, pattern in patterns.items():
                 value = "NA"        # default value
@@ -957,12 +987,18 @@ def upload_cergon_dump(request):
 
         
             site_id = dump_values.get("Site Name/System name/Unit Name", "").strip()
+            plan_id = str(current_plan_id).strip()
 
-            mask_a = link_budget_df["Site ID-A"].astype(str).str.strip() == site_id
-            mask_b = link_budget_df["Site ID -B"].astype(str).str.strip() == site_id
+            # First filter by Plan ID
+            plan_rows = link_budget_df[
+                link_budget_df["Plan Id"].astype(str).str.strip() == plan_id
+            ]
 
             row = None
             mapping = {}
+
+            mask_a = plan_rows["Site ID-A"].astype(str).str.strip() == site_id
+            mask_b = plan_rows["Site ID -B"].astype(str).str.strip() == site_id
 
             common_mapping = {
                 "Link ID (Site ID A - Site ID B and Site ID B - Site ID A)":"Link ID",
@@ -1000,13 +1036,16 @@ def upload_cergon_dump(request):
             }
 
             if mask_a.any():
-                row = link_budget_df.loc[mask_a].iloc[0]
+                row = plan_rows.loc[mask_a].iloc[0]
                 mapping = {**common_mapping, **site_a_mapping}
 
             elif mask_b.any():
-                row = link_budget_df.loc[mask_b].iloc[0]
+                row = plan_rows.loc[mask_b].iloc[0]
                 mapping = {**common_mapping, **site_b_mapping}
 
+            if row is None:
+                print(f"Link Budget not found for Plan={plan_id}, Site={site_id}")
+                continue    
             # ---------------- LB Values ----------------
             lb_values = {}
 
@@ -1053,29 +1092,44 @@ def upload_cergon_dump(request):
 
                 else:
                     dump_value = dump_values.get(param, "NA")
+
                     if param == "DCN Synch Status":
                         dump_ip = str(dump_values.get("Network IP", "NA")).strip()
 
-                        ts_row = ts_lookup.get(site_id)
-                        # print(ts_row)
+                        # Hop ID from Link Budget
+                        hop_id = str(row.get("Link ID", "")).strip().upper()
+
+                        # Traffic Shifting lookup
+                        ts_row = ts_lookup.get(hop_id)
 
                         if ts_row:
+
+                            # Current site from dump
+                            current_site = str(
+                                dump_values.get("Site Name/System name/Unit Name", "")
+                            ).strip().upper()
+
+                            # Site A & Site B from Link Budget
+                            site_a = str(row.get("Site ID-A", "")).strip().upper()
+                            site_b = str(row.get("Site ID -B", "")).strip().upper()
+
+                            # Expected IPs from Traffic Shifting
                             site_a_ip = str(ts_row.get("DCN Site A(HOP 1)", "")).strip()
                             site_b_ip = str(ts_row.get("DCN Site B(HOP 1)", "")).strip()
 
                             dump_value = dump_ip
-                            expected_value = f"A:{site_a_ip} / B:{site_b_ip}"
 
-                            if dump_ip == site_a_ip:
-                                status = "OK"
+                            # Compare only with the corresponding site's IP
+                            if current_site == site_a:
+                                expected_value = site_a_ip
+                                status = "OK" if dump_ip == site_a_ip else "NOT OK"
 
-                            elif dump_ip == site_b_ip:
-                                status = "OK"
-
-                            elif site_a_ip == site_b_ip:
-                                status = "PARTIALLY OK"
+                            elif current_site == site_b:
+                                expected_value = site_b_ip
+                                status = "OK" if dump_ip == site_b_ip else "NOT OK"
 
                             else:
+                                expected_value = f"A:{site_a_ip} / B:{site_b_ip}"
                                 status = "NOT OK"
 
                         else:
@@ -1176,7 +1230,10 @@ def upload_cergon_dump(request):
                 })
 
             site = dump_values.get("Site Name/System name/Unit Name", "NA")
-            fiber_pop=row.get("Fiber Pop", "NA")
+            print("site--------",site)
+            fiber_pop=row.get("Fiber POP Id", "NA")
+            print("fiber id--------",fiber_pop)
+
 
             idu_model_text = str(dump_values.get("Type of Equipment/IDU Model", "")).upper()
 
@@ -1240,7 +1297,7 @@ def upload_cergon_dump(request):
                 "Site ID":dump_values.get("Site Name/System name/Unit Name", "NA"),
                 "Site Name/System name/Unit Name":dump_values.get("Site Name/System name/Unit Name", "NA"),
                 "Server/RDP -IP":"",
-                "Type of Equipment":"Ceragone",
+                "Type of Equipment":"CERAGON",
                 "ODU/IDU (New/Existing)":"New",
                 "MRMC Script ID/Bandw":dump_values.get("MRMC Script ID/Bandw", "NA"),
                 "MRMC Profile/Bandw":dump_values.get("MRMC Profile/Bandw", "NA"),
@@ -1316,7 +1373,13 @@ def upload_cergon_dump(request):
             .fillna("")
         )
         print("MW Plan IDs =", Atcp_df["MW Plan Id"].tolist())
-
+        Atcp_df.drop(columns=["Fiber POP Id"], inplace=True, errors="ignore")
+        colip = "IDU Model (Modular IDU-IP20N, IP-20G , High capacity packet radio IP20C/IP20S, IP-20GX, IP-20F)"
+        Atcp_df[colip] = Atcp_df[colip].str.split("|").str[0].str.strip()
+        Atcp_df["ACM Enabled/Modulation mode (Fixed/adaptive)"] = (
+        Atcp_df["ACM Enabled/Modulation mode (Fixed/adaptive)"]
+        .str.replace(r"(?i)^enabled?$", "Adaptive", regex=True)
+    )
 
     wb = Workbook()
     wb.remove(wb.active)
@@ -1376,6 +1439,7 @@ def upload_cergon_dump(request):
 
     relative_path = os.path.relpath(output_file, MEDIA_ROOT).replace("\\", "/")
     download_url = request.build_absolute_uri(MEDIA_URL + relative_path)
+    print("End of Process- Ceragon Report")
 
     return Response({
         "status": True,

@@ -20,3 +20,9 @@ class DailytaskreviewmodelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dailytaskreviewmodel
         fields = '__all__'
+
+
+class TaskTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskTemplate
+        fields = '__all__'

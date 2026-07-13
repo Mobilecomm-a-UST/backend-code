@@ -323,7 +323,8 @@ def send_email_updateTask(task_Data):
     to_mail = task_Data["assigned_by"]
 
     # CC all owners
-    cc_mail = ";".join(task_Data["owner"])
+    # cc_mail = ";".join(task_Data["owner"])
+    cc_mail = ""
 
     send_email(
         to_mail,
@@ -336,65 +337,201 @@ def send_email_updateTask(task_Data):
 
 # ====== this function is used to send email when task is reassigned by Assiner =====
 def send_email_to_reassign_task(task_Data):
+
     body = f"""
-            <html>
-            <body style="font-family:Arial, sans-serif;background-color:#f5f5f5;">
+    <html>
+    <body style="font-family:Arial, sans-serif;background-color:#f5f5f5;">
 
-            <div style="max-width:750px;margin:auto;background:white;padding:30px;border-radius:10px;">
+    <div style="max-width:750px;margin:auto;background:white;padding:30px;border-radius:10px;">
 
-                <h2 style="color:#1f4e79;">
-                    🔄 Task Reassignment Notification
-                </h2>
+        <h2 style="color:#1f4e79;">
+            🔄 Task Reassigned
+        </h2>
 
-                <p>Hi {SplitFirstNameFromEmail(task_Data['owner'])},</p>
+        <p>Hi {SplitFirstNameFromEmail(task_Data['owner'])},</p>
 
-                <p>
-                
-                    The task assigned to you has been reassigned by
-                    <b>{task_Data['assigned_by']}</b>.
-                    Please review the updated task details below.
-                </p>
+        <p>
+            The following task has been <b>reassigned</b> by
+            <b>{task_Data['assigned_by']}</b>.
+            Please review the updated task details below.
+        </p>
 
-                <table style="width:100%;border-collapse:collapse;">
+        <table style="width:100%;border-collapse:collapse;">
 
-                    <tr>
-                        <td style="padding:10px;border:1px solid #ddd;"><b>Ticket No.</b></td>
-                        <td style="padding:10px;border:1px solid #ddd;">{task_Data['task_id']}</td>
-                    </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><b>Ticket No.</b></td>
+                <td style="padding:10px;border:1px solid #ddd;">{task_Data['task_id']}</td>
+            </tr>
 
-                    <tr>
-                        <td style="padding:10px;border:1px solid #ddd;"><b>OEM</b></td>
-                        <td style="padding:10px;border:1px solid #ddd;">{task_Data['oem']}</td>
-                    </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><b>OEM</b></td>
+                <td style="padding:10px;border:1px solid #ddd;">{task_Data['oem']}</td>
+            </tr>
 
-                    <tr>
-                        <td style="padding:10px;border:1px solid #ddd;"><b>Task</b></td>
-                        <td style="padding:10px;border:1px solid #ddd;">{task_Data['task']}</td>
-                    </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><b>Task</b></td>
+                <td style="padding:10px;border:1px solid #ddd;">{task_Data['task']}</td>
+            </tr>
 
-                    <tr>
-                        <td style="padding:10px;border:1px solid #ddd;"><b>Priority</b></td>
-                        <td style="padding:10px;border:1px solid #ddd;color:red;">
-                            <b>{task_Data['priority']}</b>
-                        </td>
-                    </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><b>Assigned By</b></td>
+                <td style="padding:10px;border:1px solid #ddd;">
+                    {task_Data['assigned_by']}
+                </td>
+            </tr>
 
-                    <tr>
-                        <td style="padding:10px;border:1px solid #ddd;"><b>Status</b></td>
-                        <td style="padding:10px;border:1px solid #ddd;">
-                            {task_Data['status']}
-                        </td>
-                    </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><b>Assigned To</b></td>
+                <td style="padding:10px;border:1px solid #ddd;">
+                    {", ".join(task_Data['owner'])}
+                </td>
+            </tr>
 
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><b>Priority</b></td>
+                <td style="padding:10px;border:1px solid #ddd;color:red;">
+                    <b>{task_Data['priority']}</b>
+                </td>
+            </tr>
 
-                    <tr>
-                        <td style="padding:10px;border:1px solid #ddd;"><b>Frequency</b></td>
-                        <td style="padding:10px;border:1px solid #ddd;">
-                            {task_Data['frequency']}
-                        </td>
-                    </tr>
-                    """
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><b>Status</b></td>
+                <td style="padding:10px;border:1px solid #ddd;">
+                    {task_Data['status']}
+                </td>
+            </tr>
 
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><b>Frequency</b></td>
+                <td style="padding:10px;border:1px solid #ddd;">
+                    {task_Data['frequency']}
+                </td>
+            </tr>
+
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><b>Deadline</b></td>
+                <td style="padding:10px;border:1px solid #ddd;">
+                    {format_datetime(task_Data['deadline'])}
+                </td>
+            </tr>
+
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><b>Remarks</b></td>
+                <td style="padding:10px;border:1px solid #ddd;">
+                    {task_Data.get('remarks', '-')}
+                </td>
+            </tr>
+
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><b>Reassign Count</b></td>
+                <td style="padding:10px;border:1px solid #ddd;">
+                    {task_Data.get('reassign_count', 0)}
+                </td>
+            </tr>
+
+        </table>
+
+        <br>
+                <div style="text-align:center; margin-top:20px;">
+
+                    <a
+                        href="mailto:noreply@mcpspmis.com?subject=Task%20Update%20%7C%20{task_Data['task_id']}%20%7C%20Completed&body=Completed"
+                        style="
+                            display:inline-block;
+                            background:#28a745;
+                            color:white;
+                            padding:12px 22px;
+                            text-decoration:none;
+                            border-radius:6px;
+                            font-weight:bold;
+                            margin-right:10px;">
+                        ✅ Completed
+                    </a>
+
+                    <a
+                        href="mailto:noreply@mcpspmis.com?subject=Task%20Update%20%7C%20{task_Data['task_id']}%20%7C%20In%20Progress&body=In%20Progress"
+                        style="
+                            display:inline-block;
+                            background:#ffc107;
+                            color:#000;
+                            padding:12px 22px;
+                            text-decoration:none;
+                            border-radius:6px;
+                            font-weight:bold;
+                            margin-right:10px;">
+                        🔄 In Progress
+                    </a>
+
+                    <a
+                        href="mailto:noreply@mcpspmis.com?subject=Task%20Update%20%7C%20{task_Data['task_id']}%20%7C%20Pending&body=Pending"
+                        style="
+                            display:inline-block;
+                            background:#dc3545;
+                            color:white;
+                            padding:12px 22px;
+                            text-decoration:none;
+                            border-radius:6px;
+                            font-weight:bold;">
+                        ⏳ Pending
+                    </a>
+
+                </div>
+
+        <br>
+
+        <div style="
+            background-color:#fff3cd;
+            padding:15px;
+            border-left:5px solid #ff9800;
+        ">
+
+            <b>Reassignment Notice</b><br><br>
+
+            This task has been reassigned by
+            <b>{task_Data['assigned_by']}</b>.
+
+            <br><br>
+
+            <b>Current Assignee(s):</b>
+            {", ".join(task_Data['owner'])}
+
+            <br><br>
+
+            <b>Total Reassignments:</b>
+            {task_Data.get('reassign_count', 0)}
+
+        </div>
+
+        <br>
+
+        <hr>
+
+        <p style="font-size:12px;color:gray;">
+            This is an automated notification generated by Daily Task Review System.
+        </p>
+
+    </div>
+
+    </body>
+    </html>
+    """
+
+    subject = f"🔄 Task Reassigned | {task_Data['task_id']}"
+
+    # Mail to all new assignees
+    to_mail = ";".join(task_Data["owner"])
+
+    # CC the assigner
+    cc_mail = task_Data["assigned_by"]
+
+    send_email(
+        to_mail,
+        cc_mail,
+        subject,
+        body,
+        None,
+        True
+    )
 # ======= Add Task Table CRUD =======
 
 @api_view(['POST'])
@@ -591,7 +728,6 @@ def update_task(request, pk):
 
     return Response(serializer.errors, status=400)
 
-
 @api_view(['DELETE'])
 def delete_task(request, pk):
     try:
@@ -618,20 +754,14 @@ def reassigned_task(request, pk):
         data=request.data,
         partial=True
     )
-
     if serializer.is_valid():
-
         # Increase reassign count by 1
         task.reassign_count = task.reassign_count + 1
-
         serializer.save(
             reassign_count=task.reassign_count
         )
-
         send_email_to_reassign_task(serializer.data)
-
         return Response(serializer.data, status=200)
-
     return Response(serializer.errors, status=400)
 
 #  ==== ================= My Task API function  =================
@@ -1050,6 +1180,128 @@ def get_my_tasks_analytics(request):
         )
 
 
+# ========= Task Templates API ==========
+
+@api_view(["POST"])
+def create_template(request):
+
+    serializer = TaskTemplateSerializer(data=request.data)
+
+    if serializer.is_valid():
+
+        serializer.save()
+
+        return Response(
+            serializer.data,
+            status=201
+        )
+
+    return Response(
+        serializer.errors,
+        status=400
+    )
+
+
+@api_view(["POST"])
+def get_all_templates(request):
+
+    assigned_by = request.data.get("assigned_by")
+
+    queryset = TaskTemplate.objects.filter(
+        assigned_by=assigned_by
+    ).order_by("-assigned_by")
+
+    serializer = TaskTemplateSerializer(
+        queryset,
+        many=True
+    )
+    return Response(serializer.data)
+
+
+@api_view(["PUT"])
+def update_template(request, pk):
+    try:
+
+        template = TaskTemplate.objects.get(id=pk)
+
+    except TaskTemplate.DoesNotExist:
+
+        return Response(
+            {"error": "Template not found"},
+            status=404
+        )
+
+    serializer = TaskTemplateSerializer(
+        template,
+        data=request.data,
+        partial=True
+    )
+
+    if serializer.is_valid():
+
+        serializer.save()
+
+        return Response(
+            serializer.data,
+            status=200
+        )
+
+    return Response(
+        serializer.errors,
+        status=400
+    )
+
+
+@api_view(["DELETE"])
+def delete_template(request, pk):
+
+    try:
+
+        template = TaskTemplate.objects.get(id=pk)
+
+    except TaskTemplate.DoesNotExist:
+
+        return Response(
+            {"error": "Template not found"},
+            status=404
+        )
+
+    template.delete()
+
+    return Response(
+        {
+            "message": "Template deleted successfully."
+        },
+        status=200
+    )
+
+@api_view(["PUT"])
+def change_template_status(request, pk):
+
+    try:
+
+        template = TaskTemplate.objects.get(id=pk)
+
+    except TaskTemplate.DoesNotExist:
+
+        return Response(
+            {"error": "Template not found"},
+            status=404
+        )
+
+    template.is_active = not template.is_active
+
+    template.save()
+
+    return Response(
+        {
+            "id": template.id,
+            "is_active": template.is_active
+        }
+    )
+
+
+    
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 def _calc_user_workload(qs):

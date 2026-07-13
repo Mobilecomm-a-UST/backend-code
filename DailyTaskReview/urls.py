@@ -20,12 +20,20 @@ urlpatterns = [
     path('reporting-email-hierarchy/update/<int:pk>/', update_email_hierarchy),
     path('reporting-email-hierarchy/delete/<int:pk>/', delete_email_hierarchy),
 
+# ========== Task Template API ==========
+    path('task-template/create/', create_template),
+    path('task-template/get/', get_all_templates),
+    path('task-template/update/<int:pk>/', update_template),
+    path('task-template/delete/<int:pk>/', delete_template),
+    path('task-template/status/<int:pk>/', change_template_status),
+
     
 #   ======= Assign Task API =======
     path('assign_task/create/', create_task),
     path('assign_task/get/', get_all_tasks),
     path('assign_task/update-task/<int:pk>/', update_task),
     path('assign_task/delete-task/<int:pk>/', delete_task),
+    path('assign_task/reassign/<int:pk>/', reassigned_task),
 
 
 #  ==========   My Task API  ==========

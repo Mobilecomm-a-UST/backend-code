@@ -30,6 +30,7 @@ from django.db.models import Count
 from .models import IntegrationDataVI
 from datetime import datetime, timedelta
 from .parser import process_log
+from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 
 from .models import *
 
@@ -54,6 +55,47 @@ def generate_date_list(start_date):
         start_date += delta
     
     return date_list
+
+
+# ======= Delete Site through Circle + Site_ID =======
+@api_view(['POST'])
+def delete_site_circle_raw(request):
+    circle = request.data.get("CIRCLE")
+    site_id = request.data.get("Site_ID")
+
+    if not circle or not site_id:
+        return Response(
+            {
+                "status": False,
+                "message": "Both CIRCLE and Site_ID are required."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    queryset = IntegrationDataVI.objects.filter(
+        CIRCLE=circle,
+        Site_ID=site_id
+    )
+
+    if not queryset.exists():
+        return Response(
+            {
+                "status": False,
+                "message": "No record found."
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    deleted_count, _ = queryset.delete()
+
+    return Response(
+        {
+            "status": True,
+            "message": f"{deleted_count} record(s) deleted successfully."
+        },
+        status=status.HTTP_200_OK
+    )
+
 @api_view(['GET'])
 def get_excel_temp_link(request):
     #mcom123 temp id.
@@ -1711,7 +1753,7 @@ def get_vi_temp_link(request):
 
     return Response({
         'file_url': file_url,
-        'template_version': 'v1.8',
+        'template_version': 'v1.1',
         'total_records': queryset.count(),
     }, status=200)
     
@@ -2236,5 +2278,11 @@ def HOTO_dashboard(request):
 
     return Response({
         "message": "Dashboard Generated Successfully",
-        "download_link": download_link
+        "download_link": download_link,
+        "dashboard": {
+            "circle status": final,
+            "circle pending bucket": pending_data,
+            "oem wise status": oem_final,
+            "oem wise pending bucket": oem_pending
+        }
     })

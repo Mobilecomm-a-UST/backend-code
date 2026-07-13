@@ -123,16 +123,30 @@ def add_to_excel(df, file_path, sheet_name="Sheet1"):
     try:
         if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
             existing_df = pd.read_excel(file_path, sheet_name=sheet_name)
+
+            existing_df = existing_df.loc[:, ~existing_df.columns.duplicated()]
+            df = df.loc[:, ~df.columns.duplicated()]
+            existing_df = existing_df.loc[:, ~existing_df.columns.str.startswith("Soft-AT-Output.")]
+
             combined_df = pd.concat([existing_df, df], ignore_index=True)
+            combined_df = combined_df.loc[:, ~combined_df.columns.duplicated()]
+            combined_df = combined_df.loc[:, ~combined_df.columns.str.startswith("Soft-AT-Output.")]
+
         else:
-            combined_df = df
-    except BadZipFile:
-        # File exists but is corrupted → recreate it
-        combined_df = df
+            combined_df = df.loc[:, ~df.columns.duplicated()]
+            combined_df = combined_df.loc[:, ~combined_df.columns.str.startswith("Soft-AT-Output.")]
+
+    except (BadZipFile, FileNotFoundError):
+        combined_df = df.loc[:, ~df.columns.duplicated()]
+        combined_df = combined_df.loc[:, ~combined_df.columns.str.startswith("Soft-AT-Output.")]
 
     combined_df.drop_duplicates(subset=[key_col], keep="first", inplace=True)
+
     combined_df.to_excel(file_path, sheet_name=sheet_name, index=False)
-    add_to_db(df)    
+
+    add_to_db(df)   
+
+    
 
 
 
@@ -782,7 +796,7 @@ def microwave_upload(request):
     final_df.drop(columns=["feq_RX", "feq_TX", "RSL_Status", "curret_rsl_status_A",
     "curret_rsl_status_Z", "Xpd_satus", "Tx_power_status", "SNR_Status",
     "polarization_status", "Modulation_status", "Modulation_config_status",
-    "Modulation_moud_status", "FAR_Remark", "BAR_Remark", "oem_remark","Remark"], inplace=True, errors="ignore")
+    "Modulation_moud_status", "FAR_Remark", "BAR_Remark", "oem_remark","Remark","Soft-AT-Output"], inplace=True, errors="ignore")
 
     final_df.drop_duplicates(inplace=True)
     print(final_df.head())
@@ -882,14 +896,34 @@ def microwave_upload(request):
         rsl_a = to_float(ws.cell(r, cols["Site A Current RSL"]).value)
         rsl_z = to_float(ws.cell(r, cols["Site Z Current RSL"]).value)
 
+
         condition = (
-            all(x is not None for x in [ber, rsl_min, rsl_max, rsl_a, rsl_z]) and
-            (rsl_min - 3) <= ber <= (rsl_max + 3) and
+            all(x is not None for x in [ber, rsl_a, rsl_z]) and
             (rsl_a - 3) <= ber <= (rsl_a + 3) and
             (rsl_z - 3) <= ber <= (rsl_z + 3)
         )
-        for col in ["RSL Min (dBm)", "RSL Max (dBm)", "Site A Current RSL", "Site Z Current RSL"]:
-            apply_color(ws.cell(r, cols[col]), condition)
+
+        apply_color(ws.cell(r, cols["Site A Current RSL"]), condition)
+        apply_color(ws.cell(r, cols["Site Z Current RSL"]), condition)
+
+
+        # RSL Min (Deviation = RSL - BER)
+        min_condition = False
+        if ber is not None and rsl_min is not None:
+            deviation = rsl_min - ber
+            min_condition = -3.999 <= deviation <= 3.999
+
+        apply_color(ws.cell(r, cols["RSL Min (dBm)"]), min_condition)
+
+
+        # RSL Max (Deviation = RSL - BER)
+        max_condition = False
+        if ber is not None and rsl_max is not None:
+            deviation = rsl_max - ber
+            max_condition = -3.999 <= deviation <= 3.999
+
+        apply_color(ws.cell(r, cols["RSL Max (dBm)"]), max_condition)
+
 
 
         acm_max = extract_qam(ws.cell(r, cols["ACM Max QAM"]).value)
@@ -947,8 +981,52 @@ def microwave_upload(request):
             apply_color(ws.cell(r, cols[col_name]), condition)
 
 
+    remarks_col = ws.max_column + 1
+    headers = {cell.value: cell.column for cell in ws[1]}
+    if "Soft-AT-Output" in headers:
+        remarks_col = headers["Soft-AT-Output"]
+    else:
+        remarks_col = ws.max_column + 1
+        ws.cell(row=1, column=remarks_col).value = "Soft-AT-Output"
+
+    RED_COLORS = {
+        "FF0000",      # RGB Red
+        "FFFF0000",    # ARGB Red
+        "C00000",      # Dark Red
+        "FFC00000"     # ARGB Dark Red
+    }
+
+    for r in range(2, ws.max_row + 1):
+        remark = "Ready to offer"   # Default
+
+        for c in range(1, remarks_col):
+            cell = ws.cell(r, c)
+
+            if cell.font.color is None:
+                continue
+
+            if cell.font.color.type == "rgb":
+                color = cell.font.color.rgb
+
+                if color:
+                    color = color.upper()
+
+                    # Match all supported red colors
+                    if (
+                        color in RED_COLORS
+                        or color.endswith("FF0000")
+                        or color.endswith("C00000")
+                    ):
+                        remark = "Action Required"
+                        break
+
+        ws.cell(row=r, column=remarks_col).value = remark
+
     wb.save(output_path)
-    print("End The Process..?")
+    print("End The Process..?")  
+
+
+
 
     
     relative_path = os.path.relpath(output_path, MEDIA_ROOT).replace("\\", "/")

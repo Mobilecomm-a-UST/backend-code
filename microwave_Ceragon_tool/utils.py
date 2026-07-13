@@ -161,7 +161,26 @@ def check_status(parameter, actual, expected, dump_values):
     #         return "NOT OK"
 
     #     return "NOT OK"
+    # Ethernet Port Speed
+    if parameter.strip().lower() == "ethernet port speed":
 
+        actual_speeds = {
+            x.strip()
+            for x in actual.split(",")
+            if x.strip()
+        }
+
+        expected_speeds = {
+            x.strip()
+            for x in expected.split(",")
+            if x.strip()
+        }
+
+        # Agar expected speed actual me present hai to OK
+        if actual_speeds & expected_speeds:
+            return "OK"
+
+        return "NOT OK"
     if parameter.strip().lower() == "multicarrier abc":
 
         idu_model = str(

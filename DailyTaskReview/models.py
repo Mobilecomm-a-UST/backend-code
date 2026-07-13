@@ -34,6 +34,50 @@ class ReportingEmailHierarchy(models.Model):
 #     endtime = models.TimeField()
 #     priority=models.TextField()
 
+class TaskTemplate(models.Model):
+
+    # ---------------- Basic Information ----------------
+    template_name = models.CharField(max_length=255,unique=True)
+    oem = models.CharField(max_length=100)
+    task = models.CharField(max_length=500)
+    owners = models.JSONField(default=list)
+    status = models.CharField(max_length=55,blank=True,null=True)
+    assigned_by = models.CharField(max_length=255)
+    priority = models.CharField(max_length=20,default="Medium")
+    remarks = models.TextField(blank=True)
+
+    # ---------------- Scheduling ----------------
+
+    recurrence_rule = models.JSONField()
+    deadline_rule = models.JSONField()
+    start_date = models.DateField()
+    end_date = models.DateField(null=True,blank=True)
+    is_active = models.BooleanField(default=True)
+
+    # ---------------- Audit ----------------
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.task
+
+
+class TaskGenerationLog(models.Model):
+
+    template = models.ForeignKey(TaskTemplate,on_delete=models.CASCADE)
+    owner = models.CharField(max_length=255)
+    task_id = models.CharField(max_length=50)
+    scheduled_datetime = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (
+            "template",
+            "owner",
+            "scheduled_datetime",
+        )
 
 
 class Dailytaskreviewmodel(models.Model):
