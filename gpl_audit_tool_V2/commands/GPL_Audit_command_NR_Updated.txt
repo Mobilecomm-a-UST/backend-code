@@ -19,6 +19,7 @@ hgetc ^NRSectorCarrier= reservedBy|noOfUsedRxAntennas$|noOfUsedTxAntennas$|confi
 ##### END OF NR CELL DATA #######    
 
 #####Start: LTE GPL Audit #######
+
 hgetc ^EUtranCell.DD= ^dlConfigurableFrequencyStart$|^cellRange$|^eUlFssSwitchThresh$|^pZeroNominalPusch$|^ulTrigActive$
 hgetc ^EUtranCell.DD= ^puschPwrOffset64qam$|^lbabIncr$|^allocTimerPucchFormat1$|^noOfPucchFormat3PrbPairs$|^qRxLevMinCe$
 hgetc ^EUtranCell.DD= ^srDetectHighThres$|^deallocTimerPucchFormat1$|^crsGain$|^outOfCoverageSparseGrantingBsr$|^outOfCoverageDepth$
@@ -52,7 +53,7 @@ hgetc ^UeMeasControl= ^inhibitB2RsrqConfig$|^filterCoefficientEUtraRsrp$|^measQu
 hgetc ^UeMeasControl= ^maxMeasB1Endc$
 hgetc ^ReportConfigSearch= ^a2CriticalThrQci1RsrpOffset$|^a1a2SearchThresholdRsrp$|^timeToTriggerA2Search$|^timeToTriggerA2OutSearch$|^hysteresisA2CriticalRsrp$|^timeToTriggerA1Search$
 hgetc ^ReportConfigSearch= ^timeToTriggerA2SearchRsrq$|^timeToTriggerA2Critical$|^a2CriticalThrQci1RsrqOffset$|^hysteresisA1A2SearchRsrp$|^timeToTriggerA1UlSearch$|^timeToTriggerA2UlCritical$
-hgetc ^ReportConfigSearch= ^a2CriticalThresholdRsrp$|^a2OuterSearchThrRsrpOffset$ 
+hgetc ^ReportConfigSearch= ^a2CriticalThresholdRsrp$|^a2OuterSearchThrRsrpOffset$|timeToTriggerA1SearchRsrq$|timeToTriggerA2CriticalRsrq$|timeToTriggerA2OutSearchRsrq$
 hgetc ^ReportConfigEUtraBestCell= ^a3offset$|^hysteresisA3$|^triggerQuantityA3$|^timeToTriggerA3$
 hgetc ^AnrFunction= ^prioTime$|^probCellDetectMedHoSuccTime$|^maxNoPciReportsEvent$|^removeNrelTime$|^prioHoSuccRate$
 hgetc ^AnrFunction= ^pciConflictMobilityEcgiMeas$|^problematicCellPolicy$|^probCellDetectLowHoSuccTime$|^probCellDetectLowHoSuccThres$|^cellRelHoAttRateThreshold$
@@ -85,21 +86,22 @@ hgetc ^QciProfilePredefined=qci5$ ^rlcMode$|^rohcEnabled$|^resourceAllocationStr
 hgetc ^QciProfilePredefined=qci5$ ^serviceType$|^logicalChannelGroupRef$|^qciSubscriptionQuanta$|^aqmMode$|^priority$
 hgetc ^QciProfilePredefined=qci5$ ^dataFwdPerQciEnabled$
 hgetc ^QciProfilePredefined=qci6$ ^dlResourceAllocationStrategy$|^srsAllocationStrategy$|^dataFwdPerQciEnabled$|^serviceType$|^qciSubscriptionQuanta$
-hgetc ^QciProfilePredefined=qci6$ ^resourceAllocationStrategy$|^counterActiveMode$
+hgetc ^QciProfilePredefined=qci6$ ^resourceAllocationStrategy$|^counterActiveMode$|absPrioOverride$
 hgetc ^QciProfilePredefined=qci7$ ^dlResourceAllocationStrategy$|^srsAllocationStrategy$|^dataFwdPerQciEnabled$|^serviceType$|^qciSubscriptionQuanta$
-hgetc ^QciProfilePredefined=qci7$ ^resourceAllocationStrategy$
-hgetc ^QciProfilePredefined=qci8$ ^dlResourceAllocationStrategy$|^srsAllocationStrategy$|^dataFwdPerQciEnabled$|^serviceType$|^qciSubscriptionQuanta$
+hgetc ^QciProfilePredefined=qci7$ ^resourceAllocationStrategy$|absPrioOverride$
+hgetc ^QciProfilePredefined=qci8$ ^dlResourceAllocationStrategy$|^srsAllocationStrategy$|^dataFwdPerQciEnabled$|^serviceType$|^qciSubscriptionQuanta$|absPrioOverride$
 hgetc ^QciProfilePredefined=qci9$ ^dlResourceAllocationStrategy$|^srsAllocationStrategy$|^schedulingAlgorithm$|^dataFwdPerQciEnabled$|^serviceType$
-hgetc ^QciProfilePredefined=qci9$ ^qciSubscriptionQuanta$|^counterActiveMode$
+hgetc ^QciProfilePredefined=qci9$ ^qciSubscriptionQuanta$|^counterActiveMode$|absPrioOverride$
 hgetc ^CarrierAggregationFunction= ^dcSCellActDeactDataThresHyst$|^waitForCaOpportunity$|^caUsageLimit$|^sCellActDeactUlDataThresh$|^waitForAdditionalSCellOpportunity$
 hgetc ^CarrierAggregationFunction= ^sCellDeactDelayTimer$|^dcSCellDeactDelayTimer$|^caRateAdjustCoeff$|^caPreemptionThreshold$|^sCellScheduleSinrThres$
 hgetc ^CarrierAggregationFunction= ^sCellActDeactUlDataThreshHyst$|^dcSCellActDeactDataThres$|^sCellActProhibitTimer$|^sCellActDeactDataThresHyst$|^waitForBetterSCellRep$
-hgetc ^CarrierAggregationFunction= ^sCellActDeactDataThres$|^endcCaPolicy$
+hgetc ^CarrierAggregationFunction= ^sCellActDeactDataThres$|^endcCaPolicy$|laaSCellDeactProhibitTimer$
 hgetc ^QciProfilePredefined=qci1$ ^srsAllocationStrategy$|^inactivityTimerOffset$|^resourceType$|^pdcpSNLength$|^pdb$|^dlMaxHARQTxQci$
 hgetc ^QciProfilePredefined=qci1$ ^pdbOffset$|^dscp$|^drxProfileRef$|^rlfPriority$|^drxPriority$
 hgetc ^QciProfilePredefined=qci1$ ^rlcSNLength$|^rlcMode$|^rohcEnabled$|^resourceAllocationStrategy$|^dlResourceAllocationStrategy$
 hgetc ^QciProfilePredefined=qci1$ ^absPrioOverride$|^tReorderingUl$|^serviceType$|^logicalChannelGroupRef$|^aqmMode$
 hgetc ^QciProfilePredefined=qci1$ ^priority$|^dataFwdPerQciEnabled$|^ulMaxHARQTxQci$|^tReorderingDl$
+hgetc ^QciProfilePredefined=.* harqPriority$|logicalChannelGroupRef$|schedulingAlgorithm$
 hgetc RadioBearerTable=default,DataRadioBearer=1$ ^tPollRetransmitDl$|^ulMaxRetxThreshold$|^dlMaxRetxThreshold$|^tPollRetransmitUl$
 hgetc ^ENodeBFunction= ^tddVoipDrxProfileId$|^licConnectedUsersPercentileConf$|^ulPhyProcResTradingEnabled$|^timePhaseMaxDeviationSib16$|^csfbMeasFromIdleMode$|^endcAllowed$
 hgetc ^ENodeBFunction= ^timePhaseMaxDeviationTdd4$|^x2SetupTwoWayRelations$|^dnsLookupOnTai$|^caAwareMfbiIntraCellHo$|^initPreschedulingEnable$
@@ -119,9 +121,9 @@ hgetc ^ReportConfigA5= ^triggerQuantityA5$|^a5Threshold1Rsrp$|^timeToTriggerA5$|
 hgetc ^ReportConfigA5= ^timeToTriggerA5Rsrq$
 hgetc ^ReportConfigA5Anr= ^a5Threshold2RsrqAnrDelta$|^a5Threshold1RsrpAnrDelta$|^a5Threshold1RsrqAnrDelta$|^a5Threshold2RsrpAnrDelta$
 hgetc ^ReportConfigCsfbUtra= ^hysteresis$|^thresholdRscp$|^timeToTrigger$|^thresholdEcNo$
-hgetc ^Paging= ^defaultPagingCycle$|^maxNoOfPagingRecordsNb$|^nB$|^noOfDefPagCyclPrim$|^maxNoOfPagingRecords$
-hgetc ^Paging= ^pagingDiscardTimerDRX$|^pagingDiscardTimerDrxNb$
-hgetc ^ReportConfigB2Utra= ^b2Threshold1Rsrq$|^triggerQuantityB2$|^hysteresisB2$|^timeToTriggerB2$|^b2Threshold1Rsrp$
+hgetc ^Paging= ^defaultPagingCycle$|^maxNoOfPagingRecordsNb$|^nB$|^noOfDefPagCyclPrim$|^maxNoOfPagingRecords$|n$|nS$
+hgetc ^Paging= ^pagingDiscardTimerDRX$|^pagingDiscardTimerDrxNb$|pagingDiscardTimer$
+hgetc ^ReportConfigB2Utra= ^b2Threshold1Rsrq$|^triggerQuantityB2$|^hysteresisB2$|^timeToTriggerB2$|^b2Threshold1Rsrp$|timeToTriggerB2Rsrq$
 hgetc ^PreschedProfile= ^preschedulingPeriod$|^preschedulingDataSize$|^preschedulingDuration$
 hgetc ^AdmissionControl= ^dlAdmOverloadThr$|^paArpOverride$|^admNrRrcDifferentiationThr$|^admNrRbDifferentiationThr$|^ulTransNwBandwidth$|^paArpOverrideHpa$|^ulAdmOverloadThr$  
 hgetc ^AdmissionControl= ^arpBasedPreEmptionState$|^admResourceMinQciPrio$|^nrOfRbReservationsPerPaConn$|^dlMbmsGbrRatio$|^ulAdmDifferentiationThr$
@@ -140,14 +142,14 @@ hgetc ^ReportConfigSCellA1A2= ^hysteresisA1A2Rsrp$|^hysteresisA1A2RsrpBidirectio
 hgetc ^ReportConfigSCellA6= ^a6offset$|^hysteresisA6$|^triggerQuantityA6$|^timeToTriggerA6$
 hgetc ^Rcs= ^rlcDlDeliveryFailureAction$|^tInactivityTimer$
 hgetc ^LoadBalancingFunction= ^txPwrForOverlaidCellDetect$|^lbCeiling$|^lbRateOffsetCoefficient$|^lbThreshold$|^lballowedForEndcUe$
-hgetc ^MACConfiguration= ^ulMaxHARQTx$|^ulTtiBundlingMaxHARQTx$
+hgetc ^MACConfiguration= ^ulMaxHARQTx$|^ulTtiBundlingMaxHARQTx$|dlMaxHARQTx$
 hgetc ^GeranFreqGroupRelation= ^mobilityAction$|^cellReselectionPriority$|^mobilityActionCsfb$|^voicePrio$|^connectedModeMobilityPrio$
 hgetc ^GeranFreqGroupRelation= ^csFallbackPrio$|^csFallbackPrioEC$|^threshXLow$|^qRxLevMin$|^altCsfbTargetPrio$
 hgetc ^GeranFreqGroupRelation= ^threshXHigh$
 hgetc ^ReportConfigA1Prim= ^a1ThresholdRsrpPrim$|^hysteresisA1Prim$
 hgetc ^ReportConfigA1Sec= ^a1ThresholdRsrqSec$|^a1ThresholdRsrpSec$
-hgetc ^ReportConfigB1Utra= ^timeToTriggerB1$|^b1ThresholdEcNoUtra$|^hysteresisB1$|^b1ThresholdRscpUtra$
-hgetc ^ReportConfigB2Geran= ^b2Threshold2Geran$|^reportIntervalB2$|^timeToTriggerB2$
+hgetc ^ReportConfigB1Utra= ^timeToTriggerB1$|^b1ThresholdEcNoUtra$|^hysteresisB1$|^b1ThresholdRscpUtra$|timeToTriggerB2Rsrq$
+hgetc ^ReportConfigB2Geran= ^b2Threshold2Geran$|^reportIntervalB2$|^timeToTriggerB2$|timeToTriggerB2Rsrq
 hgetc ^ReportConfigEUtraBadCovPrim= ^hysteresisA2Prim$|^timeToTriggerA2Prim$|^triggerQuantityA2Prim$|^a2ThresholdRsrqPrim$|^a2ThresholdRsrpPrim$
 hgetc ^ReportConfigEUtraBadCovSec= ^hysteresisA2Sec$|^triggerQuantityA2Sec$|^a2ThresholdRsrpSec$|^timeToTriggerA2Sec$|^a2ThresholdRsrqSec$
 hgetc ^ReportConfigEUtraIFBestCell= ^a3offset$|^hysteresisA3$|^triggerQuantityA3$|^timeToTriggerA3$
@@ -166,14 +168,14 @@ hgetc ^SctpProfile=1$ ^pathMaxRtx$|^initRto$|^maxRto$|^assocMaxRtx$
 hgetc ^RlfProfile=5$ ^t301$
 hgetc ^anrpciconflictdrxprofile= ^anrPciConflictOnDurationTimer$|^anrPciConflictDrxInactivityTimer$
 hgetc ^carrieraggregationfunction= ^fourLayerMimoPreferred$|^dynamicSCellSelectionMethod$|^selectionPolicyUlWeighting$|^waitForBlindSelSCellRepLessTtt$|^enhancedSelectionOfMimoAndCa$
-hgetc ^MdtConfiguration= ^triggerQuantityA2Mdt$
+hgetc ^MdtConfiguration= ^triggerQuantityA2Mdt$|timeToTriggerA2Mdt
 hgetc ^MdtConfiguration= ^a2ThresholdRsrpMdt$|^a2ThresholdRsrqMdt$
 hgetc ^ulcompgroup= ^administrativeState$
 hgetc ^ReportConfigB1GUtra= ^b1ThresholdRsrq$|^hysteresisB1$|^b1ThresholdRsrp$|^timeToTriggerB1$|^triggerQuantityB1$
 hgetc ^EUtranCell.DD= ^systemInformationBlock3$@sIntraSearchv920Active$|sIntraSearchQ$|sIntraSearchP$|qHystSfMedium$|tEvaluation$|sNonIntraSearchv920Active$|tHystNormal$|threshServingLowQ$|qHyst$|sIntraSearch$|nCellChangeMedium$|qHystSfHigh$|sNonIntraSearch$|nCellChangeHigh$|sNonIntraSearchQ$|sNonIntraSearchP$
 hgetc ^EUtranCell.DD= ^systemInformationBlock6$@tReselectionUtraSfHigh$|tReselectionUtraSfMedium$|tReselectionUtra$
 hgetc ^EUtranCell.DD= ^systemInformationBlock7$@tReselectionGeranSfHigh$|tReselectionGeranSfMedium$|tReselectionGeran$
-hgetc ^EUtranCell.DD= ^mappingInfo$@mappingInfoSIB6$|mappingInfoSIB12$|mappingInfoSIB4$|mappingInfoSIB5$
+hgetc ^EUtranCell.DD= ^mappingInfo$@mappingInfoSIB6$|mappingInfoSIB12$|mappingInfoSIB4$|mappingInfoSIB5$|mappingInfoSIB7$
 hgetc ^EUtranCell.DD= ^changeNotification$@changeNotificationSIB8$|changeNotificationSIB7$|changeNotificationSIB6$|changeNotificationSIB15$|changeNotificationSIB4$|changeNotificationSIB3$|changeNotificationSIB1$|changeNotificationSIB16$|changeNotificationSIB13$|changeNotificationSIB2$|changeNotificationSIB5$
 hgetc ^EUtranCell.DD= ^frameStartOffset$@subFrameOffset$
 hgetc ^EUtranCell.DD= ^mappingInfoCe$@mappingInfoSIB10$
@@ -192,7 +194,6 @@ hgetc ^EUtranCell.DD= ^dlMaxRetxRrcReleaseThr$|^tPollRetxRrcReleaseDl$|^modifica
 hgetc ^EUtranCell.DD= rrcQueueT300Ratio$
 hgetc  SubscriberGroupProfile=.* fastACqiReportEnabled$|bearerTriggerList$|dlDynBlerTargetAlg$|dlDynBlerTargetMax$|dlDynBlerTargetMin$
 hgetc  ReportConfigEUtraIntraFreqPm=1 maxReportCellsPm$|reportIntervalPm$
-
 hgetc ^QciProfileOperatorDefined=qci30$ ^QciProfileOperatorDefinedId$
 hgetc ^QciProfileOperatorDefined=qci31$ ^QciProfileOperatorDefinedId$
 hgetc ^ReportConfigA5EndcHo= ^a5Threshold1Rsrp$|^timeToTriggerA5$|^a5Threshold1Rsrq$
@@ -204,7 +205,19 @@ hgetc ,TermPointToGNB= createdBy|^ipv6Address$|termPointToGNBId
 hgetc ^EndcProfile= ^meNbS1TermReqArpLev$|^splitNotAllowedUeArpLev$
 hgetc ^EUtranCell.DD= ^measGapPattEndc$
 hgetc ^SectorCarrier= ^radioTransmitPerfMode$
-hgetc  ExternalGeranCell rimCapable$|rimAssociationStatus$   
+hgetc  ExternalGeranCell rimCapable$|rimAssociationStatus$
+
+hgetc ENodeBFunction=1,Rrc=1 tRrcConnectionSetup$
+hgetc ^EUtranCell.DD= siPeriodicity@siPeriodicitySI7
+hgetc ^EUtranCell.DD= changeNotification@changeNotificationSIB15$|changeNotificationSIB16
+hgetc SctpProfile= assocMaxRtx$|heartbeatInterval$|heartbeatPathProbingInterval$|initialRto$|mBuffer$|maxIncomingStream$|maxInitialRtrAtt$|maxOutgoingStream$|maximumRto$|minimumRto$|nThreshold$|pathSelection$|potentiallyFailedMaxRtx$|tSack$
+hgetc EUtranCell.DD acBarringForCsfb@acBarringForSpecialAC$|acBarringTime$
+hgetc EUtranCell.DD acBarringForMoData@acBarringForSpecialAC$|acBarringTime$
+hgetc EUtranCell.DD acBarringForMoSignalling@acBarringForSpecialAC$|acBarringTime$
+hgetc EUtranCell.DD acBarringPresence@acBarringForMmtelVideoPresence$|acBarringForMmtelVoicePresence$|acBarringForMoDataPresence$|acBarringForMoSignPresence$|acBarringPriorityCsfb$|acBarringPriorityMmtelVideo$|acBarringPriorityMmtelVoice$|acBarringPriorityMoData$|acBarringPriorityMoSignaling$
+hgetc EUtranCell.DD changeNotification@changeNotificationSIB1$|changeNotificationSIB13$|changeNotificationSIB2$|changeNotificationSIB3$|changeNotificationSIB4$|changeNotificationSIB5$|changeNotificationSIB6$|changeNotificationSIB7$
+hgetc EUtranCell.DD ssacBarringForMMTELVideo@acBarringForSpecialAC$|acBarringTime$
+hgetc EUtranCell.DD ssacBarringForMMTELVoice@acBarringForSpecialAC$|acBarringTime$
 
 #####END of LTE GPL Audit #######
 
@@ -388,7 +401,6 @@ hgetc GNBDUFunction=1,QosPriorityMapping=1,PriorityDomainMapping=1 priorityDomai
 hgetc GNBDUFunction=1,UeCC=1,SrHandling=5QI_5,SrHandlingUeCfg=Base srHandlingMode$|^conditional5qi$
 hgetc  GNBDUFunction=1,UeCC=1,RadioLinkControl=1,DrbRlc=Default,DrbRlcUeCfg=VoNR tReassemblyDl$|^tReassemblyUl$|^rlcSNLength$|^ueConfGroupList$|^ueGroupList$
 hgetc GNBCUCPFunction=1,EmCall=1 arpPrioEm5qi1List
-	
 hgetc GNBDUFunction=1,UeCC=1,DrxProfile=Default,DrxProfileUeCfg=VoNR drxEnabled$|^drxInactivityTimer$|^drxLongCycle$|^drxOnDurationTimer$|^drxRetransmissionTimerDl$|^drxRetransmissionTimerUl$|^ueGroupList
 hgetc GNBCUCPFunction=1,UeCC=1,InactivityProfile=Default,InactivityProfileUeCfg=VoNR tInactivityTimer$|^tInactivityTimerNrdcSn$|^ueGroupList$
 hgetc GNBDUFunction=1,BWPSet=100,DynPowerOpt=vonr downDlThreshold$|^downUlThreshold$|^upDlThreshold$|^upUlThreshold$
@@ -397,9 +409,7 @@ hgetc GNBCUCPFunction=1,UeGroupSelection=1,UeServiceGroupDefinition=VoNR ueGroup
 hgetc GNBCUCPFunction=1,UeGroupSelection=1,PrefUeGroupSelectionProfile=VoNR prefUeGroupId$|^preFueGroupPriority$|^selectionCriteria$
 hgetc GNBCUCPFunction=1,UeGroupSelection=1,UeMobilityGroupDefinition=VoNR ueMobilityGroupId$|^ueMobilityGroupPriority$|^selectionCriteria$
 hgetc DrbRlc=Default,DrbRlcUeCfg=VoNR tReassemblyDl$|^tReassemblyUl$|^rlcSNLength$|^ueConfGroupList$|^ueGroupList$
-
 hgetc NRCellDU=* ssbSubCarrierSpacing$|^ssbFrequency$|^ssbGscn$
-
 hgetc GNBCUCPFunction=1,EUtraNetwork=1,EUtranFrequency=.* arfcnValueEUtranDl$
 hgetc ENodeBFunction=1,EUtranCellFDD=.*,GUtranFreqRelation PmaxNR$|anrMeasOn$
 hgetc GNBCUCPFunction=1,UeGroupSelection=1,UeServiceGroupDefinition=.* ueServiceGroupId$|ueServiceGroupPriority$
@@ -413,14 +423,55 @@ hgetc EUtranCell.*DD.*, triggerQuantityB1NR$
 hgetc GNBDUFunction=1.*, bsrUeCfgRef$|harqUeCfgRef$|linkAdaptationUeCfgRef$
 hgetc EUtranCell.*DD.*, endcHoFreqPriority$|endcAwareIdleModePriority$
 
+hgetc ENodeBFunction=1,AnrFunction=1,AnrFunctionNR=1 cellAddRsrpThresholdNR$|cellAddRsrqThresholdNR$|removeNgnbTime$|ecgiDuringEpsFbEnabled$|endcRachFailThrPerUe$|maxNoOfUeForPciConflictDetect$|scgSessTimeForEndcRachFail$|supportNrFreqChange$|pciConflictDetectionType$
+hgetc ^DESManagementFunction.* ^esNotAllowedTimePeriod$|intraRatEsActivationOriginalCellLoadParameters$|requiredWakeUpTime$|periodicEsDuration$|desSwitch$
+hgetc ^ENodeBFunction=1 endcOverheatingAssistance$|overheatingIndProhibitTimer$|pciConflictReportType$
+hgetc ^EUtranCell.DD= ^loopingEndcProtectionEnabled$|loopingEndcBackOffDuration$|loopingEndcShortScgSessTime$|loopingEndcConsecFailThr$
+hgetc GNBCUCPFunction=1,AnrFunction=1,AnrFunctionEUtran=1 anrCgiMeasEUtranEnabled$
+hgetc GNBCUCPFunction=1,AnrFunction=1,AnrFunctionNR=1,AnrFunctionNRUeCfg=Base anrRsrpThreshold$|anrRsrqThreshold$|anrSinrThreshold$
+hgetc ^NRSectorCarrier=.* massiveMimoSleepEnabled$|mMimoSleepTimeGroupRef$
+hgetc ^MMimoSleepProfile.* sleepMode$|switchDownMonitorDurTimer$|switchDownPrbThreshDl$|switchDownRrcConnThresh$|switchUpMonitorDurTimer$|switchUpPrbThreshDl$|switchUpRrcConnThresh$
+hgetc ^MMimoSleepTimeWindow.* dayOfWeek$|mMimoSleepProfileRef$|startTime$|stopTime$
+hgetc ^PowerControlUeCfg.* pZeroNomPuschOffset$|puschPowerControlModeFr1$ 
+hgetc ^UeAdaptiveRlcUeCfg.* ueAdaptiveRlcRetxMode$
+hgetc ^NRCellDU.* cellBarred$|ssbPowerBoostMMimoSleep$|noOfCbraPreambles$|bwpref$|raResponseWindow$|rimDetectionEnabled$|setIdAllocation$|imsEmSupportEnabled$|dlSmallDataRobustness$|rimAggressorRSSetRef$|drxProfileRef$
+hgetc ^NRCellDU.* sibType@siBroadcastStatus$|siPeriodicity$
+hgetc ^NRCellCU.* mcfbCellProfileRef$
+hgetc GNBCUCPFunction=1,SecurityHandling=1 cipheringAlgoPrio$|integrityProtectAlgoPrio$
+hgetc GNBDUFunction=1,BWPSet=100 allBWPRegularRef$|startBWPDlRef$|startBWPUlRef$
+hgetc GNBDUFunction=1,BWPSet=100,BWPSetUeCfg=1,BWPSetCfg=0 bWPDlRef$|bWPUlRef$
+hgetc GNBDUFunction=1,BWPSet=100,BWPSetUeCfg=1,BWPSetCfg=1 dynPowerOptRef$
+hgetc ^RimRSGlobal=1 frequencyDomainPara@rimRSBandwidth$|rimRSCommonCarrierRefPoint$|rimRSStartingFreqOffsetIdList$
+hgetc ^RimRSGlobal=1 sequenceDomainPara@EnoughNotEnoughIndication$|rimRSScrambleIdListofRS1$|rimRSScrambleIdListofRS2$|rimRSScrambleTimerMultiplier$|rimRSScrambleTimerOffset$
+hgetc ^RimRSGlobal=1 timeDomainPara@dlUlSwitchingPeriod1$|enablenearfarIndicationRS1$|enablenearfarIndicationRS2$|farSymbolOffsetRS1$|farSymbolOffsetRS2$|nearOrOnlySymbolOffsetRS1$|nearOrOnlySymbolOffsetRS2$|nrofConsecutiveRIMRS1$|nrofConsecutiveRIMRS2$|symbolOffsetOfReferencePoint1$|totalNrOfSetIdOfRS1$|totalNrOfSetIdOfRS2$
+hgetc ^RimRSSet setId$|setType$
+hgetc Mcpc=1,McpcPCellProfile=Midband,McpcPCellProfileUeCfg=VoNR ^rsrpSearchZone@hysteresis
+hgetc Mcpc=1,McpcPCellProfile=Midband,McpcPCellProfileUeCfg=VoNR ^rsrpCandidateA5@threshold1$|timeToTrigger
+hgetc Mcpc=1,McpcPCellProfile=Midband,McpcPCellProfileUeCfg=VoNR ^rsrpCandidateB2@threshold1$|threshold2EUtra$|hysteresis$|timeToTrigger$
+hgetc Mcpc=1,McpcPCellProfile=Midband,McpcPCellProfileUeCfg=VoNR ^rsrpCritical@timeToTrigger
+hgetc Mcfb=1,McfbCellProfile=Default,McfbCellProfileUeCfg=Base ^rsrpCriticalCoverage@threshold$|hysteresis$|timeToTrigger$
+hgetc Mcfb=1,McfbCellProfile=Default,McfbCellProfileUeCfg=Base ^rsrpCellCandidate@threshold$|hysteresis$|timeToTrigger$
+hgetc GNBCUCPFunction=1,UeCC=1,Rohc=1,RohcUeCfg=Base ^rohc5qiList$
+hgetc GNBDUFunction=1,DU5qiTable=1,DU5qi=5 srHandlingRef$
+hgetc GNBCUCPFunction=1,EmCall=1 arpPrioEm5qi5List$
+hgetc bwpset=100,BWPSetUeCfg=vonr,bwpsetcfg=0 bWPDlRef$|bWPUlRef$
+hgetc GNBDUFunction=1,BWPSet=100,BWPSetUeCfg=vonr,BWPSetCfg=1 dynPowerOptRef$
+hgetc HARQ=1,HarqUeCfg=VoNR dlHarqMode$|ulHarqMode$
+hgetc Bsr=1,BsrUeCfg=VoNR srGrantSize$|reTxBsrTimer$
+hgetc LinkAdaptation=1,LinkAdaptationUeCfg=VoNR dlMcsTable$|ulMcsTable$|linkAdaptationUeMode$
+hgetc LinkAdaptationUeCfg=VoNR,DlLinkAdaptation=1 dlMaxMcsIndex$|dlBlerTarget$
+hgetc LinkAdaptationUeCfg=VoNR,UlLinkAdaptation=1 ulBlerTarget$|ulMinTbs$|ulServicePacketSize$|ulServicePacketInterval$|ulMaxMcsIndex$|ulSinrBackoff$
+hgetc LinkAdaptationUeCfg=VoNR,PdcchLinkAdaptation=1 pdcchLaSinrUeOffset$
+hgetc PuschRep=Default,PuschRepUeCfg=Vonr puschRepMode$
+
 #####END of NR GPL Audit #######
 
 #####Start: FeatureState Audit #######
 hgetc Lm=1,FeatureState featureState$|licenseState$|description$                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-hgetc CXC4040004$|CXC4012411$|CXC4012273$|CXC4012272$|CXC4012325$|CXC4012330$|CXC4012334$|CXC4012347$|CXC4012354$|CXC4012373$|CXC4012375$ featureState$|licenseState$|description$
-hgetc CXC4012379$|CXC4012406$|CXC4012475$|CXC4012477$|CXC4012478$|CXC4012479$|CXC4012489$|CXC4012528$|CXC4012492$|CXC4012493$|CXC4012500$ featureState$|licenseState$|description$
-hgetc CXC4012507$|CXC4012510$|CXC4012531$|CXC4012534$|CXC4012536$|CXC4012577$|CXC4012416$|CXC4012381$|CXC4012504$|CXC4011559$|CXC4012324$ featureState$|licenseState$|description$
-hgetc CXC4012385$|CXC4012503$|CXC4012356$|CXC4011967$|CXC4011163$|CXC4011063$|CXC4011345$|CXC4011815$|CXC4011477$|CXC4012480$|CXC4012549$|CXC4012554$ featureState$|licenseState$|description$   
+hgetc CXC4012371$|CXC4011251$|CXC4010620$|CXC4040004$|CXC4012411$|CXC4012273$|CXC4012272$|CXC4012325$|CXC4012330$|CXC4012334$|CXC4012347$|CXC4012354$|CXC4012373$|CXC4012375$ featureState$|licenseState$|description$
+hgetc CXC4012578$|CXC4012580$|CXC4012036$|CXC4011183$|CXC4012379$|CXC4012406$|CXC4012475$|CXC4012477$|CXC4012478$|CXC4012479$|CXC4012489$|CXC4012528$|CXC4012492$|CXC4012493$|CXC4012500$ featureState$|licenseState$|description$
+hgetc CXC4012581$|CXC4012663$|CXC4012555$|CXC4012590$|CXC4012507$|CXC4012510$|CXC4012531$|CXC4012534$|CXC4012536$|CXC4012577$|CXC4012416$|CXC4012381$|CXC4012504$|CXC4011559$|CXC4012324$ featureState$|licenseState$|description$
+hgetc CXC4012690$|CXC4012378$|CXC4012385$|CXC4012503$|CXC4012356$|CXC4011967$|CXC4011163$|CXC4011063$|CXC4011345$|CXC4011815$|CXC4011477$|CXC4012480$|CXC4012549$|CXC4012554$ featureState$|licenseState$|description$   
 hgetc CXC4012493$|CXC4012534$|CXC4012538$|CXC4012550$|CXC4012592$|CXC4012607$|CXC4012475$|CXC4012724$|CXC4012621$|CXC4012559$|CXC4012379$|CXC4012475$|CXC4012531$|CXC4012659$ featureState$|licenseState$|description$
 hgetc CXC4012558$|CXC4012373$|CXC4012562$|CXC4012587$|CXC4012510$|CXC4012547$|CXC4012549$|CXC4012591$|CXC4012637$|CXC4012593 $|CXC4012548 $|CXC4012589$|CXC4012680$|CXC4012638$|CXC4012668$|CXC4012688$|CXC4012673$|CXC4012218$|CXC4012638$|CXC4012601$|CXC4012635 featureState$|licenseState$|description$
        
@@ -439,6 +490,7 @@ hgetc  ENodeBFunction=.*,EUtranCell.DD=.*,EUtranFreqRelation= ^a5Thr1RsrpFreqOff
 hgetc  ENodeBFunction=.*,EUtranCell.DD=.*,EUtranFreqRelation= EutranFreqToQciProfileRelation@a5Thr1RsrpFreqQciOffset|a5Thr2RsrpFreqQciOffset|qciProfileRef$
 hgetc  ENodeBFunction=.*,EUtranCell.DD=.*,EUtranFreqRelation= tReselectionEutra$|anrMeasOn$|pMax$|^qOffsetFreq$
 hgetc  ENodeBFunction=.*,EUtranCell.DD=.*,EUtranFreqRelation= tReselectionEutraCe$|tReselectionEutraSfHigh$|tReselectionEutraSfMedium$|rrcQueueT300Ratio$
+hgetc .*,EUtranFreqRelation=.* allowedMeasBandwidth
 #####END of EutranfreqRelation Audit #######
 
 #####Start: GutranfreqRelation Audit #######
