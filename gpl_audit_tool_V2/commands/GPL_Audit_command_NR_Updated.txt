@@ -491,6 +491,7 @@ hgetc  ENodeBFunction=.*,EUtranCell.DD=.*,EUtranFreqRelation= EutranFreqToQciPro
 hgetc  ENodeBFunction=.*,EUtranCell.DD=.*,EUtranFreqRelation= tReselectionEutra$|anrMeasOn$|pMax$|^qOffsetFreq$
 hgetc  ENodeBFunction=.*,EUtranCell.DD=.*,EUtranFreqRelation= tReselectionEutraCe$|tReselectionEutraSfHigh$|tReselectionEutraSfMedium$|rrcQueueT300Ratio$
 hgetc .*,EUtranFreqRelation=.* allowedMeasBandwidth
+hgetc .*,EUtranFreqRelation=.* allowedMeasBandwidth
 #####END of EutranfreqRelation Audit #######
 
 #####Start: GutranfreqRelation Audit #######
