@@ -1044,8 +1044,10 @@ def upload_cergon_dump(request):
                 mapping = {**common_mapping, **site_b_mapping}
 
             if row is None:
-                print(f"Link Budget not found for Plan={plan_id}, Site={site_id}")
-                continue    
+                return Response({
+                    "status": False,
+                    "message": f"Please enter a valid Plan ID or upload the correct dump file. No matching Link Budget found for Plan ID '{plan_id}' and Site '{site_id}'."
+                }) 
             # ---------------- LB Values ----------------
             lb_values = {}
 
@@ -1077,6 +1079,7 @@ def upload_cergon_dump(request):
             #     row.get("Plan Id", "NA"),
             #     plan_status
             # ])
+            odu_ip_address = dump_values.get("Network IP", "NA")
 
             for param in master_parameters:
                 param_key = param.strip().lower()
@@ -1095,47 +1098,39 @@ def upload_cergon_dump(request):
 
                     if param == "DCN Synch Status":
                         dump_ip = str(dump_values.get("Network IP", "NA")).strip()
+                        dump_value = dump_ip
+                        expected_value = "NOT FOUND"
+                        odu_ip_address = dump_ip
+                        status = "NOT OK"
 
-                        # Hop ID from Link Budget
+                
                         hop_id = str(row.get("Link ID", "")).strip().upper()
-
-                        # Traffic Shifting lookup
                         ts_row = ts_lookup.get(hop_id)
 
                         if ts_row:
-
-                            # Current site from dump
                             current_site = str(
                                 dump_values.get("Site Name/System name/Unit Name", "")
                             ).strip().upper()
-
-                            # Site A & Site B from Link Budget
                             site_a = str(row.get("Site ID-A", "")).strip().upper()
                             site_b = str(row.get("Site ID -B", "")).strip().upper()
-
-                            # Expected IPs from Traffic Shifting
                             site_a_ip = str(ts_row.get("DCN Site A(HOP 1)", "")).strip()
                             site_b_ip = str(ts_row.get("DCN Site B(HOP 1)", "")).strip()
 
-                            dump_value = dump_ip
-
-                            # Compare only with the corresponding site's IP
+                         
                             if current_site == site_a:
                                 expected_value = site_a_ip
+                                odu_ip_address = site_a_ip
                                 status = "OK" if dump_ip == site_a_ip else "NOT OK"
 
                             elif current_site == site_b:
                                 expected_value = site_b_ip
+                                odu_ip_address = site_b_ip
                                 status = "OK" if dump_ip == site_b_ip else "NOT OK"
 
                             else:
                                 expected_value = f"A:{site_a_ip} / B:{site_b_ip}"
+                                odu_ip_address = "NA"
                                 status = "NOT OK"
-
-                        else:
-                            dump_value = dump_ip
-                            expected_value = "NOT FOUND"
-                            status = "NOT OK"
 
                         report.append([
                             param,
@@ -1312,7 +1307,7 @@ def upload_cergon_dump(request):
                 "Modulation":row.get("ACM Max QAM", "NA"),
                 "ATPC (enabled/disable)":row.get("ATPC Status", "NA"),
                 "ACM Enabled/Modulation mode (Fixed/adaptive)":row.get("ACM Status", "NA"),
-                "ODU IP Address":dump_values.get("Network IP", "NA"),
+                "ODU IP Address": odu_ip_address,
 
                 "IDU IP Address/Remarks": (
                     "Connected to Ciena"
@@ -1424,7 +1419,65 @@ def upload_cergon_dump(request):
 
     Atcp_df["SL NO"] = sl_no
     # =========================
-
+    db_plan_map = {}
+    for _, r in Atcp_df.iterrows():
+        plan = str(r["MW Plan Id"]).strip()
+        if plan not in db_plan_map:
+            db_plan_map[plan] = len(db_plan_map) + 1
+        db_sl_no = db_plan_map[plan]
+        CeragonATP.objects.create(
+            sl_no=db_sl_no,
+            mw_plan_id=r["MW Plan Id"],
+            link_id=r["Link ID (Site ID A - Site ID B and Site ID B - Site ID A)"],
+            site_id=r["Site ID"],
+            site_name=r["Site Name/System name/Unit Name"],
+            server_rdp_ip=r["Server/RDP -IP"],
+            type_of_equipment=r["Type of Equipment"],
+            odu_idu=r["ODU/IDU (New/Existing)"],
+            mrmc_script_id=r["MRMC Script ID/Bandw"],
+            mrmc_profile=r["MRMC Profile/Bandw"],
+            link_configuration=r["Link configuration ( 1+0 / 1+1 / 2+0/ XPIC/1G)"],
+            idu_model=r["IDU Model (Modular IDU-IP20N, IP-20G , High capacity packet radio IP20C/IP20S, IP-20GX, IP-20F)"],
+            link_slot_number=r["Link-Slot Number"],
+            link_port_number=r["Link-Port Number"],
+            frequency_tx=r["Frequency Tx"],
+            frequency_rx=r["Frequency Rx"],
+            tx_power=r["Tx Power  (dBm)"],
+            rsl=r["RSL(dBM) Main [<=3 dB Deviation permitted]"],
+            modulation=r["Modulation"],
+            atpc=r["ATPC (enabled/disable)"],
+            acm_mode=r["ACM Enabled/Modulation mode (Fixed/adaptive)"],
+            odu_ip_address=r["ODU IP Address"],
+            idu_ip_address_remarks=r["IDU IP Address/Remarks"],
+            odu_ip_ethernet_slot_port_detail=r["ODU IP Ethernet slot port detail  /Other remarks"],
+            gnoc_link_id=r["GNOC Link ID (Site ID A - Site ID B and Site ID B - Site ID A)"],
+            gnoc_site_name=r["GNOC Site Name/System name/Unit Name"],
+            gnoc_equipment=r["Type of Equipment/IDU Model (Modular IDU-IP20N, IP-20G, High capacity packet radio IP20C, IP-20GX)"],
+            hop_visible=r["HOP visible in NMS (Y/N) [NMS visibility is mandatory]"],
+            software_version=r["Software Version IDU"],
+            gnoc_frequency_tx=r["GNOC Frequency Tx"],
+            gnoc_frequency_rx=r["GNOC Frequency Rx"],
+            gnoc_tx_power=r["GNOC Tx Power (dBm)"],
+            gnoc_rsl=r["GNOC Current RSL (+/-3)"],
+            gnoc_mrmc_script=r["GNOC MRMC Script ID/Bandw"],
+            gnoc_mrmc_profile=r["GNOC MRMC Profile/Bandw"],
+            gnoc_modulation=r["GNOC Modulation"],
+            gnoc_acm=r["GNOC ACM Enabled/Modulation mode (Fixed/adaptive)"],
+            gnoc_atpc=r["GNOC ATPC (enabled/disable)"],
+            gnoc_high_low_violation=r["GNOC High Low Violation (Y/N) [No violation accepted]"],
+            gnoc_qos=r["GNOC QoS configured (Y/N) (As per planning guideline)"],
+            gnoc_performance=r["GNOC Performance error in last 24 hour end"],
+            gnoc_datetime=r["GNOC Date and time settings correct (Y/N)"],
+            gnoc_mstp=r["GNOC MSTP Disable define status"],
+            gnoc_undervoltage_clear=r["GNOC Undervoltage clear threshold =48"],
+            gnoc_undervoltage_raise=r["GNOC Undervoltage raise threshold =46"],
+            gnoc_critical_alarm=r["GNOC Critical alarm at New Node"],
+            gnoc_ethernet_port_speed=r["GNOC Ethernet Port speed status (Should be 1000)"],
+            gnoc_final_remarks=r["GNOC Final Remarks"],
+            gnoc_final_status=r["GNOC Final AT status (Accepted/Rejected)"],
+            done_by=r["Done By"],
+            date=r["Date"],
+        )
 
     # ATP Sheet
     if not Atcp_df.empty:
@@ -1446,5 +1499,118 @@ def upload_cergon_dump(request):
         "message": "Report generated successfully",
         "download_url": download_url
     })
-    
 
+
+
+
+@api_view(["GET", "DELETE"])
+def ceragon_atp(request):
+    if request.method == "GET":
+        data = CeragonATP.objects.all().values()
+        if not data.exists():
+            return Response({
+                "status": False,
+                "message": "No data found."
+            })
+
+        df = pd.DataFrame(list(data))
+        if "id" in df.columns:
+            df.drop(columns=["id"], inplace=True)
+        df = df.rename(columns={
+            "sl_no": "SL NO",
+            "mw_plan_id": "MW Plan Id",
+            "link_id": "Link ID (Site ID A - Site ID B and Site ID B - Site ID A)",
+            "site_id": "Site ID",
+            "site_name": "Site Name/System name/Unit Name",
+            "server_rdp_ip": "Server/RDP -IP",
+            "type_of_equipment": "Type of Equipment",
+            "odu_idu": "ODU/IDU (New/Existing)",
+            "mrmc_script_id": "MRMC Script ID/Bandw",
+            "mrmc_profile": "MRMC Profile/Bandw",
+            "link_configuration": "Link configuration ( 1+0 / 1+1 / 2+0/ XPIC/1G)",
+            "idu_model": "IDU Model (Modular IDU-IP20N, IP-20G , High capacity packet radio IP20C/IP20S, IP-20GX, IP-20F)",
+            "link_slot_number": "Link-Slot Number",
+            "link_port_number": "Link-Port Number",
+            "frequency_tx": "Frequency Tx",
+            "frequency_rx": "Frequency Rx",
+            "tx_power": "Tx Power  (dBm)",
+            "rsl": "RSL(dBM) Main [<=3 dB Deviation permitted]",
+            "modulation": "Modulation",
+            "atpc": "ATPC (enabled/disable)",
+            "acm_mode": "ACM Enabled/Modulation mode (Fixed/adaptive)",
+            "odu_ip_address": "ODU IP Address",
+            "idu_ip_address_remarks": "IDU IP Address/Remarks",
+            "odu_ip_ethernet_slot_port_detail": "ODU IP Ethernet slot port detail  /Other remarks",
+
+            "gnoc_link_id": "GNOC Link ID (Site ID A - Site ID B and Site ID B - Site ID A)",
+            "gnoc_site_name": "GNOC Site Name/System name/Unit Name",
+            "gnoc_equipment": "Type of Equipment/IDU Model (Modular IDU-IP20N, IP-20G, High capacity packet radio IP20C, IP-20GX)",
+            "hop_visible": "HOP visible in NMS (Y/N) [NMS visibility is mandatory]",
+            "software_version": "Software Version IDU",
+            "gnoc_frequency_tx": "GNOC Frequency Tx",
+            "gnoc_frequency_rx": "GNOC Frequency Rx",
+            "gnoc_tx_power": "GNOC Tx Power (dBm)",
+            "gnoc_rsl": "GNOC Current RSL (+/-3)",
+            "gnoc_mrmc_script": "GNOC MRMC Script ID/Bandw",
+            "gnoc_mrmc_profile": "GNOC MRMC Profile/Bandw",
+            "gnoc_modulation": "GNOC Modulation",
+            "gnoc_acm": "GNOC ACM Enabled/Modulation mode (Fixed/adaptive)",
+            "gnoc_atpc": "GNOC ATPC (enabled/disable)",
+            "gnoc_high_low_violation": "GNOC High Low Violation (Y/N) [No violation accepted]",
+            "gnoc_qos": "GNOC QoS configured (Y/N) (As per planning guideline)",
+            "gnoc_performance": "GNOC Performance error in last 24 hour end",
+            "gnoc_datetime": "GNOC Date and time settings correct (Y/N)",
+            "gnoc_mstp": "GNOC MSTP Disable define status",
+            "gnoc_undervoltage_clear": "GNOC Undervoltage clear threshold =48",
+            "gnoc_undervoltage_raise": "GNOC Undervoltage raise threshold =46",
+            "gnoc_critical_alarm": "GNOC Critical alarm at New Node",
+            "gnoc_ethernet_port_speed": "GNOC Ethernet Port speed status (Should be 1000)",
+            "gnoc_final_remarks": "GNOC Final Remarks",
+            "gnoc_final_status": "GNOC Final AT status (Accepted/Rejected)",
+            "done_by": "Done By",
+            "date": "Date",
+        })     
+
+        main_folder = os.path.join(MEDIA_ROOT, "MicroWave_Ceragone_Tool")
+        os.makedirs(main_folder, exist_ok=True)
+
+        atp_folder = os.path.join(main_folder, "ATP_data")
+        os.makedirs(atp_folder, exist_ok=True)
+
+        output_file = os.path.join(atp_folder, "Ceragon_ATP.xlsx")
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "ATP"
+
+        data = [df.columns.tolist()] + df.values.tolist()
+        create_config_report(ws, data)
+        wb.save(output_file)
+        relative_path = os.path.relpath(output_file, MEDIA_ROOT).replace("\\", "/")
+        download_url = request.build_absolute_uri(MEDIA_URL + relative_path)
+
+        return Response({
+            "status": True,
+            "message": "ATP file generated successfully.",
+            "download_url": download_url
+        })
+    
+    elif request.method == "DELETE":
+        total = CeragonATP.objects.count()
+        CeragonATP.objects.all().delete()
+        return Response({
+            "status": True,
+            "message": f"{total} records deleted successfully."
+        })
+
+
+@api_view(["GET"])
+
+def ceragon_atp_dashboard(request):
+    queryset = CeragonATP.objects.all().order_by("id")
+    data = list(queryset.values())
+    return Response({
+        "status": True,
+        "count": queryset.count(),
+        "data": data
+    })

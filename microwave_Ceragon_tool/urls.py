@@ -14,6 +14,9 @@ urlpatterns = [
     path("upload_serverip/", views.upload_server_ip, ),
     path("upload_serverip/<int:id>/", views.upload_server_ip, ),
     path("get_serverip/",views.get_server_ip),
+    path("ceragon-atp/", views.ceragon_atp, name="ceragon-atp"),
+    path("ceragon-atp-dashboard/",views.ceragon_atp_dashboard),
+
 
  
     
