@@ -129,6 +129,7 @@ INSTALLED_APPS = [
     "kpi_monitoring",
     "gpl_audit_tool_V2",
     "Nokia_gpl_uls",
+    "ORI_MACRO_GPL",
 ]
 
 MIDDLEWARE = [

@@ -111,6 +111,7 @@ urlpatterns = [
     path("kpi_monitoring/",include("kpi_monitoring.urls")),
     path("gpl_audit_tool_V2/",include("gpl_audit_tool_V2.urls")),
     path("nokia_uls/",include("Nokia_gpl_uls.urls")),
+    path("ori_macro/",include("ORI_MACRO_GPL.urls")),
 
 ]
 
