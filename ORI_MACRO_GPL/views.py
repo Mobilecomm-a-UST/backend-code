@@ -306,6 +306,90 @@ ALWAYS_NO_CHANGE_PARAMS = {
     "b1ThresholdRsrp",
     "actB1ThresholdsReturnTo5GSA",
     "hysB2NrThresholdRsrp",
+    "anrnrparamplmnlist@mcc",
+    "anrnrparamplmnlist@mnc",
+    "earfcndl",
+    "a1timetotriggerdeactintermeas",
+    "actmicrodtx",
+    "idlelbcellreselprioendc",
+    "idlelbcelresweightendc",
+    "moprmappinglist@mnc",
+    "carrierfreqnr",
+    "freqbandindicatorlistnr",
+    "dlcarfrqeutl@idlelbeutcelresprioendc",
+    "dlcarfrqeutl@idlelbeutcelresweightendc",
+    "freqlayendcholist.freqlayer",
+    "freqlaylistdedltelb",
+    "freqlaylistlte",
+    "freqlaylistpshonr",
+    "freqlaylistpshonrvolte",
+    "redirectprio",
+    "redirfreqeutra",
+    "csfallbprio",
+    "redirrat",
+    "redirnrcarfrq@carrierfreqnrcell",
+    "iratdataforwardingmethod",
+    "nrarfcn",
+    "actdddsperiodoptimization",
+    "actpdcprlcbufcongestionmechsm",
+    "actvonrprioduringhoprep",
+    "thphistdownlinkmaxrange",
+    "tmpactfeat1",
+    "trlfindforduvonr",
+    "a1meashossbrsrpsa@a1thresholdhossbrsrpsa",
+    "cellreselectionpriority",
+    "n310vonr",
+    "nrhoirdnlist",
+    "nrresourcegroupprofiledn",
+    "nrsysinfonsaprofiledn",
+    "numpagingoccsnpagingframe",
+    "percredsedlrat1vonr",
+    "qrxlevmin",
+    "qrxlevminoffset",
+    "sspbchblockpower",
+    "t310vonr",
+    "ulptrssampledensitythresnrb0",
+    "ultransprecodeofftotpwrthresh",
+    "ultransprecodeontotpwrthresh",
+    "ultransprepi2bpskpwrboost",
+    "dyntriggerltenrdcconflist@method",
+    "prioritylevel",
+    "retxprioritizationtype",
+    "nrdrbtcpboostdn",
+    "queuingdelaysdudiscardthreshold",
+    "fiveqivaluelist",
+    "prioritisedbitrate",
+    "rlcumdrbsnlength",
+    "drxretranstimerdl",
+    "drxretranstimerul",
+    "nrcarfrql@dlcarfrqnr",
+    "earfcnvalue",
+    "sintrasearchp",
+    "allowedmeasbw",
+    "carrierfreq",
+    "thphistscale",
+    "cfg5qirange",
+    "actl2counters",
+    "actpacketschedulercounters",
+    "cfgproftype",
+    "cfgsliceid@sd",
+    "cfgplmnid@mcc",
+    "cfgplmnid@mnc",
+    "minrsfpbbmod",
+    "minrsfprmod",
+    "minrsfpsmod",
+    "redirprio",
+    "nrrimonitorwindow",
+    "nrrithresdropheightspecialslot",
+    "rimdynamicsrsslotoffsetenabled",
+    "rssetid",
+    "snonintrasearchp",
+    "threshservinglowp",
+    "energysavingmode",
+    "primplmnupperlayerindicationr15",
+    "sibschedulinglist@simessagesibtype",
+    "fivegstac"
+
 }
 
 def remark(parameter, internal, external):
@@ -1711,7 +1795,8 @@ def nokia_slicing_dump(request):
                             "value": tf_to_01(p.text)
                         }) 
                 # ===================== NRCELL Measurement Lists =====================
-
+          
+           
             list_configs = {
 
                 "a1meashossbrsrp": {
@@ -1786,7 +1871,26 @@ def nokia_slicing_dump(request):
                                 "DistName": dist_name,
                                 "Parameter": param_map[pname],
                                 "value": tf_to_01(p.text)
-                            })    
+                            })   
+            # nrhoirDNList
+            dn_list = []
+
+            for p in (
+                mo.findall(".//ns:list[@name='nrhoirDNList']/ns:p", ns)
+                if ns else
+                mo.findall(".//list[@name='nrhoirDNList']/p")
+            ):
+                if p.text:
+                    dn_list.append(p.text.strip())
+
+            if dn_list:
+                dumy_data.append({
+                    "MO": "NRCELL",
+                    "DistName": dist_name,
+                    "Parameter": "nrhoirdnlist",
+                    "value": ";".join(dn_list)
+                })
+
 
             # print("NRCELL FOUND ----------------")
             # print("Class:", mo_class)
@@ -2021,16 +2125,12 @@ def nokia_slicing_dump(request):
                 "allowedPdcchPowerBoostALDueCfg",
                 "numSduDiscard",
                 "sduDiscardIntervalTmr",
-                "discardtimer"
-                "discardtimerul",
-                "maxdatarategbrdl",
-                "maxdatarategbrul",
-                "queuingdelaysdudiscardthreshold",
-                "maxdatarategbrdl",
-                "maxdatarategbrul",
-                "retxprioritizationtype",
-                "queuingdelaysdudiscardthreshold"
-
+                "discardTimer",
+                "discardTimerUl",
+                "maxDataRateGbrDl",
+                "maxDataRateGbrUl",
+                "queuingDelaySduDiscardThreshold",
+                "reTxPrioritizationType",
             }
 
             # deep search for all <p>
@@ -2281,6 +2381,16 @@ def nokia_slicing_dump(request):
                 "presenceAntennaPort1",
                 "reportAmount",
                 "reportInterval",
+                "discardtimer",
+                "discardtimerul",
+                "maxdatarategbrdl",
+                "maxdatarategbrul",
+                "queuingdelaysdudiscardthreshold",
+                "maxdatarategbrdl",
+                "maxdatarategbrul",
+                "retxprioritizationtype",
+                "queuingdelaysdudiscardthreshold",
+
             }
 
             for p in (mo.findall("ns:p", ns) if ns else mo.findall("p")):
@@ -2300,7 +2410,8 @@ def nokia_slicing_dump(request):
                 "b2Threshold2hoRsrp": "eutraB2MeashoRsrp@b2Threshold2hoRsrp",
                 "b2HysteresishoRsrp": "eutraB2MeashoRsrp@b2HysteresishoRsrp",
                 "b2TimeToTriggerhoRsrp": "eutraB2MeashoRsrp@b2TimeToTriggerhoRsrp",
-                "b2Threshold2hoRsrpVoNr": "eutraB2MeashoRsrp@b2Threshold2hoRsrpVoNr",
+                "b2Threshold2hoRsrpVoNr": "b2Threshold2hoRsrpVoNr",
+                
             }
 
             for item in (
@@ -3064,7 +3175,7 @@ def nokia_slicing_dump(request):
                 dumy_data.append({
                     "MO": "NRRIM_PROFILE",
                     "DistName": dist_name,
-                    "Parameter": "startrbforrs",
+                    "Parameter": "startfreqoffsetforrs",
                     "value": ",".join(map(str, start_rb_values))
                 })
 
@@ -3785,7 +3896,7 @@ def nokia_slicing_dump(request):
                         "MO": "NRDRX",
                         "DistName": dist_name,
                         "ID": nrdrx_id,
-                        "Parameter": name.lower(),
+                        "Parameter":name.lower(),
                         "value": tf_to_01(p.text)
                     })
 
@@ -3945,12 +4056,12 @@ def nokia_slicing_dump(request):
                 "alSelection"
             }
             required_dynamic_agg = {
-                "aggregationLevelListHR": "dynamicAggregationLevelSet@aggregationLevelList",
-                "cqiDciCssAl1HR": "dynamicAggregationLevelSet@cqiDciCssAl1",
-                "cqiDciCssAl2HR": "dynamicAggregationLevelSet@cqiDciCssAl2",
-                "cqiDciCssAl4HR": "dynamicAggregationLevelSet@cqiDciCssAl4",
-                "cqiDciCssAl8HR": "dynamicAggregationLevelSet@cqiDciCssAl8",
-                "cqiDciCssAl16HR": "dynamicAggregationLevelSet@cqiDciCssAl16"
+                "aggregationLevelList": "dynamicAggregationLevelSet@aggregationLevelList",
+                "cqiDciCssAl1": "dynamicAggregationLevelSet@cqiDciCssAl1",
+                "cqiDciCssAl2": "dynamicAggregationLevelSet@cqiDciCssAl2",
+                "cqiDciCssAl4": "dynamicAggregationLevelSet@cqiDciCssAl4",
+                "cqiDciCssAl8": "dynamicAggregationLevelSet@cqiDciCssAl8",
+                "cqiDciCssAl16": "dynamicAggregationLevelSet@cqiDciCssAl16"
             }
             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
                 name = p.attrib.get("name")
@@ -3965,9 +4076,9 @@ def nokia_slicing_dump(request):
 
             # dynamicAggregationLevelHRSet parameters
             for item in (
-                mo.findall(".//ns:list[@name='dynamicAggregationLevelHRSet']/ns:item", ns)
+                mo.findall(".//ns:list[@name='dynamicAggregationLevelSet']/ns:item", ns)
                 if ns else
-                mo.findall(".//list[@name='dynamicAggregationLevelHRSet']/item")
+                mo.findall(".//list[@name='dynamicAggregationLevelSet']/item")
             ):
 
                 for p in item.findall("ns:p", ns) if ns else item.findall("p"):

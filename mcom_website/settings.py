@@ -130,6 +130,7 @@ INSTALLED_APPS = [
     "gpl_audit_tool_V2",
     "Nokia_gpl_uls",
     "ORI_MACRO_GPL",
+    "field_resource_tracking",
 ]
 
 MIDDLEWARE = [

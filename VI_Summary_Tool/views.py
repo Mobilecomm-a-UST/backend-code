@@ -70,6 +70,8 @@ def vi_4g_summary(request):
     nrcell_data=[]
     nrx2link_data=[]
     ipaddressv6_data=[]
+    lncel_ids = []
+    lncel_data = []
     for file in xml_files:
         file_name = file.name.lower()
 
@@ -107,6 +109,8 @@ def vi_4g_summary(request):
         sgw_ips = [""] * 11   # SGW1 to SGW11
         ntp_ip1=""
         ntp_ip2=""
+        ip4=""
+        
         
 
       
@@ -135,9 +139,12 @@ def vi_4g_summary(request):
                     mo.findall("ns:p", ns)
                     if ns else mo.findall("p")
                 )
+
                 for p in p_tags:
                     if p.attrib.get("name") == "localIpAddr":
-                        ip = p.text
+                        # Sirf pehli baar IP set karo
+                        if not ip4:
+                            ip4 = p.text
                         break
             
             elif mo_class =="NOKLTE:LNBTS":
@@ -152,9 +159,20 @@ def vi_4g_summary(request):
                         enode = p.text
                         break
 
-            elif mo_class == "NOKLTE:LNCEL":    
+            elif mo_class == "NOKLTE:LNCEL":
                 dist_name = mo.attrib.get("distName", "")
-                lncel_id = dist_name.split("/")[-1].split("-")[-1]   
+
+                mrbts = dist_name.split("/")[0].split("-")[-1]
+                lnbts = dist_name.split("/")[1].split("-")[-1]
+                lncel = dist_name.split("/")[-1].split("-")[-1]
+
+                lncel_data.append({
+                    "MRBTS ID": mrbts,
+                    "LNBTS ID": lnbts,
+                    "LNCEL": lncel,
+                    "name": enode,
+                    "cellName": enode
+                })
 
             elif mo_class == "com.nokia.srbts.nrbts:NRBTS":
                 dist_name = mo.attrib.get("distName", "")
@@ -187,22 +205,28 @@ def vi_4g_summary(request):
                             sgw_ips[idx] = p.text
                             break      
 
-            elif mo_class=="com.nokia.srbts.mnl:NTP":
-                ntp_list = (
-                    mo.find("ns:list[@name='ntpServerIpAddrOrFqdnList']", ns)
-                    if ns else
-                    mo.find("list[@name='ntpServerIpAddrOrFqdnList']")
-                )
+            elif mo_class == "com.nokia.srbts.mnl:NTP":
+                if ns:
+                    ntp_list = mo.find("ns:list[@name='ntpServerIpAddrOrFqdnList']", ns)
+                    if ntp_list is None:
+                        ntp_list = mo.find("ns:list[@name='ntpServerIpAddrList']", ns)
+                else:
+                    ntp_list = mo.find("list[@name='ntpServerIpAddrOrFqdnList']")
+                    if ntp_list is None:
+                        ntp_list = mo.find("list[@name='ntpServerIpAddrList']")
+
                 if ntp_list is not None:
                     p_list = (
                         ntp_list.findall("ns:p", ns)
                         if ns else
                         ntp_list.findall("p")
                     )
+
                     if len(p_list) > 0:
-                        ntp_ip1 = p_list[0].text
+                        ntp_ip1 = p_list[0].text or ""
+
                     if len(p_list) > 1:
-                        ntp_ip2 = p_list[1].text   
+                        ntp_ip2 = p_list[1].text or ""   
 
             elif mo_class == "NOKLTE:LNADJGNB":
                 dist_name = mo.attrib.get("distName", "")
@@ -244,7 +268,9 @@ def vi_4g_summary(request):
                 iprtv6 = dist_name.split("/")[-1].split("-")[-1]
                 row = {
                     "MRBTS": mrbts,
-                    "IPRTV6": iprtv6
+                    "IPRTV6": iprtv6,
+                    "gatewayIpv6Addr": "",
+                    "userLabel": ""
                 }
                 # userLabel
                 p_tags = mo.findall("ns:p", ns) if ns else mo.findall("p")
@@ -349,6 +375,7 @@ def vi_4g_summary(request):
             "MRBTS_ID": mrbts_id,
             "BTS_Name": bts_name,
             "Version": version,
+            "ip4":ip4,
             "IP": ip,
             "eNode": enode,
             "LNBTS_ID": lnbts_id,
@@ -360,7 +387,8 @@ def vi_4g_summary(request):
             "ntp_ip1": ntp_ip1,
             "ntp_ip2": ntp_ip2,
             "nrcell_id":nrcell_id,
-            "circle":circle 
+            "circle":circle ,
+            "LNCel_ID": ",".join(lncel_ids),
           
         
 
@@ -440,7 +468,7 @@ def vi_4g_summary(request):
     cr_df["Circle Name"]=dumy["circle"]
     cr_df["MRBTS ID (As per OSS Snap)"] = dumy["MRBTS_ID"]
     cr_df["MRBTS Name"] = dumy["BTS_Name"]
-    cr_df["MRBTS IP"] = dumy["IP"]
+    cr_df["MRBTS IP"] = dumy["ip4"]
     cr_df["Current SW Version"] =dumy["Version"]
     cr_df["TSP Site ID"] = dumy["eNode"].str[6:]
     
@@ -498,14 +526,19 @@ def vi_4g_summary(request):
 
 
     
-    lncel_df=pd.read_excel(os.path.join(temp_folder, "Reference_Data_4g.xlsx"), sheet_name="LNCEL")
-    lncel_df.columns = lncel_df.columns.str.strip()
-    lncel_df = pd.concat([lncel_df] * len(dumy), ignore_index=True)
-    lncel_df["MRBTS ID"] =  dumy["MRBTS_ID"]
-    lncel_df["LNBTS ID"] =  dumy["LNBTS_ID"]
-    lncel_df["LNCEL"] = dumy["LNCel_ID"]
-    lncel_df["name"] = dumy["eNode"]
-    lncel_df["cellName"] = dumy["eNode"]
+    template_lncel = pd.read_excel(os.path.join(temp_folder, "Reference_Data_4g.xlsx"),sheet_name="LNCEL")
+    template_lncel.columns = template_lncel.columns.str.strip()
+    if lncel_data:
+        lncel_df = pd.DataFrame(lncel_data)
+
+        for col in template_lncel.columns:
+            if col not in lncel_df.columns:
+                lncel_df[col] = ""
+
+        lncel_df = lncel_df[template_lncel.columns]
+    else:
+        lncel_df = template_lncel.iloc[0:0].copy()
+
 
     mmeip_df=pd.read_excel(os.path.join(temp_folder, "Reference_Data_4g.xlsx"), sheet_name="MME IP")
     mmeip_df.columns = mmeip_df.columns.str.strip()
@@ -626,7 +659,7 @@ def vi_4g_summary(request):
     inventory_df["Circle"]=dumy["circle"]
     inventory_df["Location"] =  dumy["MRBTS_ID"]
     inventory_df["Nodename"]= dumy["BTS_Name"]
-    inventory_df["Node_IP"]=dumy["IP"]
+    inventory_df["Node_IP"]=dumy["ip4"]
     inventory_df["NSS ID"] = dumy["eNode"].str[6:]
     
 
@@ -637,7 +670,11 @@ def vi_4g_summary(request):
     ran_uim_df["Circle"]=dumy["circle"]
     ran_uim_df["Node id"] = dumy["MRBTS_ID"]
     ran_uim_df["Nodename"] = dumy["BTS_Name"]
-    ran_uim_df["Location"] = dumy["BTS_Name"].str.split("_").str[0].str[3:]   
+    ran_uim_df["Location"] = (
+        dumy["BTS_Name"]
+        .str.split("_").str[0]
+        .apply(lambda x: x[2:] if x.startswith("ZR") else x)
+    )
     ran_uim_df["NSS ID"] = dumy["eNode"].str[6:]
     parts = dumy["BTS_Name"].str.split("_")
     ran_uim_df["SRAN Name"]= parts.apply(
@@ -790,7 +827,9 @@ def vi_5g_summary(request):
                 iprtv6 = dist_name.split("/")[-1].split("-")[-1]
                 row = {
                     "MRBTS": mrbts,
-                    "IPRTV6": iprtv6
+                    "IPRTV6": iprtv6,
+                    "userLabel": "",
+                    "gatewayIpv6Addr": ""
                 }
                 # userLabel
                 p_tags = mo.findall("ns:p", ns) if ns else mo.findall("p")
@@ -840,6 +879,16 @@ def vi_5g_summary(request):
             "userLabel",
             "gatewayIpv6Addr"
         ])
+    required_cols = [
+        "MRBTS",
+        "IPRTV6",
+        "userLabel",
+        "gatewayIpv6Addr"
+    ]
+
+    for col in required_cols:
+        if col not in iprtv6_df.columns:
+            iprtv6_df[col] = ""    
    
 #for Commercial Radiation sheet-----
     

@@ -438,6 +438,75 @@ class EmployeeListView(APIView):
 
 
 
+class GraphData(APIView):
+
+    def get(self, request):
+        month = request.query_params.get("month")
+        cost_center = request.query_params.get("costCenter")
+
+        reports = MonthlyReport.objects.all()
+
+        if month:
+            reports = reports.filter(month=month)
+
+        if cost_center:
+            reports = reports.filter(costCenter=cost_center)
+
+        data = []
+        for report in reports:
+            data.append({
+                "circle": report.circle,
+                "customer": report.customer,
+                "month": report.month,
+                "year": report.year,
+                "costCenter": report.costCenter,
+                "costs": report.costs,
+            })
+
+        return Response(data, status=status.HTTP_200_OK)
+
+class AdminTable(APIView):
+
+    def get(self, request):
+        # month = request.query_params.get("month")
+        # cost_center = request.query_params.get("costCenter")
+
+         # if month:
+        #     reports = reports.filter(month=month)
+
+        # if cost_center:
+        #     reports = reports.filter(costCenter=cost_center)
+
+        reports = MonthlyReport.objects.all().order_by(
+            "customer",
+            "circle",
+            "costCenter",
+            "month"
+        )
+
+        result = {}
+
+        for r in reports:
+            # key = f"{r.customer}|{r.circle}|{r.costCenter}"
+            key = (r.customer, r.circle, r.costCenter)
+
+            if key not in result:
+                result[key] = {
+                    "customer": r.customer,
+                    "circle": r.circle,
+                    "category": r.category,
+                    "costCenter": r.costCenter,
+                    "months": {}
+                }
+
+            result[key]["months"][r.month] = {
+                "costs": r.costs
+            }
+
+        return Response(list(result.values()), status=status.HTTP_200_OK)
+
+
+
 
 @api_view(['GET'])
 def get_excel_temp_link(request):

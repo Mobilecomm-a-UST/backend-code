@@ -2110,21 +2110,41 @@ def relocationView(request):
         if isinstance(index_5G, slice):
             index_5G = index_5G.start
             
-        candidate_idx_5G = list(range(index_5G-7, index_5G))
-        candidate_idx_4G = list(range(index_4G-7, index_4G))
+        # candidate_idx_5G = list(range(index_5G-7, index_5G))
+        # candidate_idx_4G = list(range(index_4G-7, index_4G))
+
+        # ==== YAHAN 2 LINES REPLACE KARNI HAIN ====
+        index_4G_start = relocation_df_final.columns.get_loc(('19-May-25', '4G'))
+        if isinstance(index_4G_start, slice):
+            index_4G_start = index_4G_start.start
+
+        candidate_idx_5G = list(range(index_4G, index_5G))
+        candidate_idx_4G = list(range(index_4G_start, index_4G))
+        # ==== YAHAN TAK ====
 
         dates = pd.to_datetime(
             relocation_df_final.columns.get_level_values(0)[candidate_idx_5G],
             errors='coerce'
         )
 
+        # ==== NAYA: 4G ki apni alag dates ====
+        dates_4G = pd.to_datetime(
+            relocation_df_final.columns.get_level_values(0)[candidate_idx_4G],
+            errors='coerce'
+        )
+        # ======================================
+
         weekday_idx_5G = [
             candidate_idx_5G[i] for i, d in enumerate(dates)
             if pd.notna(d) and d.weekday() < 5
         ]
         
+        # weekday_idx_4G = [
+        #     candidate_idx_4G[i] for i, d in enumerate(dates)
+        #     if pd.notna(d) and d.weekday() < 5
+        # ]
         weekday_idx_4G = [
-            candidate_idx_4G[i] for i, d in enumerate(dates)
+            candidate_idx_4G[i] for i, d in enumerate(dates_4G)   # 👈 ab 'dates' ki jagah 'dates_4G' use ho raha hai
             if pd.notna(d) and d.weekday() < 5
         ]
         
@@ -2418,13 +2438,13 @@ def relocationView(request):
                 worksheet.write(1, idx, relocation_df_final.columns[idx-1][1], darkblue_whitefont_format)
             
 
-            payload_trend_4G_df.to_excel(writer, index=False, sheet_name='4G PLD')
-            RNA_trend_4G_df.to_excel(writer, index=False, sheet_name='4G RNA')
-            TNL_trend_4G_df.to_excel(writer, index=False, sheet_name='4G TNL')
-            VOLTE_traffic_trend_4G_df.to_excel(writer, index=False, sheet_name='4G VOLTE TRAFFIC')
+            # payload_trend_4G_df.to_excel(writer, index=False, sheet_name='4G PLD')
+            # RNA_trend_4G_df.to_excel(writer, index=False, sheet_name='4G RNA')
+            # TNL_trend_4G_df.to_excel(writer, index=False, sheet_name='4G TNL')
+            # VOLTE_traffic_trend_4G_df.to_excel(writer, index=False, sheet_name='4G VOLTE TRAFFIC')
             # THPT_flag_trend_4G_df.to_excel(writer, index=False, sheet_name='4G THPT FLAG')
-            payload_trend_5G_df.to_excel(writer, index=False, sheet_name='5G PLD')
-            RNA_trend_5G_df.to_excel(writer, index=False, sheet_name='5G RNA')
+            # payload_trend_5G_df.to_excel(writer, index=False, sheet_name='5G PLD')
+            # RNA_trend_5G_df.to_excel(writer, index=False, sheet_name='5G RNA')
             
         print('38. RELOCATION FILE CREATED !')
         

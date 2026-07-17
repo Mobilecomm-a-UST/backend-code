@@ -100,7 +100,61 @@ ALWAYS_NO_CHANGE_PARAMS = {
     "actpacketschedulercounters",
     "cfgproftype",
     "rimdynamicsrsslotoffsetenabled",
+
+    "earfcndl",
+    "idlelbcellreselprioendc",
+    "idlelbcelresweightendc",
+    "moprmappinglist@mnc",
+    "smeasconfigssbrsrp",
+    "t320",
+    "b1thresholdrsrp",
+    "b2threshold2rsrpnr",
+    "carrierfreqnr",
+    "freqbandindicatorlistnr",
+    "hysb2nrthresholdrsrp",
+    "dlcarfrqeutl@idlelbeutcelresprioendc",
+    "dlcarfrqeutl@idlelbeutcelresweightendc",
+    "freqlayendcholist.freqlayer",
+    "freqlaylistdedltelb",
+    "freqlaylistlte",
+    "freqlaylistpshonr",
+    "freqlaylistpshonrvolte",
+    "redirectprio",
+    "redirfreqeutra",
+    "csfallbprio",
+    "redirrat",
+    "redirnrcarfrq@carrierfreqnrcell",
+    "redirnrcarfrq@ssboffset",
+    "actintranrngho",
+    "cellreselectionpriority",
+    "nrhoirdnlist",
+    "nrsysinfoprofiledn",
+    "qrxlevmin",
+    "qrxlevminoffset",
+    "nrcarfrql@dlcarfrqnr",
+    "nrcarfrql@nrfrqthrh",
+    "b2threshold2horsrpvonr",
+    "earfcnvalue",
+    "sintrasearchp",
+    "allowedmeasbw",
+    "carrierfreq",
+    "item-cfgplmnid-mcc",
+    "item-cfgplmnid-mnc",
+    "item-cfgplmnid-mnclength",
+    "minrsfpbbmod",
+    "minrsfprmod",
+    "minrsfpsmod",
+    "redirprio",
+    "rssetid",
+    "snonintrasearchp",
+    "threshservinglowp",
+    "energysavingmode",
+    "primplmnupperlayerindicationr15",
+    "sibschedulinglist@simessageperiodicity",
+    "sibschedulinglist@simessagesibtype",
+    "fivegstac",
 }
+
 
 
 def remark(parameter, internal, external):
@@ -5307,10 +5361,19 @@ def nokia_slicing_dump(request):
 
 
     finaldf = excel_df.merge(
-        data_df[["MO", "ID", "Parameter","value(External)"]],
+        data_df[["MO", "ID", "Parameter", "value(External)"]],
         on=["MO", "ID", "Parameter"],
         how="left"
     )
+
+    # Add this block
+    if "Category" in finaldf.columns:
+        col = finaldf.pop("Category")
+        finaldf.insert(
+            finaldf.columns.get_loc("MO") + 1,
+            "Category",
+            col
+        )
 
     if "5G/LTE" in finaldf.columns:
         col = finaldf.pop("5G/LTE")

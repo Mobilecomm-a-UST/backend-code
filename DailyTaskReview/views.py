@@ -21,14 +21,30 @@ def SplitFirstNameFromEmail(email_list):
 
     return ",".join(names)
 
-def format_datetime(dt_string):
+# def format_datetime(dt_string):
 
-    if not dt_string:
+#     if not dt_string:
+#         return ""
+
+#     dt = datetime.fromisoformat(dt_string)
+#     return dt.strftime("%d-%m-%Y (%H:%M)")
+
+
+def format_datetime(value):
+
+    if not value:
         return ""
 
-    dt = datetime.fromisoformat(dt_string)
-    return dt.strftime("%d-%m-%Y (%H:%M)")
+    # Already datetime object
+    if isinstance(value, datetime):
+        return value.strftime("%d-%m-%Y (%H:%M)")
 
+    # ISO string
+    if isinstance(value, str):
+        dt = datetime.fromisoformat(value)
+        return dt.strftime("%d-%m-%Y (%H:%M)")
+
+    return str(value)
 
 # ===== this function is used to send email when task is assigned =====
 def send_email_assignTask(task_Data):

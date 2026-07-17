@@ -70,6 +70,7 @@ class IntegrationDataVI(models.Model):
     HOTO_Accepted_Date_4g = models.DateField(null=True, blank=True)
     HOTO_Offered_Date_2g = models.DateField(null=True, blank=True)
     HOTO_Accepted_Date_2g = models.DateField(null=True, blank=True)
+    NSS_ID = models.CharField(max_length=500, blank=True)
     # Old_Site_Tech= models.CharField(max_length=500, blank=True)
     # Allocated_Tech= models.CharField(max_length=500, blank=True)
     # Deployed_Tech= models.CharField(max_length=500, blank=True)

@@ -227,7 +227,6 @@ def upload_excel(request):
                     'Cell_ID': row['Cell ID'],
                     'LNBTS_ID': row['LNBTS ID'],
                     'OEM': str(row['OEM']).upper(),
-
                     'MO_NAME': str(row['MO NAME']).upper(),
                     'OSS_Details': row['OSS Details'],
                     'CELL_COUNT': row['CELL COUNT'],
@@ -263,6 +262,7 @@ def upload_excel(request):
                     'HOTO_Accepted_Date_4g': hoto_accepted_4g,
                     'HOTO_Offered_Date_2g': hoto_offered_2g,
                     'HOTO_Accepted_Date_2g': hoto_accepted_2g,
+                    'NSS_ID': row['NSS ID'],
                     'uploaded_by': request.user.username
                 }
             )
@@ -1976,6 +1976,70 @@ def HOTO_dashboard(request):
 
     final_ftr.append(grand_total)
 
+   #------- FTR percentage dashboard--------------------
+
+    # ftr_report = []
+
+    # for circle in circles:
+    #     for oem in oems:
+
+    #         # Total records for Circle + OEM
+    #         total = HOTOIntegrationDataVI.objects.filter(
+    #             CIRCLE=circle,
+    #             OEM=oem
+    #         ).count()
+
+    #         # Only FTR records
+    #         ftr = HOTOIntegrationDataVI.objects.filter(
+    #             CIRCLE=circle,
+    #             OEM=oem,
+    #             FTR_Status="FTR"
+    #         ).count()
+
+    #         # Percentage calculation
+    #         percent = round((ftr / total) * 100, 0) if total else 0
+
+    #         ftr_report.append({
+    #             "Circle": circle,
+    #             "OEM": oem,
+    #             "FTR Count": ftr,
+    #             "Grand Total": total,
+    #             "FTR %": f"{percent}%"
+    #         })
+    ftr_report = []
+
+    for circle in circles:
+        for oem in oems:
+
+            # Total MS1 count
+            total = HOTOIntegrationDataVI.objects.filter(
+                CIRCLE=circle,
+                OEM=oem
+            ).count()
+
+            # FTR count
+            ftr = HOTOIntegrationDataVI.objects.filter(
+                CIRCLE=circle,
+                OEM=oem,
+                FTR_Status="FTR"
+            ).count()
+
+            # FTR Percentage
+            # percent = round((ftr / total) * 100, 0) if total else 0
+            if total:
+                percent = (ftr / total) * 100
+                percent = round(percent)
+            else:
+                percent = 0
+
+            ftr_report.append({
+                "Circle": circle,
+                "RAN OEM": oem,
+                "MS1": total,
+                "FTR Count": ftr,
+                "FTR %": f"{percent}%"
+            })
+
     # ================= Dynamic Status =================
     statuses = list(
         HOTOIntegrationDataVI.objects.values_list(
@@ -2136,6 +2200,8 @@ def HOTO_dashboard(request):
     pending_df = pd.DataFrame(pending_data)
     oem_status_df = pd.DataFrame(oem_final)
     oem_pending_df = pd.DataFrame(oem_pending)
+    ftr_df = pd.DataFrame(final_ftr)
+    ftr_overall_df = pd.DataFrame(ftr_report)
 
     output_folder = os.path.join(
         settings.MEDIA_ROOT,
@@ -2163,6 +2229,9 @@ def HOTO_dashboard(request):
 
         oem_pending_df.to_excel(writer,sheet_name="Dashboard",index=False,
             startrow=len(status_df)+len(pending_df)+len(oem_status_df)+18
+        )
+        ftr_df.to_excel(
+            writer, sheet_name="FTR Dashboard", index=False, startrow=0, startcol=0
         )
         # ================= DB DATA SHEET =================
 
@@ -2283,6 +2352,8 @@ def HOTO_dashboard(request):
             "circle status": final,
             "circle pending bucket": pending_data,
             "oem wise status": oem_final,
-            "oem wise pending bucket": oem_pending
+            "oem wise pending bucket": oem_pending,
+            "FTR Status":final_ftr,
+            "FTR Dashboard": ftr_report
         }
     })

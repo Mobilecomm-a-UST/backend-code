@@ -90,30 +90,99 @@ def extract_last_mo(val):
 
     return sorted(set(cleaned))
 
+ALWAYS_NO_CHANGE_PARAMS = {
+    "earfcndl",
+    "actdedfreqlistslb",
+    "numtxwithhighnongbr",
+    "a1timetotriggerdeactintermeas",
+    "actb1thresholdsreturnto5gsa",
+    "idlelbcellreselprioendc",
+    "idlelbcelresweightendc",
+    "moprmappinglist@mnc",
+    "smeasconfigssbrsrp",
+    "carrierfreqnr",
+    "freqbandindicatorlistnr",
+    "hysb2nrthresholdrsrp",
+    "dlcarfrqeutl@idlelbeutcelresprioendc",
+    "dlcarfrqeutl@idlelbeutcelresweightendc",
+    "freqlayendcholist.freqlayer",
+    "freqlaylistdedltelb",
+    "freqlaylistlte",
+    "freqlaylistpshonr",
+    "freqlaylistpshonrvolte",
+    "redirectprio",
+    "redirfreqeutra",
+    "csfallbprio",
+    "redirrat",
+    "redirnrcarfrq@carrierfreqnrcell",
+    "redirnrcarfrq@ssboffset",
+    "nrarfcn",
+    "actintranrngho",
+    "beamset@leftedgeangle",
+    "beamset@rightedgeangle",
+    "cellreselectionpriority",
+    "fiveqivaluelist",
+    "earfcnvalue",
+    "qrxlevmin",
+    "sintrasearchp",
+    "allowedmeasbw",
+    "carrierfreq",
+    "cfg5qirange",
+    "actl2counters",
+    "actpacketschedulercounters",
+    "item-cfgplmnid-mcc",
+    "item-cfgplmnid-mnc",
+    "item-cfgplmnid-mnclength",
+    "cfgsliceid@sd",
+    "cfgplmnid@mcc",
+    "cfgplmnid@mnc",
+    "minrsfpbbmod",
+    "minrsfprmod",
+    "minrsfpsmod",
+    "redirprio",
+    "rimdynamicsrsslotoffsetenabled",
+    "rssetid",
+    "snonintrasearchp",
+    "threshservinglowp",
+}
 
-def remark(internal, external):
 
- 
-    if pd.isna(internal) and pd.isna(external):
+def remark(parameter, internal, external):
+    # Parameters which should always show No Changes
+    if str(parameter).strip().lower() in ALWAYS_NO_CHANGE_PARAMS:
         return "No Changes in value"
 
- 
-    if pd.isna(internal) and not pd.isna(external):
+    # Convert NaN to blank
+    internal = "" if pd.isna(internal) else str(internal).strip()
+    external = "" if pd.isna(external) else str(external).strip()
+
+    # Treat "-" as blank
+    if internal == "-":
+        internal = ""
+
+    if external == "-":
+        external = ""
+
+    i = internal.lower()
+    e = external.lower()
+
+    # Both blank
+    if i == "" and e == "":
         return "No Changes in value"
 
- 
-    if not pd.isna(internal) and pd.isna(external):
+    # Internal blank, External has value
+    if i == "" and e != "":
+        return "No Changes in value"
+
+    # Internal has value, External blank
+    if i != "" and e == "":
         return "Changes in value"
 
-    i = str(internal).strip().lower()
-    e = str(external).strip().lower()
-
+    # Exact match
     if i == e:
         return "No Changes in value"
 
-    if i == "-" and e == "-":
-        return "No Changes in value"
-
+    # Compare numeric values
     ni_all = re.findall(r'\d+', i)
     ne_all = re.findall(r'\d+', e)
 
@@ -121,20 +190,21 @@ def remark(internal, external):
         if any(n in ne_all for n in ni_all):
             return "No Changes in value"
 
+    # Compare MO IDs
     i_parts = extract_last_mo(i)
     e_parts = extract_last_mo(e)
 
     if set(i_parts) & set(e_parts):
         return "No Changes in value"
 
+    # Compare line-by-line
     int_list = [x.strip() for x in i.replace("\r\n", "\n").split("\n") if x.strip()]
     gui_list = [x.strip() for x in e.replace("\r\n", "\n").split("\n") if x.strip()]
 
-    if int_list == ["-"] and gui_list == ["-"]:
+    if int_list == gui_list:
         return "No Changes in value"
 
     return "Changes in value"
-
 # change t/f-> 0,1--
 def tf_to_01(val):
     if val is None:
@@ -3160,192 +3230,184 @@ def nokia_slicing_dump(request):
 
         #for NRPMQAP class-----------------------------
         elif mo_class == "com.nokia.srbts.nrbts:NRPMQAP":
-
             dist_name = mo.attrib.get("distName", "")
             try:
                 nrpmqap_id = int(dist_name.split("NRPMQAP-")[-1])
             except:
                 continue
 
-            group_1_ids = {11, 12, 15, 16, 17, 18, 19}
-            group_2_ids = {21, 22, 25, 26}
+            group_1_ids = {11,12,15,16,17,18,19}
+            group_2_ids = {21,22,25,26}
             group_3_ids = {11,12,15,16,17,18,19,21,22,25,26,47}
-            group_4_ids={47}
-            group_5_ids = {21, 22, 25, 26,47}
-            group_6_ids = {6, 7, 8, 9}
-            group_7_ids = {6, 7, 8, 9, 11, 12, 15, 16, 17, 18, 19}
-            group_8_ids = {11, 12, 15, 16, 17, 18, 19}
+            group_4_ids = {47}
+            group_5_ids = {21,22,25,26,47}
+            group_6_ids = {6,7,8,9}
+            group_7_ids = {6,7,8,9,11,12,15,16,17,18,19,21,22,25,26,47}
 
-            if nrpmqap_id not in (group_1_ids | group_2_ids | group_3_ids | group_4_ids | group_5_ids):
+            valid_ids = (
+                group_1_ids
+                | group_2_ids
+                | group_3_ids
+                | group_4_ids
+                | group_5_ids
+                | group_6_ids
+                | group_7_ids
+            )
+
+            if nrpmqap_id not in valid_ids:
                 continue
-        
+
+            ##########################################################
+            # Group 1
+            ##########################################################
+
             if nrpmqap_id in group_1_ids:
 
                 for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+
                     if p.attrib.get("name") == "thpHistScale":
                         dumy_data.append({
-                            "MO": "NRPMQAP",
-                            "DistName": dist_name,
-                            "ID": nrpmqap_id,
-                            "Parameter": "thpHistScale",
-                            "value": tf_to_01(p.text)
+                            "MO":"NRPMQAP",
+                            "ID":nrpmqap_id,
+                            "Parameter":"thphistscale",
+                            "value":tf_to_01(p.text)
                         })
 
-                # cfgSliceId marker
-                if mo.findall(".//ns:list[@name='cfgSliceId']", ns) if ns else mo.findall(".//list[@name='cfgSliceId']"):
+                if mo.findall(".//ns:list[@name='cfgSliceId']",ns) if ns else mo.findall(".//list[@name='cfgSliceId']"):
+
                     dumy_data.append({
-                        "MO": "NRPMQAP",
-                        "DistName": dist_name,
-                        "ID": nrpmqap_id,
-                        "Parameter": "cfgSliceId",
-                        "value": "List"
+                        "MO":"NRPMQAP",
+                        "ID":nrpmqap_id,
+                        "Parameter":"cfgsliceid",
+                        "value":"List"
                     })
 
-                # sd / sst
-                for item in mo.findall(".//ns:list[@name='cfgSliceId']/ns:item", ns) \
-                        if ns else mo.findall(".//list[@name='cfgSliceId']/item"):
-                    for p in item.findall("ns:p", ns) if ns else item.findall("p"):
-                        if p.attrib.get("name") in {"sd", "sst"}:
+                for item in (
+                    mo.findall(".//ns:list[@name='cfgSliceId']/ns:item",ns)
+                    if ns else
+                    mo.findall(".//list[@name='cfgSliceId']/item")
+                ):
+
+                    for p in item.findall("ns:p",ns) if ns else item.findall("p"):
+
+                        if p.attrib.get("name") in {"sd","sst"}:
+
                             dumy_data.append({
-                                "MO": "NRPMQAP",
-                                "DistName": dist_name,
-                                "ID": nrpmqap_id,
-                                "Parameter": f"Item-cfgSliceId-{p.attrib.get('name')}",
-                                "value": tf_to_01(p.text)
+                                "MO":"NRPMQAP",
+                                "ID":nrpmqap_id,
+                                "Parameter":f"cfgsliceid@{p.attrib.get('name').lower()}",
+                                "value":tf_to_01(p.text)
                             })
 
+            ##########################################################
+            # Group 2
+            ##########################################################
 
             if nrpmqap_id in group_2_ids:
 
-                simple_params = {
-                    "cfg5qiRange",
-                }
+                for p in mo.findall(".//ns:p",ns) if ns else mo.findall(".//p"):
 
-                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
-                    name = p.attrib.get("name")
-                    if name in simple_params:
+                    if p.attrib.get("name") in {"cfgQciRange","cfg5qiRange"}:
+
                         dumy_data.append({
-                            "MO": "NRPMQAP",
-                            "ID": nrpmqap_id,
-                            "Parameter": name,
-                            "value": tf_to_01(p.text)   
+                            "MO":"NRPMQAP",
+                            "ID":nrpmqap_id,
+                            "Parameter":p.attrib.get("name").lower(),
+                            "value":tf_to_01(p.text)
                         })
 
-                # cfgPlmnId
-                if mo.findall(".//ns:list[@name='cfgPlmnId']", ns) if ns else mo.findall(".//list[@name='cfgPlmnId']"):
+                if mo.findall(".//ns:list[@name='cfgPlmnId']",ns) if ns else mo.findall(".//list[@name='cfgPlmnId']"):
+
                     dumy_data.append({
-                        "MO": "NRPMQAP",
-                        "ID": nrpmqap_id,
-                        "Parameter": "cfgPlmnId",
-                        "value": "List"               
+                        "MO":"NRPMQAP",
+                        "ID":nrpmqap_id,
+                        "Parameter":"cfgplmnid",
+                        "value":"List"
                     })
 
-                for item in mo.findall(".//ns:list[@name='cfgPlmnId']/ns:item", ns) \
-                        if ns else mo.findall(".//list[@name='cfgPlmnId']/item"):
-                    for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                for item in (
+                    mo.findall(".//ns:list[@name='cfgPlmnId']/ns:item",ns)
+                    if ns else
+                    mo.findall(".//list[@name='cfgPlmnId']/item")
+                ):
+
+                    for p in item.findall("ns:p",ns) if ns else item.findall("p"):
+
                         dumy_data.append({
-                            "MO": "NRPMQAP",
-                            "ID": nrpmqap_id,
-                            "Parameter": f"Item-cfgPlmnId-{p.attrib.get('name')}",
-                            "value": tf_to_01(p.text)  
+                            "MO":"NRPMQAP",
+                            "ID":nrpmqap_id,
+                            "Parameter":f"item-cfgplmnid-{p.attrib.get('name').lower()}",
+                            "value":tf_to_01(p.text)
                         })
 
-                # cfgSliceId
-                if mo.findall(".//ns:list[@name='cfgSliceId']", ns) if ns else mo.findall(".//list[@name='cfgSliceId']"):
+                if mo.findall(".//ns:list[@name='cfgSliceId']",ns) if ns else mo.findall(".//list[@name='cfgSliceId']"):
+
                     dumy_data.append({
-                        "MO": "NRPMQAP",
-                        "ID": nrpmqap_id,
-                        "Parameter": "cfgSliceId",
-                        "value": "List"               
+                        "MO":"NRPMQAP",
+                        "ID":nrpmqap_id,
+                        "Parameter":"cfgsliceid",
+                        "value":"List"
                     })
 
-                for item in mo.findall(".//ns:list[@name='cfgSliceId']/ns:item", ns) \
-                        if ns else mo.findall(".//list[@name='cfgSliceId']/item"):
-                    for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                for item in (
+                    mo.findall(".//ns:list[@name='cfgSliceId']/ns:item",ns)
+                    if ns else
+                    mo.findall(".//list[@name='cfgSliceId']/item")
+                ):
+
+                    for p in item.findall("ns:p",ns) if ns else item.findall("p"):
+
                         dumy_data.append({
-                            "MO": "NRPMQAP",
-                            "ID": nrpmqap_id,
-                            "Parameter": f"Item-cfgSliceId-{p.attrib.get('name')}",
-                            "value": tf_to_01(p.text)  
-        
+                            "MO":"NRPMQAP",
+                            "ID":nrpmqap_id,
+                            "Parameter":f"cfgsliceid@{p.attrib.get('name').lower()}",
+                            "value":tf_to_01(p.text)
                         })
 
-            param_values = {}
+            ##########################################################
+            # Group 3
+            ##########################################################
+
             if nrpmqap_id in group_3_ids:
-                simple_params = {
-                    'actUPlaneGroup1Counters',
-                    'actUPlaneGroup2Counters',
-                }
-  
-                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
-                    name = p.attrib.get("name")
 
-                    if name in simple_params:
-                        param_values[name] = tf_to_01(p.text)
+                for p in mo.findall(".//ns:p",ns) if ns else mo.findall(".//p"):
 
-                for param, val in param_values.items():
-                    dumy_data.append({
-                        "MO": "NRPMQAP",
-                        "ID": ",".join(map(str, sorted(group_3_ids))), 
-                        "Parameter": param,
-                        "value": val
-                    })
+                    if p.attrib.get("name") in {
+                        "actUPlaneGroup1Counters",
+                        "actUPlaneGroup2Counters"
+                    }:
 
+                        dumy_data.append({
+                            "MO":"NRPMQAP",
+                            "ID":",".join(map(str,sorted(group_3_ids))),
+                            "Parameter":p.attrib["name"].lower(),
+                            "value":tf_to_01(p.text)
+                        })
 
+            ##########################################################
+            # Group 4
+            ##########################################################
 
             if nrpmqap_id in group_4_ids:
 
-                simple_params = {
-                    'cfg5qiRange',
-                }
+                for p in mo.findall(".//ns:p",ns) if ns else mo.findall(".//p"):
 
-                # ✅ only direct <p>
-                for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
-                    name = p.attrib.get("name")
-                    if name in simple_params:
+                    if p.attrib.get("name") in {"cfgQciRange","cfg5qiRange"}:
+
                         dumy_data.append({
-                            "MO": "NRPMQAP",
-                            "ID": nrpmqap_id,
-                            "Parameter": name,
-                            "value": tf_to_01(p.text)
+                            "MO":"NRPMQAP",
+                            "ID":47,
+                            "Parameter":p.attrib.get("name").lower(),
+                            "value":tf_to_01(p.text)
                         })
 
-                # ✅ cfgPlmnId
-                if mo.findall(".//ns:list[@name='cfgPlmnId']", ns) if ns else mo.findall(".//list[@name='cfgPlmnId']"):
-                    dumy_data.append({
-                        "MO": "NRPMQAP",
-                        "ID": nrpmqap_id,
-                        "Parameter": "cfgPlmnId",
-                        "value": "List"
-                    })
-
-                for item in mo.findall(".//ns:list[@name='cfgPlmnId']/ns:item", ns) \
-                        if ns else mo.findall(".//list[@name='cfgPlmnId']/item"):
-
-                    for p in item.findall("ns:p", ns) if ns else item.findall("p"):
-                        dumy_data.append({
-                            "MO": "NRPMQAP",
-                            "ID": nrpmqap_id,
-                            "Parameter": f"Item-cfgPlmnId-{p.attrib.get('name')}",
-                            "value": tf_to_01(p.text)
-                        })
-
-                # ✅ ADD THIS (MISSING PART - IMPORTANT 🔥)
-                for item in mo.findall(".//ns:list[@name='cfgSliceId']/ns:item", ns) \
-                        if ns else mo.findall(".//list[@name='cfgSliceId']/item"):
-
-                    for p in item.findall("ns:p", ns) if ns else item.findall("p"):
-                        if p.attrib.get("name") == "sd":
-                            dumy_data.append({
-                                "MO": "NRPMQAP",
-                                "ID": nrpmqap_id,
-                                "Parameter": "Item-cfgSliceId-sd",
-                                "value": tf_to_01(p.text)
-                            })
+            ##########################################################
+            # Group 5
+            ##########################################################
 
             if nrpmqap_id in group_5_ids:
 
-                simple_params = {
+                wanted={
                     "actCplaneCounters",
                     "actL2Counters",
                     "actPacketSchedulerCounters",
@@ -3354,43 +3416,60 @@ def nokia_slicing_dump(request):
                     "thpHistDownlinkMinRange",
                     "thpHistScale",
                     "thpHistUplinkMaxRange",
-                    "thpHistUplinkMinRange",
+                    "thpHistUplinkMinRange"
                 }
 
-                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
-                    name = p.attrib.get("name")
-                    if name in simple_params:
+                for p in mo.findall(".//ns:p",ns) if ns else mo.findall(".//p"):
+
+                    if p.attrib.get("name") in wanted:
+
                         dumy_data.append({
-                            "MO": "NRPMQAP",
-                            "ID": nrpmqap_id,
-                            "Parameter": name,
-                            "value": tf_to_01(p.text)   
-                        })                  
-         
+                            "MO":"NRPMQAP",
+                            "ID":nrpmqap_id,
+                            "Parameter":p.attrib["name"].lower(),
+                            "value":tf_to_01(p.text)
+                        })
+
+            ##########################################################
+            # Group 6
+            ##########################################################
+
             if nrpmqap_id in group_6_ids:
 
+                for p in mo.findall(".//ns:p",ns) if ns else mo.findall(".//p"):
+
+                    if p.attrib.get("name") in {"cfgQciRange","cfg5qiRange"}:
+                        dumy_data.append({
+                            "MO":"NRPMQAP",
+                            "ID":nrpmqap_id,
+                            "Parameter":p.attrib.get("name").lower(),
+                            "value":tf_to_01(p.text)
+                        })
+                        
                 for item in (
-                    mo.findall(".//ns:list[@name='cfgPlmnId']/ns:item", ns)
+                    mo.findall(".//ns:list[@name='cfgPlmnId']/ns:item",ns)
                     if ns else
                     mo.findall(".//list[@name='cfgPlmnId']/item")
                 ):
 
-                    for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                    for p in item.findall("ns:p",ns) if ns else item.findall("p"):
 
-                        name = p.attrib.get("name")
-
-                        if name in {"mcc", "mnc", "mncLength"}:
+                        if p.attrib.get("name") in {"mcc","mnc","mncLength"}:
 
                             dumy_data.append({
-                                "MO": "NRPMQAP",
-                                "ID": nrpmqap_id,
-                                "Parameter": f"cfgPlmnId@{name}",
-                                "value": tf_to_01(p.text)
+                                "MO":"NRPMQAP",
+                                "ID":nrpmqap_id,
+                                "Parameter":f"cfgplmnid@{p.attrib.get('name').lower()}",
+                                "value":tf_to_01(p.text)
                             })
+
+            ##########################################################
+            # Group 7
+            ##########################################################
 
             if nrpmqap_id in group_7_ids:
 
-                simple_params = {
+                wanted={
                     "cfgProfType",
                     "thpHistDownlinkMaxRange",
                     "thpHistDownlinkMinRange",
@@ -3399,33 +3478,17 @@ def nokia_slicing_dump(request):
                     "thpHistUplinkMinRange"
                 }
 
-                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
+                for p in mo.findall(".//ns:p",ns) if ns else mo.findall(".//p"):
 
-                    name = p.attrib.get("name")
-
-                    if name in simple_params:
+                    if p.attrib.get("name") in wanted:
 
                         dumy_data.append({
-                            "MO": "NRPMQAP",
-                            "ID": nrpmqap_id,
-                            "Parameter": name,
-                            "value": tf_to_01(p.text)
+                            "MO":"NRPMQAP",
+                            "ID":nrpmqap_id,
+                            "Parameter":p.attrib["name"].lower(),
+                            "value":tf_to_01(p.text)
                         })
                         
-            if nrpmqap_id in group_8_ids:
-
-                for p in mo.findall(".//ns:p", ns) if ns else mo.findall(".//p"):
-
-                    if p.attrib.get("name") == "cfg5qiRange":
-
-                        dumy_data.append({
-                            "MO": "NRPMQAP",
-                            "ID": nrpmqap_id,
-                            "Parameter": "cfg5qiRange",
-                            "value": tf_to_01(p.text)
-                        })
-
-
             group_nrbts_ids = {6, 7, 8, 9, 11, 12, 15, 16, 17, 18, 19}
             if nrpmqap_id in group_nrbts_ids:
 
@@ -3447,7 +3510,7 @@ def nokia_slicing_dump(request):
                             "Parameter": name.lower(),
                             "value": tf_to_01(p.text)
                         })
-            
+                    
                 
 
 
@@ -3512,9 +3575,10 @@ def nokia_slicing_dump(request):
                     dumy_data.append({
                         "MO": "NRRESOURCEGROUP",
                         "ID": rg_id,
-                        "Parameter": f"Item-schedulerParams-{k}",
+                        "Parameter": f"schedulerparams@{k.lower()}",
                         "value": tf_to_01(v)
                     })
+
 
             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
                 if p.attrib.get("name") == "userLabel":
@@ -3732,12 +3796,12 @@ def nokia_slicing_dump(request):
                 "alSelection"
             }
             required_dynamic_agg = {
-                "aggregationLevelListHR": "dynamicAggregationLevelSet@aggregationLevelList",
-                "cqiDciCssAl1HR": "dynamicAggregationLevelSet@cqiDciCssAl1",
-                "cqiDciCssAl2HR": "dynamicAggregationLevelSet@cqiDciCssAl2",
-                "cqiDciCssAl4HR": "dynamicAggregationLevelSet@cqiDciCssAl4",
-                "cqiDciCssAl8HR": "dynamicAggregationLevelSet@cqiDciCssAl8",
-                "cqiDciCssAl16HR": "dynamicAggregationLevelSet@cqiDciCssAl16"
+                "aggregationLevelList": "dynamicAggregationLevelSet@aggregationLevelList",
+                "cqiDciCssAl1": "dynamicAggregationLevelSet@cqiDciCssAl1",
+                "cqiDciCssAl2": "dynamicAggregationLevelSet@cqiDciCssAl2",
+                "cqiDciCssAl4": "dynamicAggregationLevelSet@cqiDciCssAl4",
+                "cqiDciCssAl8": "dynamicAggregationLevelSet@cqiDciCssAl8",
+                "cqiDciCssAl16": "dynamicAggregationLevelSet@cqiDciCssAl16",
             }
             for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
                 name = p.attrib.get("name")
@@ -3752,12 +3816,11 @@ def nokia_slicing_dump(request):
 
             # dynamicAggregationLevelHRSet parameters
             for item in (
-                mo.findall(".//ns:list[@name='dynamicAggregationLevelHRSet']/ns:item", ns)
+                mo.findall(".//ns:list[@name='dynamicAggregationLevelSet']/ns:item", ns)
                 if ns else
-                mo.findall(".//list[@name='dynamicAggregationLevelHRSet']/item")
+                mo.findall(".//list[@name='dynamicAggregationLevelSet']/item")
             ):
-
-                for p in item.findall("ns:p", ns) if ns else item.findall("p"):
+                for p in (item.findall("ns:p", ns) if ns else item.findall("p")):
                     name = p.attrib.get("name")
 
                     if name in required_dynamic_agg:
@@ -3767,6 +3830,7 @@ def nokia_slicing_dump(request):
                             "Parameter": required_dynamic_agg[name].lower(),
                             "value": tf_to_01(p.text)
                         })
+        
         
         
         elif mo_class == "com.nokia.srbts.nrbts:NRPMCCP":
@@ -4147,37 +4211,37 @@ def nokia_slicing_dump(request):
                         "value": tf_to_01(p.text)
                     })
 
-        elif mo_class == "com.nokia.srbts.nrbts:NRPMQAP":
-            dist_name = mo.attrib.get("distName", "")
+        # elif mo_class == "com.nokia.srbts.nrbts:NRPMQAP":
+        #     dist_name = mo.attrib.get("distName", "")
 
-            required_in_NRPMQAP = {
-                "thpHistDownlinkMaxRange",
-                "thpHistDownlinkMinRange",
-                "thpHistScale",
-                "thpHistUplinkMaxRange",
-                "thpHistUplinkMinRange"
-            }
+        #     required_in_NRPMQAP = {
+        #         "thpHistDownlinkMaxRange",
+        #         "thpHistDownlinkMinRange",
+        #         "thpHistScale",
+        #         "thpHistUplinkMaxRange",
+        #         "thpHistUplinkMinRange"
+        #     }
 
-            required_in_NRPMQAP_lower = {
-                x.lower() for x in required_in_NRPMQAP
-            }
+        #     required_in_NRPMQAP_lower = {
+        #         x.lower() for x in required_in_NRPMQAP
+        #     }
 
-            params_NRPMQAP = {}
+        #     params_NRPMQAP = {}
 
-            for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
+        #     for p in mo.findall("ns:p", ns) if ns else mo.findall("p"):
 
-                name = p.attrib.get("name", "")
+        #         name = p.attrib.get("name", "")
 
-                if name.lower() in required_in_NRPMQAP_lower:
+        #         if name.lower() in required_in_NRPMQAP_lower:
 
-                    params_NRPMQAP[name.lower()] = p.text
+        #             params_NRPMQAP[name.lower()] = p.text
 
-                    dumy_data.append({
-                        "MO": "NRPMQAP",
-                        "DistName": dist_name,
-                        "Parameter": name.lower(),
-                        "value": tf_to_01(p.text)
-                    }) 
+        #             dumy_data.append({
+        #                 "MO": "NRPMQAP",
+        #                 "DistName": dist_name,
+        #                 "Parameter": name.lower(),
+        #                 "value": tf_to_01(p.text)
+        #             }) 
 
         
         elif mo_class == "com.nokia.srbts.mnl:FEATCADM":
@@ -5303,10 +5367,19 @@ def nokia_slicing_dump(request):
 
 
     finaldf = excel_df.merge(
-        data_df[["MO", "ID", "Parameter","value(External)"]],
+        data_df[["MO", "ID", "Parameter", "value(External)"]],
         on=["MO", "ID", "Parameter"],
         how="left"
     )
+
+    # Add this block
+    if "Category" in finaldf.columns:
+        col = finaldf.pop("Category")
+        finaldf.insert(
+            finaldf.columns.get_loc("MO") + 1,
+            "Category",
+            col
+        )
 
     if "5G/LTE" in finaldf.columns:
         col = finaldf.pop("5G/LTE")
@@ -5355,10 +5428,13 @@ def nokia_slicing_dump(request):
     finaldf = finaldf.sort_values(["MO", "ID", "Parameter"])
     finaldf.drop(columns=["Final_Value", "Remark","source_file"], inplace=True)
     finaldf["Remarks"] = finaldf.apply(
-    lambda r: remark(r["Value(Internal)"], r["value(External)"]),
+    lambda r: remark(
+        r["Parameter"],
+        r["Value(Internal)"],
+        r["value(External)"]
+    ),
     axis=1
-)  
-
+)
     #for change in xml---- 
     changed_df = finaldf[
         finaldf["Remarks"] == "Changes in value"
